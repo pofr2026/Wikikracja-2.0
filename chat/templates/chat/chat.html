@@ -4,14 +4,13 @@
 {% load filters %}
 
 {% block content_fullscreen %}
-{% now "U" as version %}
-	<link rel="stylesheet" href="{% static 'chat/css/chat.css' %}?v={{ version }}">
+	<link rel="stylesheet" href="{% static 'chat/css/chat.css' %}">
 
   <!-- Main chat script -->
-  <script src="{% static 'chat/js/dompurify.min.js' %}?v={{ version }}"></script>
-  <script src="{% static 'chat/js/ejs.min.js' %}?v={{ version }}"></script>
-  <script src="{% static 'chat/js/chat.js' %}?v={{ version }}" type="module"></script>
-  <script src="{% static 'chat/js/handlers.js' %}?v={{ version }}" type="module"></script>
+  <script src="{% static 'chat/js/dompurify.min.js' %}"></script>
+  <script src="{% static 'chat/js/ejs.min.js' %}"></script>
+  <script src="{% static 'chat/js/chat.js' %}" type="module"></script>
+  <script src="{% static 'chat/js/handlers.js' %}" type="module"></script>
 
   <script>
     const TRANSLATIONS = {{ translations|default:"{}"|safe }};
@@ -48,7 +47,7 @@
           </button>
         </div>
       </div>
-      
+
       <div class="row">
         <div class="col p-1">
 
