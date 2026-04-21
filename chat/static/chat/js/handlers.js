@@ -141,30 +141,29 @@ document.addEventListener('DOMContentLoaded', () => {
         const content = document.getElementById(contentId);
         if (!content) return;
         const savedState = localStorage.getItem(`chat-cat-${contentId}`);
-        if (savedState === 'collapsed') {
-            content.classList.remove('open');
-            btn.setAttribute('aria-expanded', 'false');
-        } else {
-            // Default: expanded
+        if (savedState === 'expanded') {
             content.classList.add('open');
             btn.setAttribute('aria-expanded', 'true');
+        } else {
+            // Default: collapsed
+            content.classList.remove('open');
+            btn.setAttribute('aria-expanded', 'false');
         }
     });
 
     // Restore archive section states from localStorage
+    // The state is stored under the key `chat-archive-${targetId}` with values 'visible' or 'hidden'.
+    // If no value is stored (first visit), we explicitly set it to 'hidden' to ensure the default
+    // behaviour matches the requirement: the "Show archived rooms" button is unchecked.
     const archiveTargets = ['pub-rooms-archive', 'tasks-archive', 'votes-archive', 'prv-archive'];
     archiveTargets.forEach(targetId => {
         const archiveSection = document.getElementById(`content-${targetId}`);
         const archiveBtn = document.querySelector(`.archive-toggle[data-target="${targetId}"]`);
         if (!archiveSection || !archiveBtn) return;
         const savedState = localStorage.getItem(`chat-archive-${targetId}`);
-        const hasUnreadRooms = archiveSection.querySelector('.room-not-seen') !== null;
-        if (hasUnreadRooms || savedState === 'visible') {
+        if (savedState === 'visible') {
             archiveSection.classList.add('visible');
             archiveBtn.classList.add('active');
-            if (hasUnreadRooms && savedState !== 'visible') {
-                localStorage.setItem(`chat-archive-${targetId}`, 'visible');
-            }
         } else {
             archiveSection.classList.remove('visible');
             archiveBtn.classList.remove('active');
@@ -544,7 +543,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 function slideToggle(element, duration) {
     const isHidden = element.style.display === 'none' || getComputedStyle(element).display === 'none';
-    
+
     if (isHidden) {
         element.style.display = 'block';
         element.style.height = '0';
