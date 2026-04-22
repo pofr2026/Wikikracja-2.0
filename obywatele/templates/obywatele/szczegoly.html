@@ -40,6 +40,12 @@
         </div>
       {% endif %}
       <h5 class="mb-0">{{ b.uid.first_name|default:b.uid }} {{ b.uid.last_name }}</h5>
+      {% if active %}
+      <a href="{% url 'chat:open_dm' pk=b.uid.pk %}" class="proposal-chat-link ms-2" style="font-size:.78rem;">
+        <i class="fas fa-comment-dots"></i>
+        <span>{% trans 'Wyślij prywatną wiadomość' %}</span>
+      </a>
+      {% endif %}
     </div>
     <div class="card-body" style="font-size:.875rem;">
       <div class="row">
@@ -47,7 +53,7 @@
           <strong>{% trans 'Login' %}:</strong> {{ b.uid }}
         </div>
         <div class="col-md-6 mb-2">
-          <strong>{% trans 'Email' %}:</strong> {{ b.uid.email }}
+          <strong>{% trans 'Email' %}:</strong> <a href="mailto:{{ b.uid.email }}"><i class="fas fa-envelope me-1"></i>{{ b.uid.email }}</a>
         </div>
         <div class="col-md-6 mb-2">
           <strong>{% trans 'Recommended by' %}:</strong> {{ b.polecajacy|default:"-" }}
@@ -109,21 +115,63 @@
 
   {% if active %}
   <div class="card mb-3">
-    <div class="card-header">
+    <div class="card-header d-flex align-items-center gap-2">
       <span class="section-heading">{% trans 'Activity' %}</span>
     </div>
-    <div class="card-body d-flex flex-wrap gap-2">
-      <a href="{% url 'obywatele:citizen_czaty' pk=b.uid.pk %}" class="btn btn-outline-secondary btn-sm">
-        {% trans "Chats" %}
-      </a>
-      <a href="{% url 'obywatele:citizen_zadania' pk=b.uid.pk %}" class="btn btn-outline-secondary btn-sm">
-        {% trans "Tasks" %}
-      </a>
-      <a href="{% url 'obywatele:citizen_aktywnosc' pk=b.uid.pk %}" class="btn btn-outline-secondary btn-sm">
-        {% trans "Activity" %}
-      </a>
+    <div class="card-body d-flex flex-wrap gap-2 pb-2">
+      <button class="btn btn-outline-secondary btn-sm citizen-section-btn"
+              data-url="{% url 'obywatele:citizen_czaty' pk=b.uid.pk %}"
+              data-target="section-czaty">
+        <i class="fas fa-comments me-1"></i>{% trans "Chats" %}
+      </button>
+      <button class="btn btn-outline-secondary btn-sm citizen-section-btn"
+              data-url="{% url 'obywatele:citizen_zadania' pk=b.uid.pk %}"
+              data-target="section-zadania">
+        <i class="fas fa-list-check me-1"></i>{% trans "Tasks" %}
+      </button>
+      <button class="btn btn-outline-secondary btn-sm citizen-section-btn"
+              data-url="{% url 'obywatele:citizen_aktywnosc' pk=b.uid.pk %}"
+              data-target="section-aktywnosc">
+        <i class="fas fa-stream me-1"></i>{% trans "Activity" %}
+      </button>
+      <button class="btn btn-outline-secondary btn-sm citizen-section-btn"
+              data-url="{% url 'obywatele:citizen_zalozono' pk=b.uid.pk %}"
+              data-target="section-zalozono">
+        <i class="fas fa-plus-circle me-1"></i>{% trans "Założone" %}
+      </button>
     </div>
+    <div id="section-czaty" class="citizen-section" style="display:none;"></div>
+    <div id="section-zadania" class="citizen-section" style="display:none;"></div>
+    <div id="section-aktywnosc" class="citizen-section" style="display:none;"></div>
+    <div id="section-zalozono" class="citizen-section" style="display:none;"></div>
   </div>
+  <script>
+  (function(){
+    document.querySelectorAll('.citizen-section-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var targetId = btn.dataset.target;
+        var section = document.getElementById(targetId);
+        var isOpen = section.style.display !== 'none';
+        document.querySelectorAll('.citizen-section').forEach(function(s){ s.style.display = 'none'; });
+        document.querySelectorAll('.citizen-section-btn').forEach(function(b){ b.classList.remove('active'); });
+        if (isOpen) return;
+        btn.classList.add('active');
+        if (section.dataset.loaded) {
+          section.style.display = 'block';
+          return;
+        }
+        section.innerHTML = '<div class="p-3 text-muted" style="font-size:.82rem;">...</div>';
+        section.style.display = 'block';
+        fetch(btn.dataset.url, {headers: {'X-Requested-With': 'XMLHttpRequest'}})
+          .then(function(r){ return r.text(); })
+          .then(function(html){
+            section.innerHTML = html;
+            section.dataset.loaded = '1';
+          });
+      });
+    });
+  })();
+  </script>
   {% endif %}
 
   <div class="card">

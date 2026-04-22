@@ -8,6 +8,7 @@ app_name = 'chat'
 
 urlpatterns = [
     path('', views.chat, name='chat'),
+    path('dm/<int:pk>/', views.open_dm, name='open_dm'),
     path('add_room/', views.add_room, name='add_room'),
     path('upload/', views.upload_image),
     path('translations/', views.get_translations),
@@ -18,6 +19,9 @@ urlpatterns = [
 
     # Toggle notifications endpoint
     path('api/toggle-notifications/', views.toggle_notifications, name='toggle_notifications'),
+
+    # Toggle track endpoint
+    path('api/toggle-track/', views.toggle_track, name='toggle_track'),
 
     # Embedded chat widget API
     path('api/room/<int:room_id>/', views.room_data, name='room_data'),

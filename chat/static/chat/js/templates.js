@@ -15,7 +15,25 @@ import { _ } from './utility.js';
 const room_template = `
 <div id='room'>
 
-  <div class="chat-breadcrumb" id="chat-breadcrumb" aria-label="Lokalizacja"></div>
+  <div class="chat-breadcrumb-row">
+    <div class="chat-breadcrumb" id="chat-breadcrumb" aria-label="Lokalizacja"></div>
+    <div class="chat-sort-toolbar" id="chat-sort-toolbar" role="toolbar" aria-label="${_("Sortowanie i filtr")}">
+      <button type="button" class="sort-btn active" id="chat-sort-date" data-sort="date" data-order="desc">
+        <i class="fas fa-clock fa-fw"></i>
+        <span>${_("Data")}</span>
+        <i class="fas fa-arrow-down sort-arrow"></i>
+      </button>
+      <button type="button" class="sort-btn" id="chat-sort-likes" data-sort="likes" data-order="desc">
+        <i class="fas fa-thumbs-up fa-fw"></i>
+        <span>${_("Lajki")}</span>
+        <i class="fas fa-arrow-down sort-arrow" style="visibility:hidden"></i>
+      </button>
+      <button type="button" class="sort-btn" id="chat-filter-popular" data-filter="popular">
+        <i class="fas fa-fire fa-fw"></i>
+        <span>${_("Popularne")}</span>
+      </button>
+    </div>
+  </div>
 
   <div class='messages'>
     <div class='empty-chat-message'>
@@ -83,9 +101,11 @@ const message_template = `
 
     <div class='msg-body'>
       <% if (reply_to) { %>
-      <div class="msg-quote" data-reply-id="<%-reply_to.id%>">
+      <div class="msg-quote" data-reply-id="<%-reply_to.id%>" data-target-id="<%-reply_to.id%>" role="button" title="Przejdź do oryginału">
+        <span class="msg-quote-mark">"</span>
         <span class="msg-quote-author">@<%-reply_to.username%>:</span>
         <span class="msg-quote-text"><%-reply_to.text_snippet%></span>
+        <span class="msg-quote-mark">"</span>
         <button class="msg-quote-jump" data-target-id="<%-reply_to.id%>" type="button" title="Przejdź do oryginału">↗</button>
       </div>
       <% } %>

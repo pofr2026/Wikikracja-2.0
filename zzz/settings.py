@@ -1,8 +1,14 @@
 # Standard library imports
+import importlib.metadata
 import json
 import logging
 import mimetypes
 from os import getenv, path
+
+try:
+    APP_VERSION = importlib.metadata.version("wikikracja")
+except importlib.metadata.PackageNotFoundError:
+    APP_VERSION = "0.95.0-dev"
 
 # Third party imports
 from dotenv import load_dotenv
@@ -421,7 +427,7 @@ STORAGES = {
         "BACKEND": (
             "django.contrib.staticfiles.storage.StaticFilesStorage"
             if DEBUG
-            else "whitenoise.storage.CompressedManifestStaticFilesStorage"
+            else "whitenoise.storage.CompressedStaticFilesStorage"
         ),
     },
 }
@@ -463,6 +469,3 @@ PUSH_NOTIFICATIONS_SETTINGS = {
 
 # Onboarding: pk of the Board post 'Zasady wspólnoty'
 ONBOARDING_RULES_POST_ID = None  # set to the pk after creating the post
-
-# Application version — bump on each release
-APP_VERSION = '0.95'
