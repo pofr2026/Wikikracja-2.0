@@ -313,7 +313,7 @@ def _generate_feed_raw():
                 'url': f"/chat/#room_id={room.id}",
                 'object_id': room.id,
                 'room_id': room.id,
-                'message_count': len(messages),
+                'message_count': len(recent_msgs),
             })
 
     decisions = Decyzja.objects.filter(data_ostatniej_modyfikacji__gte=timezone.now() - td(days=30)).order_by('-data_ostatniej_modyfikacji')
