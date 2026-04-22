@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save, post_delete
+from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 
 from board.models import Post
@@ -33,9 +33,7 @@ def onboarding_step_chatted(sender, instance, created, **kwargs):
 @receiver(post_save, sender=KtoJuzGlosowal)
 def onboarding_step_voted(sender, instance, created, **kwargs):
     if created:
-        obj, _ = OnboardingProgress.objects.get_or_create(
-            user=instance.ktory_uzytkownik_juz_zaglosowal
-        )
+        obj, _ = OnboardingProgress.objects.get_or_create(user=instance.ktory_uzytkownik_juz_zaglosowal)
         if not obj.step_voted:
             obj.step_voted = True
             obj.save(update_fields=['step_voted'])
@@ -45,6 +43,7 @@ def onboarding_step_voted(sender, instance, created, **kwargs):
 _FEED_SIGNAL_SENDERS = (Post, Task, Book, Event, Decyzja, CitizenActivity, Message)
 
 for _sender in _FEED_SIGNAL_SENDERS:
+
     @receiver(post_save, sender=_sender, weak=False)
     @receiver(post_delete, sender=_sender, weak=False)
     def _invalidate_feed_cache(sender, **kwargs):

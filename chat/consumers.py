@@ -1,11 +1,9 @@
-# Standard library imports
 import json
 import logging
 import os
 import re
 from datetime import datetime
 
-# Third party imports
 import bleach
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
@@ -15,10 +13,8 @@ from django.db.models import Count, Prefetch, Q
 from firebase_admin import messaging
 from push_notifications.models import GCMDevice, WebPushDevice
 
-# First party imports
 from zzz.utils import get_site_domain
 
-# Local folder imports
 from .exceptions import ClientError
 from .group_messages import format_chat_message
 from .models import Message, MessageAttachment, MessageHistory, MessageHistoryEntry, MessageReaction, MessageReadBy, MessageVote, Room
@@ -293,8 +289,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         popular_only = bool(popular_only)
 
         batch_data = await self.get_recent_messages_batch(
-            room_id, self.scope['user'].id, limit=100,
-            sort_by=sort_by, order=order, popular_only=popular_only,
+            room_id,
+            self.scope['user'].id,
+            limit=100,
+            sort_by=sort_by,
+            order=order,
+            popular_only=popular_only,
         )
         messages_list = batch_data['messages']
         users_dict = batch_data['users']
@@ -375,13 +375,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         msg.id = message_id
 
         # Auto-track room for sender if they have participated-only mode enabled
-        participated_only = await database_sync_to_async(
-            lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False)
-        )()
+        participated_only = await database_sync_to_async(lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False))()
         if participated_only:
-            already_tracked = await database_sync_to_async(
-                lambda: room.tracked_by.filter(id=user.id).exists()
-            )()
+            already_tracked = await database_sync_to_async(lambda: room.tracked_by.filter(id=user.id).exists())()
             if not already_tracked:
                 await database_sync_to_async(room.tracked_by.add)(user)
                 await self.send(text_data=json.dumps({
@@ -752,13 +748,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 return
 
             # Check if user has "participated only" mode enabled
-            participated_only = await database_sync_to_async(
-                lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False)
-            )()
+            participated_only = await database_sync_to_async(lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False))()
             if participated_only:
-                has_participated = await database_sync_to_async(
-                    lambda: Message.objects.filter(room_id=room_id, sender=user).exists()
-                )()
+                has_participated = await database_sync_to_async(lambda: Message.objects.filter(room_id=room_id, sender=user).exists())()
                 if not has_participated:
                     return
 
@@ -1059,7 +1051,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         }
 
         # Build message data
-        import re as _re
         result = []
         for msg in messages:
             edited = hasattr(msg, 'messagehistory')
@@ -1074,7 +1065,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             if msg.reply_to_id and msg.reply_to:
                 rm = msg.reply_to
                 ru = 'Anonymous User' if rm.anonymous else (rm.sender.username if rm.sender else 'Unknown')
-                plain = _re.sub(r'<[^>]+>', '', rm.text)
+                plain = re.sub(r'<[^>]+>', '', rm.text)
                 reply_to_data = {
                     'id': rm.id,
                     'username': ru,
@@ -1308,7 +1299,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             msg = Message.objects.select_related('sender').get(pk=message_id)
             username = 'Anonymous User' if msg.anonymous else (msg.sender.username if msg.sender else 'Unknown')
             # Snippet 120 znaków z treści (tekst widzialny, bez HTML)
-            import re
             plain = re.sub(r'<[^>]+>', '', msg.text)
             snippet = plain[:120]
             return {
@@ -1336,8 +1326,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def get_reaction_counts(self, message_id: int) -> dict:
         """Zwraca słownik {reaction: count} dla danej wiadomości."""
-        from django.db.models import Count as DjCount
-        rows = (MessageReaction.objects.filter(message_id=message_id).values('reaction').annotate(count=DjCount('id')))
+        rows = (MessageReaction.objects.filter(message_id=message_id).values('reaction').annotate(count=Count('id')))
         result = {
             'bulb': 0,
             'question': 0
@@ -1394,4 +1383,4 @@ def _get_avatar_url(user) -> str:
             return profile.avatar.url
     except Exception:
         pass
-    return f"/static/home/images/favicon.ico"
+    return "/static/home/images/favicon.ico"

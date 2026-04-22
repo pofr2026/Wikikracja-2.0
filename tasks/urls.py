@@ -1,7 +1,5 @@
-# Third party imports
 from django.urls import path
 
-# Local folder imports
 from . import views
 
 app_name = "tasks"

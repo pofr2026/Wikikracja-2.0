@@ -1,8 +1,6 @@
-# Third party imports
 from django import template
 from django.db.models import Count
 
-# First party imports
 from chat.models import Room
 
 register = template.Library()

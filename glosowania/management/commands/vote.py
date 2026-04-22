@@ -1,11 +1,9 @@
-# Standard library imports
 import logging
 import os
 import re
 import time
 from datetime import datetime, timedelta
 
-# Third party imports
 import django
 from django.conf import settings as s
 from django.contrib.auth.models import User
@@ -14,7 +12,6 @@ from django.core.management.base import BaseCommand
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
-# First party imports
 from chat.models import Room
 from glosowania.models import Decyzja
 from zzz.utils import get_site_domain

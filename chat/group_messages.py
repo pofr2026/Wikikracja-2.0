@@ -1,4 +1,3 @@
-# Standard library imports
 from datetime import datetime
 
 
@@ -39,12 +38,15 @@ def format_chat_message(
         "downvotes": downvotes,
         "new": new,
         "edited": edited,
-        "timestamp": int(date.timestamp()) * 1000,       # unix to ms
+        "timestamp": int(date.timestamp()) * 1000,  # unix to ms
         "latest_timestamp": int(latest_date.timestamp()) * 1000,
         "attachments": attachments,
         # ZMIANA 2 — cytowanie
         "reply_to": reply_to,
         # ZMIANA 4 — reakcje + przeczytane
-        "reactions": reactions or {"bulb": 0, "question": 0},
+        "reactions": reactions or {
+            "bulb": 0,
+            "question": 0
+        },
         "read_by": read_by or [],
     }

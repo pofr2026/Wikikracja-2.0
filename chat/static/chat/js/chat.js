@@ -4,10 +4,10 @@
  * Coordinates between WebSocket API (WsApi) and DOM API (DomApi) to provide chat functionality.
  */
 
-import WsApi from './wsapi.js';
 import DomApi from './domapi.js';
-import { makeNotification, formatDate, formatDateTime, Lock, parseParms, _, $, $$ } from './utility.js';
 import { MessageHistory } from './templates.js';
+import { $, $$, _, formatDate, formatDateTime, Lock, makeNotification, parseParms } from './utility.js';
+import WsApi from './wsapi.js';
 
 /**
  * Global WebSocket API instance
@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     unreadFilterBtn?.addEventListener('click', () => {
         isUnreadFilterActive = !isUnreadFilterActive;
-        
+
         if (isUnreadFilterActive) {
             unreadFilterBtn.classList.add('active');
             localStorage.setItem('chat-unread-filter', 'active');
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-// Function to reapply unread filter when room seen status changes
+    // Function to reapply unread filter when room seen status changes
     function updateUnreadFilter() {
         if (isUnreadFilterActive) {
             applyUnreadFilter();
@@ -228,11 +228,11 @@ export async function onSocketMessage(data) {
     else if (data.unsee_room) onRoomUnsee(data.unsee_room);
     else if (data.room_seen) onRoomSeen(data.room_seen);
     else if (data.notification) onReceiveNotification(data.notification);
-    else if (data.update_votes)    onReceiveVotes(data.update_votes);
-    else if (data.edit_message)   onReceiveEdit(data.edit_message);
-    else if (data.online_data)    onReceiveOnlineUpdates(data.online_data);
+    else if (data.update_votes) onReceiveVotes(data.update_votes);
+    else if (data.edit_message) onReceiveEdit(data.edit_message);
+    else if (data.online_data) onReceiveOnlineUpdates(data.online_data);
     else if (data.update_reactions) onReceiveReactions(data.update_reactions);
-    else if (data.messages_read)    onReceiveReadBy(data.messages_read);
+    else if (data.messages_read) onReceiveReadBy(data.messages_read);
     else if (data.type === 'room-tracked') onRoomTracked(data.room_id, data.tracked);
     else console.log("Cannot handle message!");
 }
@@ -357,13 +357,13 @@ export async function onRoomTryJoin(room_id) {
     DOM_API.updateBreadcrumb(deriveBreadcrumb(room_id));
     DOM_API.setFoldedRoomTitle(response.title);
     DOM_API.showFoldedRoomHeader();
-    
+
     // Auto-expand category and archive section if needed
     const roomLink = DOM_API.getRoomLinkDiv(room_id);
     if (roomLink) {
         expandCategoryForRoom(roomLink);
     }
-    
+
     // Focus the message input field after joining a room
     const messageInput = DOM_API.getMessageInput();
     if (messageInput) {
@@ -563,14 +563,14 @@ export async function onReceiveEdit(edit_info) {
         DOM_API.updateMessageAttachments(edit_info.message_id, edit_info.attachments);
     }
     DOM_API.showHistoryButton(edit_info.message_id);
-    
+
     // Stop editing mode if this was the message being edited
     const editedId = DOM_API.getEditedMessageId();
-    
+
     // Convert both to strings for comparison since message_id can be string or number
     const editedIdStr = editedId ? String(editedId) : null;
     const messageIdStr = String(edit_info.message_id);
-    
+
     if (DOM_API.isEditing() && editedIdStr && editedIdStr === messageIdStr) {
         DOM_API.stopEditing();
     }

@@ -36,7 +36,7 @@ export function makeNotification(notif) {
     changeIcon('/static/chat/images/notification-on.ico');
     try {
         new Audio('/static/chat/sounds/notification.mp3').play();
-    } catch (e) {}
+    } catch (e) { }
 
     if (Notification?.permission === 'granted') {
         let notification = new Notification(notif.title, {

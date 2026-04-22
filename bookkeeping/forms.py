@@ -1,13 +1,10 @@
-# Standard library imports
 from datetime import datetime
 
-# Third party imports
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Submit
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-# Local folder imports
 from .models import Category, Partner, Transaction
 
 

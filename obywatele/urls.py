@@ -1,8 +1,6 @@
-# Third party imports
 from django.contrib.auth.decorators import login_required
 from django.urls import path
 
-# First party imports
 from obywatele import views as v
 
 app_name = 'obywatele'

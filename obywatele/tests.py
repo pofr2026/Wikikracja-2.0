@@ -7,19 +7,16 @@ Settings are loaded from .env (via zzz/settings.py as usual).
 EMAIL_SEND_DELAY_SECONDS is overridden to 0 so threads finish quickly.
 EMAIL_BACKEND is overridden to locmem so no real SMTP is used.
 """
-# Standard library imports
-import threading
 import secrets
+import threading
 from datetime import datetime
 
-# Third party imports
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils.timezone import make_aware, now
 
-# First party imports
 from chat.models import Message, Room
 from obywatele.forms import SendEmailToAll
 from obywatele.models import Uzytkownik

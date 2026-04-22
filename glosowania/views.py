@@ -1,26 +1,21 @@
-# Standard library imports
 import logging
 import random
 import threading
 import time
 from datetime import datetime, timedelta
 
-# Third party imports (additional)
-from django.db import IntegrityError, transaction
-from django.db.models import Count, F
-
-# Third party imports
 from django.conf import settings as s
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
+from django.db import transaction
+from django.db.models import Count, F
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
-# First party imports
 from glosowania.forms import ArgumentForm, DecyzjaForm
 from glosowania.models import Argument, Decyzja, KtoJuzGlosowal, VoteCode, ZebranePodpisy
 from zzz.utils import build_site_url, get_site_domain
@@ -266,7 +261,6 @@ def details(request: HttpRequest, pk: int):
     all_arguments = list(arguments)
 
     # Count arguments per author for this decision
-    # Standard library imports
     from collections import Counter
     author_counts = Counter(arg.author_id for arg in all_arguments if arg.author_id)
 
@@ -403,10 +397,7 @@ def SendEmail(subject: str, message: str):
     email_footer = _("Why you received this email? Here is explanation: {url}").format(url=info_url)
 
     # Filter users based on voting notification preferences
-    recipients = list(User.objects.filter(
-        is_active=True,
-        uzytkownik__email_notifications_glosowania=True
-    ).values_list('email', flat=True))
+    recipients = list(User.objects.filter(is_active=True, uzytkownik__email_notifications_glosowania=True).values_list('email', flat=True))
     email_message = EmailMessage(
         from_email=str(s.DEFAULT_FROM_EMAIL),
         bcc=recipients,
@@ -451,9 +442,7 @@ def _apply_sort(queryset, sort, order='desc'):
     if sort == 'podpisy':
         return queryset.order_by(f'{p}ile_osob_podpisalo', '-data_powstania')
     elif sort == 'buzz':
-        return queryset.annotate(
-            chat_msg_count=Count('chat_room__messages', distinct=True)
-        ).order_by(f'{p}chat_msg_count', '-data_powstania')
+        return queryset.annotate(chat_msg_count=Count('chat_room__messages', distinct=True)).order_by(f'{p}chat_msg_count', '-data_powstania')
     else:  # 'date' — domyślne
         return queryset.order_by(f'{p}data_powstania')
 

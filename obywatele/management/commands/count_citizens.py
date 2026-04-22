@@ -1,4 +1,3 @@
-# Standard library imports
 import logging
 import time
 from collections import defaultdict
@@ -6,7 +5,6 @@ from datetime import timedelta as td
 from random import choice
 from string import ascii_letters, digits
 
-# Third party imports
 from django.conf import settings as s
 from django.contrib.auth.hashers import make_password
 from django.contrib.auth.models import User
@@ -17,7 +15,6 @@ from django.db.models import Sum
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 
-# First party imports
 from chat import signals
 from chat.models import Room
 from obywatele.models import CitizenActivity, Rate, Uzytkownik
@@ -152,11 +149,7 @@ class Command(BaseCommand):
                 i.data_przyjecia = now()
                 i.save()
 
-                CitizenActivity.objects.create(
-                    uzytkownik=i,
-                    activity_type=CitizenActivity.ActivityType.USER_ACTIVATED,
-                    description=_('Candidate has been accepted as a citizen')
-                )
+                CitizenActivity.objects.create(uzytkownik=i, activity_type=CitizenActivity.ActivityType.USER_ACTIVATED, description=_('Candidate has been accepted as a citizen'))
 
                 # Log the generated password for debugging
                 log.info(f'Generated password for {i.uid.email}: {password}')
@@ -207,7 +200,7 @@ class Command(BaseCommand):
                 i.uid.save()
                 i.save()
                 log.info(f'Blocking user {i.uid}')
-                
+
                 # Track the blocking activity only if user was previously active
                 track_user_blocked(i, was_previously_active=True)
 

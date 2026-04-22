@@ -4,16 +4,16 @@
  * Handles all UI updates, element queries, and DOM-related functionality for the chat application.
  */
 
+import { Message, Room } from './templates.js';
 import {
-    removeNotification,
-    formatTime,
-    escapeHtml,
-    _,
-    setCaretPosition,
     $,
-    $$
+    $$,
+    _,
+    escapeHtml,
+    formatTime,
+    removeNotification,
+    setCaretPosition
 } from './utility.js';
-import { Room, Message } from './templates.js';
 
 /**
  * DOM API class for managing chat interface DOM operations

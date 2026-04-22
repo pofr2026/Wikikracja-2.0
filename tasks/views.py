@@ -1,7 +1,5 @@
-# Standard library imports
 import math
 
-# Third party imports
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
@@ -13,9 +11,10 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
-from django.views.generic import CreateView, DetailView, ListView, TemplateView, UpdateView
+from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
-# Local folder imports
+from chat.models import Room
+
 from .forms import TaskForm, TaskStatusForm
 from .models import Task, TaskEvaluation, TaskVote
 
@@ -41,15 +40,12 @@ def invalidate_task_list_cache(user_id=None):
 
 def _get_pulse_room_ids(user):
     """Return set of chat room IDs that have unseen messages for user — single batch query."""
-    from chat.models import Room
+
     # Rooms with at least one message, minus rooms the user has already seen
-    rooms_with_msgs = Room.objects.filter(
-        messages__isnull=False
-    ).values_list("id", flat=True).distinct()
-    seen_room_ids = set(
-        user.seen_rooms.filter(id__in=rooms_with_msgs).values_list("id", flat=True)
-    )
+    rooms_with_msgs = Room.objects.filter(messages__isnull=False).values_list("id", flat=True).distinct()
+    seen_room_ids = set(user.seen_rooms.filter(id__in=rooms_with_msgs).values_list("id", flat=True))
     return set(rooms_with_msgs) - seen_room_ids
+
 
 def _task_sort_context(request):
     sort = request.GET.get('sort', 'date')
@@ -127,20 +123,13 @@ def _load_task_lists(user):
     if cached is not None:
         return cached
 
-    queryset = (
-        Task.objects.with_metrics()
-        .annotate(chat_msg_count=Count('chat_room__messages', distinct=True))
-        .order_by("-votes_score", "-updated_at")
-    )
+    queryset = (Task.objects.with_metrics().annotate(chat_msg_count=Count('chat_room__messages', distinct=True)).order_by("-votes_score", "-updated_at"))
 
     active_tasks = list(queryset.filter(status=Task.Status.ACTIVE))
     _assign_priorities(active_tasks)
     rejected_active = [t for t in active_tasks if t.priority_category == "rejected"]
     active_non_rejected = [t for t in active_tasks if t.priority_category != "rejected"]
-    active_with_owner = [
-        t for t in active_non_rejected
-        if t.assigned_to and ((t.votes_up or 0) - (t.votes_down or 0) >= 2)
-    ]
+    active_with_owner = [t for t in active_non_rejected if t.assigned_to and ((t.votes_up or 0) - (t.votes_down or 0) >= 2)]
     awaiting_tasks = [t for t in active_non_rejected if t not in active_with_owner]
 
     finished_tasks = list(queryset.exclude(status=Task.Status.ACTIVE))
@@ -152,12 +141,10 @@ def _load_task_lists(user):
     all_tasks = active_tasks + finished_tasks
 
     # Batch: user votes (1 query)
-    vote_by_task_id = dict(
-        TaskVote.objects.filter(
-            user=user,
-            task_id__in=[t.id for t in all_tasks],
-        ).values_list("task_id", "value")
-    )
+    vote_by_task_id = dict(TaskVote.objects.filter(
+        user=user,
+        task_id__in=[t.id for t in all_tasks],
+    ).values_list("task_id", "value"))
     for t in all_tasks:
         t.user_vote_value = vote_by_task_id.get(t.id)
 
@@ -167,20 +154,11 @@ def _load_task_lists(user):
         t.chat_room_pulse_class = "chat-room-pulse" if t.chat_room_id in pulse_room_ids else ""
 
     # My tasks (separate queryset — user-specific, also annotated)
-    my_tasks_qs = list(
-        Task.objects.filter(
-            Q(assigned_to=user) | Q(votes__user=user, votes__value=1)
-        ).filter(status=Task.Status.ACTIVE).distinct()
-        .with_metrics()
-        .annotate(chat_msg_count=Count('chat_room__messages', distinct=True))
-        .order_by("-votes_score", "-updated_at")
-    )
-    my_vote_map = dict(
-        TaskVote.objects.filter(
-            user=user,
-            task_id__in=[t.id for t in my_tasks_qs],
-        ).values_list("task_id", "value")
-    )
+    my_tasks_qs = list(Task.objects.filter(Q(assigned_to=user) | Q(votes__user=user, votes__value=1)).filter(status=Task.Status.ACTIVE).distinct().with_metrics().annotate(chat_msg_count=Count('chat_room__messages', distinct=True)).order_by("-votes_score", "-updated_at"))
+    my_vote_map = dict(TaskVote.objects.filter(
+        user=user,
+        task_id__in=[t.id for t in my_tasks_qs],
+    ).values_list("task_id", "value"))
     for t in my_tasks_qs:
         t.user_vote_value = my_vote_map.get(t.id)
         t.chat_room_pulse_class = "chat-room-pulse" if t.chat_room_id in pulse_room_ids else ""
@@ -240,7 +218,9 @@ class TaskCreateView(LoginRequiredMixin, CreateView):
         TaskVote.objects.get_or_create(
             task=self.object,
             user=self.request.user,
-            defaults={"value": TaskVote.Value.UP},
+            defaults={
+                "value": TaskVote.Value.UP
+            },
         )
         return response
 

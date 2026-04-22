@@ -11,7 +11,6 @@ def get_site_domain():
         str: The domain of the current site (e.g., 'test.wikikracja.pl')
     """
     try:
-        # Third party imports
         from django.contrib.sites.models import Site
         return Site.objects.get_current().domain
     except Exception:
@@ -26,7 +25,6 @@ def build_site_url(path: str) -> str:
     Returns:
         str: Absolute URL including scheme and host.
     """
-    # Third party imports
     from django.conf import settings
     scheme = getattr(settings, "SITE_PROTOCOL", "http")
     host = get_site_domain()

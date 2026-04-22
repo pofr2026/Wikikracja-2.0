@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
-    
+
     /**
      * Copy email buttons functionality
      * Copies email to clipboard and shows visual feedback
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     this.innerHTML = '<i class="fas fa-check"></i>';
                     this.classList.remove('btn-light');
                     this.classList.add('btn-success');
-                    
+
                     // Restore original state after 1.5 seconds
                     setTimeout(() => {
                         this.innerHTML = originalHTML;

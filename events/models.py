@@ -1,10 +1,8 @@
-# Standard library imports
 import calendar
 from datetime import timedelta
 from datetime import timezone as dt_timezone
 from urllib.parse import urlencode
 
-# Third party imports
 from django.db import models
 from django.urls import reverse
 from django.utils import timezone

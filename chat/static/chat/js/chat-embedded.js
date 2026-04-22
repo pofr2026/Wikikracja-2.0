@@ -7,9 +7,9 @@
  *   <script type="module" src="{% static 'chat/js/chat-embedded.js' %}"></script>
  */
 
+import { Message } from './templates.js';
+import { _, formatDate, formatTime } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
-import { Message, MessageHistory } from './templates.js';
-import { formatDate, formatTime, _ } from './utility.js';
 
 
 /**
@@ -68,13 +68,13 @@ async function initEmbeddedChat(container) {
     `;
 
     const messagesEl = container.querySelector(`#ec-messages-${roomId}`);
-    const inputEl    = container.querySelector(`#ec-input-${roomId}`);
-    const sendBtn    = container.querySelector(`#ec-send-${roomId}`);
-    const counterEl  = container.querySelector(`#ec-counter-${roomId}`);
+    const inputEl = container.querySelector(`#ec-input-${roomId}`);
+    const sendBtn = container.querySelector(`#ec-send-${roomId}`);
+    const counterEl = container.querySelector(`#ec-counter-${roomId}`);
     const counterVal = container.querySelector(`#ec-counter-val-${roomId}`);
-    const replyPreview     = container.querySelector(`#ec-reply-preview-${roomId}`);
+    const replyPreview = container.querySelector(`#ec-reply-preview-${roomId}`);
     const replyPreviewText = container.querySelector(`#ec-reply-preview-text-${roomId}`);
-    const fileInput  = container.querySelector(`#ec-file-input-${roomId}`);
+    const fileInput = container.querySelector(`#ec-file-input-${roomId}`);
     const previewContainer = container.querySelector(`#ec-image-preview-${roomId}`);
     const previewImagesDiv = container.querySelector(`#ec-preview-images-${roomId}`);
     const deleteImagesBtn = container.querySelector(`#ec-delete-images-${roomId}`);
@@ -126,7 +126,7 @@ async function initEmbeddedChat(container) {
         if (!counterEl) return;
         counterEl.classList.remove('counter--warn', 'counter--error');
         if (rem <= 0 || rem <= 10) counterEl.classList.add('counter--error');
-        else if (rem <= 50)        counterEl.classList.add('counter--warn');
+        else if (rem <= 50) counterEl.classList.add('counter--warn');
         if (sendBtn) sendBtn.disabled = rem <= 0;
     }
 
@@ -145,23 +145,23 @@ async function initEmbeddedChat(container) {
         }
 
         const html = Message({
-            room_id:          roomId,
-            message_id:       msg.message_id,
-            username:         msg.username,
-            message:          formatMessage(msg.message),
-            upvotes:          msg.upvotes   ?? 0,
-            downvotes:        msg.downvotes ?? 0,
-            vote:             msg.your_vote ?? null,
-            own:              msg.own       ?? false,
-            edited:           msg.edited    ?? false,
-            attachments:      msg.attachments ?? {},
-            original_ts:      msg.timestamp,
-            latest_ts:        formatTime(msg.latest_timestamp ?? msg.timestamp),
-            type:             "public",
-            reply_to:         msg.reply_to  ?? null,
-            reactions:        msg.reactions  ?? { bulb: 0, question: 0 },
-            your_reactions:   msg.your_reactions ?? [],
-            read_by:          msg.read_by   ?? [],
+            room_id: roomId,
+            message_id: msg.message_id,
+            username: msg.username,
+            message: formatMessage(msg.message),
+            upvotes: msg.upvotes ?? 0,
+            downvotes: msg.downvotes ?? 0,
+            vote: msg.your_vote ?? null,
+            own: msg.own ?? false,
+            edited: msg.edited ?? false,
+            attachments: msg.attachments ?? {},
+            original_ts: msg.timestamp,
+            latest_ts: formatTime(msg.latest_timestamp ?? msg.timestamp),
+            type: "public",
+            reply_to: msg.reply_to ?? null,
+            reactions: msg.reactions ?? { bulb: 0, question: 0 },
+            your_reactions: msg.your_reactions ?? [],
+            read_by: msg.read_by ?? [],
         });
         messagesEl.insertAdjacentHTML('beforeend', html);
         if (msg.your_vote) {
@@ -439,8 +439,8 @@ async function initEmbeddedChat(container) {
 
     inputEl.addEventListener('keydown', (e) => {
         const mod = e.ctrlKey || e.metaKey;
-        if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold');      updateToolbarState(); return; }
-        if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic');    updateToolbarState(); return; }
+        if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); updateToolbarState(); return; }
+        if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
         if (mod && e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateToolbarState(); return; }
         if (e.key === 'Enter' && mod) { e.preventDefault(); submitInput(); return; }
         // zwykły Enter = nowa linia (domyślne zachowanie contenteditable)

@@ -1,4 +1,3 @@
-# Third party imports
 from django import template
 
 register = template.Library()

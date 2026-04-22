@@ -182,5 +182,5 @@ self.addEventListener('pushsubscriptionchange', (event) => {
                 .catch((error) => {
                     console.error('Failed to resubscribe after subscription change:', error);
                 })
-    );
+        );
 });

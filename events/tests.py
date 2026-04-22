@@ -1,14 +1,11 @@
-# Standard library imports
-from datetime import timedelta
 import secrets
+from datetime import timedelta
 
-# Third party imports
 from django.contrib.auth.models import User
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-# Local folder imports
 from .models import Event
 
 

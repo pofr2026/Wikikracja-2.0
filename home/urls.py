@@ -1,9 +1,6 @@
-# Third party imports
 from django.contrib.auth import views as auth_views
 from django.urls import path
-from django.views.generic import TemplateView
 
-# Local folder imports
 from . import views
 
 urlpatterns = [

@@ -1,7 +1,5 @@
-# Standard library imports
 from typing import List
 
-# Third party imports
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -11,7 +9,6 @@ from django.views.generic import RedirectView
 from django.views.static import serve
 from filebrowser.sites import site
 
-# First party imports
 from home import views as hv
 from obywatele import views as ov
 
@@ -47,7 +44,6 @@ urlpatterns: List[URLPattern | URLResolver] = [
 if settings.DEBUG:
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     if settings.DEBUG_TOOLBAR:
-        # Third party imports
         from debug_toolbar.toolbar import debug_toolbar_urls
         urlpatterns += debug_toolbar_urls()
 

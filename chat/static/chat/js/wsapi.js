@@ -26,7 +26,7 @@ export default class WsApi {
         let ws = getSharedWebSocket();
 
         // Set up this instance's message handler for non-TRACE messages
-        ws.setSocketMessageHandler(function (data) {
+        ws.setSocketMessageHandler(function(data) {
             if (data.error) {
                 alert(data.error);
                 return;

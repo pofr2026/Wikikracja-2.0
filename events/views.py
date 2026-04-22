@@ -1,10 +1,8 @@
-# Third party imports
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-# Local folder imports
 from .forms import EventForm
 from .models import Event
 
@@ -25,7 +23,7 @@ class EventListView(ListView):
         # Get all events and sort by next occurrence date
         events = []
         now = timezone.now()
-        
+
         for event in queryset:
             if event.frequency != 'once':
                 next_occurrence = event.get_next_occurrence()
@@ -38,12 +36,12 @@ class EventListView(ListView):
             else:
                 # For one-time events, use start date
                 event.sort_date = event.start_date
-            
+
             events.append(event)
-        
+
         # Sort by sort_date (upcoming first, then past)
         events.sort(key=lambda x: (x.sort_date < now, x.sort_date))
-        
+
         return events
 
     def get_context_data(self, **kwargs):

@@ -5,7 +5,8 @@ from django.utils.translation import gettext_lazy as _
 class SiteSettings(models.Model):
     onboarding_category = models.ForeignKey(
         'board.PostCategory',
-        null=True, blank=True,
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         verbose_name=_('Onboarding category'),
         help_text=_('Posts from this category can be marked as required reading'),

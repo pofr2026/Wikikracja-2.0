@@ -2,25 +2,25 @@
 
 document.addEventListener('DOMContentLoaded', function() {
 	const toggles = document.querySelectorAll('[id^="toggle-"]');
-	
+
 	function updateBadge(badge, isEnabled) {
 		badge.className = isEnabled ? 'badge bg-success' : 'badge bg-secondary';
 		badge.textContent = isEnabled ? badge.dataset.enabledText : badge.dataset.disabledText;
 	}
-	
+
 	function handleError(toggle, badge, wasChecked) {
 		toggle.checked = !wasChecked;
 		badge.className = 'badge bg-danger';
 		badge.textContent = badge.dataset.errorText;
 		setTimeout(() => updateBadge(badge, !wasChecked), 2000);
 	}
-	
+
 	function getCookie(name) {
 		const value = `; ${document.cookie}`;
 		const parts = value.split(`; ${name}=`);
 		if (parts.length === 2) return parts.pop().split(';').shift();
 	}
-	
+
 	const MUTUALLY_EXCLUSIVE = [['toggle-chat', 'toggle-chat_participated']];
 
 	function disableToggle(toggleId) {
@@ -50,10 +50,10 @@ document.addEventListener('DOMContentLoaded', function() {
 					}
 				});
 			}
-			
+
 			statusBadge.className = 'badge bg-warning';
 			statusBadge.textContent = statusBadge.dataset.savingText;
-			
+
 			fetch(this.dataset.url, {
 				method: 'POST',
 				headers: {
@@ -62,15 +62,15 @@ document.addEventListener('DOMContentLoaded', function() {
 				},
 				body: JSON.stringify({ enabled: isChecked })
 			})
-			.then(response => response.json())
-			.then(data => {
-				if (data.success) {
-					updateBadge(statusBadge, isChecked);
-				} else {
-					handleError(this, statusBadge, isChecked);
-				}
-			})
-			.catch(() => handleError(this, statusBadge, isChecked));
+				.then(response => response.json())
+				.then(data => {
+					if (data.success) {
+						updateBadge(statusBadge, isChecked);
+					} else {
+						handleError(this, statusBadge, isChecked);
+					}
+				})
+				.catch(() => handleError(this, statusBadge, isChecked));
 		});
 	});
 });

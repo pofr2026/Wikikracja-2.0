@@ -1,7 +1,5 @@
-# Third party imports
 import django_filters
 
-# First party imports
 from obywatele.models import Uzytkownik
 
 # https://django-filter.readthedocs.io/en/main/guide/usage.html

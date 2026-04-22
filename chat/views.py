@@ -1,29 +1,28 @@
-# Standard library imports
 import json
 import logging
 import uuid
 from datetime import timedelta as td
 
-# Third party imports
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.db import IntegrityError
-from django.db.models import Count, Exists, OuterRef, Prefetch, Q
+from django.db.models import Count, Exists, OuterRef, Prefetch
 from django.dispatch import receiver
 from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from PIL import Image
 
-# First party imports
 from chat.forms import RoomForm
 from chat.models import Message, Room
 from chat.signals import user_accepted, user_deleted
+from glosowania.models import Decyzja
+from tasks.models import Task
 
 log = logging.getLogger(__name__)
 
@@ -86,10 +85,6 @@ def chat(request: HttpRequest):
     private_active = allowed_rooms.filter(public=False, archived=False)
     private_archived = allowed_rooms.filter(public=False, archived=True)
 
-    # Split public rooms into categories based on database relations
-    from tasks.models import Task
-    from glosowania.models import Decyzja
-
     task_room_ids = Task.objects.filter(chat_room__isnull=False).values_list('chat_room_id', flat=True)
     vote_room_ids = Decyzja.objects.filter(chat_room__isnull=False).values_list('chat_room_id', flat=True)
 
@@ -141,9 +136,7 @@ def chat(request: HttpRequest):
     participated_only = getattr(request.user.uzytkownik, 'email_notifications_chat_participated', False)
     participated_room_ids = set()
     if participated_only:
-        participated_room_ids = set(
-            Message.objects.filter(sender=request.user).values_list('room_id', flat=True).distinct()
-        )
+        participated_room_ids = set(Message.objects.filter(sender=request.user).values_list('room_id', flat=True).distinct())
 
     # Render that in the chat template
     return render(request, "chat/chat.html", {
@@ -311,7 +304,9 @@ def room_data(request: HttpRequest, room_id: int):
     try:
         room = Room.objects.get(id=room_id, allowed=request.user)
     except Room.DoesNotExist:
-        return JsonResponse({'error': 'Not found'}, status=404)
+        return JsonResponse({
+            'error': 'Not found'
+        }, status=404)
 
     return JsonResponse({
         'room_id': room.id,
@@ -370,12 +365,18 @@ def toggle_notifications(request: HttpRequest):
         })
 
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return JsonResponse({
+            'error': 'Invalid JSON'
+        }, status=400)
     except Room.DoesNotExist:
-        return JsonResponse({'error': 'Room not found'}, status=404)
+        return JsonResponse({
+            'error': 'Room not found'
+        }, status=404)
     except Exception as e:
         log.error(f"Error toggling notifications: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({
+            'error': str(e)
+        }, status=500)
 
 
 @login_required
@@ -387,12 +388,19 @@ def toggle_track(request: HttpRequest):
         room_id = data.get('room_id')
         tracked = data.get('tracked')
         if room_id is None or tracked is None:
-            return JsonResponse({'error': 'Missing room_id or tracked'}, status=400)
+            return JsonResponse({
+                'error': 'Missing room_id or tracked'
+            }, status=400)
         room = get_object_or_404(Room, id=room_id, allowed=request.user)
         if tracked:
             room.tracked_by.add(request.user)
         else:
             room.tracked_by.remove(request.user)
-        return JsonResponse({'success': True, 'tracked': tracked})
+        return JsonResponse({
+            'success': True,
+            'tracked': tracked
+        })
     except json.JSONDecodeError:
-        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+        return JsonResponse({
+            'error': 'Invalid JSON'
+        }, status=400)

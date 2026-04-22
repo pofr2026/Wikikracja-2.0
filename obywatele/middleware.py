@@ -7,7 +7,6 @@ class UserLanguageMiddleware:
     Runs after LocaleMiddleware so it can override the auto-detected language
     for authenticated users who have set an explicit preference.
     """
-
     def __init__(self, get_response):
         self.get_response = get_response
 

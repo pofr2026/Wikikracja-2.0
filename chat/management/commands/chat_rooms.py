@@ -1,14 +1,11 @@
-# Standard library imports
 import logging
 from datetime import timedelta as td
 
-# Third party imports
 from django.conf import settings as s
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-# First party imports
 from chat.models import Message, Room
 
 log = logging.getLogger(__name__)

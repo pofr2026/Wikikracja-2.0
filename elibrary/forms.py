@@ -1,9 +1,7 @@
-# Third party imports
 from django import forms
 from django.core.validators import FileExtensionValidator
 from django.utils.translation import gettext_lazy as _
 
-# First party imports
 from elibrary.models import Book
 
 

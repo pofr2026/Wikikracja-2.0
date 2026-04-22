@@ -60,14 +60,14 @@ const room_template = `
       <label class='btn btn-primary chat-control' for='file-input'>
         <i class='fas fa-image'></i>
       </label>
-      
+
       <!-- Anonymous toggle button (icon only) -->
       <% if (is_public) { %>
         <button class='btn chat-control anonymous-toggle' id='anonymous-toggle' type='button' title='${_("Anonymous")}'>
           <i class='fas fa-user-secret'></i>
         </button>
       <% } %>
-      
+
       <!-- Rich text input -->
       <div id="message-input" class="message-input-rich" contenteditable="true"
            role="textbox" aria-multiline="true" aria-label="${_("Divide the message into several parts...")}"

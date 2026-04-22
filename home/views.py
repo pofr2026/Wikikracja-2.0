@@ -1,11 +1,7 @@
-# Standard library imports
-import json
 import logging
 import os
-from datetime import datetime as dt
 from datetime import timedelta as td
 
-# Third party imports
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import update_session_auth_hash
@@ -15,7 +11,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.contrib.staticfiles import finders
 from django.core.cache import cache
-from django.db.models import Count, Q, Sum
+from django.db.models import Q, Sum
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -23,29 +19,28 @@ from django.utils.html import strip_tags
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
+from board.models import Post, PostCategory
+from bookkeeping.models import Transaction
+from chat.models import Message, Room
+from elibrary.models import Book
+from events.models import Event
+from glosowania.models import Argument as DecyzjaArgument
+from glosowania.models import Decyzja, KtoJuzGlosowal
+from obywatele.models import CitizenActivity, Uzytkownik
+from site_settings.models import SiteSettings
+from tasks.models import Task
+
+from .forms import RememberLoginForm
+from .models import OnboardingProgress, ReadStatus
+
+log = logging.getLogger(__name__)
+
 FEED_CACHE_KEY = "feed_raw_v1"
 FEED_CACHE_TTL = 3600
 
 
 def invalidate_feed_cache():
     cache.delete(FEED_CACHE_KEY)
-
-
-# First party imports
-from board.models import Post
-from chat.models import Room, Message
-from elibrary.models import Book
-from glosowania.models import Decyzja, Argument as DecyzjaArgument, KtoJuzGlosowal
-from bookkeeping.models import Transaction
-from obywatele.models import Uzytkownik, CitizenActivity
-from tasks.models import Task
-from events.models import Event
-
-# Local folder imports
-from .forms import RememberLoginForm
-from .models import FeedItem, OnboardingProgress, ReadStatus
-
-log = logging.getLogger(__name__)
 
 
 def build_read_status_map(user):
@@ -167,8 +162,6 @@ def home(request: HttpRequest):
         status=Task.Status.ACTIVE,
     ).distinct().count()
 
-    # Onboarding widget
-    from site_settings.models import SiteSettings
     ss = SiteSettings.get()
     onboarding_docs = list(ss.onboarding_posts.order_by('title'))
     onboarding = None
@@ -282,8 +275,7 @@ def _generate_feed_raw():
 
     # Rooms: per-user (allowed=user) so we keep room items global but mark room_id;
     # is_read attached later per-request from ReadStatus
-    from chat.models import Room as ChatRoom
-    all_rooms = ChatRoom.objects.prefetch_related(
+    all_rooms = Room.objects.prefetch_related(
         'allowed',
         'messages',
         'messages__sender',
@@ -436,10 +428,9 @@ def activity_page(request):
 @login_required
 @require_POST
 def mark_doc_read(request, post_id):
-    from board.models import Post as BoardPost
     try:
-        post = BoardPost.objects.get(pk=post_id)
-    except BoardPost.DoesNotExist:
+        post = Post.objects.get(pk=post_id)
+    except Post.DoesNotExist:
         return JsonResponse({
             'ok': False
         }, status=404)
@@ -450,7 +441,6 @@ def mark_doc_read(request, post_id):
     else:
         obj.docs_read.add(post)
         is_read = True
-    from site_settings.models import SiteSettings
     required_docs = SiteSettings.get().onboarding_posts.count()
     done_docs = obj.docs_read.filter(pk__in=SiteSettings.get().onboarding_posts.values_list('pk', flat=True)).count()
     done = done_docs + (1 if obj.step_argued else 0) + (1 if obj.step_chatted else 0) + (1 if obj.step_voted else 0)
@@ -502,7 +492,6 @@ def mark_as_read(request):
         # For room messages, also update room.seen_by for chat consistency
         if content_type in ['message', 'room_messages'] and read_status_content_type == ReadStatus.ContentType.MESSAGE:
             try:
-                from chat.models import Room
                 room = Room.objects.get(id=object_id)
                 room.seen_by.add(request.user)
             except Room.DoesNotExist:
@@ -528,7 +517,7 @@ def mark_all_read(request):
 
         # Get all current feed items and mark them as read
         feed_items = generate_feed_items(user)
-        read_status_map = build_read_status_map(user)
+        # read_status_map = build_read_status_map(user)
 
         # Create read statuses for all unread items
         created_count = 0
@@ -560,7 +549,6 @@ def mark_all_read(request):
         # Batch update room.seen_by for all rooms
         if room_ids_to_mark:
             try:
-                from chat.models import Room
                 rooms = Room.objects.filter(id__in=room_ids_to_mark)
                 for room in rooms:
                     room.seen_by.add(user)
@@ -639,7 +627,6 @@ def mark_unread(request):
         # For room messages, also remove from room.seen_by for chat consistency
         if content_type in ['message', 'room_messages'] and read_status_content_type == ReadStatus.ContentType.MESSAGE:
             try:
-                from chat.models import Room
                 room = Room.objects.get(id=object_id)
                 room.seen_by.remove(request.user)
             except Room.DoesNotExist:
@@ -661,9 +648,6 @@ ALL_SEARCH_CATS = ['post', 'task', 'decision', 'event', 'book', 'citizen', 'chat
 
 @login_required
 def global_search(request: HttpRequest):
-    from django.contrib.auth.models import User as AuthUser
-    from chat.models import Room, Message
-
     query = request.GET.get('q', '').strip()
 
     # Determine active categories (empty = all)
@@ -675,7 +659,6 @@ def global_search(request: HttpRequest):
     if query:
         # ── Board posts ──────────────────────────────────────────────
         if 'post' in active_cats:
-            from django.db.models import Q
             posts = Post.objects.filter(Q(title__icontains=query) | Q(subtitle__icontains=query) | Q(text__icontains=query)).distinct()[:10]
             for obj in posts:
                 results.append({
@@ -689,7 +672,6 @@ def global_search(request: HttpRequest):
 
         # ── Tasks ────────────────────────────────────────────────────
         if 'task' in active_cats:
-            from django.db.models import Q
             tasks = Task.objects.filter(Q(title__icontains=query) | Q(description__icontains=query)).distinct()[:10]
             for obj in tasks:
                 results.append({
@@ -703,7 +685,6 @@ def global_search(request: HttpRequest):
 
         # ── Voting / decisions – all statuses (1=Propozycja … 5=Zatwierdzone) ──
         if 'decision' in active_cats:
-            from django.db.models import Q
 
             # 1. Search main decision fields
             decisions = Decyzja.objects.filter(Q(title__icontains=query) | Q(tresc__icontains=query) | Q(uzasadnienie__icontains=query) | Q(args_for__icontains=query) | Q(args_against__icontains=query)).distinct()[:10]
@@ -740,7 +721,7 @@ def global_search(request: HttpRequest):
             # 2. Search Argument model (user-added arguments across all statuses)
             arguments_qs = DecyzjaArgument.objects.filter(content__icontains=query).select_related('decyzja', 'author').distinct()[:15]
 
-            seen_decision_ids = {r['url'] for r in results if r['cat'] == 'decision'}
+            # seen_decision_ids = {r['url'] for r in results if r['cat'] == 'decision'}
             for arg in arguments_qs:
                 arg_type_label = (str(_('argument for')) if arg.argument_type == 'FOR' else str(_('argument against')))
                 status_label = STATUS_LABELS.get(arg.decyzja.status, '')
@@ -758,7 +739,6 @@ def global_search(request: HttpRequest):
 
         # ── Events ───────────────────────────────────────────────────
         if 'event' in active_cats:
-            from django.db.models import Q
             events = Event.objects.filter(Q(title__icontains=query) | Q(description__icontains=query) | Q(place__icontains=query)).distinct()[:10]
             for obj in events:
                 results.append({
@@ -772,7 +752,6 @@ def global_search(request: HttpRequest):
 
         # ── Library ──────────────────────────────────────────────────
         if 'book' in active_cats:
-            from django.db.models import Q
             books = Book.objects.filter(Q(title__icontains=query) | Q(author__icontains=query) | Q(abstract__icontains=query)).distinct()[:10]
             for obj in books:
                 results.append({
@@ -786,8 +765,7 @@ def global_search(request: HttpRequest):
 
         # ── Citizens ─────────────────────────────────────────────────
         if 'citizen' in active_cats:
-            from django.db.models import Q
-            users = AuthUser.objects.filter(Q(username__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query)).distinct()[:10]
+            users = User.objects.filter(Q(username__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query)).distinct()[:10]
             for obj in users:
                 results.append({
                     'cat': 'citizen',
@@ -800,193 +778,6 @@ def global_search(request: HttpRequest):
 
         # ── Chat (rooms + messages user has access to) ────────────────
         if 'chat' in active_cats:
-            from django.db.models import Q
-            accessible_rooms = Room.objects.filter(allowed=request.user)
-
-            # Rooms by title
-            rooms = accessible_rooms.filter(title__icontains=query).distinct()[:5]
-            for obj in rooms:
-                results.append({
-                    'cat': 'chat',
-                    'type': _('Chat room'),
-                    'type_color': 'primary',
-                    'title': obj.title,
-                    'description': '',
-                    'url': f'/chat/#room_id={obj.pk}',
-                })
-
-            # Messages in accessible rooms
-            messages_qs = Message.objects.filter(
-                Q(text__icontains=query),
-                room__in=accessible_rooms,
-            ).select_related('sender', 'room').order_by('-time').distinct()[:15]
-            for obj in messages_qs:
-                sender_name = obj.sender.username if obj.sender else str(_('Anonymous'))
-                results.append({
-                    'cat': 'chat',
-                    'type': _('Chat message'),
-                    'type_color': 'primary',
-                    'title': f'{obj.room.title}',
-                    'description': f'{sender_name}: {strip_tags(obj.text)[:100]}',
-                    'url': f'/chat/#room_id={obj.room.pk}',
-                })
-
-    unread_items = [i for i in generate_feed_items(request.user) if not i['is_read']]
-    return render(request, 'home/search.html', {
-        'query': query,
-        'results': results,
-        'active_cats': active_cats,
-        'all_cats': ALL_SEARCH_CATS,
-        'selected_cats': selected,
-        'unread_items': unread_items,
-    })
-
-
-ALL_SEARCH_CATS = ['post', 'task', 'decision', 'event', 'book', 'citizen', 'chat']
-
-
-@login_required
-def global_search(request: HttpRequest):
-    from django.contrib.auth.models import User as AuthUser
-    from chat.models import Room, Message
-
-    query = request.GET.get('q', '').strip()
-
-    # Determine active categories (empty = all)
-    selected = [c for c in request.GET.getlist('cat') if c in ALL_SEARCH_CATS]
-    active_cats = set(selected) if selected else set(ALL_SEARCH_CATS)
-
-    results = []
-
-    if query:
-        # ── Board posts ──────────────────────────────────────────────
-        if 'post' in active_cats:
-            from django.db.models import Q
-            posts = Post.objects.filter(Q(title__icontains=query) | Q(subtitle__icontains=query) | Q(text__icontains=query)).distinct()[:10]
-            for obj in posts:
-                results.append({
-                    'cat': 'post',
-                    'type': _('Post'),
-                    'type_color': 'primary',
-                    'title': obj.title,
-                    'description': (strip_tags(obj.text) or '')[:120],
-                    'url': f'/board/view/{obj.pk}/',
-                })
-
-        # ── Tasks ────────────────────────────────────────────────────
-        if 'task' in active_cats:
-            from django.db.models import Q
-            tasks = Task.objects.filter(Q(title__icontains=query) | Q(description__icontains=query)).distinct()[:10]
-            for obj in tasks:
-                results.append({
-                    'cat': 'task',
-                    'type': _('Task'),
-                    'type_color': 'warning',
-                    'title': obj.title,
-                    'description': (strip_tags(obj.description) or '')[:120],
-                    'url': f'/tasks/{obj.pk}/',
-                })
-
-        # ── Voting / decisions – all statuses (1=Propozycja … 5=Zatwierdzone) ──
-        if 'decision' in active_cats:
-            from django.db.models import Q
-
-            # 1. Search main decision fields
-            decisions = Decyzja.objects.filter(Q(title__icontains=query) | Q(tresc__icontains=query) | Q(uzasadnienie__icontains=query) | Q(args_for__icontains=query) | Q(args_against__icontains=query)).distinct()[:10]
-
-            STATUS_LABELS = {
-                1: str(_('Proposition')),
-                2: str(_('Discussion')),
-                3: str(_('Referendum')),
-                4: str(_('Rejected')),
-                5: str(_('Approved')),
-            }
-
-            for obj in decisions:
-                matched_field = ''
-                q_low = query.lower()
-                if q_low in (obj.args_for or '').lower():
-                    matched_field = str(_('argument for'))
-                elif q_low in (obj.args_against or '').lower():
-                    matched_field = str(_('argument against'))
-                elif q_low in (obj.uzasadnienie or '').lower():
-                    matched_field = str(_('reasoning'))
-
-                snippet = strip_tags(obj.tresc or obj.uzasadnienie or '') or ''
-                results.append({
-                    'cat': 'decision',
-                    'type': _('Voting'),
-                    'type_color': 'danger',
-                    'title': obj.title,
-                    'description': snippet[:120],
-                    'meta': (STATUS_LABELS.get(obj.status, '') + (f' · {matched_field}' if matched_field else '')),
-                    'url': f'/glosowania/details/{obj.pk}/',
-                })
-
-            # 2. Search Argument model (user-added arguments across all statuses)
-            arguments_qs = DecyzjaArgument.objects.filter(content__icontains=query).select_related('decyzja', 'author').distinct()[:15]
-
-            seen_decision_ids = {r['url'] for r in results if r['cat'] == 'decision'}
-            for arg in arguments_qs:
-                arg_type_label = (str(_('argument for')) if arg.argument_type == 'FOR' else str(_('argument against')))
-                status_label = STATUS_LABELS.get(arg.decyzja.status, '')
-                url = f'/glosowania/details/{arg.decyzja.pk}/'
-                author_name = arg.author.username if arg.author else str(_('unknown'))
-                results.append({
-                    'cat': 'decision',
-                    'type': _('Voting'),
-                    'type_color': 'danger',
-                    'title': arg.decyzja.title,
-                    'description': arg.content[:120],
-                    'meta': f'{status_label} · {arg_type_label} · {author_name}',
-                    'url': url,
-                })
-
-        # ── Events ───────────────────────────────────────────────────
-        if 'event' in active_cats:
-            from django.db.models import Q
-            events = Event.objects.filter(Q(title__icontains=query) | Q(description__icontains=query) | Q(place__icontains=query)).distinct()[:10]
-            for obj in events:
-                results.append({
-                    'cat': 'event',
-                    'type': _('Event'),
-                    'type_color': 'success',
-                    'title': obj.title,
-                    'description': (strip_tags(obj.description) or '')[:120],
-                    'url': f'/events/{obj.pk}/',
-                })
-
-        # ── Library ──────────────────────────────────────────────────
-        if 'book' in active_cats:
-            from django.db.models import Q
-            books = Book.objects.filter(Q(title__icontains=query) | Q(author__icontains=query) | Q(abstract__icontains=query)).distinct()[:10]
-            for obj in books:
-                results.append({
-                    'cat': 'book',
-                    'type': _('Library'),
-                    'type_color': 'info',
-                    'title': obj.title or str(_('Untitled')),
-                    'description': (strip_tags(obj.abstract) or '')[:120],
-                    'url': f'/elibrary/{obj.pk}/detail/',
-                })
-
-        # ── Citizens ─────────────────────────────────────────────────
-        if 'citizen' in active_cats:
-            from django.db.models import Q
-            users = AuthUser.objects.filter(Q(username__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query)).distinct()[:10]
-            for obj in users:
-                results.append({
-                    'cat': 'citizen',
-                    'type': _('Citizen'),
-                    'type_color': 'secondary',
-                    'title': obj.get_full_name() or obj.username,
-                    'description': f'@{obj.username}',
-                    'url': f'/obywatele/{obj.pk}/',
-                })
-
-        # ── Chat (rooms + messages user has access to) ────────────────
-        if 'chat' in active_cats:
-            from django.db.models import Q
             accessible_rooms = Room.objects.filter(allowed=request.user)
 
             # Rooms by title
@@ -1137,14 +928,12 @@ def firebase_messaging_sw(request):
 
 @login_required
 def onboarding_posts_for_category(request):
-    from board.models import Post as BoardPost
-    from site_settings.models import SiteSettings
     cat_id = request.GET.get('cat_id')
     if not cat_id:
         return JsonResponse({
             'posts': []
         })
-    posts = list(BoardPost.objects.filter(category_id=cat_id, is_archived=False).order_by('title').values('id', 'title'))
+    posts = list(Post.objects.filter(category_id=cat_id, is_archived=False).order_by('title').values('id', 'title'))
     selected = list(SiteSettings.get().onboarding_posts.values_list('id', flat=True))
     return JsonResponse({
         'posts': posts,
@@ -1154,9 +943,6 @@ def onboarding_posts_for_category(request):
 
 @login_required
 def site_admin(request: HttpRequest) -> HttpResponse:
-    from board.models import Post as BoardPost, PostCategory
-    from site_settings.models import SiteSettings
-
     ss = SiteSettings.get()
 
     if request.method == 'POST' and 'save_onboarding' in request.POST:
@@ -1168,7 +954,7 @@ def site_admin(request: HttpRequest) -> HttpResponse:
     selected_ids = set(ss.onboarding_posts.values_list('id', flat=True))
     categories_with_posts = []
     for cat in PostCategory.objects.order_by('name'):
-        posts = list(BoardPost.objects.filter(category=cat, is_archived=False).order_by('title'))
+        posts = list(Post.objects.filter(category=cat, is_archived=False).order_by('title'))
         if posts:
             selected_count = sum(1 for p in posts if p.id in selected_ids)
             categories_with_posts.append({
@@ -1183,7 +969,7 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         'signatures_span': settings.CZAS_NA_ZEBRANIE_PODPISOW,
         'discussion_span': settings.DYSKUSJA,
         'referendum_span': settings.CZAS_TRWANIA_REFERENDUM,
-        'documents': BoardPost.objects.filter(is_archived=False).order_by('title'),
+        'documents': Post.objects.filter(is_archived=False).order_by('title'),
         'ss': ss,
         'categories_with_posts': categories_with_posts,
         'selected_onboarding_post_ids': selected_ids,

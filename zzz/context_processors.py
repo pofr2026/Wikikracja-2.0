@@ -1,12 +1,8 @@
-# Standard library imports
-import json
 import logging
 
-# Third party imports
 from django.conf import settings
 from django.http import HttpRequest
 
-# First party imports
 from board.models import Post
 
 log = logging.getLogger(__name__)

@@ -1,10 +1,7 @@
-# Future imports
 from __future__ import unicode_literals
 
-# Standard library imports
 from datetime import datetime
 
-# Third party imports
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models.signals import post_save
@@ -71,28 +68,12 @@ class Uzytkownik(models.Model):
 
     # Last broadcast time
     last_broadcast = models.DateTimeField(default=make_aware(datetime(1900, 1, 1)))
-    
+
     # Email notification preferences
-    email_notifications_obywatele = models.BooleanField(
-        default=True, 
-        help_text=_('Receive notifications about new citizens and membership requests'),
-        verbose_name=_('Citizenship notifications')
-    )
-    email_notifications_glosowania = models.BooleanField(
-        default=True, 
-        help_text=_('Receive notifications about law proposals and voting'),
-        verbose_name=_('Voting notifications')
-    )
-    email_notifications_chat = models.BooleanField(
-        default=True,
-        help_text=_('Receive notifications about new chat messages'),
-        verbose_name=_('Chat notifications')
-    )
-    email_notifications_chat_participated = models.BooleanField(
-        default=False,
-        help_text=_('Receive notifications only for chat rooms where I have participated'),
-        verbose_name=_('Chat notifications — participated only')
-    )
+    email_notifications_obywatele = models.BooleanField(default=True, help_text=_('Receive notifications about new citizens and membership requests'), verbose_name=_('Citizenship notifications'))
+    email_notifications_glosowania = models.BooleanField(default=True, help_text=_('Receive notifications about law proposals and voting'), verbose_name=_('Voting notifications'))
+    email_notifications_chat = models.BooleanField(default=True, help_text=_('Receive notifications about new chat messages'), verbose_name=_('Chat notifications'))
+    email_notifications_chat_participated = models.BooleanField(default=False, help_text=_('Receive notifications only for chat rooms where I have participated'), verbose_name=_('Chat notifications — participated only'))
 
     class Meta:
         verbose_name = _("Citizen")
@@ -113,24 +94,23 @@ class Uzytkownik(models.Model):
 
 class CitizenActivity(models.Model):
     """Track activities related to citizens"""
-    
     class ActivityType(models.TextChoices):
         NEW_CANDIDATE = 'new_candidate', _('New Candidate')
         USER_ACTIVATED = 'user_activated', _('User Activated')
         USER_BLOCKED = 'user_blocked', _('User Blocked')
-    
+
     uzytkownik = models.ForeignKey(Uzytkownik, on_delete=models.CASCADE, related_name='activities')
     activity_type = models.CharField(max_length=20, choices=ActivityType.choices)
     timestamp = models.DateTimeField(auto_now_add=True)
     description = models.TextField(blank=True)
-    
+
     class Meta:
         ordering = ['-timestamp']
         indexes = [
             models.Index(fields=['timestamp'], name='citizen_activity_timestamp_idx'),
             models.Index(fields=['activity_type'], name='citizen_activity_type_idx'),
         ]
-    
+
     def __str__(self):
         return f"{self.uzytkownik.uid.username}: {self.get_activity_type_display()}"
 

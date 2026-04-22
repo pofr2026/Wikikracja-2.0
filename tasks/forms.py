@@ -1,8 +1,6 @@
-# Third party imports
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-# Local folder imports
 from .models import Task
 
 

@@ -1,9 +1,9 @@
-# Standard library imports
+import calendar as cal_mod
+import json
 import logging
 import time
-from datetime import timedelta
+from datetime import date, datetime, timedelta
 
-# Third party imports
 from allauth.account.models import EmailAddress
 from allauth.account.signals import email_confirmed, user_signed_up
 from django.conf import settings as s
@@ -17,19 +17,25 @@ from django.db import DatabaseError
 from django.db.models import Case, Count, IntegerField, Q, Sum, Value, When
 from django.dispatch import receiver
 from django.http import HttpRequest, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone, translation
 from django.utils.translation import check_for_language
-from django.shortcuts import get_object_or_404, redirect, render
-from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
 from django_filters.views import FilterView
 from django_tables2.views import SingleTableMixin
 
-# First party imports
+from bookkeeping.models import Transaction
+from chat.models import Message, Room
+from elibrary.models import Book
+from events.models import Event
+from glosowania.models import Argument, Decyzja, KtoJuzGlosowal, ZebranePodpisy
 from obywatele.filters import UzytkownikFilter
 from obywatele.forms import AvatarForm, EmailChangeForm, OnboardingDetailsForm, ProfileForm, SendEmailToAll, UserForm, UsernameChangeForm
 from obywatele.models import CitizenActivity, Rate, Uzytkownik
 from obywatele.tables import UzytkownikTable
+from tasks.models import Task, TaskEvaluation, TaskVote
 from zzz.utils import build_site_url, get_site_domain
 
 HOST = get_site_domain()
@@ -48,12 +54,12 @@ def is_email_confirmed_for_candidate(user: User, profile: Uzytkownik) -> bool:
 def get_onboarding_user_from_request(request: HttpRequest):
     """
     CRITICAL: Find user for onboarding form access.
-    
+
     DESIGN NOTE: Three ways to access onboarding form:
     1. Session (immediate after signup) - primary method
     2. Email link with uid/token (backup after email confirmation)
     3. Fallback for already active users with incomplete onboarding
-    
+
     Without this logic, users get "Could not find your onboarding account" error.
     """
     onboarding_user_id = request.session.get('onboarding_user_id')
@@ -78,18 +84,15 @@ def get_onboarding_user_from_request(request: HttpRequest):
     user = User.objects.filter(pk=onboarding_user_id, is_active=False).first()
     if user:
         return user
-    
+
     # METHOD 3: Fallback - active user with incomplete onboarding
     # This handles edge cases where user became active but didn't complete onboarding
     user = User.objects.filter(pk=onboarding_user_id).first()
     if user and hasattr(user, 'uzytkownik'):
         profile = user.uzytkownik
-        if profile.onboarding_status in [
-            Uzytkownik.OnboardingStatus.EMAIL_ENTERED,
-            Uzytkownik.OnboardingStatus.EMAIL_CONFIRMED
-        ]:
+        if profile.onboarding_status in [Uzytkownik.OnboardingStatus.EMAIL_ENTERED, Uzytkownik.OnboardingStatus.EMAIL_CONFIRMED]:
             return user
-    
+
     return None
 
 
@@ -148,8 +151,6 @@ def _build_calendar_grid(year, month, events):
       {'day': int or None, 'events': [Event, ...], 'is_today': bool}
     Days from adjacent months are represented as None.
     """
-    import calendar as cal_mod
-    from datetime import date
 
     today = timezone.localdate()
     days_in_month = cal_mod.monthrange(year, month)[1]
@@ -179,9 +180,7 @@ def _build_calendar_grid(year, month, events):
                 events_by_day.setdefault(sd.day, []).append(event)
 
         elif freq == 'monthly_ordinal':
-            occurrence = event._get_nth_weekday_of_month(
-                year, month, event.monthly_weekday, event.monthly_ordinal
-            )
+            occurrence = event._get_nth_weekday_of_month(year, month, event.monthly_weekday, event.monthly_ordinal)
             if occurrence:
                 d = timezone.localtime(occurrence).day
                 events_by_day.setdefault(d, []).append(event)
@@ -198,7 +197,11 @@ def _build_calendar_grid(year, month, events):
         week = []
         for day_num in raw_week:
             if day_num == 0:
-                week.append({'day': None, 'events': [], 'is_today': False})
+                week.append({
+                    'day': None,
+                    'events': [],
+                    'is_today': False
+                })
             else:
                 week.append({
                     'day': day_num,
@@ -212,8 +215,6 @@ def _build_calendar_grid(year, month, events):
 @login_required
 @login_required
 def wspolnota_calendar(request: HttpRequest):
-    import calendar as cal_mod
-    from events.models import Event
     now = timezone.localtime(timezone.now())
     month_param = request.GET.get('month', '')
     try:
@@ -243,10 +244,6 @@ def wspolnota_calendar(request: HttpRequest):
 
 
 def wspolnota(request: HttpRequest):
-    import calendar as cal_mod
-    from bookkeeping.models import Transaction
-    from django.db.models import Sum
-    from events.models import Event
 
     # --- stats ---
     thirty_days_ago = timezone.now() - timedelta(days=30)
@@ -263,30 +260,15 @@ def wspolnota(request: HttpRequest):
     for_sale_count = Uzytkownik.objects.exclude(for_sale__isnull=True).exclude(for_sale='').count()
 
     # --- recent members ---
-    recent_members = (
-        User.objects
-        .filter(is_active=True)
-        .select_related('uzytkownik')
-        .order_by('-uzytkownik__data_przyjecia')[:5]
-    )
+    recent_members = (User.objects.filter(is_active=True).select_related('uzytkownik').order_by('-uzytkownik__data_przyjecia')[:5])
 
     # --- recent chat messages ---
-    from chat.models import Message
-    recent_chat_messages = (
-        Message.objects
-        .filter(room__public=True, room__allowed=request.user)
-        .select_related('sender', 'sender__uzytkownik', 'room')
-        .order_by('-time')[:4]
-    )
+    recent_chat_messages = (Message.objects.filter(room__public=True, room__allowed=request.user).select_related('sender', 'sender__uzytkownik', 'room').order_by('-time')[:4])
 
     # --- finances ---
     this_year = timezone.now().year
-    income = Transaction.objects.filter(
-        type=Transaction.INCOMING, created_date__year=this_year
-    ).aggregate(total=Sum('amount'))['total'] or 0
-    expense = Transaction.objects.filter(
-        type=Transaction.OUTGOING, created_date__year=this_year
-    ).aggregate(total=Sum('amount'))['total'] or 0
+    income = Transaction.objects.filter(type=Transaction.INCOMING, created_date__year=this_year).aggregate(total=Sum('amount'))['total'] or 0
+    expense = Transaction.objects.filter(type=Transaction.OUTGOING, created_date__year=this_year).aggregate(total=Sum('amount'))['total'] or 0
 
     # --- calendar ---
     now = timezone.localtime(timezone.now())
@@ -525,17 +507,15 @@ def poczekalnia(request: HttpRequest):
         error(request, _('Your profile does not exist. Please contact administrator.'))
         return redirect('home:index')
 
-    candidate_profiles = {user.id: user.uzytkownik for user in uid if hasattr(user, 'uzytkownik')}
+    candidate_profiles = {
+        user.id: user.uzytkownik for user in uid if hasattr(user, 'uzytkownik')
+    }
     candidate_profile_ids = [profile.id for profile in candidate_profiles.values()]
     existing_rates = {
-        rate.kandydat_id: rate
-        for rate in Rate.objects.filter(obywatel=citizen_profile, kandydat_id__in=candidate_profile_ids)
+        rate.kandydat_id: rate for rate in Rate.objects.filter(obywatel=citizen_profile, kandydat_id__in=candidate_profile_ids)
     }
     ratings_count_map = {
-        row['kandydat_id']: row['total']
-        for row in Rate.objects.filter(kandydat_id__in=candidate_profile_ids)
-        .values('kandydat_id')
-        .annotate(total=Count('id'))
+        row['kandydat_id']: row['total'] for row in Rate.objects.filter(kandydat_id__in=candidate_profile_ids).values('kandydat_id').annotate(total=Count('id'))
     }
 
     # Get ratings from the current user for all candidates
@@ -699,26 +679,74 @@ def dodaj(request: HttpRequest):
 def my_profile(request: HttpRequest):
     user = request.user
     profile = request.user.uzytkownik
-    
+
     asset_fields = [
-        {'field': 'city', 'label': _('City')},
-        {'field': 'phone', 'label': _('Communicator / Phone')},
-        {'field': 'job', 'label': _('Job')},
-        {'field': 'responsibilities', 'label': _('Responsibilities')},
-        {'field': 'business', 'label': _('Business')},
-        {'field': 'hobby', 'label': _('Hobby')},
-        {'field': 'to_give_away', 'label': _('To give away')},
-        {'field': 'to_borrow', 'label': _('To borrow')},
-        {'field': 'for_sale', 'label': _('For sale')},
-        {'field': 'i_need', 'label': _('I need')},
-        {'field': 'want_to_learn', 'label': _('I want to learn')},
-        {'field': 'skills', 'label': _('Skills')},
-        {'field': 'knowledge', 'label': _('Knowledge')},
-        {'field': 'gift', 'label': _('Gift')},
-        {'field': 'other', 'label': _('Other')},
-        {'field': 'why', 'label': _('Why do you want to join?')},
+        {
+            'field': 'city',
+            'label': _('City')
+        },
+        {
+            'field': 'phone',
+            'label': _('Communicator / Phone')
+        },
+        {
+            'field': 'job',
+            'label': _('Job')
+        },
+        {
+            'field': 'responsibilities',
+            'label': _('Responsibilities')
+        },
+        {
+            'field': 'business',
+            'label': _('Business')
+        },
+        {
+            'field': 'hobby',
+            'label': _('Hobby')
+        },
+        {
+            'field': 'to_give_away',
+            'label': _('To give away')
+        },
+        {
+            'field': 'to_borrow',
+            'label': _('To borrow')
+        },
+        {
+            'field': 'for_sale',
+            'label': _('For sale')
+        },
+        {
+            'field': 'i_need',
+            'label': _('I need')
+        },
+        {
+            'field': 'want_to_learn',
+            'label': _('I want to learn')
+        },
+        {
+            'field': 'skills',
+            'label': _('Skills')
+        },
+        {
+            'field': 'knowledge',
+            'label': _('Knowledge')
+        },
+        {
+            'field': 'gift',
+            'label': _('Gift')
+        },
+        {
+            'field': 'other',
+            'label': _('Other')
+        },
+        {
+            'field': 'why',
+            'label': _('Why do you want to join?')
+        },
     ]
-    
+
     notifications = [
         {
             'type': 'obywatele',
@@ -745,7 +773,7 @@ def my_profile(request: HttpRequest):
             'enabled': profile.email_notifications_chat_participated,
         },
     ]
-    
+
     profile_form = ProfileForm(initial={
         'first_name': user.first_name,
         'last_name': user.last_name,
@@ -792,7 +820,6 @@ def upload_avatar(request: HttpRequest):
 @login_required
 @require_POST
 def toggle_notification(request: HttpRequest):
-    import json
 
     NOTIFICATION_FIELDS = {
         'obywatele': 'email_notifications_obywatele',
@@ -808,16 +835,24 @@ def toggle_notification(request: HttpRequest):
 
         field_name = NOTIFICATION_FIELDS.get(notification_type)
         if not field_name:
-            return JsonResponse({'success': False, 'error': 'Invalid notification type'})
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid notification type'
+            })
 
         profile = request.user.uzytkownik
         setattr(profile, field_name, enabled)
         profile.save()
 
-        return JsonResponse({'success': True})
+        return JsonResponse({
+            'success': True
+        })
 
     except (json.JSONDecodeError, AttributeError):
-        return JsonResponse({'success': False, 'error': 'Invalid request'})
+        return JsonResponse({
+            'success': False,
+            'error': 'Invalid request'
+        })
 
 
 @login_required
@@ -1042,7 +1077,6 @@ def set_user_language(request: HttpRequest):
 
 @login_required
 def citizen_czaty(request: HttpRequest, pk: int):
-    from chat.models import Room, Message
     target_user = get_object_or_404(User, pk=pk)
     qs = Room.objects.filter(allowed=target_user, public=True).order_by('-last_activity')
     rows = []
@@ -1063,14 +1097,8 @@ def citizen_czaty(request: HttpRequest, pk: int):
 
 @login_required
 def citizen_zadania(request: HttpRequest, pk: int):
-    from tasks.models import Task
     target_user = get_object_or_404(User, pk=pk)
-    tasks = (
-        Task.objects
-        .filter(Q(created_by=target_user) | Q(assigned_to=target_user))
-        .distinct()
-        .order_by('-created_at')
-    )
+    tasks = (Task.objects.filter(Q(created_by=target_user) | Q(assigned_to=target_user)).distinct().order_by('-created_at'))
     template = 'obywatele/_citizen_zadania_partial.html' if request.headers.get('X-Requested-With') == 'XMLHttpRequest' else 'obywatele/citizen_zadania.html'
     return render(request, template, {
         'target_user': target_user,
@@ -1081,11 +1109,6 @@ def citizen_zadania(request: HttpRequest, pk: int):
 
 @login_required
 def citizen_aktywnosc(request: HttpRequest, pk: int):
-    import datetime
-    from django.urls import reverse
-    from tasks.models import Task, TaskVote, TaskEvaluation
-    from glosowania.models import Argument, ZebranePodpisy, KtoJuzGlosowal
-
     target_user = get_object_or_404(User, pk=pk)
     target_profile = get_object_or_404(Uzytkownik, uid=target_user)
     items = []
@@ -1096,7 +1119,9 @@ def citizen_aktywnosc(request: HttpRequest, pk: int):
             'title': t.title,
             'ts': t.created_at,
             'label': _('Created task'),
-            'url': reverse('tasks:detail', kwargs={'pk': t.pk}),
+            'url': reverse('tasks:detail', kwargs={
+                'pk': t.pk
+            }),
         })
 
     for t in Task.objects.filter(assigned_to=target_user).order_by('-updated_at'):
@@ -1105,7 +1130,9 @@ def citizen_aktywnosc(request: HttpRequest, pk: int):
             'title': t.title,
             'ts': t.updated_at,
             'label': _('Assigned task'),
-            'url': reverse('tasks:detail', kwargs={'pk': t.pk}),
+            'url': reverse('tasks:detail', kwargs={
+                'pk': t.pk
+            }),
         })
 
     for tv in TaskVote.objects.filter(user=target_user).select_related('task').order_by('-updated_at'):
@@ -1114,7 +1141,9 @@ def citizen_aktywnosc(request: HttpRequest, pk: int):
             'title': tv.task.title,
             'ts': tv.updated_at,
             'label': _('Voted on task'),
-            'url': reverse('tasks:detail', kwargs={'pk': tv.task_id}),
+            'url': reverse('tasks:detail', kwargs={
+                'pk': tv.task_id
+            }),
         })
 
     for te in TaskEvaluation.objects.filter(user=target_user).select_related('task').order_by('-updated_at'):
@@ -1123,7 +1152,9 @@ def citizen_aktywnosc(request: HttpRequest, pk: int):
             'title': te.task.title,
             'ts': te.updated_at,
             'label': _('Evaluated task'),
-            'url': reverse('tasks:detail', kwargs={'pk': te.task_id}),
+            'url': reverse('tasks:detail', kwargs={
+                'pk': te.task_id
+            }),
         })
 
     for arg in Argument.objects.filter(author=target_user).select_related('decyzja').order_by('-created_at'):
@@ -1132,7 +1163,9 @@ def citizen_aktywnosc(request: HttpRequest, pk: int):
             'title': arg.decyzja.title,
             'ts': arg.created_at,
             'label': _('Added argument'),
-            'url': reverse('glosowania:details', kwargs={'pk': arg.decyzja_id}),
+            'url': reverse('glosowania:details', kwargs={
+                'pk': arg.decyzja_id
+            }),
         })
 
     for zp in ZebranePodpisy.objects.filter(podpis_uzytkownika=target_user).select_related('projekt'):
@@ -1142,7 +1175,9 @@ def citizen_aktywnosc(request: HttpRequest, pk: int):
                 'title': zp.projekt.title,
                 'ts': None,
                 'label': _('Signed proposal'),
-                'url': reverse('glosowania:details', kwargs={'pk': zp.projekt_id}),
+                'url': reverse('glosowania:details', kwargs={
+                    'pk': zp.projekt_id
+                }),
             })
 
     for kg in KtoJuzGlosowal.objects.filter(ktory_uzytkownik_juz_zaglosowal=target_user).select_related('projekt'):
@@ -1151,7 +1186,9 @@ def citizen_aktywnosc(request: HttpRequest, pk: int):
             'title': kg.projekt.title,
             'ts': None,
             'label': _('Voted in referendum'),
-            'url': reverse('glosowania:details', kwargs={'pk': kg.projekt_id}),
+            'url': reverse('glosowania:details', kwargs={
+                'pk': kg.projekt_id
+            }),
         })
 
     for ca in CitizenActivity.objects.filter(uzytkownik=target_profile).order_by('-timestamp'):
@@ -1176,12 +1213,6 @@ def citizen_aktywnosc(request: HttpRequest, pk: int):
 
 @login_required
 def citizen_zalozono(request: HttpRequest, pk: int):
-    import datetime
-    from django.urls import reverse
-    from tasks.models import Task
-    from glosowania.models import Decyzja
-    from elibrary.models import Book
-
     target_user = get_object_or_404(User, pk=pk)
     items = []
 
@@ -1190,7 +1221,9 @@ def citizen_zalozono(request: HttpRequest, pk: int):
             'title': t.title,
             'ts': t.created_at,
             'label': _('Zadanie'),
-            'url': reverse('tasks:detail', kwargs={'pk': t.pk}),
+            'url': reverse('tasks:detail', kwargs={
+                'pk': t.pk
+            }),
         })
 
     for d in Decyzja.objects.filter(author=target_user).order_by('-data_powstania'):
@@ -1198,7 +1231,9 @@ def citizen_zalozono(request: HttpRequest, pk: int):
             'title': d.title or '—',
             'ts': datetime.datetime(d.data_powstania.year, d.data_powstania.month, d.data_powstania.day, tzinfo=datetime.timezone.utc) if d.data_powstania else None,
             'label': _('Propozycja głosowania'),
-            'url': reverse('glosowania:details', kwargs={'pk': d.pk}),
+            'url': reverse('glosowania:details', kwargs={
+                'pk': d.pk
+            }),
         })
 
     for b in Book.objects.filter(uploader=target_user).order_by('-uploaded'):
@@ -1206,7 +1241,9 @@ def citizen_zalozono(request: HttpRequest, pk: int):
             'title': b.title or '—',
             'ts': b.uploaded,
             'label': _('Dokument (biblioteka)'),
-            'url': reverse('elibrary:book-detail', kwargs={'pk': b.pk}),
+            'url': reverse('elibrary:book-detail', kwargs={
+                'pk': b.pk
+            }),
         })
 
     epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)

@@ -5,18 +5,18 @@
  */
 
 import {
-    onSubmitMessage,
-    onUpdateVote,
-    onRoomTryJoin,
-    onBackToRoomList,
-    onToggleNotifications,
-    onToggleSeen,
-    onMessageHistory,
-    copyRoomLink,
-    copyMessageLink,
-    setReplyTarget,
     clearReplyTarget,
+    copyMessageLink,
+    copyRoomLink,
+    onBackToRoomList,
+    onMessageHistory,
+    onRoomTryJoin,
+    onSubmitMessage,
+    onToggleNotifications,
     onToggleReaction,
+    onToggleSeen,
+    onUpdateVote,
+    setReplyTarget,
 } from './chat.js';
 import DomApi from './domapi.js';
 import { $, $$ } from './utility.js';
@@ -213,8 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ZMIANA 6: rich text shortcuts
         if (el.isContentEditable) {
-            if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold');      updateToolbarState(); return; }
-            if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic');    updateToolbarState(); return; }
+            if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); updateToolbarState(); return; }
+            if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
             if (mod && e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateToolbarState(); return; }
             // Ctrl+Enter = wyślij; Enter = nowa linia (domyślne zachowanie contenteditable)
             if (e.key === 'Enter' && mod) {
@@ -492,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const jumpBtn = e.target.closest('.msg-quote-jump') || e.target.closest('.msg-quote');
         if (jumpBtn) {
             const targetId = jumpBtn.dataset.targetId || jumpBtn.dataset.replyId
-                          || jumpBtn.closest('.msg-quote')?.dataset.replyId;
+                || jumpBtn.closest('.msg-quote')?.dataset.replyId;
             const currentMsg = jumpBtn.closest('.message');
             if (currentMsg) _replySourceMessageId = currentMsg.dataset.messageId;
 

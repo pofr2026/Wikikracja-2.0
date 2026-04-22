@@ -1,4 +1,3 @@
-# Third party imports
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Prefetch
@@ -210,7 +209,8 @@ class Message(models.Model):
     # ZMIANA 2 — cytowanie: opcjonalne odwołanie do wiadomości-rodzica
     reply_to = models.ForeignKey(
         'self',
-        null=True, blank=True,
+        null=True,
+        blank=True,
         on_delete=models.SET_NULL,
         related_name='replies',
     )

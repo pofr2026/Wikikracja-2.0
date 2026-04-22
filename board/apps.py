@@ -1,4 +1,3 @@
-# Third party imports
 from django.apps import AppConfig
 
 
@@ -8,5 +7,4 @@ class BoardConfig(AppConfig):
 
     def ready(self):
         # Import signals to register them
-        # First party imports
         import board.signals  # noqa: F401

@@ -1,18 +1,12 @@
-# Third party imports
 from django.contrib.auth.decorators import login_required
-
-# import os
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
-from django.db.models import Prefetch
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils.translation import gettext_lazy as _
 from django.views.generic import DeleteView, DetailView, ListView, UpdateView
 from PIL import Image
 
-# First party imports
 from board.models import Post, PostCategory
 from elibrary.forms import UpdateBookForm
 from elibrary.models import Book
@@ -36,11 +30,7 @@ def _load_elibrary_data():
         return cached
 
     # Single query: all non-archived posts with their categories — eliminates N+1
-    all_posts = list(
-        Post.objects.filter(is_archived=False)
-        .select_related('category', 'author')
-        .order_by('category__priority', 'category__name', '-updated')
-    )
+    all_posts = list(Post.objects.filter(is_archived=False).select_related('category', 'author').order_by('category__priority', 'category__name', '-updated'))
     categories = list(PostCategory.objects.all())
 
     # Group in Python — no extra queries per category
@@ -56,13 +46,22 @@ def _load_elibrary_data():
     for cat in categories:
         cat_posts = posts_by_cat.get(cat.pk, [])
         if cat_posts:
-            category_groups_raw.append({'category': cat, 'posts': cat_posts})
+            category_groups_raw.append({
+                'category': cat,
+                'posts': cat_posts
+            })
     if uncategorized:
-        category_groups_raw.append({'category': None, 'posts': uncategorized})
+        category_groups_raw.append({
+            'category': None,
+            'posts': uncategorized
+        })
 
     books = list(Book.objects.select_related('uploader').order_by('-id'))
 
-    result = {'category_groups_raw': category_groups_raw, 'books': books}
+    result = {
+        'category_groups_raw': category_groups_raw,
+        'books': books
+    }
     cache.set(ELIBRARY_CACHE_KEY, result, ELIBRARY_CACHE_TTL)
     return result
 
@@ -116,7 +115,10 @@ class BookList(LoginRequiredMixin, ListView):
                 key=lambda p: p.updated,
                 reverse=reverse_order,
             )
-            category_groups.append({'category': group['category'], 'posts': sorted_posts})
+            category_groups.append({
+                'category': group['category'],
+                'posts': sorted_posts
+            })
         context['category_groups'] = category_groups
 
         # Sort books in Python

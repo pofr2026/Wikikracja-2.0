@@ -1,4 +1,3 @@
-# Standard library imports
 import importlib.metadata
 import json
 import logging
@@ -10,11 +9,9 @@ try:
 except importlib.metadata.PackageNotFoundError:
     APP_VERSION = "0.95.0-dev"
 
-# Third party imports
 from dotenv import load_dotenv
 from firebase_admin import credentials
 
-# First party imports
 from zzz.settings_base import BASE_DIR, DATABASES  # noqa: F401
 
 # Register additional MIME types not recognized by default
@@ -424,11 +421,7 @@ STORAGES = {
     "staticfiles": {
         # In development: serve source files directly via finders (no hashing, no collectstatic needed)
         # In production: compress + hash for optimal caching
-        "BACKEND": (
-            "django.contrib.staticfiles.storage.StaticFilesStorage"
-            if DEBUG
-            else "whitenoise.storage.CompressedStaticFilesStorage"
-        ),
+        "BACKEND": ("django.contrib.staticfiles.storage.StaticFilesStorage" if DEBUG else "whitenoise.storage.CompressedStaticFilesStorage"),
     },
 }
 WHITENOISE_AUTOREFRESH = DEBUG
