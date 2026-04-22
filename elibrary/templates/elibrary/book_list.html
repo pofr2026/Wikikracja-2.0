@@ -5,7 +5,7 @@
 
 {% block content %}
 
-<div class="section">
+<div class="section" id="proposals-list">
 
 {# ── TOOLBAR ── #}
 <div class="proposals-toolbar mb-3">
@@ -44,10 +44,10 @@
   <span class="toolbar-divider"></span>
 
   <div class="toolbar-view">
-    <button class="view-toggle-btn" id="btn-list" onclick="setView('list')" title="{% trans 'Lista' %}">
+    <button class="view-toggle-btn" id="btn-list" onclick="setElibraryView('list')" title="{% trans 'Lista' %}">
       <i class="fas fa-list"></i>
     </button>
-    <button class="view-toggle-btn" id="btn-grid" onclick="setView('grid')" title="{% trans 'Siatka' %}">
+    <button class="view-toggle-btn" id="btn-grid" onclick="setElibraryView('grid')" title="{% trans 'Siatka' %}">
       <i class="fas fa-grip"></i>
     </button>
   </div>
@@ -249,49 +249,4 @@
 </div>
 
 </div>{# /section #}
-
-<style>
-/* ── domyślny widok: lista ── */
-.elibrary-posts-grid  { display: none; }
-.elibrary-posts-list  { display: block; }
-.elibrary-books-grid  { display: none; }
-.elibrary-books-list  { display: block; }
-
-/* ── widok siatki ── */
-.view-grid .elibrary-posts-grid { display: block; }
-.view-grid .elibrary-posts-list { display: none; }
-.view-grid .elibrary-books-grid { display: block; }
-.view-grid .elibrary-books-list { display: none; }
-
-.elibrary-post-row:hover { background: var(--accent-muted); }
-</style>
-
-<script>
-(function () {
-  var STORAGE_KEY = 'elibrary_view';
-
-  window.setView = function (mode) {
-    var page    = document.querySelector('.section');
-    var btnList = document.getElementById('btn-list');
-    var btnGrid = document.getElementById('btn-grid');
-    if (!page) return;
-    if (mode === 'grid') {
-      page.classList.add('view-grid');
-      btnGrid.classList.add('active');
-      btnList.classList.remove('active');
-    } else {
-      page.classList.remove('view-grid');
-      btnList.classList.add('active');
-      btnGrid.classList.remove('active');
-    }
-    localStorage.setItem(STORAGE_KEY, mode);
-  };
-
-  document.addEventListener('DOMContentLoaded', function () {
-    var saved = localStorage.getItem(STORAGE_KEY) || 'list';
-    setView(saved);
-  });
-})();
-</script>
-
 {% endblock %}

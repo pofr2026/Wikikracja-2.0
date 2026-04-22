@@ -54,10 +54,10 @@
   <span class="toolbar-divider"></span>
 
   <div class="toolbar-view">
-    <button class="view-toggle-btn" id="btn-list" onclick="setView('list')" title="{% trans 'List' %}">
+    <button class="view-toggle-btn" id="btn-list" onclick="setTaskView('list')" title="{% trans 'List' %}">
       <i class="fas fa-list"></i>
     </button>
-    <button class="view-toggle-btn" id="btn-grid" onclick="setView('grid')" title="{% trans 'Grid' %}">
+    <button class="view-toggle-btn" id="btn-grid" onclick="setTaskView('grid')" title="{% trans 'Grid' %}">
       <i class="fas fa-grip"></i>
     </button>
   </div>
@@ -129,5 +129,4 @@
 
 </div>
 
-{% include 'tasks/_card_script.html' %}
 {% endblock tasks %}
