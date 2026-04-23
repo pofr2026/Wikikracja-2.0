@@ -1,5 +1,6 @@
 {% extends 'home/base.html' %}
 {% load i18n %}
+{% load bookkeeping_extras %}
 {% load crispy_forms_tags %}
 
 {% block content %}
@@ -51,7 +52,7 @@
           <td>{{ transaction.payment_received_date|date:"Y-m-d" }}</td>
           <td>{{ transaction.partner }}</td>
           <td>{{ transaction.category|default:"-" }}</td>
-          <td>{{ transaction.amount }}</td>
+          <td>{{ transaction.amount|normalize_decimal }}</td>
           <td class="{% if transaction.balance > 0 %}text-success{% elif transaction.balance < 0 %}text-danger{% endif %}">
             {{ transaction.balance|floatformat:2 }}
           </td>

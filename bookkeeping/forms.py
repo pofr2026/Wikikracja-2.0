@@ -50,9 +50,9 @@ class TransactionForm(forms.ModelForm):
 
     category = forms.ModelChoiceField(queryset=Category.objects.all().order_by('name'), required=True, label=_('Category'))
 
-    amount = forms.DecimalField(label=_('Amount'), min_value=0.01, decimal_places=2, widget=forms.NumberInput(attrs={
+    amount = forms.DecimalField(label=_('Amount'), min_value=0.00000001, decimal_places=8, widget=forms.NumberInput(attrs={
         'class': 'form-control',
-        'step': '0.01'
+        'step': '0.00000001'
     }))
 
     payment_received_date = forms.DateField(initial=datetime.now, label=_('Payment received date'), widget=forms.DateInput(attrs={

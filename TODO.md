@@ -143,6 +143,7 @@ Do oddania / na sprzedaż / do wypożyczenia:
 
 # OBYWATELE
 
+- Do profilu użytkownika możliwość wyboru ról/zadań (it, marketing, księgowość, administracja)
 - Walidacja czyści formularz jeśli pierwsze pole jest nieprawidłowe (przy zapraszaniu nowej osoby)
 - Dodaj opcję kasowania własnego konta i wszystkich danych użytkownika. Powinna być możliwość samodzielnego usunięcia z grupy ale też powinien być okres karencji po którym potwierdza się chęć odejścia. W okresie karencji będziemy mieli szansę zapytać co jest nie tak.
 - Temat grace period (okres karencji) pojawił się też przy normalnym usuwaniu użytkowników oraz przy czasowej banicji (jako konsekwencji złamania przepisu). Może da się upiec 3 pieczenie przy jednym ogniu.

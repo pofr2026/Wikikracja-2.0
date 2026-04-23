@@ -39,7 +39,7 @@ class Transaction(models.Model):
 
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Category"))
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, null=True, blank=False, verbose_name=_("Partner"))
-    amount = models.FloatField(null=True, blank=False, verbose_name=_("Outgoing amount"))
+    amount = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=False, verbose_name=_("Outgoing amount"))
     note = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Note"))
     author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("Author"), related_name='transactions')
 

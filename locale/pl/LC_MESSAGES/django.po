@@ -384,7 +384,7 @@ msgstr ""
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:48
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:48
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:26
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:45
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:46
 msgid "Incoming"
 msgstr "Przychodzący"
 
@@ -392,7 +392,7 @@ msgstr "Przychodzący"
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:50
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:50
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:28
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:47
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:48
 msgid "Outgoing"
 msgstr "Wychodzący"
 
@@ -409,7 +409,7 @@ msgstr "Typ"
 #: .\bookkeeping\forms.py:49 .\bookkeeping\models.py:41
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:36
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:31
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:24
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:25
 msgid "Partner"
 msgstr "Partner"
 
@@ -421,7 +421,7 @@ msgstr "Wybierz partnera"
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:37
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:37
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:32
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:26
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:27
 msgid "Amount"
 msgstr "Kwota"
 
@@ -480,7 +480,7 @@ msgstr "Wychodząca ilość"
 #: .\bookkeeping\templates\bookkeeping\report_list.html:9
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:10
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:9
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:12
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:13
 msgid "Transactions"
 msgstr "Transakcje"
 
@@ -493,7 +493,7 @@ msgstr "Transakcje"
 #: .\bookkeeping\templates\bookkeeping\report_list.html:10
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:11
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:10
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:13
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:14
 msgid "Partners"
 msgstr "Partnerzy"
 
@@ -506,7 +506,7 @@ msgstr "Partnerzy"
 #: .\bookkeeping\templates\bookkeeping\report_list.html:12
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:13
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:12
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:15
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:16
 msgid "Reports"
 msgstr "Raporty"
 
@@ -649,7 +649,7 @@ msgstr "Nowa Transakcja"
 msgid "Save Transaction"
 msgstr "Zapisz Transakcję"
 
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:10
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:11
 msgid "Add Transaction"
 msgstr "Dodaj Transakcję"
 

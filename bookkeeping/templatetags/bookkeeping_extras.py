@@ -1,6 +1,17 @@
+from decimal import Decimal, InvalidOperation
+
 from django import template
 
 register = template.Library()
+
+
+@register.filter
+def normalize_decimal(value):
+    try:
+        normalized = Decimal(value).normalize()
+        return f"{normalized:f}"
+    except (InvalidOperation, TypeError):
+        return value
 
 
 @register.filter
