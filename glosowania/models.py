@@ -57,7 +57,7 @@ class Decyzja(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="decyzja",
-        verbose_name=_("chat room"),
+        verbose_name=_("Chat room"),
     )
 
     # 1.Proposition

@@ -20,19 +20,19 @@
 
     <div class="proposal-card-badges-row">
       {% if i.status == 1 %}
-        <span class="badge-status badge-proposition">{% trans 'Propozycja' %}</span>
+        <span class="badge-status badge-proposition">{% trans 'Proposal' %}</span>
       {% elif i.status == 2 %}
-        <span class="badge-status badge-discussion">{% trans 'Dyskusja' %}</span>
+        <span class="badge-status badge-discussion">{% trans 'Discussion' %}</span>
       {% elif i.status == 3 %}
         <span class="badge-status badge-referendum">{% trans 'Referendum' %}</span>
       {% elif i.status == 4 %}
-        <span class="badge-status badge-rejected">{% trans 'Odrzucone' %}</span>
+        <span class="badge-status badge-rejected">{% trans 'Rejected' %}</span>
       {% elif i.status == 5 %}
-        <span class="badge-status badge-approved">{% trans 'Zatwierdzone' %}</span>
+        <span class="badge-status badge-approved">{% trans 'Approved' %}</span>
       {% endif %}
 
       {% if i.chat_room_pulse_class %}
-        <a href="{{ i.chat_room_url }}" 
+        <a href="{{ i.chat_room_url }}"
            class="proposal-chat-link proposal-chat-link--pulse {{ i.chat_room_pulse_class }}"
            onclick="event.stopPropagation()">
           <i class="fas fa-comment-dots"></i>
@@ -42,7 +42,7 @@
           {% endwith %}
         </a>
       {% elif i.chat_room %}
-        <a href="{{ i.chat_room_url }}" 
+        <a href="{{ i.chat_room_url }}"
            class="proposal-chat-link"
            onclick="event.stopPropagation()">
           <i class="fas fa-comment-dots"></i>
@@ -90,7 +90,7 @@
       {# Szczegóły — prawy dolny róg, widoczny na zwiniętym kafelku #}
       <a href="{% url 'glosowania:details' pk=i.pk %}"
          class="proposal-details-inline" onclick="event.stopPropagation()">
-        {% trans 'Szczegóły' %} <i class="fas fa-arrow-right fa-fw"></i>
+        {% trans 'Details' %} <i class="fas fa-arrow-right fa-fw"></i>
       </a>
 
     </div>
@@ -106,14 +106,14 @@
     <div class="proposal-body-topbar">
       <a href="{% url 'glosowania:details' pk=i.pk %}" class="proposal-details-btn"
          onclick="event.stopPropagation()">
-        <i class="fas fa-arrow-up-right-from-square fa-fw"></i> {% trans 'Szczegóły' %}
+        <i class="fas fa-arrow-up-right-from-square fa-fw"></i> {% trans 'Details' %}
       </a>
     </div>
 
     {% if i.tresc %}
     <div class="proposal-section">
       <div class="proposal-section-label">
-        <i class="fas fa-scroll fa-fw"></i> {% trans 'Treść przepisu' %}
+        <i class="fas fa-scroll fa-fw"></i> {% trans 'Law text' %}
       </div>
       <div class="proposal-section-text">{{ i.tresc|linebreaksbr }}</div>
     </div>
@@ -122,7 +122,7 @@
     {% if i.kara %}
     <div class="proposal-section">
       <div class="proposal-section-label">
-        <i class="fas fa-triangle-exclamation fa-fw"></i> {% trans 'Konsekwencje' %}
+        <i class="fas fa-triangle-exclamation fa-fw"></i> {% trans 'Consequences' %}
       </div>
       <div class="proposal-section-text">{{ i.kara|linebreaksbr }}</div>
     </div>
@@ -131,7 +131,7 @@
     {% if i.uzasadnienie %}
     <div class="proposal-section">
       <div class="proposal-section-label">
-        <i class="fas fa-lightbulb fa-fw"></i> {% trans 'Uzasadnienie' %}
+        <i class="fas fa-lightbulb fa-fw"></i> {% trans 'Reasoning' %}
       </div>
       <div class="proposal-section-text">{{ i.uzasadnienie|linebreaksbr }}</div>
     </div>
@@ -145,7 +145,7 @@
       <div class="proposal-section-text">
         {% trans 'Start' %}: {{ i.data_referendum_start|date:"d.m.Y"|default:"—" }}
         &nbsp;·&nbsp;
-        {% trans 'Koniec' %}: {{ i.data_referendum_stop|date:"d.m.Y"|default:"—" }}
+        {% trans 'End' %}: {{ i.data_referendum_stop|date:"d.m.Y"|default:"—" }}
       </div>
     </div>
     {% endif %}

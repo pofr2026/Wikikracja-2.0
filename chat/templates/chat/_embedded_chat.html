@@ -13,21 +13,21 @@ Użycie:
 {% if chat_room %}
 <section class="ec-section">
   <h2 class="ec-section-title">
-    <i class="fas fa-comments fa-fw"></i> {% trans 'Czat' %}
+    <i class="fas fa-comments fa-fw"></i> {% trans 'Chat' %}
     <a href="{% url 'chat:chat' %}#room_id={{ chat_room.pk }}"
-       class="ec-open-full" title="{% trans 'Otwórz w czacie' %}">
+       class="ec-open-full" title="{% trans 'Open in chat' %}">
       <i class="fas fa-arrow-up-right-from-square fa-fw"></i>
     </a>
   </h2>
 
   <!-- ZMIANA 3: breadcrumb skrócony dla embedded -->
-  <div class="ec-breadcrumb">💬 {% trans 'Dyskusja do:' %} {{ chat_room.title }}</div>
+  <div class="ec-breadcrumb">💬 {% trans 'Discussion to:' %} {{ chat_room.title }}</div>
 
   <div class="embedded-chat"
        data-room-id="{{ chat_room.pk }}"
        data-csrf="{{ csrf_token }}">
     {# chat-embedded.js wypełni ten div #}
-    <div class="ec-loading">{% trans 'Łączenie…' %}</div>
+    <div class="ec-loading">{% trans 'Connecting…' %}</div>
   </div>
 </section>
 

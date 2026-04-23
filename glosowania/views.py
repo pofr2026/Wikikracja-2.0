@@ -439,7 +439,7 @@ def parameters(request: HttpRequest):
 def _apply_sort(queryset, sort, order='desc'):
     """Zastosuj sortowanie do querysetu Decyzja."""
     p = '' if order == 'asc' else '-'
-    if sort == 'podpisy':
+    if sort == 'signatures':
         return queryset.order_by(f'{p}ile_osob_podpisalo', '-data_powstania')
     elif sort == 'buzz':
         return queryset.annotate(chat_msg_count=Count('chat_room__messages', distinct=True)).order_by(f'{p}chat_msg_count', '-data_powstania')

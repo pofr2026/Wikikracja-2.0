@@ -17,20 +17,20 @@ const room_template = `
 
   <div class="chat-breadcrumb-row">
     <div class="chat-breadcrumb" id="chat-breadcrumb" aria-label="Lokalizacja"></div>
-    <div class="chat-sort-toolbar" id="chat-sort-toolbar" role="toolbar" aria-label="${_("Sortowanie i filtr")}">
+    <div class="chat-sort-toolbar" id="chat-sort-toolbar" role="toolbar" aria-label="${_("Sorting and filter")}">
       <button type="button" class="sort-btn active" id="chat-sort-date" data-sort="date" data-order="desc">
         <i class="fas fa-clock fa-fw"></i>
-        <span>${_("Data")}</span>
+        <span>${_("Date")}</span>
         <i class="fas fa-arrow-down sort-arrow"></i>
       </button>
       <button type="button" class="sort-btn" id="chat-sort-likes" data-sort="likes" data-order="desc">
         <i class="fas fa-thumbs-up fa-fw"></i>
-        <span>${_("Lajki")}</span>
+        <span>${_("Likes")}</span>
         <i class="fas fa-arrow-down sort-arrow" style="visibility:hidden"></i>
       </button>
       <button type="button" class="sort-btn" id="chat-filter-popular" data-filter="popular">
         <i class="fas fa-fire fa-fw"></i>
-        <span>${_("Popularne")}</span>
+        <span>${_("Popular")}</span>
       </button>
     </div>
   </div>
@@ -70,8 +70,8 @@ const room_template = `
 
       <!-- Rich text input -->
       <div id="message-input" class="message-input-rich" contenteditable="true"
-           role="textbox" aria-multiline="true" aria-label="${_("Divide the message into several parts...")}"
-           data-placeholder="${_("Divide the message into several parts...")}"></div>
+           role="textbox" aria-multiline="true" aria-label="${_("Reply to the appropriate message...")}"
+           data-placeholder="${_("Reply to the appropriate message...")}"></div>
 
       <!-- Send button -->
       <button class='send-message chat-control btn btn-primary'>

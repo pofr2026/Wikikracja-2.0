@@ -43,7 +43,7 @@
       {% if active %}
       <a href="{% url 'chat:open_dm' pk=b.uid.pk %}" class="proposal-chat-link ms-2" style="font-size:.78rem;">
         <i class="fas fa-comment-dots"></i>
-        <span>{% trans 'Wyślij prywatną wiadomość' %}</span>
+        <span>{% trans 'Send a private message' %}</span>
       </a>
       {% endif %}
     </div>
@@ -137,7 +137,7 @@
       <button class="btn btn-outline-secondary btn-sm citizen-section-btn"
               data-url="{% url 'obywatele:citizen_zalozono' pk=b.uid.pk %}"
               data-target="section-zalozono">
-        <i class="fas fa-plus-circle me-1"></i>{% trans "Założone" %}
+        <i class="fas fa-plus-circle me-1"></i>{% trans "Founded" %}
       </button>
     </div>
     <div id="section-czaty" class="citizen-section" style="display:none;"></div>

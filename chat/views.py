@@ -195,28 +195,22 @@ def upload_image(request: HttpRequest):
 
 def get_translations():
     strings = [
-        "Click here to enable notifications",
         "Today",
         "Yesterday",
+        "Tomorrow",
         "Anonymous",
         "Enable Notifications",
-        "Chat works better with notifications. You can allow them to see new messages even beyond chat room.",
-        "Do you want to receive notifications?",
-        "If nothing happens, you may have ignored permission prompt too many times. Check your browser settings to enable them.",
         "Yes",
-        "No, don't show again",
         "edit",
         "edited",
         "Changes History",
         "Close",
-        "This room is empty, be the first one to write something.",
-        "editing: ",
         "Loading...",
         "Copy link",
         "Copy message link",
         "Link copied",
         "Could not copy link",
-        "Divide the message into several parts...",
+        "Reply to the appropriate message...",
         "Upvote",
         "Downvote",
         "Title",
@@ -241,12 +235,13 @@ def get_translations():
         "Dec",
         "Unread",
         "Show only unread rooms",
+        "Sorting and filter",
+        "Likes",
+        "Popular",
     ]
     translation = {
         x: _(x) for x in strings
     }
-    # for i in translation:
-    #     print(i, _(i))
     return translation
 
 

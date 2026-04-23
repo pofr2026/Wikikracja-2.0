@@ -63,7 +63,7 @@ class Task(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="task",
-        verbose_name=_("chat room"),
+        verbose_name=_("Chat room"),
     )
 
     objects = TaskQuerySet.as_manager()

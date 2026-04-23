@@ -50,7 +50,7 @@ async function initEmbeddedChat(container) {
                     </button>
                     <div id="ec-input-${roomId}" class="message-input-rich" role="textbox"
                          contenteditable="true" aria-multiline="true"
-                         data-placeholder="${_('Divide the message into several parts...')}"></div>
+                         data-placeholder="${_('Reply to the appropriate message...')}"></div>
                     <button class="send-message chat-control btn btn-primary ec-send-btn" id="ec-send-${roomId}" type="button">
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -509,7 +509,7 @@ async function initEmbeddedChat(container) {
             return;
         }
 
-        // Głosowanie
+        // Voting
         const voteBtn = e.target.closest('.msg-vote');
         if (voteBtn && joined) {
             const isAdd = !voteBtn.classList.contains('active');

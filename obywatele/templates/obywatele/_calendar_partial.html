@@ -4,17 +4,17 @@
     <i class="fas fa-calendar-days"></i>{{ cal_month_name }} {{ cal_year }}
   </span>
   <div class="d-flex align-items-center gap-2">
-    <button class="btn btn-sm btn-outline-secondary cal-nav" data-month="{{ prev_month }}" title="{% trans 'Poprzedni miesiąc' %}">
+    <button class="btn btn-sm btn-outline-secondary cal-nav" data-month="{{ prev_month }}" title="{% trans 'Previous month' %}">
       <i class="fas fa-chevron-left"></i>
     </button>
-    <button class="btn btn-sm btn-outline-secondary cal-nav" data-month="{{ next_month }}" title="{% trans 'Następny miesiąc' %}">
+    <button class="btn btn-sm btn-outline-secondary cal-nav" data-month="{{ next_month }}" title="{% trans 'Next month' %}">
       <i class="fas fa-chevron-right"></i>
     </button>
-    <button class="btn btn-sm btn-outline-secondary cal-nav" data-month="" title="{% trans 'Wróć do bieżącego miesiąca' %}">
-      {% trans "Dziś" %}
+    <button class="btn btn-sm btn-outline-secondary cal-nav" data-month="" title="{% trans 'Return to the current month' %}">
+      {% trans "Today" %}
     </button>
     <a href="{% url 'events:list' %}" class="btn btn-sm btn-outline-primary ms-1">
-      {% trans "Pełny kalendarz" %} &rarr;
+      {% trans "Full calendar" %} &rarr;
     </a>
   </div>
 </div>
@@ -22,13 +22,13 @@
   <table class="cal-table">
     <thead>
       <tr>
-        <th>{% trans "Pn" %}</th>
-        <th>{% trans "Wt" %}</th>
-        <th>{% trans "Śr" %}</th>
-        <th>{% trans "Cz" %}</th>
-        <th>{% trans "Pt" %}</th>
-        <th>{% trans "So" %}</th>
-        <th>{% trans "Nd" %}</th>
+        <th>{% trans "Mo" %}</th>
+        <th>{% trans "Tu" %}</th>
+        <th>{% trans "We" %}</th>
+        <th>{% trans "Th" %}</th>
+        <th>{% trans "Fr" %}</th>
+        <th>{% trans "Sa" %}</th>
+        <th>{% trans "Su" %}</th>
       </tr>
     </thead>
     <tbody>

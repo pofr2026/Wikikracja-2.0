@@ -39,7 +39,7 @@ class Event(models.Model):
 
     title = models.CharField(max_length=200, verbose_name=_('Title'), help_text=_('Enter a descriptive name for the event'))
     description = models.TextField(blank=True, verbose_name=_('Description'), help_text=_('Optional description of the event'))
-    link = models.URLField(blank=True, verbose_name=_('Link do spotkania'), help_text=_('Optional link to event details, registration, or location'))
+    link = models.URLField(blank=True, verbose_name=_('Link to the meeting'), help_text=_('Optional link to event details, registration, or location'))
     place = models.CharField(max_length=200, blank=True, verbose_name=_('Place'), help_text=_('Optional event location or venue'))
     start_date = models.DateTimeField(verbose_name=_('Start Date'), help_text=_('When does the event start?'))
     end_date = models.DateTimeField(blank=True, null=True, verbose_name=_('End Date'), help_text=_('When does the event end? (optional)'))

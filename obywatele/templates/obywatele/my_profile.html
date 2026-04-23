@@ -120,13 +120,13 @@ updateThemeBtns(localStorage.getItem('app-theme') || 'dark');
 
       <div class="d-flex flex-wrap gap-2 mt-3">
         <a href="{% url 'account_change_password' %}" class="btn btn-sm btn-outline-secondary">
-          <i class="fas fa-key me-1"></i>{% trans "Zmień hasło" %}
+          <i class="fas fa-key me-1"></i>{% trans "Change password" %}
         </a>
         <a href="{% url 'obywatele:change_email' %}" class="btn btn-sm btn-outline-secondary">
-          <i class="fas fa-envelope me-1"></i>{% trans "Zmień email" %}
+          <i class="fas fa-envelope me-1"></i>{% trans "Change email" %}
         </a>
         <a href="{% url 'obywatele:change_username' %}" class="btn btn-sm btn-outline-secondary">
-          <i class="fas fa-at me-1"></i>{% trans "Zmień nazwę użytkownika" %}
+          <i class="fas fa-at me-1"></i>{% trans "Change username" %}
         </a>
       </div>
     </div>
@@ -137,7 +137,7 @@ updateThemeBtns(localStorage.getItem('app-theme') || 'dark');
     <div class="card-header d-flex align-items-center justify-content-between">
       <span class="section-heading">{% trans "Personal Data" %} &amp; {% trans "Resources" %}</span>
       <a href="{% url 'obywatele:my_assets' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-pen me-1"></i>{% trans "Edytuj" %}
+        <i class="fas fa-pen me-1"></i>{% trans "Edit" %}
       </a>
     </div>
     <div class="card-body">
@@ -204,19 +204,19 @@ updateThemeBtns(localStorage.getItem('app-theme') || 'dark');
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <button type="button" id="theme-btn-dark" class="btn btn-sm btn-outline-secondary"
                 onclick="toggleTheme('dark');">
-          <i class="fas fa-moon me-1"></i>{% trans "Ciemny" %}
+          <i class="fas fa-moon me-1"></i>{% trans "Dark" %}
         </button>
         <button type="button" id="theme-btn-light" class="btn btn-sm btn-outline-secondary"
                 onclick="toggleTheme('light');">
-          <i class="fas fa-sun me-1"></i>{% trans "Jasny" %}
+          <i class="fas fa-sun me-1"></i>{% trans "Bright" %}
         </button>
         <button type="button" id="theme-btn-civic" class="btn btn-sm btn-outline-secondary"
                 onclick="toggleTheme('civic');">
-          <i class="fas fa-landmark me-1"></i>{% trans "Obywatelski" %}
+          <i class="fas fa-landmark me-1"></i>{% trans "Civil" %}
         </button>
         <button type="button" id="theme-btn-official" class="btn btn-sm btn-outline-secondary"
                 onclick="toggleTheme('official');">
-          <i class="fas fa-building-columns me-1"></i>{% trans "Oficjalny" %}
+          <i class="fas fa-building-columns me-1"></i>{% trans "Official" %}
         </button>
       </div>
     </div>

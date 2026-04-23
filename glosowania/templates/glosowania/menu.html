@@ -7,7 +7,7 @@
 <nav class="stepper-nav">
 
   {# Info ─ wyróżniony, pierwszy #}
-  <a href="{% url 'glosowania:parameters' %}" class="stepper-info-btn" title="{% trans 'Jak działają głosowania?' %}">
+  <a href="{% url 'glosowania:parameters' %}" class="stepper-info-btn" title="{% trans 'How do votes work?' %}">
     <i class="fas fa-circle-info"></i>
   </a>
 
@@ -17,14 +17,14 @@
   <div class="stepper-step-wrap {% if p == '/glosowania/proposition/' %}active{% endif %}">
     <a href="{% url 'glosowania:proposition' %}" class="stepper-step">
       <span class="stepper-step-num">1</span>
-      <span>{% trans 'Propozycje' %}</span>
+      <span>{% trans 'Suggestions' %}</span>
     </a>
   </div>
 
   <div class="stepper-step-wrap {% if p == '/glosowania/discussion/' %}active{% endif %}">
     <a href="{% url 'glosowania:discussion' %}" class="stepper-step">
       <span class="stepper-step-num">2</span>
-      <span>{% trans 'Dyskusja' %}</span>
+      <span>{% trans 'Discussion' %}</span>
     </a>
   </div>
 
@@ -38,16 +38,16 @@
   <div class="stepper-step-wrap {% if p == '/glosowania/approved/' %}active{% endif %}">
     <a href="{% url 'glosowania:approved' %}" class="stepper-step">
       <span class="stepper-step-num">4</span>
-      <span>{% trans 'Zatwierdzone' %}</span>
+      <span>{% trans 'Approved' %}</span>
     </a>
   </div>
 
-  {# Separator + Odrzucone (poza ścieżką) #}
+  {# Separator + Rejected (poza ścieżką) #}
   <span class="stepper-sep"></span>
   <a href="{% url 'glosowania:rejected' %}"
      class="stepper-rejected {% if p == '/glosowania/rejected/' %}active{% endif %}">
     <i class="fas fa-ban fa-fw"></i>
-    <span>{% trans 'Odrzucone' %}</span>
+    <span>{% trans 'Rejected' %}</span>
   </a>
 
   {% endwith %}

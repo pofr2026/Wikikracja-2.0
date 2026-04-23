@@ -404,14 +404,14 @@ def activity_page(request):
         all_items.sort(key=lambda x: x['timestamp'], reverse=(order == 'desc'))
 
     content_types = [
-        ('', _('Wszystkie')),
-        ('post', _('Ogłoszenia')),
-        ('task', _('Zadania')),
-        ('decision', _('Głosowania')),
-        ('event', _('Kalendarz')),
-        ('citizen', _('Obywatele')),
-        ('book', _('Biblioteka')),
-        ('room_messages', _('Czat')),
+        ('', _('All')),
+        ('post', _('Announcements')),
+        ('task', _('Tasks')),
+        ('decision', _('Votings')),
+        ('event', _('Calendar')),
+        ('citizen', _('Citizens')),
+        ('book', _('Library')),
+        ('room_messages', _('Chat')),
     ]
 
     return render(request, 'home/activity.html', {
@@ -683,7 +683,7 @@ def global_search(request: HttpRequest):
                     'url': f'/tasks/{obj.pk}/',
                 })
 
-        # ── Voting / decisions – all statuses (1=Propozycja … 5=Zatwierdzone) ──
+        # ── Voting / decisions – all statuses (1=Proposal … 5=Approved) ──
         if 'decision' in active_cats:
 
             # 1. Search main decision fields
@@ -705,7 +705,7 @@ def global_search(request: HttpRequest):
                 elif q_low in (obj.args_against or '').lower():
                     matched_field = str(_('argument against'))
                 elif q_low in (obj.uzasadnienie or '').lower():
-                    matched_field = str(_('reasoning'))
+                    matched_field = str(_('Reasoning'))
 
                 snippet = strip_tags(obj.tresc or obj.uzasadnienie or '') or ''
                 results.append({
@@ -726,7 +726,7 @@ def global_search(request: HttpRequest):
                 arg_type_label = (str(_('argument for')) if arg.argument_type == 'FOR' else str(_('argument against')))
                 status_label = STATUS_LABELS.get(arg.decyzja.status, '')
                 url = f'/glosowania/details/{arg.decyzja.pk}/'
-                author_name = arg.author.username if arg.author else str(_('unknown'))
+                author_name = arg.author.username if arg.author else str(_('Unknown'))
                 results.append({
                     'cat': 'decision',
                     'type': _('Voting'),

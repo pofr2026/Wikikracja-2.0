@@ -11,12 +11,12 @@
       <a href="?filter=unread&sort={{ sort }}&order={{ order }}"
          class="sort-btn {% if filter_unread %}active{% endif %}"
          style="color:#60a5fa;border-color:rgba(96,165,250,.35);{% if filter_unread %}background:rgba(96,165,250,.12);{% endif %}">
-        <i class="fas fa-bell"></i>{% trans "Nieprzeczytane" %}
+        <i class="fas fa-bell"></i>{% trans "Unread" %}
         {% if unread_count %}<span style="font-size:.7rem;">({{ unread_count }})</span>{% endif %}
       </a>
       <a href="?sort={{ sort }}&order={{ order }}"
          class="sort-btn {% if not ct_filter and not filter_unread %}active{% endif %}">
-        {% trans "Wszystkie" %}
+        {% trans "All" %}
       </a>
       {% for ct_val, ct_label in content_types %}{% if ct_val %}
       <a href="?type={{ ct_val }}&sort={{ sort }}&order={{ order }}"
@@ -32,16 +32,16 @@
 
     <button type="button" class="sort-btn" id="btn-mark-all"
             style="color:#60a5fa;border-color:rgba(96,165,250,.35);">
-      <i class="fas fa-check-double"></i>{% trans "Oznacz jako przeczytane" %}
+      <i class="fas fa-check-double"></i>{% trans "Mark as read" %}
     </button>
 
     <span class="toolbar-divider"></span>
 
     <div class="toolbar-sort">
-      <span class="toolbar-sort-label">{% trans "Sortuj" %}:</span>
+      <span class="toolbar-sort-label">{% trans "Sort" %}:</span>
       <a href="?type={{ ct_filter }}&sort=date&order={% if sort == 'date' and order == 'desc' %}asc{% else %}desc{% endif %}{% if filter_unread %}&filter=unread{% endif %}"
          class="sort-btn {% if sort == 'date' %}active{% endif %}">
-        {% trans "Data" %}
+        {% trans "Date" %}
         {% if sort == 'date' %}<i class="fas fa-arrow-{% if order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>{% endif %}
       </a>
     </div>
@@ -49,17 +49,17 @@
     <span class="toolbar-divider"></span>
 
     <div class="toolbar-view">
-      <button class="view-toggle-btn" id="btn-list" onclick="setActivityView('list')" title="{% trans 'Lista' %}">
+      <button class="view-toggle-btn" id="btn-list" onclick="setActivityView('list')" title="{% trans 'List' %}">
         <i class="fas fa-list"></i>
       </button>
-      <button class="view-toggle-btn" id="btn-grid" onclick="setActivityView('grid')" title="{% trans 'Siatka' %}">
+      <button class="view-toggle-btn" id="btn-grid" onclick="setActivityView('grid')" title="{% trans 'Grid' %}">
         <i class="fas fa-grip"></i>
       </button>
     </div>
 
   </div>
 
-  {# ── Lista ── #}
+  {# ── List ── #}
   <div class="card">
     <div class="activity-list" id="activity-list">
       {% for item in feed_items %}
@@ -98,7 +98,7 @@
       {% empty %}
       <div class="p-5 text-center">
         <i class="fas fa-inbox fa-2x d-block mb-2" style="color:var(--text-muted);opacity:.35;"></i>
-        <span style="font-size:.875rem;color:var(--text-muted);">{% trans "Brak aktywności" %}</span>
+        <span style="font-size:.875rem;color:var(--text-muted);">{% trans "No activity" %}</span>
       </div>
       {% endfor %}
     </div>

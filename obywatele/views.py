@@ -1,8 +1,9 @@
 import calendar as cal_mod
+import datetime
 import json
 import logging
 import time
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
 from allauth.account.models import EmailAddress
 from allauth.account.signals import email_confirmed, user_signed_up
@@ -1220,7 +1221,7 @@ def citizen_zalozono(request: HttpRequest, pk: int):
         items.append({
             'title': t.title,
             'ts': t.created_at,
-            'label': _('Zadanie'),
+            'label': _('Task'),
             'url': reverse('tasks:detail', kwargs={
                 'pk': t.pk
             }),
@@ -1230,7 +1231,7 @@ def citizen_zalozono(request: HttpRequest, pk: int):
         items.append({
             'title': d.title or '—',
             'ts': datetime.datetime(d.data_powstania.year, d.data_powstania.month, d.data_powstania.day, tzinfo=datetime.timezone.utc) if d.data_powstania else None,
-            'label': _('Propozycja głosowania'),
+            'label': _('Voting proposal'),
             'url': reverse('glosowania:details', kwargs={
                 'pk': d.pk
             }),

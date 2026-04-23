@@ -58,10 +58,9 @@
     <!-- Logo -->
     <div class="sidebar-logo">
       <a href="{% url 'home' %}" style="text-decoration:none;">
-        <span class="logo-title"><i class="fas fa-fw fa-building-columns"></i><span class="logo-label ms-1">{% trans "W Lobby" %}</span></span>
-        <span class="logo-sub">{% trans "Obywatelskie" %}</span>
+        <span class="logo-title"><i class="fas fa-fw fa-building-columns"></i><span class="logo-label ms-1">{{ request.site.name }}</span></span>
+        <a href="{% url 'site_admin' %}" style="text-decoration:none;"><span class="logo-sub">v.{{ app_version }}</span></a>
       </a>
-      <a href="{% url 'site_admin' %}" class="sidebar-version-link">Wikikracja v.{{ app_version }}</a>
     </div>
 
     <!-- Main navigation -->
@@ -70,10 +69,10 @@
 
         <li class="nav-item">
           <a href="{% url 'home' %}"
-             title="{% trans 'Pulpit' %}"
+             title="{% trans 'Desktop' %}"
              class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
             <i class="fas fa-fw fa-house nav-icon"></i>
-            <span class="nav-text">{% trans "Pulpit" %}</span>
+            <span class="nav-text">{% trans "Desktop" %}</span>
             {% if unread_items %}
               <span class="nav-badge">{{ unread_items|length }}</span>
             {% endif %}
@@ -82,37 +81,37 @@
 
         <li class="nav-item">
           <a href="{% url 'glosowania:proposition' %}"
-             title="{% trans 'Agora / Demokracja' %}"
+             title="{% trans 'Agora / Democracy' %}"
              class="{% if request.resolver_match.namespace == 'glosowania' or request.resolver_match.namespace == 'board' %}active{% endif %}">
             <i class="fas fa-fw fa-landmark nav-icon"></i>
-            <span class="nav-text">{% trans "Agora / Demokracja" %}</span>
+            <span class="nav-text">{% trans "Agora / Democracy" %}</span>
           </a>
         </li>
 
         <li class="nav-item">
           <a href="{% url 'tasks:list' %}"
-             title="{% trans 'Działanie' %}"
+             title="{% trans 'Action' %}"
              class="{% if request.resolver_match.namespace == 'tasks' or request.resolver_match.namespace == 'events' %}active{% endif %}">
             <i class="fas fa-fw fa-bolt nav-icon"></i>
-            <span class="nav-text">{% trans "Działanie" %}</span>
+            <span class="nav-text">{% trans "Action" %}</span>
           </a>
         </li>
 
         <li class="nav-item">
           <a href="{% url 'elibrary:book_list' %}"
-             title="{% trans 'Baza Wiedzy' %}"
+             title="{% trans 'Knowledge Base' %}"
              class="{% if request.resolver_match.namespace == 'elibrary' %}active{% endif %}">
             <i class="fas fa-fw fa-book nav-icon"></i>
-            <span class="nav-text">{% trans "Baza Wiedzy" %}</span>
+            <span class="nav-text">{% trans "Knowledge Base" %}</span>
           </a>
         </li>
 
         <li class="nav-item">
           <a href="{% url 'obywatele:wspolnota' %}"
-             title="{% trans 'Wspólnota' %}"
+             title="{% trans 'Community' %}"
              class="{% if request.resolver_match.namespace == 'obywatele' and request.resolver_match.url_name != 'my_profile' and request.resolver_match.url_name != 'haslo' and request.resolver_match.url_name != 'my_assets' and request.resolver_match.url_name != 'change_email' and request.resolver_match.url_name != 'change_username' %}active{% endif %}">
             <i class="fas fa-fw fa-users nav-icon"></i>
-            <span class="nav-text">{% trans "Wspólnota" %}</span>
+            <span class="nav-text">{% trans "Community" %}</span>
           </a>
         </li>
 
@@ -124,16 +123,16 @@
       <ul class="list-unstyled mb-0">
         <li class="nav-item">
           <a href="{% url 'obywatele:my_profile' %}"
-             title="{% trans 'Ustawienia' %}"
+             title="{% trans 'Settings' %}"
              class="{% if request.resolver_match.url_name == 'my_profile' or request.resolver_match.url_name == 'haslo' or request.resolver_match.url_name == 'my_assets' or request.resolver_match.url_name == 'change_email' or request.resolver_match.url_name == 'change_username' %}active{% endif %}">
             <i class="fas fa-fw fa-gear nav-icon"></i>
-            <span class="nav-text">{% trans "Ustawienia" %}</span>
+            <span class="nav-text">{% trans "Settings" %}</span>
           </a>
         </li>
         <li class="nav-item">
-          <a href="{% url 'account_logout' %}" title="{% trans 'Wyloguj' %}">
+          <a href="{% url 'account_logout' %}" title="{% trans 'Log out' %}">
             <i class="fas fa-fw fa-right-from-bracket nav-icon"></i>
-            <span class="nav-text">{% trans "Wyloguj" %}</span>
+            <span class="nav-text">{% trans "Log out" %}</span>
           </a>
         </li>
       </ul>
@@ -151,15 +150,15 @@
       {% endif %}
       <div class="user-info">
         <span class="user-name">{{ user.username }}</span>
-        <span class="user-role">{% trans "Obywatel" %}</span>
+        <span class="user-role">{% trans "Citizen" %}</span>
       </div>
     </a>
 
     <!-- Collapse toggle -->
     <button class="sidebar-toggle-btn d-none d-md-flex" id="sidebar-collapse-btn"
-            title="{% trans 'Zwiń/rozwiń menu' %}">
+            title="{% trans 'Collapse/expand menu' %}">
       <i class="fas fa-angles-left" id="sidebar-collapse-icon"></i>
-      <span class="sidebar-toggle-label ms-2">{% trans "Zwiń" %}</span>
+      <span class="sidebar-toggle-label ms-2">{% trans "Collapse" %}</span>
     </button>
 
   </aside>
@@ -178,17 +177,17 @@
         <button class="btn btn-sm d-md-none me-2 p-1" id="sidebar-toggle">
           <i class="fas fa-bars"></i>
         </button>
-        <a href="{% url 'home' %}">{% trans "Lobby Obywatelskie" %}</a>
+        <a href="{% url 'home' %}">{{ request.site.name }}</a>
         <span class="sep">›</span>
         <span class="current">
-          {% if request.resolver_match.url_name == 'home' %}{% trans "Pulpit" %}
-          {% elif request.resolver_match.namespace == 'glosowania' %}{% trans "Głosowania" %}
+          {% if request.resolver_match.url_name == 'home' %}{% trans "Desktop" %}
+          {% elif request.resolver_match.namespace == 'glosowania' %}{% trans "Votings" %}
           {% elif request.resolver_match.namespace == 'board' %}{% trans "Board" %}
-          {% elif request.resolver_match.namespace == 'tasks' %}{% trans "Zadania" %}
-          {% elif request.resolver_match.namespace == 'events' %}{% trans "Kalendarz" %}
-          {% elif request.resolver_match.namespace == 'elibrary' %}{% trans "Biblioteka" %}
-          {% elif request.resolver_match.namespace == 'obywatele' %}{% trans "Obywatele" %}
-          {% elif request.resolver_match.namespace == 'bookkeeping' %}{% trans "Księgowość" %}
+          {% elif request.resolver_match.namespace == 'tasks' %}{% trans "Tasks" %}
+          {% elif request.resolver_match.namespace == 'events' %}{% trans "Calendar" %}
+          {% elif request.resolver_match.namespace == 'elibrary' %}{% trans "Library" %}
+          {% elif request.resolver_match.namespace == 'obywatele' %}{% trans "Citizens" %}
+          {% elif request.resolver_match.namespace == 'bookkeeping' %}{% trans "Bookkeeping" %}
           {% elif request.resolver_match.namespace == 'chat' %}{% trans "Chat" %}
           {% else %}…{% endif %}
         </span>
@@ -205,11 +204,11 @@
                box-shadow:0 8px 32px rgba(0,0,0,.45);">
             <div class="d-flex justify-content-between align-items-center mb-2">
               <span style="font-size:.75rem;color:var(--text-muted);">
-                <i class="fas fa-filter me-1"></i>{% trans "Szukaj w kategoriach" %}
+                <i class="fas fa-filter me-1"></i>{% trans "Search in categories" %}
               </span>
               <button type="button" id="topbar-select-all"
                       style="font-size:.72rem;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;">
-                {% trans "Wszędzie" %}
+                {% trans "Everywhere" %}
               </button>
             </div>
             <div class="d-flex flex-wrap gap-2">
@@ -219,23 +218,23 @@
               </label>
               <label class="tb-chip" data-color="warning">
                 <input type="checkbox" name="cat" value="task" class="d-none tb-cb">
-                <i class="fas fa-list-check me-1"></i>{% trans "Zadania" %}
+                <i class="fas fa-list-check me-1"></i>{% trans "Tasks" %}
               </label>
               <label class="tb-chip" data-color="danger">
                 <input type="checkbox" name="cat" value="decision" class="d-none tb-cb">
-                <i class="fas fa-landmark me-1"></i>{% trans "Głosowania" %}
+                <i class="fas fa-landmark me-1"></i>{% trans "Votings" %}
               </label>
               <label class="tb-chip" data-color="success">
                 <input type="checkbox" name="cat" value="event" class="d-none tb-cb">
-                <i class="fas fa-calendar me-1"></i>{% trans "Wydarzenie" %}
+                <i class="fas fa-calendar me-1"></i>{% trans "Event" %}
               </label>
               <label class="tb-chip" data-color="info">
                 <input type="checkbox" name="cat" value="book" class="d-none tb-cb">
-                <i class="fas fa-book me-1"></i>{% trans "Biblioteka" %}
+                <i class="fas fa-book me-1"></i>{% trans "Library" %}
               </label>
               <label class="tb-chip" data-color="secondary">
                 <input type="checkbox" name="cat" value="citizen" class="d-none tb-cb">
-                <i class="fas fa-users me-1"></i>{% trans "Obywatele" %}
+                <i class="fas fa-users me-1"></i>{% trans "Citizens" %}
               </label>
               <label class="tb-chip" data-color="primary">
                 <input type="checkbox" name="cat" value="chat" class="d-none tb-cb">
@@ -248,9 +247,9 @@
           <div style="display:flex;gap:.35rem;align-items:center;">
             <input type="search" name="q" id="topbar-q" class="search-box"
                    value="{{ request.GET.q|default:'' }}"
-                   placeholder="{% trans 'Szukaj…' %}" aria-label="{% trans 'Szukaj' %}">
+                   placeholder="{% trans 'Search' %}…" aria-label="{% trans 'Search' %}">
             <button type="button" id="topbar-filter-btn"
-                    title="{% trans 'Filtry wyszukiwania' %}"
+                    title="{% trans 'Search filters' %}"
                     style="background:transparent;border:1px solid var(--border);border-radius:.4rem;
                            padding:.36rem .55rem;cursor:pointer;color:var(--text-muted);
                            transition:color .15s,border-color .15s;flex-shrink:0;">
@@ -269,7 +268,7 @@
       </button>
 
       <!-- Notification bell -->
-      <a href="{% url 'activity' %}" class="notif-bell" title="{% trans 'Aktywność' %}">
+      <a href="{% url 'activity' %}" class="notif-bell" title="{% trans 'Activity' %}">
         <i class="far fa-bell"></i>
         {% if unread_items %}<span class="notif-dot"></span>{% endif %}
       </a>
@@ -282,11 +281,11 @@
     <nav class="topbar">
       <div class="topbar-breadcrumb">
         <a href="{% url 'home' %}" style="color:var(--accent);font-weight:700;font-size:1rem;">
-          <i class="fas fa-building-columns me-1"></i>{% trans "W Lobby" %}
+          <i class="fas fa-building-columns me-1"></i>{{ request.site.name }}
         </a>
       </div>
       <a href="{% url 'login' %}" class="btn btn-sm btn-outline-secondary me-1">{% trans "Login" %}</a>
-      <a href="{% url 'account_signup' %}" class="btn-cta">{% trans "Zarejestruj się" %}</a>
+      <a href="{% url 'account_signup' %}" class="btn-cta">{% trans "Register" %}</a>
     </nav>
     {% endif %}
 

@@ -9,14 +9,14 @@
     <h4 class="mb-0" style="color:var(--text-primary);">
       <i class="fas fa-magnifying-glass me-2" style="color:var(--accent);"></i>
       {% if query %}
-        {% blocktrans with q=query %}Wyniki dla „{{ q }}"{% endblocktrans %}
+        {% blocktrans with q=query %}Results for „{{ q }}"{% endblocktrans %}
       {% else %}
-        {% trans "Wyszukiwanie" %}
+        {% trans "Search" %}
       {% endif %}
     </h4>
     {% if query %}
       <span class="badge" style="background:var(--accent-muted);color:var(--accent);font-size:.8rem;padding:.4rem .75rem;">
-        {{ results|length }} {% trans "wyników" %}
+        {{ results|length }} {% trans "results" %}
       </span>
     {% endif %}
   </div>
@@ -30,18 +30,18 @@
         <input type="search" name="q" id="sq" value="{{ query }}"
                class="form-control"
                style="background:var(--bg-base);border-color:var(--border);color:var(--text-primary);"
-               placeholder="{% trans 'Szukaj po tytule, treści, autorze…' %}"
+               placeholder="{% trans 'Search by title, content, author…' %}"
                autofocus>
         <button class="btn fw-semibold" type="submit"
                 style="background:var(--accent);color:#111;border:none;">
-          <i class="fas fa-magnifying-glass me-1"></i>{% trans "Szukaj" %}
+          <i class="fas fa-magnifying-glass me-1"></i>{% trans "Search" %}
         </button>
       </div>
 
       <!-- Category filter chips -->
       <div class="d-flex flex-wrap gap-2 align-items-center">
         <span style="color:var(--text-muted);font-size:.78rem;flex-shrink:0;">
-          <i class="fas fa-filter me-1"></i>{% trans "Szukaj w:" %}
+          <i class="fas fa-filter me-1"></i>{% trans "Search in:" %}
         </span>
 
         {% comment %}
@@ -59,31 +59,31 @@
         <label class="sp-chip{% if 'task' in active_cats %} on{% endif %}" data-color="warning">
           <input type="checkbox" name="cat" value="task" class="d-none sp-cb"
                  {% if 'task' in active_cats %}checked{% endif %}>
-          <i class="fas fa-list-check me-1"></i>{% trans "Zadania" %}
+          <i class="fas fa-list-check me-1"></i>{% trans "Tasks" %}
         </label>
 
         <label class="sp-chip{% if 'decision' in active_cats %} on{% endif %}" data-color="danger">
           <input type="checkbox" name="cat" value="decision" class="d-none sp-cb"
                  {% if 'decision' in active_cats %}checked{% endif %}>
-          <i class="fas fa-landmark me-1"></i>{% trans "Głosowania" %}
+          <i class="fas fa-landmark me-1"></i>{% trans "Votings" %}
         </label>
 
         <label class="sp-chip{% if 'event' in active_cats %} on{% endif %}" data-color="success">
           <input type="checkbox" name="cat" value="event" class="d-none sp-cb"
                  {% if 'event' in active_cats %}checked{% endif %}>
-          <i class="fas fa-calendar me-1"></i>{% trans "Wydarzenie" %}
+          <i class="fas fa-calendar me-1"></i>{% trans "Event" %}
         </label>
 
         <label class="sp-chip{% if 'book' in active_cats %} on{% endif %}" data-color="info">
           <input type="checkbox" name="cat" value="book" class="d-none sp-cb"
                  {% if 'book' in active_cats %}checked{% endif %}>
-          <i class="fas fa-book me-1"></i>{% trans "Biblioteka" %}
+          <i class="fas fa-book me-1"></i>{% trans "Library" %}
         </label>
 
         <label class="sp-chip{% if 'citizen' in active_cats %} on{% endif %}" data-color="secondary">
           <input type="checkbox" name="cat" value="citizen" class="d-none sp-cb"
                  {% if 'citizen' in active_cats %}checked{% endif %}>
-          <i class="fas fa-users me-1"></i>{% trans "Obywatele" %}
+          <i class="fas fa-users me-1"></i>{% trans "Citizens" %}
         </label>
 
         <label class="sp-chip{% if 'chat' in active_cats %} on{% endif %}" data-color="primary">
@@ -96,7 +96,7 @@
                 class="btn btn-sm ms-1"
                 style="font-size:.72rem;background:transparent;border:1px solid var(--border);
                        color:var(--text-muted);padding:.25rem .6rem;">
-          {% trans "Wszędzie" %}
+          {% trans "Everywhere" %}
         </button>
       </div>
     </div>
@@ -105,14 +105,14 @@
   <!-- Results -->
   {% if not query %}
     <p style="color:var(--text-muted);">
-      {% trans "Wpisz frazę, wybierz kategorie i naciśnij Szukaj." %}
+      {% trans "Enter a phrase, select categories and press Search." %}
     </p>
 
   {% elif not results %}
     <div class="card p-4 text-center">
       <i class="fas fa-circle-xmark fa-2x mb-3" style="color:var(--text-muted);"></i>
       <p class="mb-0" style="color:var(--text-muted);">
-        {% trans "Brak wyników dla podanej frazy w wybranych kategoriach." %}
+        {% trans "No results for the specified phrase in the selected categories." %}
       </p>
     </div>
 

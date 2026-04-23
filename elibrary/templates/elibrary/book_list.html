@@ -10,33 +10,33 @@
 {# ── TOOLBAR ── #}
 <div class="proposals-toolbar mb-3">
   <a href="{% url 'board:create_post' %}" class="toolbar-add-btn">
-    <i class="fas fa-plus"></i> {% trans 'Utwórz dokument' %}
+    <i class="fas fa-plus"></i> {% trans 'Create document' %}
   </a>
 
   <a href="{% url 'elibrary:add' %}" class="toolbar-add-btn">
-    <i class="fas fa-book-medical"></i> {% trans 'Dodaj eBook' %}
+    <i class="fas fa-book-medical"></i> {% trans 'Add eBook' %}
   </a>
   <a href="{% url 'board:archive' %}" class="btn btn-sm btn-outline-secondary">
-    <i class="fas fa-box-archive me-1"></i>{% trans "Archiwum" %}
+    <i class="fas fa-box-archive me-1"></i>{% trans "Archive" %}
   </a>
   <a href="{% url 'board:category_list' %}" class="btn btn-sm btn-outline-secondary">
-    <i class="fas fa-tags me-1"></i>{% trans "Kategorie" %}
+    <i class="fas fa-tags me-1"></i>{% trans "Categories" %}
   </a>
 
   <span class="toolbar-divider"></span>
 
   <div class="toolbar-sort">
-    <span class="toolbar-sort-label">{% trans 'Sortuj:' %}</span>
+    <span class="toolbar-sort-label">{% trans 'Sort' %}:</span>
 
     {% if current_sort == 'date' %}
       <a href="{% url 'elibrary:book_list' %}?sort=date&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}"
          class="sort-btn active">
-        {% trans 'Data' %}
+        {% trans 'Date' %}
         <i class="fas fa-arrow-{% if current_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>
       </a>
     {% else %}
       <a href="{% url 'elibrary:book_list' %}?sort=date&order=desc" class="sort-btn">
-        {% trans 'Data' %}
+        {% trans 'Date' %}
       </a>
     {% endif %}
   </div>
@@ -44,10 +44,10 @@
   <span class="toolbar-divider"></span>
 
   <div class="toolbar-view">
-    <button class="view-toggle-btn" id="btn-list" onclick="setElibraryView('list')" title="{% trans 'Lista' %}">
+    <button class="view-toggle-btn" id="btn-list" onclick="setElibraryView('list')" title="{% trans 'List' %}">
       <i class="fas fa-list"></i>
     </button>
-    <button class="view-toggle-btn" id="btn-grid" onclick="setElibraryView('grid')" title="{% trans 'Siatka' %}">
+    <button class="view-toggle-btn" id="btn-grid" onclick="setElibraryView('grid')" title="{% trans 'Grid' %}">
       <i class="fas fa-grip"></i>
     </button>
   </div>
@@ -59,12 +59,12 @@
   <div class="card-header d-flex align-items-center justify-content-between gap-2">
     <span class="section-heading" style="font-size:.9rem;">
       <i class="fas fa-bullhorn me-2" style="color:var(--accent);opacity:.8;"></i>
-      {% if group.category %}{{ group.category.name }}{% else %}{% trans "Różne" %}{% endif %}
+      {% if group.category %}{{ group.category.name }}{% else %}{% trans "Miscellaneous" %}{% endif %}
     </span>
     {% if user.is_authenticated %}
     <div class="d-flex gap-2" style="position:relative;z-index:2;">
       <a href="{% url 'board:create_post' %}" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem;">
-        <i class="fas fa-plus me-1"></i>{% trans "Utwórz" %}
+        <i class="fas fa-plus me-1"></i>{% trans "Create" %}
       </a>
     </div>
     {% endif %}
@@ -162,11 +162,11 @@
 <div class="card mb-4">
   <div class="card-header">
     <span class="section-heading" style="font-size:.9rem;">
-      <i class="fas fa-bullhorn me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Ogłoszenia" %}
+      <i class="fas fa-bullhorn me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Announcements" %}
     </span>
   </div>
   <div class="card-body py-2 px-3">
-    <span style="font-size:.82rem;color:var(--text-muted);">{% trans "Brak ogłoszeń" %}</span>
+    <span style="font-size:.82rem;color:var(--text-muted);">{% trans "No announcements" %}</span>
   </div>
 </div>
 {% endfor %}
@@ -175,10 +175,10 @@
 <div class="card mb-4">
   <div class="card-header d-flex align-items-center justify-content-between gap-2">
     <span class="section-heading" style="font-size:.9rem;">
-      <i class="fas fa-book me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Biblioteka" %}
+      <i class="fas fa-book me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Library" %}
     </span>
     <a href="{% url 'elibrary:add' %}" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem;">
-      <i class="fas fa-plus me-1"></i>{% trans "Dodaj eBook" %}
+      <i class="fas fa-plus me-1"></i>{% trans "Add eBook" %}
     </a>
   </div>
 
@@ -243,7 +243,7 @@
   {% else %}
   <div class="card-body text-center py-5" style="color:var(--text-muted);">
     <i class="fas fa-book-open fa-2x d-block mb-2" style="opacity:.3;"></i>
-    <span style="font-size:.875rem;">{% trans "Biblioteka jest pusta" %}</span>
+    <span style="font-size:.875rem;">{% trans "Library is empty" %}</span>
   </div>
   {% endif %}
 </div>
