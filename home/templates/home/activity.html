@@ -63,7 +63,7 @@
   <div class="card">
     <div class="activity-list" id="activity-list">
       {% for item in feed_items %}
-      <a href="{{ item.url }}" class="feed-row">
+      <a href="{{ item.url }}" class="feed-row {% if not item.is_read %}unread-item{% endif %}" data-content-type="{{ item.content_type }}" data-object-id="{{ item.object_id }}" style="{% if not item.is_read %}background:rgba(96,165,250,.08);border-left:3px solid #60a5fa;{% endif %}">
 
         <span class="badge-status flex-shrink-0 mt-1
           {% if item.content_type == 'decision' %}badge-referendum
@@ -138,5 +138,10 @@ document.getElementById('btn-mark-all')?.addEventListener('click', function() {
     if (data.success) location.reload();
   });
 });
+
+// Initialize mark-as-read for activity page
+window.CSRF_TOKEN = '{{ csrf_token }}';
+window.MARK_AS_READ_URL = "{% url 'mark_as_read' %}";
+window.initActivityFeedMarkRead('#activity-list', '.feed-row');
 </script>
 {% endblock %}

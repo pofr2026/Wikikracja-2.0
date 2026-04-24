@@ -308,7 +308,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     applyState(localStorage.getItem(STORAGE_KEY) === 'true');
 
-
     // Toggle sidebar state on button click
     btn.addEventListener('click', function() {
         const isCollapsed = sidebar.classList.contains('collapsed');
@@ -316,3 +315,37 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem(STORAGE_KEY, String(!isCollapsed));
     });
 });
+
+// ============================================================
+// Mark activity feed items as read - shared function
+// ============================================================
+window.initActivityFeedMarkRead = function(containerSelector, linkSelector) {
+    var container = document.querySelector(containerSelector);
+    if (!container) return;
+
+    container.addEventListener('click', function(e) {
+        var link = e.target.closest(linkSelector);
+        if (!link) return;
+        e.preventDefault();
+        var contentType = link.getAttribute('data-content-type');
+        var objectId = link.getAttribute('data-object-id');
+        var url = link.getAttribute('href');
+        if (!contentType || !objectId) {
+            window.location.href = url;
+            return;
+        }
+        fetch(window.MARK_AS_READ_URL || '/mark-as-read/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': window.CSRF_TOKEN || '',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                content_type: contentType,
+                object_id: objectId
+            })
+        }).finally(function() {
+            window.location.href = url;
+        });
+    });
+};

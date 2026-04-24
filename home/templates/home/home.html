@@ -106,8 +106,8 @@
 
 {# ══ Skróty ════════════════════════════════════════════════════════════════ #}
 <div class="d-flex gap-2 flex-wrap align-items-center mb-3">
-  <a href="{% url 'activity' %}" class="badge-status" style="text-decoration:none;{% if unread_items %}background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3);{% endif %}">
-    <i class="{% if unread_items %}fas{% else %}far{% endif %} fa-bell me-1"></i>{% if unread_items %}{{ unread_items|length }}{% else %}0{% endif %}
+  <a href="{% url 'activity' %}" class="badge-status" style="text-decoration:none;{% if unread_items_no_events %}background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3);{% endif %}">
+    <i class="{% if unread_items_no_events %}fas{% else %}far{% endif %} fa-bell me-1"></i>{% if unread_items_no_events %}{{ unread_items_no_events|length }}{% else %}0{% endif %}
   </a>
   {% if chat_unread_count %}
   <a href="{% url 'chat:chat' %}" class="badge-status" style="text-decoration:none;background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3);">
@@ -153,15 +153,15 @@
         <span class="section-heading" style="font-size:.85rem;">
           <i class="fas fa-stream me-1" style="color:var(--accent);opacity:.7;"></i>{% trans "Activity" %}
         </span>
-        {% if unread_items %}
+        {% if unread_items_no_events %}
         <span class="badge-status" style="background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.3);position:relative;z-index:2;">
-          <i class="fas fa-bell me-1"></i>{{ unread_items|length }} {% trans "unread" %}
+          <i class="fas fa-bell me-1"></i>{{ unread_items_no_events|length }} {% trans "unread" %}
         </span>
         {% endif %}
       </div>
       <div class="card-body p-0" id="activity-feed-body" style="overflow:hidden;min-height:0;">
         {% for item in last_feed_items %}
-        <div class="task-dash-row d-flex align-items-center gap-2 px-3 py-2 activity-feed-row" style="min-width:0;">
+        <div class="task-dash-row d-flex align-items-center gap-2 px-3 py-2 activity-feed-row {% if not item.is_read %}unread-item{% endif %}" style="min-width:0;{% if not item.is_read %}background:rgba(96,165,250,.08);border-left:3px solid #60a5fa;{% endif %}">
           <span class="badge-status flex-shrink-0
             {% if item.content_type == 'decision' %}badge-referendum
             {% elif item.content_type == 'task' %}badge-discussion
@@ -173,6 +173,8 @@
           </span>
           <a href="{{ item.url }}"
              class="task-dash-link {% if not item.is_read %}fw-semibold{% endif %}"
+             data-content-type="{{ item.content_type }}"
+             data-object-id="{{ item.object_id }}"
              style="font-size:.82rem;color:var(--text-primary);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1;position:relative;z-index:2;transition:color .15s;"
              title="{{ item.title }}">
             {{ item.title }}
@@ -189,6 +191,12 @@
         <div id="activity-feed-more" style="display:none;font-size:.78rem;color:var(--text-muted);padding:2px 12px 4px;">…</div>
       </div>
       <a href="{% url 'activity' %}" class="stretched-link"></a>
+      <script>
+      // Initialize mark-as-read for home page activity feed
+      window.CSRF_TOKEN = '{{ csrf_token }}';
+      window.MARK_AS_READ_URL = "{% url 'mark_as_read' %}";
+      window.initActivityFeedMarkRead('#activity-feed-body', '.task-dash-link');
+      </script>
       <script>
       (function(){
         function trimActivityFeed() {

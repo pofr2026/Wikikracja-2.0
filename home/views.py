@@ -62,17 +62,6 @@ def home(request: HttpRequest):
     # Generate unified feed
     feed_items = generate_feed_items(request.user)
 
-    # Find first unread item for jump functionality
-    first_unread = None
-    unread_items = [item for item in feed_items if not item['is_read']]
-    if unread_items:
-        first_unread = unread_items[0]
-        # Mark the first unread item with ID for jumping
-        for i, item in enumerate(feed_items):
-            if item == first_unread:
-                feed_items[i]['is_first_unread'] = True
-                break
-
     # Check if we should filter to show only unread items
     # Priority: URL parameter > session (synced from localStorage)
     url_filter = request.GET.get('filter')
@@ -90,7 +79,7 @@ def home(request: HttpRequest):
         filter_unread = False
 
     if filter_unread:
-        feed_items = unread_items
+        feed_items = [item for item in feed_items if not item['is_read']]
 
     # Get counts for each section
     ongoing_count = Decyzja.objects.filter(status=3).count()
@@ -153,6 +142,9 @@ def home(request: HttpRequest):
 
     last_feed_items = [i for i in feed_items if i['content_type'] != 'event'][:6]
 
+    # Unread count without events (for home page display)
+    unread_items_no_events = [item for item in feed_items if not item['is_read'] and item['content_type'] != 'event']
+
     # Licznik nieprzeczytanych pokoi czatu
     chat_unread_count = Room.objects.filter(allowed=request.user).exclude(seen_by=request.user).count()
 
@@ -176,8 +168,7 @@ def home(request: HttpRequest):
 
     return render(request, 'home/home.html', {
         'feed_items': feed_items,
-        'first_unread': first_unread,
-        'unread_items': unread_items,
+        'unread_items_no_events': unread_items_no_events,
         'filter_unread': filter_unread,
         'chat_unread_count': chat_unread_count,
         'my_tasks_count': my_tasks_count,
@@ -808,14 +799,12 @@ def global_search(request: HttpRequest):
                     'url': f'/chat/#room_id={obj.room.pk}',
                 })
 
-    unread_items = [i for i in generate_feed_items(request.user) if not i['is_read']]
     return render(request, 'home/search.html', {
         'query': query,
         'results': results,
         'active_cats': active_cats,
         'all_cats': ALL_SEARCH_CATS,
         'selected_cats': selected,
-        'unread_items': unread_items,
     })
 
 

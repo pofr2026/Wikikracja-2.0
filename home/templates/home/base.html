@@ -73,9 +73,9 @@
              class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
             <i class="fas fa-fw fa-house nav-icon"></i>
             <span class="nav-text">{% trans "Desktop" %}</span>
-            {% if unread_items %}
+            {% comment %} {% if unread_items %}
               <span class="nav-badge">{{ unread_items|length }}</span>
-            {% endif %}
+            {% endif %} {% endcomment %}
           </a>
         </li>
 
