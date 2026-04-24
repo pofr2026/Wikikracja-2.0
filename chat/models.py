@@ -215,25 +215,13 @@ class Message(models.Model):
         related_name='replies',
     )
 
+    # JSONField to store votes as {user_id: 1/-1}
+    votes = models.JSONField(default=dict, blank=True)
+
     class Meta:
         unique_together = ('sender', 'text', 'room', 'time')
         indexes = [
             models.Index(fields=['room', 'time'], name='chat_message_room_time_asc_idx'),
-        ]
-
-
-class MessageVote(models.Model):
-    user = models.ForeignKey(User, related_name="votes", on_delete=models.CASCADE)
-    message = models.ForeignKey(Message, related_name="votes", on_delete=models.CASCADE)
-
-    vote_types = [('upvote', 'Upvote'), ('downvote', 'Downvote')]
-    vote = models.CharField(choices=vote_types, max_length=50)
-
-    class Meta:
-        # can be removed in future to make possible reactions or something like that
-        unique_together = ('user', 'message')
-        indexes = [
-            models.Index(fields=['message', 'vote'], name='chat_messagevote_msg_vote_idx'),
         ]
 
 

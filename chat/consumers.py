@@ -17,7 +17,7 @@ from zzz.utils import get_site_domain
 
 from .exceptions import ClientError
 from .group_messages import format_chat_message
-from .models import Message, MessageAttachment, MessageHistory, MessageHistoryEntry, MessageReaction, MessageReadBy, MessageVote, Room
+from .models import Message, MessageAttachment, MessageHistory, MessageHistoryEntry, MessageReaction, MessageReadBy, Room
 from .utils import HandledMessage, Handlers, OnlineUserRegistry, RoomRegistry, helper_method
 
 # HTML sanitizer config for rich text (ZMIANA 6)
@@ -961,7 +961,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def get_recent_messages(self, room_id, limit=100):
-        messages = Message.objects.filter(room=room_id).select_related('sender').prefetch_related(Prefetch('attachments', queryset=MessageAttachment.objects.all()), 'messagehistory').annotate(upvotes=Count('votes', filter=Q(votes__vote='upvote')), downvotes=Count('votes', filter=Q(votes__vote='downvote'))).order_by('-time')[:limit]
+        messages = Message.objects.filter(room=room_id).select_related('sender').prefetch_related(Prefetch('attachments', queryset=MessageAttachment.objects.all()), 'messagehistory').order_by('-time')[:limit]
 
         result = []
         for msg in reversed(list(messages)):
@@ -973,6 +973,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 attachments_of_type.append(attachment.filename)
                 attachments[attachment.type] = attachments_of_type
 
+            # Compute upvotes/downvotes from the votes JSONField
+            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
+            upvotes = sum(1 for v in votes_dict.values() if v == 1)
+            downvotes = sum(1 for v in votes_dict.values() if v == -1)
+
             result.append({
                 'id': msg.id,
                 'sender_id': msg.sender_id,
@@ -980,8 +985,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'text': msg.text,
                 'room_id': msg.room_id,
                 'anonymous': msg.anonymous,
-                'upvotes': msg.upvotes,
-                'downvotes': msg.downvotes,
+                'upvotes': upvotes,
+                'downvotes': downvotes,
                 'edited': edited,
                 'attachments': attachments,
             })
@@ -999,34 +1004,41 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         order: 'asc' or 'desc'
         popular_only: if True, only return messages with >= 1 upvote
         """
+        # Fetch messages without annotation; we'll compute upvotes/downvotes from votes JSONField
         qs = Message.objects.filter(room=room_id) \
             .select_related('sender', 'reply_to__sender') \
             .prefetch_related(
                 Prefetch('attachments', queryset=MessageAttachment.objects.all()),
                 'messagehistory'
-            ) \
-            .annotate(
-                upvotes=Count('votes', filter=Q(votes__vote='upvote')),
-                downvotes=Count('votes', filter=Q(votes__vote='downvote'))
             )
 
+        # Compute upvotes/downvotes in Python after fetching, but for sorting by likes we need to sort by upvotes count.
+        # We'll fetch all messages first, then sort manually.
+        # For large limits this might be inefficient, but limit is 100.
+        all_messages = list(qs)
+        # Compute votes count for each message
+        for msg in all_messages:
+            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
+            msg.upvotes = sum(1 for v in votes_dict.values() if v == 1)
+            msg.downvotes = sum(1 for v in votes_dict.values() if v == -1)
+
         if popular_only:
-            qs = qs.filter(upvotes__gte=1)
+            all_messages = [msg for msg in all_messages if msg.upvotes >= 1]
 
+        # Sorting
         if sort_by == 'likes':
-            order_field = 'upvotes' if order == 'asc' else '-upvotes'
-            qs = qs.order_by(order_field, '-time')
+            reverse = (order == 'desc')
+            all_messages.sort(key=lambda m: (m.upvotes, m.time), reverse=reverse)
         else:
-            order_field = 'time' if order == 'asc' else '-time'
-            qs = qs.order_by(order_field)
+            reverse = (order == 'desc')
+            all_messages.sort(key=lambda m: m.time, reverse=reverse)
 
-        messages = qs[:limit]
+        messages = all_messages[:limit]
 
         # Always display chronologically in UI (oldest first) when sorting by date desc
         if sort_by == 'date' and order == 'desc':
             messages = list(reversed(messages))
-        else:
-            messages = list(messages)
+
         if not messages:
             return {
                 'messages': [],
@@ -1045,10 +1057,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 u.id: u for u in User.objects.filter(id__in=sender_ids)
             }
 
-        # Batch fetch current user's votes for these messages in one query
-        user_votes = {
-            v.message_id: v.vote for v in MessageVote.objects.filter(user_id=user_id, message_id__in=message_ids)
-        }
+        # Build user_votes from the votes JSONField
+        user_votes = {}
+        str_user_id = str(user_id)
+        for msg in messages:
+            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
+            if str_user_id in votes_dict:
+                vote_value = votes_dict[str_user_id]
+                # Map to 'upvote' or 'downvote' string
+                user_votes[msg.id] = 'upvote' if vote_value == 1 else 'downvote'
 
         # Build message data
         result = []
@@ -1170,21 +1187,52 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def add_vote(self, event: str, message_id: int):
-        vote = MessageVote(vote=event, message_id=message_id, user=self.scope['user'])
-        vote.full_clean()  # to enforce validation of event name according to choices of MessageVote
-        vote.save()
+        """Add a vote directly to the message's votes JSONField."""
         m = Message.objects.get(pk=message_id)
-        return m.votes.filter(vote="upvote").count(), m.votes.filter(vote="downvote").count()
+        votes_dict = m.votes if isinstance(m.votes, dict) else {}
+        user_id = str(self.scope['user'].id)
+        vote_value = 1 if event == 'upvote' else -1
+        votes_dict[user_id] = vote_value
+        m.votes = votes_dict
+        m.save(update_fields=['votes'])
+
+        # Compute upvotes/downvotes from the votes JSONField
+        upvotes = sum(1 for v in votes_dict.values() if v == 1)
+        downvotes = sum(1 for v in votes_dict.values() if v == -1)
+        return upvotes, downvotes
 
     @database_sync_to_async
     def remove_vote(self, event: str, message_id: int):
-        MessageVote.objects.filter(vote=event, message_id=message_id, user=self.scope['user']).delete()
+        """Remove a vote directly from the message's votes JSONField."""
         m = Message.objects.get(pk=message_id)
-        return m.votes.filter(vote="upvote").count(), m.votes.filter(vote="downvote").count()
+        votes_dict = m.votes if isinstance(m.votes, dict) else {}
+        user_id = str(self.scope['user'].id)
+        if user_id in votes_dict:
+            del votes_dict[user_id]
+            m.votes = votes_dict
+            m.save(update_fields=['votes'])
+
+        # Compute upvotes/downvotes from the votes JSONField
+        upvotes = sum(1 for v in votes_dict.values() if v == 1)
+        downvotes = sum(1 for v in votes_dict.values() if v == -1)
+        return upvotes, downvotes
 
     @database_sync_to_async
     def get_vote(self, message_id: int):
-        return MessageVote.objects.filter(message_id=message_id, user=self.scope['user']).first()
+        """Check the votes JSONField on the message."""
+        try:
+            m = Message.objects.get(pk=message_id)
+        except Message.DoesNotExist:
+            return None
+        votes_dict = m.votes if isinstance(m.votes, dict) else {}
+        user_id = str(self.scope['user'].id)
+        if user_id in votes_dict:
+            vote_value = votes_dict[user_id]
+            # Return a dummy object with a 'vote' attribute for compatibility
+            from types import SimpleNamespace
+            vote_str = 'upvote' if vote_value == 1 else 'downvote'
+            return SimpleNamespace(vote=vote_str)
+        return None
 
     @database_sync_to_async
     def get_room_by_message(self, message_id: int):
