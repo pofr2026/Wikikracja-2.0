@@ -1,0 +1,146 @@
+# Third party imports
+from django.test import TestCase
+
+# Local folder imports
+from tasks.models import Task, TaskEvaluation, TaskVote
+from tasks.tests.utils import make_task, make_user
+
+
+# ---------------------------------------------------------------------------
+# Task model
+# ---------------------------------------------------------------------------
+class TaskModelTest(TestCase):
+    def setUp(self):
+        self.user = make_user("creator")
+        self.task = make_task(created_by=self.user)
+
+    def test_str_returns_title(self):
+        self.assertEqual(str(self.task), "Zadanie")
+
+    def test_default_status_is_active(self):
+        self.assertEqual(self.task.status, Task.Status.ACTIVE)
+
+    def test_is_active_true_for_active_task(self):
+        self.assertTrue(self.task.is_active)
+
+    def test_is_active_false_for_completed_task(self):
+        self.task.status = Task.Status.COMPLETED
+        self.task.save()
+        self.assertFalse(self.task.is_active)
+
+    def test_get_chat_room_title_clips_to_90(self):
+        task = make_task(title="A" * 100)
+        self.assertEqual(len(task.get_chat_room_title()), 90)
+
+    def test_get_chat_room_url_none_when_no_room(self):
+        self.assertIsNone(self.task.get_chat_room_url())
+
+    def test_created_by_set_null_on_user_delete(self):
+        temp = make_user("temp")
+        task = make_task(created_by=temp)
+        temp.delete()
+        task.refresh_from_db()
+        self.assertIsNone(task.created_by)
+
+    def test_assigned_to_set_null_on_user_delete(self):
+        temp = make_user("temp2")
+        task = make_task(assigned_to=temp)
+        temp.delete()
+        task.refresh_from_db()
+        self.assertIsNone(task.assigned_to)
+
+
+# ---------------------------------------------------------------------------
+# TaskQuerySet.with_metrics()
+# ---------------------------------------------------------------------------
+class TaskQuerySetMetricsTest(TestCase):
+    def setUp(self):
+        self.user = make_user("voter")
+        self.other = make_user("other")
+        self.task = make_task(created_by=self.user)
+
+    def test_with_metrics_votes_up(self):
+        TaskVote.objects.create(task=self.task, user=self.user, value=TaskVote.Value.UP)
+        task = Task.objects.with_metrics().get(pk=self.task.pk)
+        self.assertEqual(task.votes_up, 1)
+        self.assertEqual(task.votes_down, 0)
+
+    def test_with_metrics_votes_down(self):
+        TaskVote.objects.create(task=self.task, user=self.user, value=TaskVote.Value.DOWN)
+        task = Task.objects.with_metrics().get(pk=self.task.pk)
+        self.assertEqual(task.votes_down, 1)
+        self.assertEqual(task.votes_up, 0)
+
+    def test_with_metrics_votes_score_sum(self):
+        TaskVote.objects.create(task=self.task, user=self.user, value=TaskVote.Value.UP)
+        TaskVote.objects.create(task=self.task, user=self.other, value=TaskVote.Value.DOWN)
+        task = Task.objects.with_metrics().get(pk=self.task.pk)
+        self.assertEqual(task.votes_score, 0)
+
+    def test_with_metrics_no_votes_score_is_zero(self):
+        task = Task.objects.with_metrics().get(pk=self.task.pk)
+        self.assertEqual(task.votes_score, 0)
+
+    def test_with_metrics_eval_success(self):
+        TaskEvaluation.objects.create(task=self.task, user=self.user, value=TaskEvaluation.Value.SUCCESS)
+        task = Task.objects.with_metrics().get(pk=self.task.pk)
+        self.assertEqual(task.eval_success, 1)
+        self.assertEqual(task.eval_failure, 0)
+
+    def test_with_metrics_eval_failure(self):
+        TaskEvaluation.objects.create(task=self.task, user=self.user, value=TaskEvaluation.Value.FAILURE)
+        task = Task.objects.with_metrics().get(pk=self.task.pk)
+        self.assertEqual(task.eval_failure, 1)
+        self.assertEqual(task.eval_success, 0)
+
+
+# ---------------------------------------------------------------------------
+# TaskVote model
+# ---------------------------------------------------------------------------
+class TaskVoteModelTest(TestCase):
+    def setUp(self):
+        self.user = make_user("voter")
+        self.task = make_task()
+
+    def test_str_contains_user_and_task(self):
+        vote = TaskVote.objects.create(task=self.task, user=self.user, value=TaskVote.Value.UP)
+        self.assertIn(self.user.username, str(vote))
+        self.assertIn(self.task.title, str(vote))
+
+    def test_unique_constraint_one_vote_per_user_per_task(self):
+        from django.db import IntegrityError
+        TaskVote.objects.create(task=self.task, user=self.user, value=TaskVote.Value.UP)
+        with self.assertRaises(IntegrityError):
+            TaskVote.objects.create(task=self.task, user=self.user, value=TaskVote.Value.DOWN)
+
+    def test_vote_deleted_with_task(self):
+        vote = TaskVote.objects.create(task=self.task, user=self.user, value=TaskVote.Value.UP)
+        vote_id = vote.id
+        self.task.delete()
+        self.assertFalse(TaskVote.objects.filter(id=vote_id).exists())
+
+
+# ---------------------------------------------------------------------------
+# TaskEvaluation model
+# ---------------------------------------------------------------------------
+class TaskEvaluationModelTest(TestCase):
+    def setUp(self):
+        self.user = make_user("evaluator")
+        self.task = make_task(status=Task.Status.COMPLETED)
+
+    def test_str_contains_user_and_task(self):
+        ev = TaskEvaluation.objects.create(task=self.task, user=self.user, value=TaskEvaluation.Value.SUCCESS)
+        self.assertIn(self.user.username, str(ev))
+        self.assertIn(self.task.title, str(ev))
+
+    def test_unique_constraint_one_evaluation_per_user_per_task(self):
+        from django.db import IntegrityError
+        TaskEvaluation.objects.create(task=self.task, user=self.user, value=TaskEvaluation.Value.SUCCESS)
+        with self.assertRaises(IntegrityError):
+            TaskEvaluation.objects.create(task=self.task, user=self.user, value=TaskEvaluation.Value.FAILURE)
+
+    def test_evaluation_deleted_with_task(self):
+        ev = TaskEvaluation.objects.create(task=self.task, user=self.user, value=TaskEvaluation.Value.SUCCESS)
+        ev_id = ev.id
+        self.task.delete()
+        self.assertFalse(TaskEvaluation.objects.filter(id=ev_id).exists())
