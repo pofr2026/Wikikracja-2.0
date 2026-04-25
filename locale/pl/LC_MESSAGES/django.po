@@ -2430,7 +2430,7 @@ msgstr "Przejdź do Agory"
 
 #: .\home\templates\home\home.html:451
 msgid "New proposals"
-msgstr "Nowe propozycje"
+msgstr "Propozycje głosowań"
 
 #: .\home\templates\home\home.html:458 .\home\templates\home\site_admin.html:34
 msgid "signatures"
@@ -2443,6 +2443,24 @@ msgstr "Wszystkie propozycje"
 #: .\home\templates\home\home.html:471
 msgid "No new proposals"
 msgstr "Brak nowych propozycji"
+
+msgid "Voting proposals"
+msgstr "Propozycje głosowań"
+
+msgid "No voting proposals"
+msgstr "Brak propozycji głosowań"
+
+msgid "Discussed votings"
+msgstr "Dyskutowane głosowania"
+
+msgid "No discussed votings"
+msgstr "Brak dyskutowanych głosowań"
+
+msgid "All discussions"
+msgstr "Wszystkie dyskusje"
+
+msgid "discussion"
+msgstr "dyskusja"
 
 #: .\home\templates\home\home.html:505
 msgid "All my tasks"
