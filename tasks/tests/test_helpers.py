@@ -19,6 +19,7 @@ def make_annotated_task(title, votes_score, votes_up=0, votes_down=0,
     task.chat_msg_count = chat_msg_count
     if updated_at:
         task.updated_at = updated_at
+        task.created_at = updated_at
     return task
 
 
