@@ -34,12 +34,36 @@ class Task(models.Model):
         CANCELLED = "cancelled", _("Cancelled")
         REJECTED = "rejected", _("Rejected")
 
+    class Category(models.TextChoices):
+        IT = "it", _("Wikikracja i IT")
+        INTERNAL = "internal", _("Sprawy Wewnętrzne LO")
+        EDUCATION = "education", _("Edukacja i Wiedza")
+        PROMO = "promo", _("Promocja i Zasięgi")
+        RESOURCES = "resources", _("Zasoby i Biznes")
+        INTERVENTION = "intervention", _("Interwencja Obywatelska")
+        OTHER = "other", _("Inne")
+
+    CATEGORY_DESCRIPTIONS = {
+        "it": _("Rozwój Wikikracji, poprawki kodu, hosting, administracja techniczna."),
+        "internal": _("My, nasi ludzie i zasady — onboarding, rekrutacja, powitania, spotkania."),
+        "education": _("Baza wiedzy, informacje dot. DB, linki, listy, manuale."),
+        "promo": _("Social media, PR, newslettery, grafika, akcje ulotkowe."),
+        "resources": _("Projekty zarobkowe, składki, zarządzanie majątkiem, spółdzielnie."),
+        "intervention": _("Lobbying, petycje, wdrażanie DB w gminach, kontakt z politykami."),
+        "other": _("Zadania bez przypisanej kategorii."),
+    }
+
     title = models.CharField(max_length=200)
     description = models.TextField()
     status = models.CharField(
         max_length=16,
         choices=Status.choices,
         default=Status.ACTIVE,
+    )
+    category = models.CharField(
+        max_length=16,
+        choices=Category.choices,
+        default=Category.OTHER,
     )
     created_by = models.ForeignKey(
         User,

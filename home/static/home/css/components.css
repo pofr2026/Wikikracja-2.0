@@ -109,6 +109,128 @@
   box-shadow: 0 0 10px var(--accent-glow);
 }
 /* ══════════════════════════════════════════════════
+   CATEGORY FILTER DROPDOWN
+   ══════════════════════════════════════════════════ */
+.toolbar-sort-sep {
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  flex-shrink: 0;
+  margin: 0 .15rem;
+}
+.cat-filter {
+  position: relative;
+  flex-shrink: 0;
+}
+.cat-filter__chevron {
+  font-size: .6rem;
+  margin-left: 2px;
+  transition: transform var(--transition-fast);
+}
+.cat-filter__trigger[aria-expanded="true"] .cat-filter__chevron {
+  transform: rotate(180deg);
+}
+.cat-filter__panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 200;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem;
+  padding: .5rem .6rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: .5rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  min-width: 260px;
+  max-width: 340px;
+}
+.cat-filter__panel[hidden] {
+  display: none;
+}
+.cat-filter__item {
+  display: inline-flex;
+  align-items: center;
+  gap: .3rem;
+  padding: .28rem .65rem;
+  border-radius: .4rem;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: .78rem;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+.cat-filter__item:hover {
+  color: var(--text-primary);
+  border-color: rgba(255,255,255,.2);
+}
+.cat-filter__item.selected {
+  color: var(--accent);
+  border-color: rgba(0,209,178,.45);
+  background: var(--accent-muted);
+  font-weight: 500;
+}
+.cat-filter__all {
+  width: 100%;
+  font-weight: 600;
+  margin-bottom: .1rem;
+}
+.cat-filter__check {
+  font-size: .65rem;
+  opacity: 0;
+}
+.cat-filter__item.selected .cat-filter__check {
+  opacity: 1;
+}
+/* ── popover — project tokens ── */
+.popover {
+  --bs-popover-bg: var(--bg-card);
+  --bs-popover-border-color: var(--border);
+  --bs-popover-header-bg: var(--bg-card);
+  --bs-popover-header-color: var(--accent);
+  --bs-popover-body-color: var(--text-primary);
+  --bs-popover-max-width: 300px;
+  font-size: .8rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,.55);
+}
+.popover-header {
+  font-size: .78rem;
+  font-weight: 600;
+  letter-spacing: .02em;
+  border-bottom-color: var(--border);
+}
+.popover-body p { margin-bottom: .45rem; }
+.popover-body p:last-child { margin-bottom: 0; }
+.popover-body strong {
+  color: var(--text-primary);
+  font-size: .78rem;
+}
+.popover-body .text-muted {
+  color: var(--text-muted) !important;
+  font-size: .72rem;
+  line-height: 1.4;
+}
+/* ── info icon button ── */
+.info-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: .85rem;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+  line-height: 1;
+}
+.info-icon-btn:hover,
+.info-icon-btn:focus { color: var(--accent); outline: none; }
+/* ══════════════════════════════════════════════════
    BADGES
    ══════════════════════════════════════════════════ */
 .badge-status {

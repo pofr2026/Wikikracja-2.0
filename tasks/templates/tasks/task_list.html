@@ -15,40 +15,64 @@
     <span class="toolbar-sort-label">{% trans 'Sort' %}:</span>
 
     {% if current_sort == 'date' %}
-      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=date&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}"
+      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=date&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}{% for c in current_categories %}&category={{ c }}{% endfor %}"
          class="sort-btn active">
         {% trans 'Newest' %}
         <i class="fas fa-arrow-{% if current_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>
       </a>
     {% else %}
-      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=date&order=desc" class="sort-btn">
+      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=date&order=desc{% for c in current_categories %}&category={{ c }}{% endfor %}" class="sort-btn">
         {% trans 'Newest' %}
       </a>
     {% endif %}
 
     {% if current_sort == 'score' %}
-      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=score&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}"
+      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=score&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}{% for c in current_categories %}&category={{ c }}{% endfor %}"
          class="sort-btn active">
         {% trans 'Score' %}
         <i class="fas fa-arrow-{% if current_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>
       </a>
     {% else %}
-      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=score&order=desc" class="sort-btn">
+      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=score&order=desc{% for c in current_categories %}&category={{ c }}{% endfor %}" class="sort-btn">
         {% trans 'Score' %}
       </a>
     {% endif %}
 
     {% if current_sort == 'buzz' %}
-      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=buzz&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}"
+      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=buzz&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}{% for c in current_categories %}&category={{ c }}{% endfor %}"
          class="sort-btn active">
         {% trans 'Buzz' %}
         <i class="fas fa-arrow-{% if current_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>
       </a>
     {% else %}
-      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=buzz&order=desc" class="sort-btn">
+      <a href="{% url 'tasks:list' %}?tab={{ current_tab }}&sort=buzz&order=desc{% for c in current_categories %}&category={{ c }}{% endfor %}" class="sort-btn">
         {% trans 'Buzz' %}
       </a>
     {% endif %}
+
+    <span class="toolbar-sort-sep"></span>
+
+    {# ── CATEGORY DROPDOWN ── #}
+    <div class="cat-filter" id="catFilter">
+      <button type="button" class="sort-btn cat-filter__trigger" id="catFilterBtn"
+              aria-expanded="false" aria-controls="catFilterPanel">
+        <span id="catFilterLabel">{% trans 'Category' %}</span>
+        <i class="fas fa-chevron-down cat-filter__chevron"></i>
+      </button>
+      <div class="cat-filter__panel" id="catFilterPanel" hidden>
+        <div class="cat-filter__item cat-filter__all" id="catAllRow" data-key="" data-label="{% trans 'All' %}">
+          <i class="fas fa-check cat-filter__check"></i>
+          <span>{% trans 'All' %}</span>
+        </div>
+        {% for cat_key, cat_label, cat_desc in category_choices_with_desc %}
+        <div class="cat-filter__item" data-key="{{ cat_key }}" data-label="{{ cat_label }}"
+             title="{{ cat_desc }}">
+          <i class="fas fa-check cat-filter__check"></i>
+          <span>{{ cat_label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
   </div>
 
   <span class="toolbar-divider"></span>
@@ -130,3 +154,108 @@
 </div>
 
 {% endblock tasks %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var btn      = document.getElementById('catFilterBtn');
+  var panel    = document.getElementById('catFilterPanel');
+  var labelEl  = document.getElementById('catFilterLabel');
+  var allRow   = document.getElementById('catAllRow');
+  var catRows  = Array.from(panel.querySelectorAll('.cat-filter__item:not(.cat-filter__all)'));
+  var allCards = Array.from(document.querySelectorAll('.proposal-card[data-category]'));
+  var sectionLabels = Array.from(document.querySelectorAll('.tasks-section-label'));
+  var LABEL_ALL = '{% trans "Category" %}';
+
+  // ── restore from URL ─────────────────────────────────────────
+  var params  = new URLSearchParams(window.location.search);
+  var initial = params.getAll('category');
+  initial.forEach(function (val) {
+    catRows.forEach(function (row) {
+      if (row.dataset.key === val) row.classList.add('selected');
+    });
+  });
+
+  // ── core ─────────────────────────────────────────────────────
+  function selected() {
+    return catRows.filter(function (r) { return r.classList.contains('selected'); })
+                  .map(function (r) { return r.dataset.key; });
+  }
+
+  function apply() {
+    var sel = selected();
+    var all = sel.length === 0;
+
+    allRow.classList.toggle('selected', all);
+
+    // cards
+    allCards.forEach(function (card) {
+      card.style.display = (all || sel.indexOf(card.dataset.category) !== -1) ? '' : 'none';
+    });
+
+    // section labels
+    sectionLabels.forEach(function (label) {
+      var sib = label.nextElementSibling;
+      var vis = false;
+      while (sib && !sib.classList.contains('tasks-section-label')) {
+        if (sib.classList.contains('proposal-card') && sib.style.display !== 'none') { vis = true; break; }
+        sib = sib.nextElementSibling;
+      }
+      label.style.display = vis ? '' : 'none';
+    });
+
+    // button label + active state
+    if (all) {
+      labelEl.textContent = LABEL_ALL;
+      btn.classList.remove('active');
+    } else {
+      labelEl.textContent = LABEL_ALL + ' (' + sel.length + ')';
+      btn.classList.add('active');
+    }
+
+    // URL sync
+    var p = new URLSearchParams(window.location.search);
+    p.delete('category');
+    sel.forEach(function (v) { p.append('category', v); });
+    history.pushState(null, '', window.location.pathname + (p.toString() ? '?' + p.toString() : ''));
+  }
+
+  // ── clicks inside panel stay inside panel ────────────────────
+  panel.addEventListener('click', function (e) {
+    e.stopPropagation();
+  });
+
+  // ── click: "All" ─────────────────────────────────────────────
+  allRow.addEventListener('click', function () {
+    catRows.forEach(function (r) { r.classList.remove('selected'); });
+    apply();
+  });
+
+  // ── click: category item ──────────────────────────────────────
+  catRows.forEach(function (row) {
+    row.addEventListener('click', function () {
+      row.classList.toggle('selected');
+      apply();
+    });
+  });
+
+  // ── open / close ──────────────────────────────────────────────
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var opening = panel.hidden;
+    panel.hidden = !opening;
+    btn.setAttribute('aria-expanded', String(opening));
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!document.getElementById('catFilter').contains(e.target)) {
+      panel.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  // ── init ─────────────────────────────────────────────────────
+  apply();
+})();
+</script>
+{% endblock extra_js %}
