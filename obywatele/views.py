@@ -529,7 +529,7 @@ def poczekalnia(request: HttpRequest):
 
         rate = existing_rates.get(candidate_profile.id)
         if rate is None:
-            rate, _ = Rate.objects.get_or_create(kandydat=candidate_profile, obywatel=citizen_profile)
+            rate, _created = Rate.objects.get_or_create(kandydat=candidate_profile, obywatel=citizen_profile)
             existing_rates[candidate_profile.id] = rate
 
         # Add rating directly to user object as a custom attribute

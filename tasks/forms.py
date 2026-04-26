@@ -7,7 +7,7 @@ from .models import Task
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ["title", "description"]
+        fields = ["title", "description", "category"]
         widgets = {
             "title": forms.TextInput(attrs={
                 "class": "form-control"
@@ -15,6 +15,9 @@ class TaskForm(forms.ModelForm):
             "description": forms.Textarea(attrs={
                 "class": "form-control",
                 "rows": 6
+            }),
+            "category": forms.Select(attrs={
+                "class": "form-select"
             }),
         }
 

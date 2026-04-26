@@ -1,394 +1,248 @@
 {% extends 'glosowania/menu.html' %}
-{% load static %}
 {% load i18n %}
-{% load crispy_forms_tags %}
 
 {% block glosowania %}
 
-<div class="detail-layout">
+<div class="d-flex flex-column gap-3 mb-3">
 
-  {# ════════════════════════════════ PANEL GŁÓWNY ════════════════════════════════ #}
-  <div class="detail-main">
+  {# Karta: info + akcja #}
+  <div class="card">
+    <div class="card-body d-flex flex-column gap-2" style="font-size:.82rem;">
 
-    {# ── Nagłówek ── #}
-    <div class="detail-header">
-      <div class="detail-header-top">
-        <span class="detail-num">#{{ id.id }}</span>
-        <span class="detail-title">{{ id.display_title }}</span>
-        <div class="detail-nav">
-          {% if prev %}
-            <a href="{% url 'glosowania:details' pk=prev.id %}" class="detail-nav-btn" title="{% trans 'Previous' %}">
-              <i class="fas fa-chevron-left"></i>
-            </a>
-          {% else %}
-            <span class="detail-nav-btn disabled"><i class="fas fa-chevron-left"></i></span>
+      <p class="mb-0 fw-semibold" style="font-size:1rem;color:var(--text-primary);line-height:1.35;">
+        <span style="color:var(--text-muted);font-weight:400;">#{{ id.id }}</span> {{ id.display_title }}
+      </p>
+
+      <div class="d-flex flex-wrap align-items-center gap-2" style="color:var(--text-muted);font-size:.78rem;">
+        {% if id.author %}
+        <a href="{% url 'obywatele:obywatele_szczegoly' pk=id.author.pk %}" class="detail-author-link d-flex align-items-center gap-1" style="text-decoration:none;">
+          <span class="detail-author-avatar">{% if id.author.uzytkownik.avatar %}<img src="{{ id.author.uzytkownik.avatar.url }}" alt="">{% else %}{{ id.author.username|slice:":2"|upper }}{% endif %}</span>
+          <span style="color:var(--accent);">{{ id.author.username }}</span>
+        </a>
+        <span class="detail-meta-sep">·</span>
+        {% endif %}
+        {% if id.data_powstania %}<span>{{ id.data_powstania|date:"d.m.Y" }}</span><span class="detail-meta-sep">·</span>{% endif %}
+        <span><i class="fas fa-pen-nib fa-fw"></i> {{ id.ile_osob_podpisalo|default:"0" }}</span>
+        {% if id.data_zebrania_podpisow %}<span class="detail-meta-sep">·</span><span>{% trans 'Signatures' %}: {{ id.data_zebrania_podpisow|date:"d.m.Y" }}</span>{% endif %}
+        {% if id.data_referendum_start %}<span class="detail-meta-sep">·</span><span>{% trans 'Referendum' %}: {{ id.data_referendum_start|date:"d.m.Y" }}{% if data_referendum_stop %}–{{ data_referendum_stop|date:"d.m.Y" }}{% endif %}</span>{% endif %}
+        <span class="detail-meta-sep">·</span>
+        <span class="detail-status-badge s{{ id.status }}">
+          {% if id.status == 1 %}<i class="fas fa-file-pen"></i> {% trans 'Proposal' %}
+          {% elif id.status == 2 %}<i class="fas fa-comments"></i> {% trans 'Discussion' %}
+          {% elif id.status == 3 %}<i class="fas fa-person-booth"></i> {% trans 'Referendum' %}
+          {% elif id.status == 4 %}<i class="fas fa-ban"></i> {% trans 'Rejected' %}
+          {% elif id.status == 5 %}<i class="fas fa-check-circle"></i> {% trans 'Approved' %}
           {% endif %}
-          {% if next %}
-            <a href="{% url 'glosowania:details' pk=next.id %}" class="detail-nav-btn" title="{% trans 'Next' %}">
-              <i class="fas fa-chevron-right"></i>
-            </a>
-          {% else %}
-            <span class="detail-nav-btn disabled"><i class="fas fa-chevron-right"></i></span>
-          {% endif %}
+        </span>
+        {% if chat_room %}
+        <a href="{% url 'chat:chat' %}#room_id={{ chat_room.id }}" class="proposal-chat-link {{ chat_room_pulse_class }}" style="text-decoration:none;">
+          <i class="fas fa-comment-dots"></i> {% trans 'Chat' %}
+        </a>
+        {% endif %}
+        <div class="detail-nav d-flex gap-1">
+          {% if prev %}<a href="{% url 'glosowania:details' pk=prev.id %}" class="detail-nav-btn" title="{% trans 'Previous' %}"><i class="fas fa-chevron-left"></i></a>
+          {% else %}<span class="detail-nav-btn disabled"><i class="fas fa-chevron-left"></i></span>{% endif %}
+          {% if next %}<a href="{% url 'glosowania:details' pk=next.id %}" class="detail-nav-btn" title="{% trans 'Next' %}"><i class="fas fa-chevron-right"></i></a>
+          {% else %}<span class="detail-nav-btn disabled"><i class="fas fa-chevron-right"></i></span>{% endif %}
         </div>
       </div>
 
-      <div class="detail-meta">
-        {% if id.author %}
-          <a href="{% url 'obywatele:obywatele_szczegoly' pk=id.author.pk %}" class="detail-author-link">
-            <span class="detail-author-avatar">
-              {% if id.author.uzytkownik.avatar %}
-                <img src="{{ id.author.uzytkownik.avatar.url }}" alt="">
-              {% else %}
-                {{ id.author.username|slice:":2"|upper }}
-              {% endif %}
-            </span>
-            <span class="detail-author-name">{{ id.author.username }}</span>
-          </a>
+      {% if id.status == 1 %}
+      <div class="d-flex align-items-center gap-1" style="font-size:.78rem;color:var(--text-muted);">
+        <i class="fas fa-pen-nib" style="color:{% if signed %}#00bc8c{% else %}var(--accent){% endif %};"></i>
+        {% if signed %}{% trans 'I support' %}{% else %}{% trans 'I do not support' %}{% endif %}
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span style="font-size:.78rem;color:var(--text-muted);">{% trans 'Do you support submitting this proposal to a referendum?' %}</span>
+        {% if not signed %}
+        <form method="post" class="mb-0 d-inline">
+          {% csrf_token %}
+          <button type="submit" name="sign" value="1" class="action-btn action-btn-sign"><i class="fas fa-pen-nib"></i> {% trans 'I sign' %}</button>
+        </form>
+        {% else %}
+        <form method="post" class="mb-0 d-inline">
+          {% csrf_token %}
+          <button type="submit" name="withdraw" value="1" class="action-btn action-btn-withdraw"><i class="fas fa-xmark"></i> {% trans 'Withdraw signature' %}</button>
+        </form>
         {% endif %}
-        {% if id.data_powstania %}
-          <span class="detail-meta-sep">·</span>
-          <span>{{ id.data_powstania|date:"d.m.Y" }}</span>
-        {% endif %}
-        {% if id.ile_osob_podpisalo %}
-          <span class="detail-meta-sep">·</span>
-          <span><i class="fas fa-pen-nib fa-fw"></i> {{ id.ile_osob_podpisalo }}</span>
-        {% endif %}
-        {% if chat_room %}
-          <span class="detail-meta-sep">·</span>
-          <a href="{% url 'chat:chat' %}#room_id={{ chat_room.id }}"
-             class="proposal-chat-link {{ chat_room_pulse_class }}" style="font-size:.78rem;">
-            <i class="fas fa-comment-dots"></i>
-            <span>{% trans 'Chat' %}</span>
-          </a>
+        {% if id.author == None or id.author == current_user %}
+        <a href="{% url 'glosowania:edit' id.pk %}" class="action-btn action-btn-edit"><i class="fas fa-pen"></i> {% trans 'Edit' %}</a>
         {% endif %}
       </div>
-    </div>
 
-    {# ── Jeden kafelek: Treść / Konsekwencje / Uzasadnienie / Znosi ── #}
-    {% if id.tresc or id.kara or id.uzasadnienie or id.znosi %}
-    <div class="detail-section">
+      {% elif id.status == 3 and id.is_author_signed %}
+      <div class="d-flex align-items-center gap-1" style="font-size:.78rem;color:var(--text-muted);">
+        <i class="fas fa-person-booth" style="color:var(--accent);"></i>
+        {% if voted %}{% trans 'I voted' %}{% else %}{% trans 'Your vote' %}{% endif %}
+      </div>
+      {% if not voted %}
+      <div class="d-flex align-items-center gap-2 flex-wrap">
+        <span style="font-size:.78rem;color:var(--text-muted);">{% trans 'Would you like to implement this rule?' %}</span>
+        <form method="post" class="mb-0 d-inline">
+          {% csrf_token %}
+          <button type="submit" name="tak" value="1" class="action-btn action-btn-yes"><i class="fas fa-check"></i> {% trans 'Yes' %}</button>
+          <button type="submit" name="nie" value="1" class="action-btn action-btn-no"><i class="fas fa-xmark"></i> {% trans 'No' %}</button>
+        </form>
+      </div>
+      {% else %}
+      <span style="font-size:.78rem;color:var(--text-muted);"><i class="fas fa-check-circle" style="color:#00bc8c;"></i> {% trans 'You have already voted in this referendum' %}</span>
+      {% endif %}
+
+      {% elif id.status == 4 or id.status == 5 %}
+      <div class="d-flex align-items-center gap-1" style="font-size:.78rem;color:var(--text-muted);">
+        <i class="fas fa-chart-bar" style="color:var(--accent);"></i> {% trans 'Results' %}
+      </div>
+      {% with total=id.za|add:id.przeciw %}{% if total %}
+      <div class="result-bar">
+        <div class="result-bar-labels">
+          <span style="color:#00bc8c;"><i class="fas fa-check fa-fw"></i> {% trans 'For' %} {{ id.za }}</span>
+          <span style="color:#f87171;">{% trans 'Against' %} {{ id.przeciw }} <i class="fas fa-xmark fa-fw"></i></span>
+        </div>
+        <div class="result-bar-track"><div class="result-bar-fill" style="width:{% widthratio id.za total 100 %}%;"></div></div>
+      </div>
+      {% endif %}{% endwith %}
+      {% if voters %}<div style="font-size:.75rem;color:var(--text-muted);"><i class="fas fa-users me-1"></i>{% for voter in voters %}{{ voter.ktory_uzytkownik_juz_zaglosowal.username }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+      {% if report %}<div class="protocol-list" style="font-size:.72rem;">{% for r in report %}<span class="{% if r.vote %}protocol-yes{% else %}protocol-no{% endif %}">{% if r.vote %}✓{% else %}✗{% endif %} {{ r.code }}</span><br>{% endfor %}</div>{% endif %}
+      {% endif %}
+
+    </div>
+  </div>
+
+  {# Treść przepisu #}
+  {% if id.tresc or id.kara or id.uzasadnienie or id.znosi %}
+  <div class="card">
+    <div class="card-body d-flex flex-column gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <i class="fas fa-scroll" style="color:var(--accent);font-size:.85rem;"></i>
+        <span class="section-heading" style="font-size:.85rem;">{% trans 'Law text' %}</span>
+      </div>
       {% if id.tresc %}
       <div class="detail-subsection">
-        <div class="detail-section-label">
-          <i class="fas fa-scroll"></i>{% trans 'Law text' %}
-        </div>
-        <div class="detail-section-text">{{ id.tresc|linebreaksbr }}</div>
+        <div class="detail-section-text" style="font-size:.82rem;">{{ id.tresc|linebreaksbr }}</div>
       </div>
       {% endif %}
       {% if id.kara %}
       <div class="detail-subsection">
-        <div class="detail-section-label">
-          <i class="fas fa-triangle-exclamation"></i>{% trans 'Consequences' %}
-        </div>
-        <div class="detail-section-text">{{ id.kara|linebreaksbr }}</div>
+        <div class="detail-section-label"><i class="fas fa-triangle-exclamation"></i>{% trans 'Consequences' %}</div>
+        <div class="detail-section-text" style="font-size:.82rem;">{{ id.kara|linebreaksbr }}</div>
       </div>
       {% endif %}
       {% if id.uzasadnienie %}
       <div class="detail-subsection">
-        <div class="detail-section-label">
-          <i class="fas fa-lightbulb"></i>{% trans 'Reasoning' %}
-        </div>
-        <div class="detail-section-text">{{ id.uzasadnienie|linebreaksbr }}</div>
+        <div class="detail-section-label"><i class="fas fa-lightbulb"></i>{% trans 'Reasoning' %}</div>
+        <div class="detail-section-text" style="font-size:.82rem;">{{ id.uzasadnienie|linebreaksbr }}</div>
       </div>
       {% endif %}
       {% if id.znosi %}
       <div class="detail-subsection">
-        <div class="detail-section-label">
-          <i class="fas fa-ban"></i>{% trans 'Abolishes regulations' %}
-        </div>
-        <div class="detail-section-text">{{ id.znosi }}</div>
+        <div class="detail-section-label"><i class="fas fa-ban"></i>{% trans 'Abolishes regulations' %}</div>
+        <div class="detail-section-text" style="font-size:.82rem;">{{ id.znosi }}</div>
       </div>
       {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{# Argumenty #}
+<div class="args-grid">
+
+  <div>
+    <div class="args-col-header for">
+      <span class="col-icon">+</span> {% trans 'Arguments FOR' %}
+    </div>
+    {% if positive_arguments %}
+      {% for arg in positive_arguments %}
+      <div class="arg-card for">
+        {% if arg.author %}<a href="{% url 'obywatele:obywatele_szczegoly' pk=arg.author.pk %}" class="arg-card-author">{% else %}<span class="arg-card-author">{% endif %}
+          <div class="arg-author-avatar">
+            {% if arg.author.uzytkownik.avatar %}<img src="{{ arg.author.uzytkownik.avatar.url }}" alt="">{% else %}{{ arg.author.username|slice:":2"|upper }}{% endif %}
+          </div>
+          <div class="arg-author-info">
+            <span class="arg-author-name">{{ arg.author.username|default:"—" }}</span>
+            <span class="arg-author-date">{{ arg.created_at|date:"d.m.Y" }}</span>
+          </div>
+        {% if arg.author %}</a>{% else %}</span>{% endif %}
+        <div class="arg-card-content">{{ arg.content|urlize|linebreaksbr }}</div>
+        {% if arg.author == current_user and id.status not in "4,5"|make_list %}
+        <div class="arg-card-footer">
+          <a href="{% url 'glosowania:edit_argument' arg.id %}" class="arg-edit-btn">{% trans 'Edit' %}</a>
+          <a href="{% url 'glosowania:delete_argument' arg.id %}" class="arg-edit-btn danger">{% trans 'Delete' %}</a>
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    {% else %}
+      <p class="args-empty">{% trans 'No arguments for.' %}</p>
+    {% endif %}
+    {% if user.is_authenticated and id.status not in "4,5"|make_list %}
+    <button class="arg-add-toggle for" onclick="toggleArgForm('form-for')">
+      <i class="fas fa-plus"></i> {% trans 'Add an argument for' %}
+    </button>
+    <div class="arg-inline-form" id="form-for">
+      <form method="POST" action="{% url 'glosowania:add_argument' id.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="argument_type" value="FOR">
+        <textarea name="content" rows="3" placeholder="{% trans 'Your argument for...' %}" required></textarea>
+        <button type="submit" class="arg-inline-submit for"><i class="fas fa-check"></i> {% trans 'Add' %}</button>
+      </form>
     </div>
     {% endif %}
+  </div>
 
-    {# ── Argumenty ── #}
-    <div class="args-grid">
-
-      {# ── ZA ── #}
-      <div>
-        <div class="args-col-header for">
-          <span class="col-icon">+</span> {% trans 'Arguments FOR' %}
-        </div>
-
-        {% if positive_arguments %}
-          {% for arg in positive_arguments %}
-          <div class="arg-card for">
-            {# Autor → profil #}
-            {% if arg.author %}
-            <a href="{% url 'obywatele:obywatele_szczegoly' pk=arg.author.pk %}" class="arg-card-author">
-            {% else %}
-            <span class="arg-card-author">
-            {% endif %}
-              <div class="arg-author-avatar">
-                {% if arg.author.uzytkownik.avatar %}
-                  <img src="{{ arg.author.uzytkownik.avatar.url }}" alt="">
-                {% else %}
-                  {{ arg.author.username|slice:":2"|upper }}
-                {% endif %}
-              </div>
-              <div class="arg-author-info">
-                <span class="arg-author-name">{{ arg.author.username|default:"—" }}</span>
-                <span class="arg-author-date">{{ arg.created_at|date:"d.m.Y" }}</span>
-              </div>
-            {% if arg.author %}</a>{% else %}</span>{% endif %}
-
-            <div class="arg-card-content">{{ arg.content|urlize|linebreaksbr }}</div>
-
-            {% if arg.author == current_user and id.status not in "4,5"|make_list %}
-            <div class="arg-card-footer">
-              <a href="{% url 'glosowania:edit_argument' arg.id %}" class="arg-edit-btn">{% trans 'Edit' %}</a>
-              <a href="{% url 'glosowania:delete_argument' arg.id %}" class="arg-edit-btn danger">{% trans 'Delete' %}</a>
-            </div>
-            {% endif %}
-          </div>
-          {% endfor %}
-        {% else %}
-          <p class="args-empty">{% trans 'No arguments for.' %}</p>
-        {% endif %}
-
-        {# Dodaj argument ZA #}
-        {% if user.is_authenticated and id.status not in "4,5"|make_list %}
-        <button class="arg-add-toggle for" onclick="toggleArgForm('form-for')">
-          <i class="fas fa-plus"></i> {% trans 'Add an argument for' %}
-        </button>
-        <div class="arg-inline-form" id="form-for">
-          <form method="POST" action="{% url 'glosowania:add_argument' id.pk %}">
-            {% csrf_token %}
-            <input type="hidden" name="argument_type" value="FOR">
-            <textarea name="content" rows="3" placeholder="{% trans 'Your argument for...' %}" required></textarea>
-            <button type="submit" class="arg-inline-submit for">
-              <i class="fas fa-check"></i> {% trans 'Add' %}
-            </button>
-          </form>
-        </div>
-        {% endif %}
-      </div>
-
-      {# ── PRZECIW ── #}
-      <div>
-        <div class="args-col-header against">
-          <span class="col-icon">−</span> {% trans 'Arguments AGAINST' %}
-        </div>
-
-        {% if negative_arguments %}
-          {% for arg in negative_arguments %}
-          <div class="arg-card against">
-            {% if arg.author %}
-            <a href="{% url 'obywatele:obywatele_szczegoly' pk=arg.author.pk %}" class="arg-card-author">
-            {% else %}
-            <span class="arg-card-author">
-            {% endif %}
-              <div class="arg-author-avatar">
-                {% if arg.author.uzytkownik.avatar %}
-                  <img src="{{ arg.author.uzytkownik.avatar.url }}" alt="">
-                {% else %}
-                  {{ arg.author.username|slice:":2"|upper }}
-                {% endif %}
-              </div>
-              <div class="arg-author-info">
-                <span class="arg-author-name">{{ arg.author.username|default:"—" }}</span>
-                <span class="arg-author-date">{{ arg.created_at|date:"d.m.Y" }}</span>
-              </div>
-            {% if arg.author %}</a>{% else %}</span>{% endif %}
-
-            <div class="arg-card-content">{{ arg.content|urlize|linebreaksbr }}</div>
-
-            {% if arg.author == current_user and id.status not in "4,5"|make_list %}
-            <div class="arg-card-footer">
-              <a href="{% url 'glosowania:edit_argument' arg.id %}" class="arg-edit-btn">{% trans 'Edit' %}</a>
-              <a href="{% url 'glosowania:delete_argument' arg.id %}" class="arg-edit-btn danger">{% trans 'Delete' %}</a>
-            </div>
-            {% endif %}
-          </div>
-          {% endfor %}
-        {% else %}
-          <p class="args-empty">{% trans 'No arguments against.' %}</p>
-        {% endif %}
-
-        {# Dodaj argument PRZECIW #}
-        {% if user.is_authenticated and id.status not in "4,5"|make_list %}
-        <button class="arg-add-toggle against" onclick="toggleArgForm('form-against')">
-          <i class="fas fa-plus"></i> {% trans 'Add an argument against' %}
-        </button>
-        <div class="arg-inline-form" id="form-against">
-          <form method="POST" action="{% url 'glosowania:add_argument' id.pk %}">
-            {% csrf_token %}
-            <input type="hidden" name="argument_type" value="AGAINST">
-            <textarea name="content" rows="3" placeholder="{% trans 'Your argument against...' %}" required></textarea>
-            <button type="submit" class="arg-inline-submit against">
-              <i class="fas fa-check"></i> {% trans 'Add' %}
-            </button>
-          </form>
-        </div>
-        {% endif %}
-      </div>
-
+  <div>
+    <div class="args-col-header against">
+      <span class="col-icon">−</span> {% trans 'Arguments AGAINST' %}
     </div>
-
-    <script>
-    function toggleArgForm(id) {
-      var el = document.getElementById(id);
-      el.classList.toggle('visible');
-      if (el.classList.contains('visible')) el.querySelector('textarea').focus();
-    }
-    </script>
-
-  </div>{# /.detail-main #}
-
-
-  {# ════════════════════════════════ PANEL BOCZNY ════════════════════════════════ #}
-  <div class="detail-sidebar">
-
-    {# ── Status ── #}
-    <div class="sidebar-card">
-      <div class="sidebar-card-title"><i class="fas fa-circle-dot"></i> {% trans 'Status' %}</div>
-
-      <div class="detail-status-badge s{{ id.status }}">
-        {% if id.status == 1 %}<i class="fas fa-file-pen"></i> {% trans 'Proposal' %}
-        {% elif id.status == 2 %}<i class="fas fa-comments"></i> {% trans 'Discussion' %}
-        {% elif id.status == 3 %}<i class="fas fa-person-booth"></i> {% trans 'Referendum' %}
-        {% elif id.status == 4 %}<i class="fas fa-ban"></i> {% trans 'Rejected' %}
-        {% elif id.status == 5 %}<i class="fas fa-check-circle"></i> {% trans 'Approved' %}
+    {% if negative_arguments %}
+      {% for arg in negative_arguments %}
+      <div class="arg-card against">
+        {% if arg.author %}<a href="{% url 'obywatele:obywatele_szczegoly' pk=arg.author.pk %}" class="arg-card-author">{% else %}<span class="arg-card-author">{% endif %}
+          <div class="arg-author-avatar">
+            {% if arg.author.uzytkownik.avatar %}<img src="{{ arg.author.uzytkownik.avatar.url }}" alt="">{% else %}{{ arg.author.username|slice:":2"|upper }}{% endif %}
+          </div>
+          <div class="arg-author-info">
+            <span class="arg-author-name">{{ arg.author.username|default:"—" }}</span>
+            <span class="arg-author-date">{{ arg.created_at|date:"d.m.Y" }}</span>
+          </div>
+        {% if arg.author %}</a>{% else %}</span>{% endif %}
+        <div class="arg-card-content">{{ arg.content|urlize|linebreaksbr }}</div>
+        {% if arg.author == current_user and id.status not in "4,5"|make_list %}
+        <div class="arg-card-footer">
+          <a href="{% url 'glosowania:edit_argument' arg.id %}" class="arg-edit-btn">{% trans 'Edit' %}</a>
+          <a href="{% url 'glosowania:delete_argument' arg.id %}" class="arg-edit-btn danger">{% trans 'Delete' %}</a>
+        </div>
         {% endif %}
       </div>
-
-      <div class="detail-info-row">
-        <span class="detail-info-key">{% trans 'Added' %}</span>
-        <span class="detail-info-val">{{ id.data_powstania|date:"d.m.Y"|default:"—" }}</span>
-      </div>
-      {% if id.data_zebrania_podpisow %}
-      <div class="detail-info-row">
-        <span class="detail-info-key">{% trans 'Signatures collected' %}</span>
-        <span class="detail-info-val">{{ id.data_zebrania_podpisow|date:"d.m.Y" }}</span>
-      </div>
-      {% endif %}
-      {% if id.data_referendum_start %}
-      <div class="detail-info-row">
-        <span class="detail-info-key">{% trans 'Referendum starts' %}</span>
-        <span class="detail-info-val">{{ id.data_referendum_start|date:"d.m.Y" }}</span>
-      </div>
-      {% endif %}
-      {% if data_referendum_stop %}
-      <div class="detail-info-row">
-        <span class="detail-info-key">{% trans 'Referendum ends' %}</span>
-        <span class="detail-info-val">{{ data_referendum_stop|date:"d.m.Y" }}</span>
-      </div>
-      {% endif %}
-      {% if id.path %}
-      <div class="detail-info-row">
-        <span class="detail-info-key">{% trans 'History' %}</span>
-        <span class="detail-info-val" style="font-size:.72rem;">{{ id.path }}</span>
-      </div>
-      {% endif %}
-    </div>
-
-    {# ── Actions: Proposal (podpisywanie) ── #}
-    {% if id.status == 1 %}
-    <div class="sidebar-card">
-      <div class="sidebar-card-title"><i class="fas fa-pen-nib"></i> {% trans 'Your vote' %}</div>
-      {% if not signed %}
-        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.75rem;">
-          {% trans 'Do you support submitting this proposal to a referendum?' %}
-        </p>
-        <form method="post">
-          {% csrf_token %}
-          <button type="submit" name="sign" value="1" class="action-btn action-btn-sign">
-            <i class="fas fa-pen-nib"></i> {% trans 'I sign' %}
-          </button>
-        </form>
-      {% else %}
-        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.75rem;">
-          {% trans 'You signed this proposal.' %}
-        </p>
-        <form method="post">
-          {% csrf_token %}
-          <button type="submit" name="withdraw" value="1" class="action-btn action-btn-withdraw">
-            <i class="fas fa-xmark"></i> {% trans 'Withdraw signature' %}
-          </button>
-        </form>
-      {% endif %}
-
-      {% if id.author == None or id.author == current_user %}
-      <a href="{% url 'glosowania:edit' id.pk %}" class="action-btn action-btn-edit" style="margin-top:.25rem;">
-        <i class="fas fa-pen"></i> {% trans 'Edit' %}
-      </a>
-      {% endif %}
+      {% endfor %}
+    {% else %}
+      <p class="args-empty">{% trans 'No arguments against.' %}</p>
+    {% endif %}
+    {% if user.is_authenticated and id.status not in "4,5"|make_list %}
+    <button class="arg-add-toggle against" onclick="toggleArgForm('form-against')">
+      <i class="fas fa-plus"></i> {% trans 'Add an argument against' %}
+    </button>
+    <div class="arg-inline-form" id="form-against">
+      <form method="POST" action="{% url 'glosowania:add_argument' id.pk %}">
+        {% csrf_token %}
+        <input type="hidden" name="argument_type" value="AGAINST">
+        <textarea name="content" rows="3" placeholder="{% trans 'Your argument against...' %}" required></textarea>
+        <button type="submit" class="arg-inline-submit against"><i class="fas fa-check"></i> {% trans 'Add' %}</button>
+      </form>
     </div>
     {% endif %}
+  </div>
 
-    {# ── Actions: Referendum (głosowanie) ── #}
-    {% if id.status == 3 and id.is_author_signed %}
-    <div class="sidebar-card">
-      <div class="sidebar-card-title"><i class="fas fa-person-booth"></i> {% trans 'Voting' %}</div>
-      {% if not voted %}
-        <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:.75rem;">
-          {% trans 'Would you like to implement this rule?' %}
-        </p>
-        <form method="post">
-          {% csrf_token %}
-          <button type="submit" name="tak" value="1" class="action-btn action-btn-yes">
-            <i class="fas fa-check"></i> {% trans 'Yes' %}
-          </button>
-          <button type="submit" name="nie" value="1" class="action-btn action-btn-no">
-            <i class="fas fa-xmark"></i> {% trans 'No' %}
-          </button>
-        </form>
-      {% else %}
-        <p style="font-size:.82rem;color:var(--text-muted);">
-          <i class="fas fa-check-circle" style="color:#00bc8c;"></i> {% trans 'You voted' %}
-        </p>
-      {% endif %}
-    </div>
-    {% endif %}
+</div>
 
-    {# ── Results (status 4 lub 5) ── #}
-    {% if id.status == 4 or id.status == 5 %}
-    <div class="sidebar-card">
-      <div class="sidebar-card-title"><i class="fas fa-chart-bar"></i> {% trans 'Results' %}</div>
-
-      {% with total=id.za|add:id.przeciw %}
-      {% if total %}
-        <div class="result-bar">
-          <div class="result-bar-labels">
-            <span style="color:#00bc8c;"><i class="fas fa-check fa-fw"></i> {% trans 'For' %} {{ id.za }}</span>
-            <span style="color:#f87171;">{% trans 'Against' %} {{ id.przeciw }} <i class="fas fa-xmark fa-fw"></i></span>
-          </div>
-          <div class="result-bar-track">
-            <div class="result-bar-fill" style="width:{% widthratio id.za total 100 %}%;"></div>
-          </div>
-        </div>
-      {% endif %}
-      {% endwith %}
-
-      {% if voters %}
-      <div class="detail-section-label" style="margin-top:.75rem;">
-        <i class="fas fa-users" style="color:var(--accent);margin-right:.25rem;"></i>{% trans 'They voted' %}
-      </div>
-      <div class="voters-list">
-        {% for voter in voters %}{{ voter.ktory_uzytkownik_juz_zaglosowal.username }}{% if not forloop.last %}, {% endif %}{% endfor %}
-      </div>
-      {% endif %}
-
-      {% if report %}
-      <div class="detail-section-label" style="margin-top:.75rem;">
-        <i class="fas fa-file-lines" style="color:var(--accent);margin-right:.25rem;"></i>{% trans 'Protocol' %}
-      </div>
-      <div class="protocol-list">
-        {% for r in report %}
-          <span class="{% if r.vote %}protocol-yes{% else %}protocol-no{% endif %}">
-            {% if r.vote %}✓{% else %}✗{% endif %} {{ r.code }}
-          </span><br>
-        {% endfor %}
-      </div>
-      {% endif %}
-    </div>
-    {% endif %}
-
-  </div>{# /.detail-sidebar #}
-
-</div>{# /.detail-layout #}
+<script>
+function toggleArgForm(id) {
+  var el = document.getElementById(id);
+  el.classList.toggle('visible');
+  if (el.classList.contains('visible')) el.querySelector('textarea').focus();
+}
+</script>
 
 {% with chat_room=chat_room %}
   {% include 'chat/_embedded_chat.html' %}

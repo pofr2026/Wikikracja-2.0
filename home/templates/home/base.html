@@ -284,6 +284,16 @@
           <i class="fas fa-building-columns me-1"></i>{{ request.site.name }}
         </a>
       </div>
+      <div class="anon-nav">
+        <a href="{% url 'board:start' %}"
+           class="anon-nav-link {% if request.resolver_match.namespace == 'board' %}active{% endif %}">
+          <i class="fas fa-bullhorn"></i><span class="anon-nav-text">{% trans "Announcements" %}</span>
+        </a>
+        <a href="{% url 'events:list' %}"
+           class="anon-nav-link {% if request.resolver_match.namespace == 'events' %}active{% endif %}">
+          <i class="fas fa-calendar-days"></i><span class="anon-nav-text">{% trans "Calendar" %}</span>
+        </a>
+      </div>
       <a href="{% url 'login' %}" class="btn btn-sm btn-outline-secondary me-1">{% trans "Login" %}</a>
       <a href="{% url 'account_signup' %}" class="btn-cta">{% trans "Register" %}</a>
     </nav>

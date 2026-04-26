@@ -79,6 +79,7 @@
 
 # BOOKKEEPING
 
+- Dodać waluty
 - Mechanizm do opłacania składki
 - Umowy - ja pożyczam tobie, ja przechowuję tobie.
 - Między sobą: kto, komu, ile, kiedy, za co. Squash: jeśli A wisi B, B wisi C, C wisi A 100zł to wszystko się zeruje. Rozliczenia gotówkowe / Śledzenie przekazywania przedmiotów

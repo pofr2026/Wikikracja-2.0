@@ -19,23 +19,24 @@ from .forms import TaskForm, TaskStatusForm
 from .models import Task, TaskEvaluation, TaskVote
 
 TASK_LIST_CACHE_TTL = 3600  # 1h — signals handle invalidation on data changes
+TASK_LIST_GLOBAL_VERSION_KEY = "task_list_global_version"
 
 
 def _task_list_cache_key(user_id):
-    return f"task_list_data_v1_{user_id}"
+    version = cache.get(TASK_LIST_GLOBAL_VERSION_KEY, 1)
+    return f"task_list_data_v2_{version}_{user_id}"
 
 
 def invalidate_task_list_cache(user_id=None):
-    """Invalidate task list cache. If user_id is None, clear all users' caches."""
+    """Invalidate task list cache. Bumps global version to invalidate all users at once."""
     if user_id:
         cache.delete(_task_list_cache_key(user_id))
     else:
-        # Wildcard delete for all users — use cache.delete_pattern if available,
-        # otherwise rely on TTL expiry (Redis supports it via django-redis).
+        # Bump global version — all per-user keys become stale immediately
         try:
-            cache.delete_pattern("task_list_data_v1_*")
-        except AttributeError:
-            pass  # plain RedisCache doesn't support delete_pattern; TTL handles it
+            cache.incr(TASK_LIST_GLOBAL_VERSION_KEY)
+        except ValueError:
+            cache.set(TASK_LIST_GLOBAL_VERSION_KEY, 2, timeout=None)
 
 
 def _get_pulse_room_ids(user):
@@ -57,7 +58,15 @@ def _task_sort_context(request):
     tab = request.GET.get('tab', 'mine')
     if tab not in ('mine', 'awaiting', 'active', 'finished'):
         tab = 'mine'
-    return sort, order, tab
+    valid_categories = {c[0] for c in Task.Category.choices}
+    categories = [c for c in request.GET.getlist('category') if c in valid_categories]
+    return sort, order, tab, categories
+
+
+def _filter_by_category(tasks, categories):
+    if not categories:
+        return tasks
+    return [t for t in tasks if t.category in categories]
 
 
 def _apply_task_sort(tasks, sort, order):
@@ -182,21 +191,29 @@ class TaskListView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        sort, order, tab = _task_sort_context(self.request)
+        sort, order, tab, categories = _task_sort_context(self.request)
 
         data = _load_task_lists(self.request.user)
 
+        def prepare(tasks):
+            return _apply_task_sort(_filter_by_category(tasks, categories), sort, order)
+
         context.update({
-            "active_tasks": _apply_task_sort(data["active_with_owner"], sort, order),
-            "awaiting_tasks": _apply_task_sort(data["awaiting_tasks"], sort, order),
-            "finished_completed": _apply_task_sort(data["completed_tasks"], sort, order),
-            "finished_rejected": _apply_task_sort(data["rejected_tasks"] + data["rejected_active"], sort, order),
-            "finished_cancelled": _apply_task_sort(data["cancelled_tasks"], sort, order),
-            "my_tasks_own": _apply_task_sort(data["my_tasks_own"], sort, order),
-            "my_tasks_supporting": _apply_task_sort(data["my_tasks_supporting"], sort, order),
+            "active_tasks": prepare(data["active_with_owner"]),
+            "awaiting_tasks": prepare(data["awaiting_tasks"]),
+            "finished_completed": prepare(data["completed_tasks"]),
+            "finished_rejected": prepare(data["rejected_tasks"] + data["rejected_active"]),
+            "finished_cancelled": prepare(data["cancelled_tasks"]),
+            "my_tasks_own": prepare(data["my_tasks_own"]),
+            "my_tasks_supporting": prepare(data["my_tasks_supporting"]),
             "current_tab": tab,
             "current_sort": sort,
             "current_order": order,
+            "current_categories": categories,
+            "category_choices_with_desc": [
+                (k, v, Task.CATEGORY_DESCRIPTIONS.get(k, ""))
+                for k, v in Task.Category.choices
+            ],
         })
         return context
 
@@ -205,7 +222,17 @@ class TaskHelpView(LoginRequiredMixin, TemplateView):
     template_name = "tasks/task_help.html"
 
 
-class TaskCreateView(LoginRequiredMixin, CreateView):
+class CategoryContextMixin:
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["category_choices_with_desc"] = [
+            (k, v, Task.CATEGORY_DESCRIPTIONS.get(k, ""))
+            for k, v in Task.Category.choices
+        ]
+        return context
+
+
+class TaskCreateView(CategoryContextMixin, LoginRequiredMixin, CreateView):
     model = Task
     form_class = TaskForm
     template_name = "tasks/task_form.html"
@@ -298,7 +325,7 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
         return context
 
 
-class TaskEditView(LoginRequiredMixin, UpdateView):
+class TaskEditView(CategoryContextMixin, LoginRequiredMixin, UpdateView):
     model = Task
     form_class = TaskForm
     template_name = "tasks/task_form.html"

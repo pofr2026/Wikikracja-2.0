@@ -34,7 +34,7 @@ const RoomLock = new Lock();
 let CurrentRoomId = null;
 
 /**
- * Message ID being replied to (ZMIANA 2)
+ * Message ID being replied to
  * @type {number|null}
  */
 let currentReplyId = null;
@@ -110,21 +110,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set the WebSocket message handler to break circular dependency
     WS_API.socketMessageHandler = onSocketMessage;
-
-    // Handle mobile keyboard viewport changes for back button visibility
-    if (window.visualViewport) {
-        const handleViewportChange = () => {
-            const header = document.getElementById('folded-room-header');
-            if (header && window.innerWidth <= 767) { // Only on mobile
-                const offsetTop = window.visualViewport.offsetTop;
-                header.style.transform = `translateY(${offsetTop}px)`;
-            }
-        };
-
-        window.visualViewport.addEventListener('resize', handleViewportChange);
-        window.visualViewport.addEventListener('scroll', handleViewportChange);
-        handleViewportChange(); // Initial call
-    }
 
     // Handle unread filter functionality
     const unreadFilterBtn = $('#unread-filter-btn');
@@ -355,7 +340,6 @@ export async function onRoomTryJoin(room_id) {
     resetSortState();
     bindSortToolbar();
     DOM_API.updateBreadcrumb(deriveBreadcrumb(room_id));
-    DOM_API.setFoldedRoomTitle(response.title);
     DOM_API.showFoldedRoomHeader();
 
     // Auto-expand category and archive section if needed
@@ -388,14 +372,6 @@ export async function onRoomTryLeave(sync_with_server) {
     CurrentRoomId = null;
 }
 
-/**
- * Handle back button click - leave room and show room list on mobile
- */
-export async function onBackToRoomList() {
-    if (CurrentRoomId) {
-        await onRoomTryLeave(false);
-    }
-}
 
 /**
  * @param {Array} messages - Array of message objects from server
@@ -506,12 +482,12 @@ export async function onReceiveVotes(event) {
         if (event.add) active_btn?.classList.add('active');
     }
 
-    // ZMIANA 4A — update vote bar after vote change
+    // update vote bar after vote change
     DOM_API.updateVoteBar(event.message_id, event.upvotes, event.downvotes);
 }
 
 /**
- * ZMIANA 4B — update emoji reaction counts + active state for a message.
+ * update emoji reaction counts + active state for a message.
  */
 export async function onReceiveReactions(event) {
     const msgDiv = DOM_API.getMessageDiv(event.message_id);
@@ -541,7 +517,7 @@ export async function onReceiveReactions(event) {
 }
 
 /**
- * ZMIANA 4C — update "read by" avatars for a message.
+ * update "read by" avatars for a message.
  */
 export async function onReceiveReadBy(event) {
     const msgDiv = DOM_API.getMessageDiv(event.message_id);
@@ -596,7 +572,7 @@ export async function onRoomSeen(room_id) {
 }
 
 /**
- * Set a message as the current reply target (ZMIANA 2).
+ * Set a message as the current reply target.
  * Updates the reply-preview bar in the input area.
  */
 export function setReplyTarget(message_id, username, snippet) {
@@ -610,7 +586,7 @@ export function setReplyTarget(message_id, username, snippet) {
 }
 
 /**
- * Clear the current reply target (ZMIANA 2).
+ * Clear the current reply target.
  */
 export function clearReplyTarget() {
     currentReplyId = null;
@@ -619,7 +595,7 @@ export function clearReplyTarget() {
 }
 
 /**
- * ZMIANA 4B — send toggle-reaction command to server.
+ * send toggle-reaction command to server.
  */
 export function onToggleReaction(reaction, message_id) {
     WS_API?.toggleReaction(reaction, message_id);

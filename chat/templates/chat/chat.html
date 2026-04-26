@@ -22,35 +22,33 @@
   <div class="row chat-rooms">
     <!-- Messages and Input field -->
     <div class="chat-root-messages col-md-7">
-      <!-- Folded room header - shown when room is selected on mobile -->
-      <div class="folded-room-header" id="folded-room-header">
-        <button class="btn btn-sm btn-back-room" id="back-to-room-list" aria-label="{% trans 'Back to room list' %}">
-          <i class="fas fa-arrow-left"></i>
-        </button>
-        <span class="folded-room-title" id="folded-room-title"></span>
-      </div>
     </div>
 
-    <!-- Room list -->
-    <div class="room-list col-md-5" id="room-list">
-      <!-- Top controls -->
-      <div class="room-list-controls p-2 border-bottom">
-        <div class="d-flex gap-2 justify-content-end">
-          <button class="stepper-info-btn me-auto" id="info-btn" data-bs-toggle="modal" data-bs-target="#chat-info-modal" title="{% trans 'Info' %}">
+    <!-- Room list controls + scrollable list — wrapped in flex column -->
+    <div class="room-list-col col-md-5">
+      <!-- Top controls — outside scroll container, never affected by scrollbar -->
+      <div class="room-list-controls">
+        <div class="room-list-controls-inner">
+          <button class="sort-btn me-auto" id="info-btn" data-bs-toggle="modal" data-bs-target="#chat-info-modal" title="{% trans 'Info' %}">
             <i class="fas fa-circle-info"></i>
           </button>
-          <a href="{% url 'chat:add_room' %}" class="btn btn-sm btn-secondary">
+          <a href="{% url 'chat:add_room' %}" class="sort-btn">
             <i class="fas fa-plus me-1"></i>{% trans 'Room' %}
           </a>
-          <button class="btn btn-sm btn-secondary" id="collapse-all-btn" title="{% trans 'Collapse/expand all' %}">
+          <button class="sort-btn" id="unread-filter-btn" title="{% trans 'Show only unread rooms' %}">
+            <i class="fas fa-eye-slash me-1"></i>{% trans 'Unread' %}
+          </button>
+          <button class="sort-btn" id="collapse-all-btn" title="{% trans 'Collapse/expand all' %}">
             <i class="fas fa-angles-up"></i>
           </button>
-          <button class="btn btn-sm btn-secondary" id="unread-filter-btn" title="{% trans 'Show only unread rooms' %}">
-            <i class="fas fa-eye-slash me-1"></i>{% trans 'Unread' %}
+          <button class="sort-btn" id="room-list-toggle-static-btn" title="{% trans 'Hide room list' %}">
+            <i class="fas fa-angles-right"></i>
           </button>
         </div>
       </div>
 
+      <!-- Scrollable room list -->
+      <div class="room-list" id="room-list">
       <div class="row">
         <div class="col p-1">
 
@@ -172,7 +170,8 @@
 
         </div>
       </div>
-    </div>
+      </div><!-- /.room-list -->
+    </div><!-- /.room-list-col -->
   </div>
 
   <!-- ======================================================================== -->

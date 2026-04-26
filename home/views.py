@@ -86,8 +86,11 @@ def home(request: HttpRequest):
     upcoming_count = Decyzja.objects.filter(status=2).count()
     signatures_count = Decyzja.objects.filter(status=1).count()
 
-    # Nowe propozycje widget (max 3, zbierające podpisy)
+    # Propozycje głosowań widget (max 3, zbierające podpisy, status=1)
     new_proposals = Decyzja.objects.filter(status=1).select_related('author').order_by('-data_ostatniej_modyfikacji')[:3]
+
+    # Dyskutowane głosowania widget (max 3, status=2)
+    discussed_proposals = Decyzja.objects.filter(status=2).select_related('author').order_by('-data_ostatniej_modyfikacji')[:3]
 
     # My tasks widget (max 3, active — assigned to me or supported by me)
     my_tasks = Task.objects.filter(Q(assigned_to=request.user) | Q(votes__user=request.user, votes__value=1)).filter(status=Task.Status.ACTIVE).distinct().order_by('updated_at')[:3]
@@ -189,6 +192,7 @@ def home(request: HttpRequest):
         'candidates_count': candidates_count,
         'last_feed_items': last_feed_items,
         'new_proposals': new_proposals,
+        'discussed_proposals': discussed_proposals,
     })
 
 
