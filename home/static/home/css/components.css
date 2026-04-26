@@ -675,7 +675,7 @@
    ══════════════════════════════════════════════════ */
 .detail-layout {
   display: grid;
-  grid-template-columns: 1fr 340px;
+  grid-template-columns: 1fr;
   gap: 1.25rem;
   align-items: start;
 }
@@ -1079,12 +1079,12 @@
 .detail-status-badge {
   display: inline-flex;
   align-items: center;
-  gap: .4rem;
+  gap: .3rem;
   font-size: .78rem;
-  font-weight: 600;
-  padding: .35rem .85rem;
-  border-radius: var(--radius-badge);
-  margin-bottom: .85rem;
+  font-weight: 500;
+  padding: 2px 7px 2px 5px;
+  border-radius: 2rem;
+  margin-bottom: 0;
 }
 .detail-status-badge.s1 {
   background: var(--badge-proposition-bg);
@@ -1135,8 +1135,8 @@
   align-items: center;
   justify-content: center;
   gap: .4rem;
-  width: 100%;
-  padding: .55rem 1rem;
+  width: fit-content;
+  padding: .35rem .75rem;
   border-radius: .5rem;
   font-size: .85rem;
   font-weight: 600;

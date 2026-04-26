@@ -2456,6 +2456,18 @@ msgstr "Dyskutowane głosowania"
 msgid "No discussed votings"
 msgstr "Brak dyskutowanych głosowań"
 
+msgid "I signed"
+msgstr "Podpisałem"
+
+msgid "I voted"
+msgstr "Zagłosowałem"
+
+msgid "I support"
+msgstr "Popieram"
+
+msgid "I do not support"
+msgstr "Nie popieram"
+
 msgid "All discussions"
 msgstr "Wszystkie dyskusje"
 
