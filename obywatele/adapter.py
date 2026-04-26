@@ -40,7 +40,7 @@ class CustomAccountAdapter(DefaultAccountAdapter):
         """
         return super().get_signup_redirect_url(request)
 
-    def is_auto_signup_allowed(self, request, sociallogin):
+    def is_auto_signup_allowed(self, request, sociallogin):  # noqa: ARG002 - allauth API requires this signature
         """
         Disable auto signup for social accounts to ensure onboarding flow
         """

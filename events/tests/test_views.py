@@ -65,7 +65,7 @@ class EventViewTest(TestCase):
 
     def test_private_event_visible_for_logged_in_user(self):
         from events.models import Event as E
-        private = E.objects.create(
+        E.objects.create(
             title="Private Visible",
             start_date=timezone.now() + timedelta(days=1),
             frequency='once',
