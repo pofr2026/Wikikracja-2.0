@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-26 10:06+0200\n"
+"POT-Creation-Date: 2026-04-26 14:57+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -122,7 +122,7 @@ msgid "Category"
 msgstr ""
 
 #: .\board\models.py:29 .\board\templates\board\post_detail.html:27
-#: .\chat\templates\chat\chat.html:62 .\events\models.py:50
+#: .\chat\templates\chat\chat.html:60 .\events\models.py:50
 #: .\events\templates\events\event_detail.html:80
 #: .\events\templates\events\event_list.html:77
 msgid "Public"
@@ -154,7 +154,8 @@ msgstr ""
 #: .\board\templates\board\archive.html:16
 #: .\board\templates\board\board.html:10
 #: .\board\templates\board\postcategory_list.html:13
-#: .\elibrary\templates\elibrary\book_list.html:165 .\home\views.py:403
+#: .\elibrary\templates\elibrary\book_list.html:165
+#: .\home\templates\home\base.html:291 .\home\views.py:403
 msgid "Announcements"
 msgstr ""
 
@@ -276,7 +277,7 @@ msgid "Back"
 msgstr "Back"
 
 #: .\board\templates\board\post_detail.html:27
-#: .\chat\templates\chat\chat.html:151
+#: .\chat\templates\chat\chat.html:149
 #: .\events\templates\events\event_detail.html:84
 #: .\events\templates\events\event_list.html:81
 msgid "Private"
@@ -728,100 +729,100 @@ msgstr ""
 msgid "New room"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:27
-msgid "Back to room list"
-msgstr ""
-
-#: .\chat\templates\chat\chat.html:39
+#: .\chat\templates\chat\chat.html:32
 msgid "Info"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:43
+#: .\chat\templates\chat\chat.html:36
 #: .\obywatele\templates\obywatele\_citizen_czaty_partial.html:7
 msgid "Room"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:45
-msgid "Collapse/expand all"
-msgstr ""
-
-#: .\chat\templates\chat\chat.html:48
+#: .\chat\templates\chat\chat.html:38
 msgid "Show only unread rooms"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:49 .\chat\templates\chat\room_link.html:12
+#: .\chat\templates\chat\chat.html:39 .\chat\templates\chat\room_link.html:12
 #: .\home\templates\home\activity.html:14 .\home\templates\home\home.html:631
 msgid "Unread"
 msgstr "Unread"
 
-#: .\chat\templates\chat\chat.html:64 .\chat\templates\chat\chat.html:91
-#: .\chat\templates\chat\chat.html:122 .\chat\templates\chat\chat.html:153
+#: .\chat\templates\chat\chat.html:41
+msgid "Collapse/expand all"
+msgstr ""
+
+#: .\chat\templates\chat\chat.html:44
+msgid "Hide room list"
+msgstr ""
+
+#: .\chat\templates\chat\chat.html:62 .\chat\templates\chat\chat.html:89
+#: .\chat\templates\chat\chat.html:120 .\chat\templates\chat\chat.html:151
 msgid "Show archived rooms"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:72 .\chat\templates\chat\chat.html:78
-#: .\chat\templates\chat\chat.html:101 .\chat\templates\chat\chat.html:109
-#: .\chat\templates\chat\chat.html:132 .\chat\templates\chat\chat.html:140
-#: .\chat\templates\chat\chat.html:161 .\chat\templates\chat\chat.html:167
+#: .\chat\templates\chat\chat.html:70 .\chat\templates\chat\chat.html:76
+#: .\chat\templates\chat\chat.html:99 .\chat\templates\chat\chat.html:107
+#: .\chat\templates\chat\chat.html:130 .\chat\templates\chat\chat.html:138
+#: .\chat\templates\chat\chat.html:159 .\chat\templates\chat\chat.html:165
 #: .\tasks\templates\tasks\task_detail.html:42
 msgid "None"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:89 .\chat\templates\chat\chat.html:211
+#: .\chat\templates\chat\chat.html:87 .\chat\templates\chat\chat.html:210
 #: .\home\templates\home\base.html:187 .\home\templates\home\base.html:222
 #: .\home\templates\home\home.html:47 .\home\templates\home\search.html:63
 #: .\home\views.py:404 .\obywatele\templates\obywatele\szczegoly.html:130
 msgid "Tasks"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:120 .\chat\templates\chat\chat.html:215
+#: .\chat\templates\chat\chat.html:118 .\chat\templates\chat\chat.html:214
 msgid "Referendums"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:185
+#: .\chat\templates\chat\chat.html:184
 msgid "Changes history"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:190 .\chat\templates\chat\chat.html:228
+#: .\chat\templates\chat\chat.html:189 .\chat\templates\chat\chat.html:227
 #: .\tasks\templates\tasks\task_detail.html:160
 msgid "Close"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:202
+#: .\chat\templates\chat\chat.html:201
 msgid "Chat Information"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:207
+#: .\chat\templates\chat\chat.html:206
 msgid "Public Rooms"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:208
+#: .\chat\templates\chat\chat.html:207
 #, python-format
 msgid "Public chat rooms are archived if they are not used for %(archive_days)s days. After %(delete_days)s days they are deleted."
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:212
+#: .\chat\templates\chat\chat.html:211
 msgid "Task rooms are created for specific tasks and projects. They are protected from automatic deletion and are used for collaborative work discussions."
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:216
+#: .\chat\templates\chat\chat.html:215
 msgid "Referendum rooms are created for voting and decision-making processes. They are protected from automatic deletion and provide a space for discussions about proposals."
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:219
+#: .\chat\templates\chat\chat.html:218
 msgid "Private Messages"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:220
+#: .\chat\templates\chat\chat.html:219
 #, python-format
 msgid "Private messages are archived when user is blocked and deleted after %(delete_days)s days."
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:223
+#: .\chat\templates\chat\chat.html:222
 msgid "Archives"
 msgstr ""
 
-#: .\chat\templates\chat\chat.html:224
+#: .\chat\templates\chat\chat.html:223
 msgid "Click the archive button (folder icon) next to each category to show archived rooms."
 msgstr ""
 
@@ -2039,8 +2040,8 @@ msgstr ""
 msgid "Board"
 msgstr "Board"
 
-#: .\home\templates\home\base.html:188 .\home\templates\home\home.html:39
-#: .\home\views.py:406
+#: .\home\templates\home\base.html:188 .\home\templates\home\base.html:295
+#: .\home\templates\home\home.html:39 .\home\views.py:406
 msgid "Calendar"
 msgstr ""
 
@@ -2083,7 +2084,7 @@ msgstr ""
 msgid "Activity"
 msgstr "Activity"
 
-#: .\home\templates\home\base.html:288 .\home\templates\home\home.html:13
+#: .\home\templates\home\base.html:298 .\home\templates\home\home.html:13
 #: .\home\templates\home\login.html:4 .\home\templates\home\login.html:13
 #: .\home\templates\home\login.html:34
 #: .\obywatele\management\commands\count_citizens.py:181
@@ -2091,27 +2092,27 @@ msgstr "Activity"
 msgid "Login"
 msgstr ""
 
-#: .\home\templates\home\base.html:289
+#: .\home\templates\home\base.html:299
 msgid "Register"
 msgstr ""
 
-#: .\home\templates\home\base.html:297
+#: .\home\templates\home\base.html:307
 msgid "Enable notifications to stay updated with new messages and activities"
 msgstr ""
 
-#: .\home\templates\home\base.html:299
+#: .\home\templates\home\base.html:309
 msgid "Enable Notifications"
 msgstr ""
 
-#: .\home\templates\home\base.html:302
+#: .\home\templates\home\base.html:312
 msgid "Not now"
 msgstr ""
 
-#: .\home\templates\home\base.html:307
+#: .\home\templates\home\base.html:317
 msgid "Notifications are blocked. Please enable them in your browser settings"
 msgstr ""
 
-#: .\home\templates\home\base.html:309
+#: .\home\templates\home\base.html:319
 msgid "Dismiss"
 msgstr ""
 
