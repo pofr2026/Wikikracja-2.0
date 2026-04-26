@@ -8,7 +8,6 @@ import {
     clearReplyTarget,
     copyMessageLink,
     copyRoomLink,
-    onBackToRoomList,
     onMessageHistory,
     onRoomTryJoin,
     onSubmitMessage,
@@ -34,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
         textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
     }
 
-    // ---- ZMIANA 5: Character counter ----
+    // Character counter
     const MSG_MAX = window.SITE_SETTINGS?.messageMaxLength ?? 500;
 
     function updateCounter(text) {
@@ -77,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 2500);
     }
 
-    // ---- ZMIANA 6: Rich text toolbar state ----
+    // Rich text toolbar state
     function updateToolbarState() {
         ['bold', 'italic', 'underline'].forEach(cmd => {
             const btn = $(`[data-cmd="${cmd}"]`);
@@ -133,7 +132,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-    // ---- ZMIANA 1: Tree sidebar — nav-cat-btn collapse/expand ----
+    // Tree sidebar — nav-cat-btn collapse/expand
     // Restore cat states from localStorage (before click handler, so initial state is set)
     document.querySelectorAll('.nav-cat-btn').forEach(btn => {
         const contentId = btn.dataset.catContent;
@@ -211,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const el = e.target;
         const mod = e.ctrlKey || e.metaKey;
 
-        // ZMIANA 6: rich text shortcuts
+        // Rich text shortcuts
         if (el.isContentEditable) {
             if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); updateToolbarState(); return; }
             if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
@@ -412,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ---- ZMIANA 4B: Emoji reaction toggle ----
+    // Emoji reaction toggle
     document.addEventListener("click", (e) => {
         const btn = e.target.closest(".reaction-btn");
         if (btn) {
@@ -463,7 +462,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ---- ZMIANA 2: Quote/Reply ----
+    // Quote/Reply
     let _replySourceMessageId = null; // ID of the message containing the clicked quote jump
 
     document.addEventListener('click', (e) => {
@@ -574,56 +573,74 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Handle back button to room list
+    // ── Room list show/hide ───────────────────────────────────────────────────
+    const chatRoomsEl = $('.chat-rooms');
+    const HIDDEN_KEY = 'chat-room-list-hidden';
+
+    function setRoomListHidden(hidden) {
+        chatRoomsEl?.classList.toggle('room-list-hidden', hidden);
+        if (hidden) localStorage.setItem(HIDDEN_KEY, '1');
+        else localStorage.removeItem(HIDDEN_KEY);
+        updateToggleBtn();
+    }
+
+    function updateToggleBtn() {
+        const hidden = chatRoomsEl?.classList.contains('room-list-hidden');
+        // Button in sort toolbar (dynamic, inside #room)
+        const dynBtn = document.getElementById('toggle-room-list-btn');
+        if (dynBtn) {
+            dynBtn.querySelector('i').className = hidden ? 'fas fa-angles-left' : 'fas fa-angles-right';
+            dynBtn.title = hidden ? 'Show room list' : 'Hide room list';
+        }
+        // Button in room-list-controls (static, desktop only)
+        const staticBtn = document.getElementById('room-list-toggle-static-btn');
+        if (staticBtn) {
+            staticBtn.querySelector('i').className = hidden ? 'fas fa-angles-left' : 'fas fa-angles-right';
+            staticBtn.title = hidden ? 'Show room list' : 'Hide room list';
+        }
+    }
+
+    // Restore saved state — desktop only; mobile always starts with list visible
+    if (window.innerWidth < 768) {
+        chatRoomsEl?.classList.remove('room-list-hidden');
+    } else if (localStorage.getItem(HIDDEN_KEY)) {
+        setRoomListHidden(true);
+    }
+
+    // Mobile: show room list (keep room joined, just switch view)
+    function mobileShowRoomList() {
+        chatRoomsEl?.classList.add('room-list-showing');
+    }
+    // Mobile: hide room list and return to chat view
+    function mobileHideRoomList() {
+        chatRoomsEl?.classList.remove('room-list-showing');
+    }
+    // #toggle-room-list-btn (inside room area): on mobile shows room list without leaving room
     document.addEventListener('click', (e) => {
-        const backBtn = e.target.closest('#back-to-room-list');
-        if (backBtn) {
-            e.preventDefault();
-            onBackToRoomList();
+        const btn = e.target.closest('#toggle-room-list-btn');
+        if (!btn) return;
+        if (window.innerWidth < 768) {
+            mobileShowRoomList();
+        } else {
+            setRoomListHidden(!chatRoomsEl?.classList.contains('room-list-hidden'));
         }
     });
 
-    // Handle folded room title click to navigate back to room list
+    // #room-list-toggle-static-btn (obok "Nieprzeczytane"): na mobile zwija listę, na desktop toggle
     document.addEventListener('click', (e) => {
-        const roomTitle = e.target.closest('#folded-room-title');
-        if (roomTitle) {
-            e.preventDefault();
-            onBackToRoomList();
+        const btn = e.target.closest('#room-list-toggle-static-btn');
+        if (!btn) return;
+        if (window.innerWidth < 768) {
+            mobileHideRoomList();
+        } else {
+            setRoomListHidden(!chatRoomsEl?.classList.contains('room-list-hidden'));
         }
     });
 
-    // Handle window resize - reset mobile state on larger screens
+    // Handle window resize
     window.addEventListener('resize', () => {
-        if (window.innerWidth >= 768) {
-            const chatRooms = $(".chat-rooms");
-            if (chatRooms) chatRooms.classList.remove('mobile-room-selected');
+        if (window.innerWidth >= 768 && !localStorage.getItem(HIDDEN_KEY)) {
+            setRoomListHidden(false);
         }
     });
 });
-
-function slideToggle(element, duration) {
-    const isHidden = element.style.display === 'none' || getComputedStyle(element).display === 'none';
-
-    if (isHidden) {
-        element.style.display = 'block';
-        element.style.height = '0';
-        element.style.overflow = 'hidden';
-        element.style.transition = `height ${duration}ms ease`;
-        requestAnimationFrame(() => {
-            element.style.height = element.scrollHeight + 'px';
-        });
-    } else {
-        element.style.height = element.scrollHeight + 'px';
-        element.style.overflow = 'hidden';
-        element.style.transition = `height ${duration}ms ease`;
-        requestAnimationFrame(() => {
-            element.style.height = '0';
-        });
-        element.addEventListener('transitionend', function handler() {
-            element.removeEventListener('transitionend', handler);
-            element.style.display = 'none';
-            element.style.height = '';
-            element.style.overflow = '';
-        });
-    }
-}

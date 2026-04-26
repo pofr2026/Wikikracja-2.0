@@ -32,6 +32,9 @@ const room_template = `
         <i class="fas fa-fire fa-fw"></i>
         <span>${_("Popular")}</span>
       </button>
+      <button type="button" class="sort-btn" id="toggle-room-list-btn" title="${_("Hide room list")}">
+        <i class="fas fa-angles-right"></i>
+      </button>
     </div>
   </div>
 
