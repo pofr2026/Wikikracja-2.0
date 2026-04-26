@@ -1,4 +1,3 @@
-# Third party imports
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db.models import Sum
 from django.shortcuts import redirect, render
@@ -7,7 +6,6 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView, View
 
-# Local folder imports
 from .forms import TransactionForm
 from .models import Category, Partner, Transaction
 

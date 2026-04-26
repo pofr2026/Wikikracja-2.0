@@ -1,11 +1,9 @@
-# Standard library imports
 import logging
 import threading
 from collections import defaultdict
 from datetime import datetime as dt
 from time import sleep
 
-# Third party imports
 import pytz
 from django.conf import settings as s
 from django.core.mail import EmailMessage
@@ -13,7 +11,6 @@ from django.core.management.base import BaseCommand
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
-# First party imports
 from chat.models import Message, Room
 from obywatele.models import Uzytkownik
 from zzz.utils import get_site_domain

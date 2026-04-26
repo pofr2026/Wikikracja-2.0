@@ -1,14 +1,17 @@
-# Standard library imports
+import importlib.metadata
 import json
 import logging
 import mimetypes
 from os import getenv, path
 
-# Third party imports
+try:
+    APP_VERSION = importlib.metadata.version("wikikracja")
+except importlib.metadata.PackageNotFoundError:
+    APP_VERSION = "0.95.0-dev"
+
 from dotenv import load_dotenv
 from firebase_admin import credentials
 
-# First party imports
 from zzz.settings_base import BASE_DIR, DATABASES  # noqa: F401
 
 # Register additional MIME types not recognized by default
@@ -136,6 +139,9 @@ ARCHIVE_PUBLIC_CHAT_ROOM = env_int("ARCHIVE_PUBLIC_CHAT_ROOM", 9)
 DELETE_PUBLIC_CHAT_ROOM = env_int("DELETE_PUBLIC_CHAT_ROOM", 360)
 
 UPLOAD_IMAGE_MAX_SIZE_MB = env_int("UPLOAD_IMAGE_MAX_SIZE_MB", 5)
+
+# ZMIANA 5: maksymalna długość wiadomości czatu (konfigurowalna)
+MESSAGE_MAX_LENGTH = env_int("MESSAGE_MAX_LENGTH", 500)
 DATA_UPLOAD_MAX_MEMORY_SIZE = env_int("DATA_UPLOAD_MAX_MEMORY_SIZE", 10485760)
 
 ACCEPTANCE = env_int("ACCEPTANCE", 3)
@@ -155,6 +161,7 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.middleware.locale.LocaleMiddleware',
+    'obywatele.middleware.UserLanguageMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -232,6 +239,7 @@ INSTALLED_APPS = [
     'tasks',
     'captcha',
     'push_notifications',
+    'site_settings',
 ]
 
 if DEBUG:
@@ -411,7 +419,9 @@ STORAGES = {
         "BACKEND": "django.core.files.storage.FileSystemStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        # In development: serve source files directly via finders (no hashing, no collectstatic needed)
+        # In production: compress + hash for optimal caching
+        "BACKEND": ("django.contrib.staticfiles.storage.StaticFilesStorage" if DEBUG else "whitenoise.storage.CompressedStaticFilesStorage"),
     },
 }
 WHITENOISE_AUTOREFRESH = DEBUG
@@ -449,3 +459,6 @@ PUSH_NOTIFICATIONS_SETTINGS = {
         'sub': f"mailto:{getenv('VAPID_ADMIN_EMAIL', 'admin@example.com')}"
     }
 }
+
+# Onboarding: pk of the Board post 'Zasady wspólnoty'
+ONBOARDING_RULES_POST_ID = None  # set to the pk after creating the post

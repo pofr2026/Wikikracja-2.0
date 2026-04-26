@@ -5,7 +5,7 @@
  * and handles displaying them to the user.
  */
 
-import { makeNotification, $ } from './utility.js';
+import { $, makeNotification } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
 
 /**

@@ -1,0 +1,338 @@
+# Third party imports
+from django.core.cache import cache
+from django.test import Client, TestCase
+from django.urls import reverse
+
+# Local folder imports
+from tasks.models import Task, TaskEvaluation, TaskVote
+from tasks.tests.utils import make_task, make_user
+from tasks.views import _task_list_cache_key
+
+
+class TaskListViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("listuser")
+
+    def test_requires_login(self):
+        response = self.client.get(reverse("tasks:list"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_authenticated_returns_200(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:list"))
+        self.assertEqual(response.status_code, 200)
+
+
+class TaskCreateViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("creator")
+
+    def test_requires_login(self):
+        response = self.client.get(reverse("tasks:add"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_get_returns_form(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:add"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_creates_task(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:add"), {"title": "Nowe zadanie", "description": "Opis"})
+        self.assertTrue(Task.objects.filter(title="Nowe zadanie").exists())
+
+    def test_post_assigns_creator_as_created_by_and_assigned_to(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:add"), {"title": "Moje zadanie", "description": "Opis"})
+        task = Task.objects.get(title="Moje zadanie")
+        self.assertEqual(task.created_by, self.user)
+        self.assertEqual(task.assigned_to, self.user)
+
+    def test_post_creates_upvote_for_creator(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:add"), {"title": "Auto-vote", "description": "Opis"})
+        task = Task.objects.get(title="Auto-vote")
+        vote = TaskVote.objects.filter(task=task, user=self.user).first()
+        self.assertIsNotNone(vote)
+        self.assertEqual(vote.value, TaskVote.Value.UP)
+
+    def test_post_empty_title_returns_form(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(reverse("tasks:add"), {"title": "", "description": "Opis"})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Task.objects.exists())
+
+
+class TaskDetailViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("detailuser")
+        self.task = make_task(created_by=self.user)
+
+    def test_requires_login(self):
+        response = self.client.get(reverse("tasks:detail", kwargs={"pk": self.task.pk}))
+        self.assertEqual(response.status_code, 302)
+
+    def test_authenticated_returns_200(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:detail", kwargs={"pk": self.task.pk}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_nonexistent_task_returns_404(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:detail", kwargs={"pk": 99999}))
+        self.assertEqual(response.status_code, 404)
+
+
+class TaskEditViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = make_user("owner")
+        self.other = make_user("intruder")
+        self.task = make_task(created_by=self.owner, assigned_to=self.owner)
+
+    def test_assigned_user_can_access_edit(self):
+        self.client.login(username=self.owner.username, password=self.owner._plain_password)
+        response = self.client.get(reverse("tasks:edit", kwargs={"pk": self.task.pk}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_assigned_user_redirected_to_detail(self):
+        self.client.login(username=self.other.username, password=self.other._plain_password)
+        response = self.client.get(reverse("tasks:edit", kwargs={"pk": self.task.pk}))
+        self.assertRedirects(response, reverse("tasks:detail", kwargs={"pk": self.task.pk}))
+
+    def test_edit_updates_title(self):
+        self.client.login(username=self.owner.username, password=self.owner._plain_password)
+        self.client.post(
+            reverse("tasks:edit", kwargs={"pk": self.task.pk}),
+            {"title": "Zmieniony tytuł", "description": "Nowy opis"},
+        )
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.title, "Zmieniony tytuł")
+
+
+class TaskCloseViewTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.owner = make_user("owner")
+        self.other = make_user("intruder")
+        self.task = make_task(created_by=self.owner, assigned_to=self.owner)
+
+    def test_assigned_user_can_access_close(self):
+        self.client.login(username=self.owner.username, password=self.owner._plain_password)
+        response = self.client.get(reverse("tasks:close", kwargs={"pk": self.task.pk}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_non_assigned_user_redirected_to_detail(self):
+        self.client.login(username=self.other.username, password=self.other._plain_password)
+        response = self.client.get(reverse("tasks:close", kwargs={"pk": self.task.pk}))
+        self.assertRedirects(response, reverse("tasks:detail", kwargs={"pk": self.task.pk}))
+
+    def test_close_sets_completed_status(self):
+        self.client.login(username=self.owner.username, password=self.owner._plain_password)
+        self.client.post(
+            reverse("tasks:close", kwargs={"pk": self.task.pk}),
+            {"status": Task.Status.COMPLETED},
+        )
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.COMPLETED)
+
+    def test_close_sets_cancelled_status(self):
+        self.client.login(username=self.owner.username, password=self.owner._plain_password)
+        self.client.post(
+            reverse("tasks:close", kwargs={"pk": self.task.pk}),
+            {"status": Task.Status.CANCELLED},
+        )
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.CANCELLED)
+
+
+class TakeResignTaskTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("worker")
+        self.other = make_user("other")
+        self.task = make_task(created_by=self.other)
+
+    def test_take_task_assigns_user(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:take", kwargs={"pk": self.task.pk}))
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.assigned_to, self.user)
+
+    def test_take_task_requires_post(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:take", kwargs={"pk": self.task.pk}))
+        self.assertEqual(response.status_code, 405)
+
+    def test_resign_task_clears_assigned_to(self):
+        self.task.assigned_to = self.user
+        self.task.save()
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:resign", kwargs={"pk": self.task.pk}))
+        self.task.refresh_from_db()
+        self.assertIsNone(self.task.assigned_to)
+
+    def test_resign_by_non_assigned_user_does_nothing(self):
+        self.task.assigned_to = self.other
+        self.task.save()
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:resign", kwargs={"pk": self.task.pk}))
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.assigned_to, self.other)
+
+    def test_resign_unassigned_task_does_nothing(self):
+        # assigned_to=None — nikomu nie przypisane, resign nie powinien crashować
+        self.assertIsNone(self.task.assigned_to)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(reverse("tasks:resign", kwargs={"pk": self.task.pk}))
+        self.assertIn(response.status_code, (302, 200))
+        self.task.refresh_from_db()
+        self.assertIsNone(self.task.assigned_to)
+
+
+class VoteTaskTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("voter")
+        self.task = make_task(created_by=self.user)
+
+    def test_upvote_creates_vote(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": 1})
+        self.assertTrue(TaskVote.objects.filter(task=self.task, user=self.user, value=1).exists())
+
+    def test_downvote_creates_vote(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": -1})
+        self.assertTrue(TaskVote.objects.filter(task=self.task, user=self.user, value=-1).exists())
+
+    def test_same_vote_twice_removes_vote(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": 1})
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": 1})
+        self.assertFalse(TaskVote.objects.filter(task=self.task, user=self.user).exists())
+
+    def test_flip_vote_up_to_down(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": 1})
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": -1})
+        vote = TaskVote.objects.get(task=self.task, user=self.user)
+        self.assertEqual(vote.value, TaskVote.Value.DOWN)
+
+    def test_flip_vote_down_to_up(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": -1})
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": 1})
+        vote = TaskVote.objects.get(task=self.task, user=self.user)
+        self.assertEqual(vote.value, TaskVote.Value.UP)
+
+    def test_score_minus_2_rejects_task(self):
+        user2 = make_user("voter2")
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": -1})
+        self.client.logout()
+        self.client.login(username=user2.username, password=user2._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": -1})
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.REJECTED)
+
+    def test_invalid_vote_value_redirects_without_saving(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": 99})
+        self.assertFalse(TaskVote.objects.filter(task=self.task, user=self.user).exists())
+
+    def test_requires_post(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:vote", kwargs={"pk": self.task.pk}))
+        self.assertEqual(response.status_code, 405)
+
+
+class ReopenDeleteTaskTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("owner")
+        self.task = make_task(created_by=self.user, status=Task.Status.COMPLETED)
+
+    def test_reopen_changes_status_to_active(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:reopen", kwargs={"pk": self.task.pk}))
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.ACTIVE)
+
+    def test_reopen_already_active_task_does_nothing(self):
+        active_task = make_task(created_by=self.user, status=Task.Status.ACTIVE)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:reopen", kwargs={"pk": active_task.pk}))
+        active_task.refresh_from_db()
+        self.assertEqual(active_task.status, Task.Status.ACTIVE)
+
+    def test_delete_task_by_creator(self):
+        active_task = make_task(created_by=self.user, status=Task.Status.ACTIVE)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:delete", kwargs={"pk": active_task.pk}))
+        self.assertFalse(Task.objects.filter(pk=active_task.pk).exists())
+
+    def test_delete_completed_task_not_allowed(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:delete", kwargs={"pk": self.task.pk}))
+        self.assertTrue(Task.objects.filter(pk=self.task.pk).exists())
+
+    def test_delete_by_non_creator_not_allowed(self):
+        other = make_user("intruder")
+        active_task = make_task(created_by=self.user, status=Task.Status.ACTIVE)
+        self.client.login(username=other.username, password=other._plain_password)
+        self.client.post(reverse("tasks:delete", kwargs={"pk": active_task.pk}))
+        self.assertTrue(Task.objects.filter(pk=active_task.pk).exists())
+
+
+class EvaluateTaskTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("evaluator")
+        self.task = make_task(status=Task.Status.COMPLETED)
+
+    def test_evaluate_success(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:evaluate", kwargs={"pk": self.task.pk}), {"value": "success"})
+        self.assertTrue(TaskEvaluation.objects.filter(task=self.task, user=self.user, value="success").exists())
+
+    def test_evaluate_failure(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:evaluate", kwargs={"pk": self.task.pk}), {"value": "failure"})
+        self.assertTrue(TaskEvaluation.objects.filter(task=self.task, user=self.user, value="failure").exists())
+
+    def test_same_evaluation_twice_removes_it(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:evaluate", kwargs={"pk": self.task.pk}), {"value": "success"})
+        self.client.post(reverse("tasks:evaluate", kwargs={"pk": self.task.pk}), {"value": "success"})
+        self.assertFalse(TaskEvaluation.objects.filter(task=self.task, user=self.user).exists())
+
+    def test_flip_evaluation_success_to_failure(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:evaluate", kwargs={"pk": self.task.pk}), {"value": "success"})
+        self.client.post(reverse("tasks:evaluate", kwargs={"pk": self.task.pk}), {"value": "failure"})
+        ev = TaskEvaluation.objects.get(task=self.task, user=self.user)
+        self.assertEqual(ev.value, TaskEvaluation.Value.FAILURE)
+
+    def test_invalid_evaluation_value_ignored(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:evaluate", kwargs={"pk": self.task.pk}), {"value": "invalid"})
+        self.assertFalse(TaskEvaluation.objects.filter(task=self.task, user=self.user).exists())
+
+
+class TaskCacheInvalidationTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("cacheuser")
+        self.task = make_task(created_by=self.user)
+
+    def test_vote_invalidates_user_cache(self):
+        cache_key = _task_list_cache_key(self.user.id)
+        cache.set(cache_key, "cached_data", 3600)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": 1})
+        self.assertIsNone(cache.get(cache_key))
+

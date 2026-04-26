@@ -1,4 +1,3 @@
-# Third party imports
 from decimal import Decimal, InvalidOperation
 
 from django import template

@@ -1,11 +1,9 @@
-# Standard library imports
 import json
 import logging
 import os
 import tempfile
 import threading
 
-# Third party imports
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from django.conf import settings
@@ -39,7 +37,6 @@ def start_scheduler():
     try:
         _scheduler_lock_fd = open(lock_file_path, 'w')
         if os.name != 'nt':
-            # Standard library imports
             import fcntl
             fcntl.flock(_scheduler_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
             log.info(f"Acquired scheduler lock: {lock_file_path}")
@@ -116,11 +113,13 @@ def start_scheduler():
 
 def run_meeting_notification():
     """Send push notifications for events that are starting now"""
-    from events.models import Event
-    from django.utils import timezone
     from datetime import timedelta
+
     from django.conf import settings
+    from django.utils import timezone
     from django.utils.translation import gettext_lazy as _
+
+    from events.models import Event
 
     # Get events that are starting now (within the current minute)
     now = timezone.now()

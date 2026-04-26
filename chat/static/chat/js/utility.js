@@ -36,7 +36,7 @@ export function makeNotification(notif) {
     changeIcon('/static/chat/images/notification-on.ico');
     try {
         new Audio('/static/chat/sounds/notification.mp3').play();
-    } catch (e) {}
+    } catch (e) { }
 
     if (Notification?.permission === 'granted') {
         let notification = new Notification(notif.title, {
@@ -47,7 +47,7 @@ export function makeNotification(notif) {
         });
         notification.onclick = function() {
             if (window.location.pathname !== "/chat/") {
-                window.location.href = "/chat#room_id=" + notif.room_id;
+                window.location.href = "/chat/#room_id=" + notif.room_id;
             }
         };
     }
@@ -245,11 +245,12 @@ export function parseParms(str) {
  * @returns {string} - Translated string or original if translation not found
  */
 export function _(s) {
-    let translation = TRANSLATIONS[s];
+    // typeof never throws for undeclared vars — safe in modules without TRANSLATIONS defined
+    const T = typeof TRANSLATIONS !== 'undefined' ? TRANSLATIONS : {};
+    const translation = T[s];
     if (translation !== undefined) {
         return translation;
     }
-    console.warn("translation for '" + s + "' was not passed to JS. Take a look at chat.views.get_translations");
     return s;
 }
 

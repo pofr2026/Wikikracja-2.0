@@ -1,7 +1,5 @@
-# Third party imports
 from django.urls import path
 
-# Local folder imports
 from . import views as v
 
 app_name = 'glosowania'

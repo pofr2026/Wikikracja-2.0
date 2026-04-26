@@ -1,8 +1,6 @@
-# Third party imports
 from django import template
 from django.db.models import Count
 
-# First party imports
 from chat.models import Room
 
 register = template.Library()
@@ -14,23 +12,28 @@ def name_for(room, user):
     return room.displayed_name(user)
 
 
+def _is_seen(room, user):
+    """Core logic: returns True if room has been seen by user."""
+    # Annotated queryset (fast path)
+    if hasattr(room, 'is_seen') and hasattr(room, 'messages_count'):
+        return room.is_seen or room.messages_count == 0
+    # Prefetched seen_by (e.g. via select_related + Prefetch on task.chat_room)
+    if hasattr(room, '_prefetched_objects_cache') and 'seen_by' in room._prefetched_objects_cache:
+        return any(u.id == user.id for u in room.seen_by.all())
+    # Fallback: direct query
+    return room.messages.all().count() == 0 or room.seen_by.filter(id=user.id).exists()
+
+
 @register.filter('is_seen_by')
 def is_seen_by(room, user):
-    """Returns True if the room has been seen by the user"""
-    # Use pre-computed annotations if available
-    if hasattr(room, 'is_seen') and hasattr(room, 'messages_count'):
-        return "true" if (room.is_seen or room.messages_count == 0) else "false"
-    # Fallback to direct query
-    return "true" if (room.messages.all().count() == 0 or room.seen_by.filter(id=user.id).exists()) else "false"
+    """Returns 'true'/'false' string for JS data-seen attribute."""
+    return "true" if _is_seen(room, user) else "false"
 
 
 @register.filter('seen_by')
 def seen_by(room, user):
-    # Use pre-computed annotations from the view if available
-    if hasattr(room, 'is_seen') and hasattr(room, 'messages_count'):
-        return "" if (room.is_seen or room.messages_count == 0) else "room-not-seen"
-    # Fallback to original logic if annotations not available
-    return "" if (room.messages.all().count() == 0 or room.seen_by.filter(id=user.id).exists()) else "room-not-seen"
+    """Returns CSS class string: '' if seen, 'room-not-seen' if unseen."""
+    return "" if _is_seen(room, user) else "room-not-seen"
 
 
 @register.filter('is_muted_by')
@@ -40,6 +43,26 @@ def is_muted_by(room, user):
     if hasattr(room, '_prefetched_objects_cache') and 'muted_by' in room._prefetched_objects_cache:
         return any(u.id == user.id for u in room.muted_by.all())
     return room.muted_by.filter(id=user.id).exists()
+
+
+@register.filter('not_participated')
+def not_participated(room, participated_room_ids):
+    """Returns True if user has not participated in this room (and participated_only mode is on)."""
+    return room.id not in participated_room_ids
+
+
+@register.filter('is_tracked_by')
+def is_tracked_by(room, user):
+    """Returns True if user explicitly tracks this room."""
+    if hasattr(room, '_prefetched_objects_cache') and 'tracked_by' in room._prefetched_objects_cache:
+        return any(u.id == user.id for u in room.tracked_by.all())
+    return room.tracked_by.filter(id=user.id).exists()
+
+
+@register.simple_tag
+def is_auto_muted(participated_only, is_not_participated, is_tracked):
+    """Returns True if room should be visually auto-muted."""
+    return participated_only and is_not_participated and not is_tracked
 
 
 @register.filter("has_messages")

@@ -1,7 +1,5 @@
-# Third party imports
 from django import forms
 
-# Local folder imports
 from .models import Argument, Decyzja
 
 

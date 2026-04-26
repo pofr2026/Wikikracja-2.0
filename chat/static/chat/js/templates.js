@@ -15,6 +15,29 @@ import { _ } from './utility.js';
 const room_template = `
 <div id='room'>
 
+  <div class="chat-breadcrumb-row">
+    <div class="chat-breadcrumb" id="chat-breadcrumb" aria-label="Lokalizacja"></div>
+    <div class="chat-sort-toolbar" id="chat-sort-toolbar" role="toolbar" aria-label="${_("Sorting and filter")}">
+      <button type="button" class="sort-btn active" id="chat-sort-date" data-sort="date" data-order="desc">
+        <i class="fas fa-clock fa-fw"></i>
+        <span>${_("Date")}</span>
+        <i class="fas fa-arrow-down sort-arrow"></i>
+      </button>
+      <button type="button" class="sort-btn" id="chat-sort-likes" data-sort="likes" data-order="desc">
+        <i class="fas fa-thumbs-up fa-fw"></i>
+        <span>${_("Likes")}</span>
+        <i class="fas fa-arrow-down sort-arrow" style="visibility:hidden"></i>
+      </button>
+      <button type="button" class="sort-btn" id="chat-filter-popular" data-filter="popular">
+        <i class="fas fa-fire fa-fw"></i>
+        <span>${_("Popular")}</span>
+      </button>
+      <button type="button" class="sort-btn" id="toggle-room-list-btn" title="${_("Hide room list")}">
+        <i class="fas fa-angles-right"></i>
+      </button>
+    </div>
+  </div>
+
   <div class='messages'>
     <div class='empty-chat-message'>
       ${_("This room is empty, be the first one to write something.")}
@@ -29,28 +52,42 @@ const room_template = `
   </div>
 
   <div class='chat-controls'>
+    <div class="reply-preview" id="reply-preview" style="display:none">
+      <span class="reply-preview-label">↩ </span>
+      <span class="reply-preview-text" id="reply-preview-text"></span>
+      <button class="reply-preview-close" id="reply-preview-close" type="button" title="Anuluj odpowiedź">✕</button>
+    </div>
     <div class='chat-controls-row'>
       <!-- Image upload button -->
       <input type='file' id='file-input' class='file-input' multiple='multiple'/>
       <label class='btn btn-primary chat-control' for='file-input'>
         <i class='fas fa-image'></i>
       </label>
-      
+
       <!-- Anonymous toggle button (icon only) -->
       <% if (is_public) { %>
         <button class='btn chat-control anonymous-toggle' id='anonymous-toggle' type='button' title='${_("Anonymous")}'>
           <i class='fas fa-user-secret'></i>
         </button>
       <% } %>
-      
-      <!-- Message input -->
-      <textarea id="message-input" rows="1" placeholder="${_("Divide the message into several parts...")}" 
-                enterkeyhint="send"></textarea>
-      
+
+      <!-- Rich text input -->
+      <div id="message-input" class="message-input-rich" contenteditable="true"
+           role="textbox" aria-multiline="true" aria-label="${_("Reply to the appropriate message...")}"
+           data-placeholder="${_("Reply to the appropriate message...")}"></div>
+
       <!-- Send button -->
       <button class='send-message chat-control btn btn-primary'>
         <i class='fas fa-paper-plane'></i>
       </button>
+    </div>
+    <div class="fmt-toolbar" id="fmt-toolbar">
+      <button class="fmt-btn" data-cmd="bold"      title="Ctrl+B"><b>B</b></button>
+      <button class="fmt-btn" data-cmd="italic"    title="Ctrl+I"><i>I</i></button>
+      <button class="fmt-btn" data-cmd="underline" title="Ctrl+U"><u>U</u></button>
+    </div>
+    <div class="msg-counter" id="msg-counter">
+      <span id="msg-counter-val"><%- messageMaxLength %></span> / <%- messageMaxLength %>
     </div>
   </div>
 </div>
@@ -66,6 +103,15 @@ const message_template = `
   <div class='message-content'>
 
     <div class='msg-body'>
+      <% if (reply_to) { %>
+      <div class="msg-quote" data-reply-id="<%-reply_to.id%>" data-target-id="<%-reply_to.id%>" role="button" title="Przejdź do oryginału">
+        <span class="msg-quote-mark">"</span>
+        <span class="msg-quote-author">@<%-reply_to.username%>:</span>
+        <span class="msg-quote-text"><%-reply_to.text_snippet%></span>
+        <span class="msg-quote-mark">"</span>
+        <button class="msg-quote-jump" data-target-id="<%-reply_to.id%>" type="button" title="Przejdź do oryginału">↗</button>
+      </div>
+      <% } %>
       <div class='attachment-image-container'>
         <% if (attachments && attachments.images) { %>
           <% for (let filename of attachments.images) { %>
@@ -92,6 +138,14 @@ const message_template = `
           </button>
         <% } %>
         <button type='button'
+          class='btn btn-sm ms-1 message-btn reply-btn'
+          data-message-id='<%-message_id%>'
+          data-username='<%=username%>'
+          data-snippet='<%-message.replace(/<[^>]*>/g,"").slice(0,80)%>'
+          title='Odpowiedz'>
+          <i class='fas fa-reply'></i>
+        </button>
+        <button type='button'
           class='btn btn-sm ms-1 message-btn copy-message-url'
           data-room-id='<%-room_id%>'
           data-message-id='<%-message_id%>'
@@ -99,18 +153,52 @@ const message_template = `
           <i class='fas fa-link'></i>
         </button>
       </div>
-      <div class='message-header-right'>
-        <% if (type == "public") { %>
-          <button type='button' data-event-name='upvote' data-message-id="<%-message_id%>" class='btn btn-sm ms-1 message-btn msg-vote' title='${_("Upvote")}'>
-            <i class='fas fa-thumbs-up'></i>
-            <span class='msg-upvotes'><%-upvotes%></span>
-          </button>
-          <button type='button' data-event-name='downvote' data-message-id="<%-message_id%>" class='btn btn-sm ms-1 message-btn msg-vote' title='${_("Downvote")}'>
-            <i class='fas fa-thumbs-down'></i>
-            <span class='msg-downvotes'><%-downvotes%></span>
-          </button>
-        <% } %>
-      </div>
+      <div class='message-header-right'></div>
+    </div>
+
+    <%
+      const _totalVotes = upvotes + downvotes;
+      const _pct = _totalVotes > 0 ? Math.round((upvotes / _totalVotes) * 100) : 0;
+      const _barCls = _pct >= 60 ? 'vote-bar--positive' : (_pct >= 40 ? 'vote-bar--neutral' : 'vote-bar--negative');
+    %>
+    <div class="msg-meta-row">
+      <% if (type == "public") { %>
+        <button type='button' data-event-name='upvote' data-message-id="<%-message_id%>" class='btn btn-sm message-btn msg-vote' title='${_("Upvote")}'>
+          <i class='fas fa-thumbs-up'></i>
+          <span class='msg-upvotes'><%-upvotes%></span>
+        </button>
+        <button type='button' data-event-name='downvote' data-message-id="<%-message_id%>" class='btn btn-sm message-btn msg-vote' title='${_("Downvote")}'>
+          <i class='fas fa-thumbs-down'></i>
+          <span class='msg-downvotes'><%-downvotes%></span>
+        </button>
+      <% } %>
+
+      <% if (_totalVotes >= 3) { %>
+        <div class="vote-bar-wrap">
+          <div class="vote-bar-fill <%- _barCls %>" style="width:<%- _pct %>%"></div>
+        </div>
+        <span class="vote-bar-label"><%- _pct %>% popiera</span>
+      <% } %>
+
+      <span class="msg-divider" aria-hidden="true"></span>
+
+      <% for (const [_key, _emoji, _label] of [['bulb','💡','Ciekawe'],['question','❓','Mam pytanie']]) { %>
+        <button class="reaction-btn<% if ((your_reactions||[]).includes(_key)) { %> reaction-btn--active<% } %>"
+                data-reaction="<%- _key %>" data-message-id="<%- message_id %>"
+                type="button" title="<%- _label %>">
+          <%- _emoji %><% if ((reactions[_key]||0) > 0) { %><span class="reaction-count"><%- reactions[_key] %></span><% } %>
+        </button>
+      <% } %>
+
+      <% if (read_by && read_by.length) { %>
+        <% const _vis = read_by.slice(0,3); const _extra = read_by.length - _vis.length; %>
+        <div class="msg-read-by">
+          <% for (const _u of _vis) { %><img class="msg-avatar" src="<%- _u.avatar_url %>" title="<%- _u.username %>" alt="<%- _u.username %>"><% } %>
+          <% if (_extra > 0) { %><span class="msg-read-extra">+<%- _extra %></span><% } %>
+        </div>
+      <% } else { %>
+        <div class="msg-read-by"></div>
+      <% } %>
     </div>
 
   </div>

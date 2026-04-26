@@ -1,4 +1,3 @@
-# Third party imports
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Prefetch
@@ -27,6 +26,9 @@ class Room(models.Model):
 
     # List of users who disabled notifications
     muted_by = models.ManyToManyField(User, related_name='muted_rooms')
+
+    # List of users who explicitly track this room (overrides auto-mute in participated-only mode)
+    tracked_by = models.ManyToManyField(User, related_name='tracked_rooms', blank=True)
 
     # Last activity timestamp
     last_activity = models.DateTimeField(auto_now=True)
@@ -204,7 +206,14 @@ class Message(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="messages")
     anonymous = models.BooleanField(default=False)
 
-    # TODO: revisions (editMessage(), deleteMessage())
+    # ZMIANA 2 — cytowanie: opcjonalne odwołanie do wiadomości-rodzica
+    reply_to = models.ForeignKey(
+        'self',
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='replies',
+    )
 
     class Meta:
         unique_together = ('sender', 'text', 'room', 'time')
@@ -253,4 +262,30 @@ class MessageAttachment(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['message'], name='chat_messageattachment_msg_idx'),
+        ]
+
+
+# ZMIANA 4B — lekkie reakcje emoji (💡 ❓), niezależne od głosowania 👍/👎
+class MessageReaction(models.Model):
+    REACTION_CHOICES = [('bulb', '💡'), ('question', '❓')]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='message_reactions')
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='reactions')
+    reaction = models.CharField(max_length=20, choices=REACTION_CHOICES)
+
+    class Meta:
+        unique_together = ('user', 'message', 'reaction')
+        indexes = [
+            models.Index(fields=['message', 'reaction'], name='chat_msgreact_idx'),
+        ]
+
+
+# ZMIANA 4C — "przeczytane przez": śledzenie kto przeczytał daną wiadomość
+class MessageReadBy(models.Model):
+    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='read_by')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='read_messages')
+
+    class Meta:
+        unique_together = ('message', 'user')
+        indexes = [
+            models.Index(fields=['message'], name='chat_msgreadby_message_idx'),
         ]

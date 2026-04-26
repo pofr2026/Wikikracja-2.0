@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', async function () {
+document.addEventListener('DOMContentLoaded', async function() {
     const enabled = await PushNotificationManager.initialize();
     console.log('Push notifications enabled:', enabled);
 });

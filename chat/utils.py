@@ -1,10 +1,8 @@
-# Standard library imports
 import datetime
 import inspect
 import logging
 from typing import Union
 
-# Local folder imports
 from .models import Message, Room
 
 log = logging.getLogger(__name__)
@@ -182,11 +180,9 @@ def send_message_to_room(room_title, message_text, sender=None, anonymous=True):
         Message: The created message object or None if room not found
     """
     try:
-        # Third party imports
         from asgiref.sync import async_to_sync
         from channels.layers import get_channel_layer
 
-        # Local folder imports
         from .consumers import ChatConsumer
         from .group_messages import format_chat_message
 

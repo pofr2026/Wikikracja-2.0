@@ -1,16 +1,11 @@
-# Standard library imports
 import re
 
-# Third party imports
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_comma_separated_integer_list
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-
-# First party imports
-from chat.models import Room
 
 User = get_user_model()
 
@@ -62,7 +57,7 @@ class Decyzja(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="decyzja",
-        verbose_name=_("chat room"),
+        verbose_name=_("Chat room"),
     )
 
     # 1.Proposition

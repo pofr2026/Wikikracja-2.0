@@ -1,4 +1,3 @@
-# Third party imports
 from django.contrib.auth import get_user_model
 from django.core.validators import FileExtensionValidator
 from django.db import models
@@ -23,9 +22,9 @@ class Book(models.Model):
         verbose_name=_('Cover'),
         help_text=_('Cover proportions should be 2/3. I.E. width x 1.5 = height')  # doesnt work and I don't know why...
     )
-    file_epub = models.FileField(null=True, blank=True, upload_to='elibrary', verbose_name=_('epub'), validators=[FileExtensionValidator(['epub'])])
-    file_mobi = models.FileField(null=True, blank=True, upload_to='elibrary', verbose_name=_('mobi'), validators=[FileExtensionValidator(['mobi'])])
-    file_pdf = models.FileField(null=True, blank=True, upload_to='elibrary', verbose_name=_('pdf'), validators=[FileExtensionValidator(['pdf'])])
+    file_epub = models.FileField(null=True, blank=True, upload_to='elibrary', verbose_name='epub', validators=[FileExtensionValidator(['epub'])])
+    file_mobi = models.FileField(null=True, blank=True, upload_to='elibrary', verbose_name='mobi', validators=[FileExtensionValidator(['mobi'])])
+    file_pdf = models.FileField(null=True, blank=True, upload_to='elibrary', verbose_name='pdf', validators=[FileExtensionValidator(['pdf'])])
     uploader = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     uploaded = models.DateTimeField(_('Uploaded'), default=timezone.now, editable=False)
 
