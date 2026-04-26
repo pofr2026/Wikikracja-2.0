@@ -9,7 +9,7 @@ from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.db.models import Count, Prefetch, Q
+from django.db.models import Prefetch
 from firebase_admin import messaging
 from push_notifications.models import GCMDevice, WebPushDevice
 
@@ -17,7 +17,7 @@ from zzz.utils import get_site_domain
 
 from .exceptions import ClientError
 from .group_messages import format_chat_message
-from .models import Message, MessageAttachment, MessageHistory, MessageHistoryEntry, MessageReaction, MessageReadBy, MessageVote, Room
+from .models import Message, MessageAttachment, MessageHistory, MessageHistoryEntry, MessageReadBy, Room
 from .utils import HandledMessage, Handlers, OnlineUserRegistry, RoomRegistry, helper_method
 
 # HTML sanitizer config for rich text (ZMIANA 6)
@@ -563,7 +563,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         ZMIANA 4B — toggle emoji-reakcji (💡 ❓).
         Broadcast update_reactions do całego pokoju.
         """
-        valid_reactions = dict(MessageReaction.REACTION_CHOICES)
+        valid_reactions = dict([('bulb', '💡'), ('question', '❓')])
         if reaction not in valid_reactions:
             raise ClientError("INVALID_REACTION")
 
@@ -961,7 +961,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def get_recent_messages(self, room_id, limit=100):
-        messages = Message.objects.filter(room=room_id).select_related('sender').prefetch_related(Prefetch('attachments', queryset=MessageAttachment.objects.all()), 'messagehistory').annotate(upvotes=Count('votes', filter=Q(votes__vote='upvote')), downvotes=Count('votes', filter=Q(votes__vote='downvote'))).order_by('-time')[:limit]
+        messages = Message.objects.filter(room=room_id).select_related('sender').prefetch_related(Prefetch('attachments', queryset=MessageAttachment.objects.all()), 'messagehistory').order_by('-time')[:limit]
 
         result = []
         for msg in reversed(list(messages)):
@@ -973,6 +973,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 attachments_of_type.append(attachment.filename)
                 attachments[attachment.type] = attachments_of_type
 
+            # Compute upvotes/downvotes from the votes JSONField
+            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
+            upvotes = sum(1 for v in votes_dict.values() if v == 1)
+            downvotes = sum(1 for v in votes_dict.values() if v == -1)
+
             result.append({
                 'id': msg.id,
                 'sender_id': msg.sender_id,
@@ -980,8 +985,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'text': msg.text,
                 'room_id': msg.room_id,
                 'anonymous': msg.anonymous,
-                'upvotes': msg.upvotes,
-                'downvotes': msg.downvotes,
+                'upvotes': upvotes,
+                'downvotes': downvotes,
                 'edited': edited,
                 'attachments': attachments,
             })
@@ -999,34 +1004,41 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         order: 'asc' or 'desc'
         popular_only: if True, only return messages with >= 1 upvote
         """
+        # Fetch messages without annotation; we'll compute upvotes/downvotes from votes JSONField
         qs = Message.objects.filter(room=room_id) \
             .select_related('sender', 'reply_to__sender') \
             .prefetch_related(
                 Prefetch('attachments', queryset=MessageAttachment.objects.all()),
                 'messagehistory'
-            ) \
-            .annotate(
-                upvotes=Count('votes', filter=Q(votes__vote='upvote')),
-                downvotes=Count('votes', filter=Q(votes__vote='downvote'))
             )
 
+        # Compute upvotes/downvotes in Python after fetching, but for sorting by likes we need to sort by upvotes count.
+        # We'll fetch all messages first, then sort manually.
+        # For large limits this might be inefficient, but limit is 100.
+        all_messages = list(qs)
+        # Compute votes count for each message
+        for msg in all_messages:
+            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
+            msg.upvotes = sum(1 for v in votes_dict.values() if v == 1)
+            msg.downvotes = sum(1 for v in votes_dict.values() if v == -1)
+
         if popular_only:
-            qs = qs.filter(upvotes__gte=1)
+            all_messages = [msg for msg in all_messages if msg.upvotes >= 1]
 
+        # Sorting
         if sort_by == 'likes':
-            order_field = 'upvotes' if order == 'asc' else '-upvotes'
-            qs = qs.order_by(order_field, '-time')
+            reverse = (order == 'desc')
+            all_messages.sort(key=lambda m: (m.upvotes, m.time), reverse=reverse)
         else:
-            order_field = 'time' if order == 'asc' else '-time'
-            qs = qs.order_by(order_field)
+            reverse = (order == 'desc')
+            all_messages.sort(key=lambda m: m.time, reverse=reverse)
 
-        messages = qs[:limit]
+        messages = all_messages[:limit]
 
         # Always display chronologically in UI (oldest first) when sorting by date desc
         if sort_by == 'date' and order == 'desc':
             messages = list(reversed(messages))
-        else:
-            messages = list(messages)
+
         if not messages:
             return {
                 'messages': [],
@@ -1036,7 +1048,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         # Collect unique sender IDs and message IDs
         sender_ids = {msg.sender_id for msg in messages if msg.sender_id}
-        message_ids = [msg.id for msg in messages]
+        # message_ids = [msg.id for msg in messages]
 
         # Batch fetch all users in one query
         users = {}
@@ -1045,10 +1057,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 u.id: u for u in User.objects.filter(id__in=sender_ids)
             }
 
-        # Batch fetch current user's votes for these messages in one query
-        user_votes = {
-            v.message_id: v.vote for v in MessageVote.objects.filter(user_id=user_id, message_id__in=message_ids)
-        }
+        # Build user_votes from the votes JSONField
+        user_votes = {}
+        str_user_id = str(user_id)
+        for msg in messages:
+            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
+            if str_user_id in votes_dict:
+                vote_value = votes_dict[str_user_id]
+                # Map to 'upvote' or 'downvote' string
+                user_votes[msg.id] = 'upvote' if vote_value == 1 else 'downvote'
 
         # Build message data
         result = []
@@ -1170,21 +1187,71 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def add_vote(self, event: str, message_id: int):
-        vote = MessageVote(vote=event, message_id=message_id, user=self.scope['user'])
-        vote.full_clean()  # to enforce validation of event name according to choices of MessageVote
-        vote.save()
+        """Add a vote directly to the message's reactions JSONField."""
         m = Message.objects.get(pk=message_id)
-        return m.votes.filter(vote="upvote").count(), m.votes.filter(vote="downvote").count()
+        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        user_id = self.scope['user'].id
+
+        # Initialize lists if not present
+        if 'upvotes' not in reactions_dict:
+            reactions_dict['upvotes'] = []
+        if 'downvotes' not in reactions_dict:
+            reactions_dict['downvotes'] = []
+
+        # Remove from both lists first (in case user is changing vote)
+        if user_id in reactions_dict['upvotes']:
+            reactions_dict['upvotes'].remove(user_id)
+        if user_id in reactions_dict['downvotes']:
+            reactions_dict['downvotes'].remove(user_id)
+
+        # Add to appropriate list
+        if event == 'upvote':
+            reactions_dict['upvotes'].append(user_id)
+        else:
+            reactions_dict['downvotes'].append(user_id)
+
+        m.reactions = reactions_dict
+        m.save(update_fields=['reactions'])
+
+        return len(reactions_dict.get('upvotes', [])), len(reactions_dict.get('downvotes', []))
 
     @database_sync_to_async
     def remove_vote(self, event: str, message_id: int):
-        MessageVote.objects.filter(vote=event, message_id=message_id, user=self.scope['user']).delete()
+        """Remove a vote directly from the message's reactions JSONField."""
         m = Message.objects.get(pk=message_id)
-        return m.votes.filter(vote="upvote").count(), m.votes.filter(vote="downvote").count()
+        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        user_id = self.scope['user'].id
+
+        # Remove from appropriate list
+        if event == 'upvote' and user_id in reactions_dict.get('upvotes', []):
+            reactions_dict['upvotes'].remove(user_id)
+        elif event == 'downvote' and user_id in reactions_dict.get('downvotes', []):
+            reactions_dict['downvotes'].remove(user_id)
+
+        m.reactions = reactions_dict
+        m.save(update_fields=['reactions'])
+
+        return len(reactions_dict.get('upvotes', [])), len(reactions_dict.get('downvotes', []))
 
     @database_sync_to_async
     def get_vote(self, message_id: int):
-        return MessageVote.objects.filter(message_id=message_id, user=self.scope['user']).first()
+        """Check the reactions JSONField on the message."""
+        try:
+            m = Message.objects.get(pk=message_id)
+        except Message.DoesNotExist:
+            return None
+        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        user_id = self.scope['user'].id
+
+        if user_id in reactions_dict.get('upvotes', []):
+            return type('Vote', (), {
+                'vote': 'upvote'
+            })()
+        elif user_id in reactions_dict.get('downvotes', []):
+            return type('Vote', (), {
+                'vote': 'downvote'
+            })()
+        return None
 
     @database_sync_to_async
     def get_room_by_message(self, message_id: int):
@@ -1316,29 +1383,57 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @database_sync_to_async
     def toggle_reaction(self, reaction: str, message_id: int) -> bool:
         """Toggle reakcji dla bieżącego użytkownika. Zwraca True jeśli dodano, False jeśli usunięto."""
-        user = self.scope['user']
-        obj, created = MessageReaction.objects.get_or_create(user=user, message_id=message_id, reaction=reaction)
-        if not created:
-            obj.delete()
-            return False
-        return True
+        m = Message.objects.get(pk=message_id)
+        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        user_id = self.scope['user'].id
+
+        # Initialize list if not present
+        if reaction not in reactions_dict:
+            reactions_dict[reaction] = []
+
+        # Toggle: if user_id in list, remove it; otherwise add it
+        if user_id in reactions_dict[reaction]:
+            reactions_dict[reaction].remove(user_id)
+            added = False
+        else:
+            reactions_dict[reaction].append(user_id)
+            added = True
+
+        m.reactions = reactions_dict
+        m.save(update_fields=['reactions'])
+        return added
 
     @database_sync_to_async
     def get_reaction_counts(self, message_id: int) -> dict:
         """Zwraca słownik {reaction: count} dla danej wiadomości."""
-        rows = (MessageReaction.objects.filter(message_id=message_id).values('reaction').annotate(count=Count('id')))
-        result = {
-            'bulb': 0,
-            'question': 0
+        try:
+            m = Message.objects.get(pk=message_id)
+        except Message.DoesNotExist:
+            return {
+                'bulb': 0,
+                'question': 0
+            }
+
+        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        return {
+            'bulb': len(reactions_dict.get('bulb', [])),
+            'question': len(reactions_dict.get('question', []))
         }
-        for row in rows:
-            result[row['reaction']] = row['count']
-        return result
 
     @database_sync_to_async
     def get_user_reactions(self, user_id: int, message_id: int) -> list:
         """Zwraca listę reakcji danego użytkownika dla wiadomości."""
-        return list(MessageReaction.objects.filter(user_id=user_id, message_id=message_id).values_list('reaction', flat=True))
+        try:
+            m = Message.objects.get(pk=message_id)
+        except Message.DoesNotExist:
+            return []
+
+        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        result = []
+        for reaction_type, user_list in reactions_dict.items():
+            if reaction_type in ('bulb', 'question') and user_id in user_list:
+                result.append(reaction_type)
+        return result
 
     # ── ZMIANA 4C — "przeczytane przez" ─────────────────────────────
 

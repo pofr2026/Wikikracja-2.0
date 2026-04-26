@@ -215,25 +215,13 @@ class Message(models.Model):
         related_name='replies',
     )
 
+    # JSONField to store reactions: {upvotes: [user_ids], downvotes: [user_ids], bulb: [user_ids], question: [user_ids]}
+    reactions = models.JSONField(default=dict, null=True, blank=True)
+
     class Meta:
         unique_together = ('sender', 'text', 'room', 'time')
         indexes = [
             models.Index(fields=['room', 'time'], name='chat_message_room_time_asc_idx'),
-        ]
-
-
-class MessageVote(models.Model):
-    user = models.ForeignKey(User, related_name="votes", on_delete=models.CASCADE)
-    message = models.ForeignKey(Message, related_name="votes", on_delete=models.CASCADE)
-
-    vote_types = [('upvote', 'Upvote'), ('downvote', 'Downvote')]
-    vote = models.CharField(choices=vote_types, max_length=50)
-
-    class Meta:
-        # can be removed in future to make possible reactions or something like that
-        unique_together = ('user', 'message')
-        indexes = [
-            models.Index(fields=['message', 'vote'], name='chat_messagevote_msg_vote_idx'),
         ]
 
 
@@ -262,20 +250,6 @@ class MessageAttachment(models.Model):
     class Meta:
         indexes = [
             models.Index(fields=['message'], name='chat_messageattachment_msg_idx'),
-        ]
-
-
-# ZMIANA 4B — lekkie reakcje emoji (💡 ❓), niezależne od głosowania 👍/👎
-class MessageReaction(models.Model):
-    REACTION_CHOICES = [('bulb', '💡'), ('question', '❓')]
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='message_reactions')
-    message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='reactions')
-    reaction = models.CharField(max_length=20, choices=REACTION_CHOICES)
-
-    class Meta:
-        unique_together = ('user', 'message', 'reaction')
-        indexes = [
-            models.Index(fields=['message', 'reaction'], name='chat_msgreact_idx'),
         ]
 
 
