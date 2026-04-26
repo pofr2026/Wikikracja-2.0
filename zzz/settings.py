@@ -447,8 +447,8 @@ PUSH_NOTIFICATIONS = {
 }
 
 # Initialize the default app (either use `GOOGLE_APPLICATION_CREDENTIALS` environment variable, or pass a firebase_admin.credentials.Certificate instance)
-FIREBASE_CERT_PATH = getenv('FIREBASE_CERT_PATH')
-if FIREBASE_CERT_PATH is not None:
+FIREBASE_CERT_PATH = getenv('FIREBASE_CERT_PATH', '')
+if FIREBASE_CERT_PATH != '' and path.exists(FIREBASE_CERT_PATH):
     serviceAccount = credentials.Certificate(FIREBASE_CERT_PATH)
     import firebase_admin
     firebase_app = firebase_admin.initialize_app(credential=serviceAccount)
