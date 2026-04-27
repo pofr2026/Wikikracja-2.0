@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-27 18:06+0200\n"
+"POT-Creation-Date: 2026-04-27 19:15+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,8 +21,9 @@ msgstr ""
 #: .\board\forms.py:19 .\board\templates\board\create_post.html:29
 #: .\board\templates\board\edit_post.html:29
 #: .\board\templates\board\postcategory_form.html:28 .\bookkeeping\forms.py:21
-#: .\bookkeeping\forms.py:34 .\bookkeeping\forms.py:76
-#: .\chat\templates\chat\add.html:15 .\elibrary\templates\elibrary\add.html:35
+#: .\bookkeeping\forms.py:34 .\bookkeeping\forms.py:47
+#: .\bookkeeping\forms.py:92 .\chat\templates\chat\add.html:15
+#: .\elibrary\templates\elibrary\add.html:35
 #: .\elibrary\templates\elibrary\book_form.html:31
 #: .\glosowania\templates\glosowania\dodaj.html:36
 #: .\glosowania\templates\glosowania\edit.html:20
@@ -44,12 +45,14 @@ msgstr ""
 
 #: .\board\models.py:9
 #: .\board\templates\board\postcategory_confirm_delete.html:59
-#: .\board\templates\board\postcategory_list.html:24 .\bookkeeping\models.py:9
-#: .\bookkeeping\models.py:16
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:74
-#: .\bookkeeping\templates\bookkeeping\category_list.html:21
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:74
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:21
+#: .\board\templates\board\postcategory_list.html:24 .\bookkeeping\models.py:10
+#: .\bookkeeping\models.py:23 .\bookkeeping\models.py:30
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:74
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:23
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:75
+#: .\bookkeeping\templates\bookkeeping\category_list.html:22
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:75
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:22
 msgid "Name"
 msgstr ""
 
@@ -85,7 +88,7 @@ msgid "Subtitle"
 msgstr ""
 
 #: .\board\models.py:25 .\board\templates\board\post_detail.html:27
-#: .\bookkeeping\models.py:44
+#: .\bookkeeping\models.py:59
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:29
 #: .\elibrary\forms.py:10 .\elibrary\models.py:15
 #: .\elibrary\templates\elibrary\book_confirm_delete.html:15
@@ -97,9 +100,7 @@ msgid "Author"
 msgstr ""
 
 #: .\board\models.py:26 .\board\templates\board\post_detail.html:27
-#: .\bookkeeping\models.py:37
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:24
-#: .\events\templates\events\event_detail.html:107
+#: .\bookkeeping\models.py:51 .\events\templates\events\event_detail.html:107
 #: .\glosowania\templates\glosowania\delete_argument.html:20
 #: .\glosowania\templates\glosowania\edit_argument.html:12
 #: .\tasks\templates\tasks\task_detail.html:44
@@ -111,10 +112,10 @@ msgstr "Created"
 msgid "Updated"
 msgstr "Updated"
 
-#: .\board\models.py:28 .\bookkeeping\forms.py:51 .\bookkeeping\models.py:40
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:36
-#: .\bookkeeping\templates\bookkeeping\report_list.html:44
-#: .\bookkeeping\templates\bookkeeping\report_list.html:85
+#: .\board\models.py:28 .\bookkeeping\forms.py:66 .\bookkeeping\models.py:55
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:37
+#: .\bookkeeping\templates\bookkeeping\report_list.html:43
+#: .\bookkeeping\templates\bookkeeping\report_list.html:84
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:26
 #: .\tasks\templates\tasks\task_form.html:32
 #: .\tasks\templates\tasks\task_list.html:59
@@ -172,6 +173,9 @@ msgid "Archive"
 msgstr "Archive"
 
 #: .\board\templates\board\board.html:18
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:10
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:11
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:10
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:12
 #: .\bookkeeping\templates\bookkeeping\category_form.html:13
 #: .\bookkeeping\templates\bookkeeping\category_list.html:10
@@ -181,7 +185,7 @@ msgstr "Archive"
 #: .\bookkeeping\templates\bookkeeping\report_list.html:11
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:12
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:11
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:15
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:14
 #: .\elibrary\templates\elibrary\book_list.html:23
 #: .\tasks\templates\tasks\task_form.html:36
 msgid "Categories"
@@ -217,12 +221,14 @@ msgstr ""
 #: .\board\templates\board\post_confirm_delete.html:20
 #: .\board\templates\board\postcategory_confirm_delete.html:69
 #: .\board\templates\board\postcategory_form.html:29
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:84
-#: .\bookkeeping\templates\bookkeeping\category_form.html:38
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:90
-#: .\bookkeeping\templates\bookkeeping\partner_form.html:63
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:43
-#: .\bookkeeping\templates\bookkeeping\transaction_form.html:57
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:84
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:51
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:85
+#: .\bookkeeping\templates\bookkeeping\category_form.html:39
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:91
+#: .\bookkeeping\templates\bookkeeping\partner_form.html:64
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:45
+#: .\bookkeeping\templates\bookkeeping\transaction_form.html:61
 #: .\elibrary\templates\elibrary\add.html:36
 #: .\elibrary\templates\elibrary\book_confirm_delete.html:25
 #: .\elibrary\templates\elibrary\book_form.html:32
@@ -256,9 +262,10 @@ msgstr ""
 #: .\board\templates\board\post_confirm_delete.html:19
 #: .\board\templates\board\post_detail.html:31
 #: .\board\templates\board\postcategory_list.html:37
-#: .\bookkeeping\templates\bookkeeping\category_list.html:32
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:54
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:64
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:47
+#: .\bookkeeping\templates\bookkeeping\category_list.html:33
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:55
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:62
 #: .\elibrary\templates\elibrary\book_detail.html:75
 #: .\events\templates\events\event_detail.html:16
 #: .\glosowania\templates\glosowania\szczegoly.html:171
@@ -289,11 +296,13 @@ msgstr ""
 #: .\board\templates\board\post_detail.html:30
 #: .\board\templates\board\postcategory_confirm_delete.html:44
 #: .\board\templates\board\postcategory_list.html:36
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:58
-#: .\bookkeeping\templates\bookkeeping\category_list.html:31
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:58
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:53
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:63
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:57
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:46
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:59
+#: .\bookkeeping\templates\bookkeeping\category_list.html:32
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:59
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:54
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:61
 #: .\elibrary\templates\elibrary\book_detail.html:72
 #: .\events\templates\events\event_detail.html:13
 #: .\events\templates\events\event_list.html:92
@@ -308,7 +317,7 @@ msgstr "Edit"
 
 #: .\board\templates\board\postcategory_confirm_delete.html:9
 #: .\board\templates\board\postcategory_confirm_delete.html:18
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:19
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:20
 msgid "Delete category"
 msgstr ""
 
@@ -317,9 +326,11 @@ msgid "This category is assigned to the following announcements:"
 msgstr ""
 
 #: .\board\templates\board\postcategory_confirm_delete.html:33
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:34
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:34
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:33
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:33
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:35
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:35
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:35
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:24
 #: .\elibrary\templates\elibrary\book_list.html:34
 #: .\elibrary\templates\elibrary\book_list.html:39
 #: .\events\templates\events\event_list.html:39
@@ -335,10 +346,12 @@ msgstr ""
 
 #: .\board\templates\board\postcategory_confirm_delete.html:34
 #: .\board\templates\board\postcategory_list.html:26
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:39
-#: .\bookkeeping\templates\bookkeeping\category_list.html:22
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:39
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:28
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:38
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:27
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:40
+#: .\bookkeeping\templates\bookkeeping\category_list.html:23
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:40
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:29
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:30
 msgid "Actions"
 msgstr ""
@@ -354,7 +367,7 @@ msgid "Back to category"
 msgstr "Back to Calendar"
 
 #: .\board\templates\board\postcategory_confirm_delete.html:58
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:73
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:74
 msgid "Are you sure you want to delete this category?"
 msgstr ""
 
@@ -371,7 +384,7 @@ msgstr "Edit category"
 
 #: .\board\templates\board\postcategory_form.html:11
 #: .\board\templates\board\postcategory_form.html:20
-#: .\bookkeeping\templates\bookkeeping\category_form.html:25
+#: .\bookkeeping\templates\bookkeeping\category_form.html:26
 #, fuzzy
 #| msgid "Nowa kategoria"
 msgid "New category"
@@ -382,7 +395,7 @@ msgid "Announcement categories"
 msgstr ""
 
 #: .\board\templates\board\postcategory_list.html:16
-#: .\bookkeeping\templates\bookkeeping\category_list.html:13
+#: .\bookkeeping\templates\bookkeeping\category_list.html:14
 msgid "Add category"
 msgstr ""
 
@@ -396,97 +409,131 @@ msgstr "New category"
 msgid "Cannot delete category because it is in use. Remove all posts that use it first."
 msgstr ""
 
-#: .\bookkeeping\forms.py:41 .\bookkeeping\models.py:32
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:48
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:48
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:26
+#: .\bookkeeping\forms.py:54 .\bookkeeping\models.py:46
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:47
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:49
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:49
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:27
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:46
 msgid "Incoming"
 msgstr ""
 
-#: .\bookkeeping\forms.py:42 .\bookkeeping\models.py:33
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:50
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:50
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:28
+#: .\bookkeeping\forms.py:55 .\bookkeeping\models.py:47
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:49
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:51
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:51
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:29
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:48
 msgid "Outgoing"
 msgstr ""
 
-#: .\bookkeeping\forms.py:45 .\bookkeeping\models.py:35
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:35
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:35
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:24
+#: .\bookkeeping\forms.py:58 .\bookkeeping\models.py:49
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:34
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:36
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:36
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:25
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:23
 #: .\obywatele\templates\obywatele\_citizen_aktywnosc_partial.html:8
 #: .\obywatele\templates\obywatele\_citizen_zalozono_partial.html:8
 msgid "Type"
 msgstr ""
 
-#: .\bookkeeping\forms.py:49 .\bookkeeping\models.py:41
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:36
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:31
+#: .\bookkeeping\forms.py:62 .\bookkeeping\models.py:54
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:33
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:27
+msgid "Asset"
+msgstr ""
+
+#: .\bookkeeping\forms.py:64 .\bookkeeping\models.py:56
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:35
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:37
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:32
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:25
 msgid "Partner"
 msgstr ""
 
-#: .\bookkeeping\forms.py:49
+#: .\bookkeeping\forms.py:64
 msgid "Select partner"
 msgstr ""
 
-#: .\bookkeeping\forms.py:53
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:37
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:37
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:32
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:27
+#: .\bookkeeping\forms.py:68 .\bookkeeping\models.py:57
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:36
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:38
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:38
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:34
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:28
 msgid "Amount"
 msgstr ""
 
-#: .\bookkeeping\forms.py:58 .\bookkeeping\models.py:38
+#: .\bookkeeping\forms.py:74 .\bookkeeping\models.py:52
 msgid "Payment received date"
 msgstr ""
 
-#: .\bookkeeping\forms.py:66 .\bookkeeping\models.py:43
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:38
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:38
+#: .\bookkeeping\forms.py:82 .\bookkeeping\models.py:58
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:37
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:39
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:39
 #: .\templates\allauth\account\snippets\already_logged_in.html:5
 msgid "Note"
 msgstr ""
 
-#: .\bookkeeping\models.py:17
+#: .\bookkeeping\models.py:9
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:73
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:22
+msgid "Code"
+msgstr ""
+
+#: .\bookkeeping\models.py:11
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:24
+msgid "Symbol"
+msgstr ""
+
+#: .\bookkeeping\models.py:12
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:25
+msgid "Decimal places"
+msgstr ""
+
+#: .\bookkeeping\models.py:13
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:26
+#, fuzzy
+#| msgid "Next Occurrence"
+msgid "Is currency"
+msgstr "Next Occurrence"
+
+#: .\bookkeeping\models.py:31
 msgid "email"
 msgstr ""
 
-#: .\bookkeeping\models.py:18
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:79
+#: .\bookkeeping\models.py:32
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:80
 msgid "Phone"
 msgstr ""
 
-#: .\bookkeeping\models.py:19
+#: .\bookkeeping\models.py:33
 msgid "Web page"
 msgstr ""
 
-#: .\bookkeeping\models.py:20
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:25
+#: .\bookkeeping\models.py:34
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:26
 msgid "Address"
 msgstr ""
 
-#: .\bookkeeping\models.py:21
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:26
+#: .\bookkeeping\models.py:35
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:27
 #: .\obywatele\models.py:39 .\obywatele\templates\obywatele\my_profile.html:144
 #: .\obywatele\templates\obywatele\start.html:49
 #: .\obywatele\templates\obywatele\szczegoly.html:199 .\obywatele\views.py:687
 msgid "City"
 msgstr ""
 
-#: .\bookkeeping\models.py:22
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:27
+#: .\bookkeeping\models.py:36
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:28
 msgid "Country"
 msgstr ""
 
-#: .\bookkeeping\models.py:42
-msgid "Outgoing amount"
-msgstr ""
-
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:8
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:9
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:8
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:10
 #: .\bookkeeping\templates\bookkeeping\category_form.html:11
 #: .\bookkeeping\templates\bookkeeping\category_list.html:8
@@ -496,10 +543,13 @@ msgstr ""
 #: .\bookkeeping\templates\bookkeeping\report_list.html:9
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:10
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:9
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:13
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:12
 msgid "Transactions"
 msgstr ""
 
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:9
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:10
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:9
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:11
 #: .\bookkeeping\templates\bookkeeping\category_form.html:12
 #: .\bookkeeping\templates\bookkeeping\category_list.html:9
@@ -509,10 +559,13 @@ msgstr ""
 #: .\bookkeeping\templates\bookkeeping\report_list.html:10
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:11
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:10
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:14
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:13
 msgid "Partners"
 msgstr ""
 
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:11
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:12
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:11
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:13
 #: .\bookkeeping\templates\bookkeeping\category_form.html:14
 #: .\bookkeeping\templates\bookkeeping\category_list.html:11
@@ -522,64 +575,135 @@ msgstr ""
 #: .\bookkeeping\templates\bookkeeping\report_list.html:12
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:13
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:12
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:15
+#: .\obywatele\templates\obywatele\assets.html:10
+#: .\obywatele\templates\obywatele\menu.html:20
+msgid "Assets"
+msgstr ""
+
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:12
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:13
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:12
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:14
+#: .\bookkeeping\templates\bookkeeping\category_form.html:15
+#: .\bookkeeping\templates\bookkeeping\category_list.html:12
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:14
+#: .\bookkeeping\templates\bookkeeping\partner_form.html:13
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:15
+#: .\bookkeeping\templates\bookkeeping\report_list.html:13
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:14
+#: .\bookkeeping\templates\bookkeeping\transaction_form.html:13
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:16
 msgid "Reports"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:30
-msgid "This category is used in the following transactions:"
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:18
+#, fuzzy
+#| msgid "Delete"
+msgid "Delete asset"
+msgstr "Delete"
+
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:29
+msgid "This asset is used in the following transactions:"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:65
-msgid "You must remove all dependencies before deleting this category."
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:64
+msgid "You must remove all dependencies before deleting this asset."
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:69
-msgid "Back to Categories"
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:68
+#, fuzzy
+#| msgid "Back to Calendar"
+msgid "Back to Assets"
+msgstr "Back to Calendar"
+
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:72
+#, fuzzy
+#| msgid "Are you sure you want to delete the following event?"
+msgid "Are you sure you want to delete this asset?"
+msgstr "Are you sure you want to delete the following event?"
+
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:81
+#, fuzzy
+#| msgid "Delete"
+msgid "Yes, Delete Asset"
+msgstr "Delete"
+
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:24
+#, fuzzy
+#| msgid "Updated"
+msgid "Update Asset"
+msgstr "Updated"
+
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:24
+msgid "New Asset"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:81
-msgid "Yes, Delete Category"
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:50
+msgid "Save Asset"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\category_form.html:25
-msgid "Update Category"
-msgstr ""
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:14
+#, fuzzy
+#| msgid "Add Event"
+msgid "Add asset"
+msgstr "Add Event"
 
-#: .\bookkeeping\templates\bookkeeping\category_form.html:37
-msgid "Save Category"
-msgstr ""
-
-#: .\bookkeeping\templates\bookkeeping\category_list.html:38
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:60
-#: .\bookkeeping\templates\bookkeeping\report_list.html:67
-#: .\bookkeeping\templates\bookkeeping\report_list.html:108
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:76
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:53
+#: .\bookkeeping\templates\bookkeeping\category_list.html:39
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:61
+#: .\bookkeeping\templates\bookkeeping\report_list.html:69
+#: .\bookkeeping\templates\bookkeeping\report_list.html:110
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:73
 msgid "No records found."
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:19
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:31
+msgid "This category is used in the following transactions:"
+msgstr ""
+
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:66
+msgid "You must remove all dependencies before deleting this category."
+msgstr ""
+
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:70
+msgid "Back to Categories"
+msgstr ""
+
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:82
+msgid "Yes, Delete Category"
+msgstr ""
+
+#: .\bookkeeping\templates\bookkeeping\category_form.html:26
+msgid "Update Category"
+msgstr ""
+
+#: .\bookkeeping\templates\bookkeeping\category_form.html:38
+msgid "Save Category"
+msgstr ""
+
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:20
 msgid "Delete Partner"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:30
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:31
 msgid "This partner is used in the following transactions:"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:65
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:66
 msgid "You must remove all dependencies before deleting this partner."
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:69
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:70
 msgid "Back to Partners"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:73
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:74
 msgid "Are you sure you want to delete this partner?"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:76
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:22 .\home\forms.py:16
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:77
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:23 .\home\forms.py:16
 #: .\home\templates\home\login.html:15 .\obywatele\forms.py:27
 #: .\obywatele\templates\obywatele\poczekalnia.html:24
 #: .\obywatele\templates\obywatele\start.html:29
@@ -587,19 +711,19 @@ msgstr ""
 msgid "Email"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:87
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:88
 msgid "Yes, Delete Partner"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_form.html:23
+#: .\bookkeeping\templates\bookkeeping\partner_form.html:24
 msgid "Update Partner"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_form.html:23
+#: .\bookkeeping\templates\bookkeeping\partner_form.html:24
 msgid "New Partner"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_form.html:62
+#: .\bookkeeping\templates\bookkeeping\partner_form.html:63
 msgid "Save Partner"
 msgstr ""
 
@@ -607,79 +731,77 @@ msgstr ""
 msgid "Add Partner"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:23
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:24
 #: .\obywatele\models.py:38
 msgid "Phone number"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:24
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:25
 msgid "Web Page"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\report_list.html:20
+#: .\bookkeeping\templates\bookkeeping\report_list.html:21
 msgid "Select Year"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\report_list.html:37
+#: .\bookkeeping\templates\bookkeeping\report_list.html:36
 msgid "Summary"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\report_list.html:45
-#: .\bookkeeping\templates\bookkeeping\report_list.html:86
+#: .\bookkeeping\templates\bookkeeping\report_list.html:44
+#: .\bookkeeping\templates\bookkeeping\report_list.html:85
 msgid "Sum"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\report_list.html:58
-msgid "Total of the year"
+#: .\bookkeeping\templates\bookkeeping\report_list.html:60
+msgid "Summary of the year"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\report_list.html:78
+#: .\bookkeeping\templates\bookkeeping\report_list.html:77
 msgid "All Years Summary"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\report_list.html:99
+#: .\bookkeeping\templates\bookkeeping\report_list.html:101
 msgid "Total all years"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:19
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:20
 msgid "Delete Transaction"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:23
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:24
 msgid "Are you sure you want to delete this transaction?"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:40
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:42
 msgid "Yes, Delete Transaction"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\transaction_form.html:23
+#: .\bookkeeping\templates\bookkeeping\transaction_form.html:24
 msgid "Update Transaction"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\transaction_form.html:23
+#: .\bookkeeping\templates\bookkeeping\transaction_form.html:24
 msgid "New Transaction"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\transaction_form.html:56
+#: .\bookkeeping\templates\bookkeeping\transaction_form.html:60
 msgid "Save Transaction"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:11
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:10
 msgid "Add Transaction"
 msgstr ""
 
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:28
-#: .\home\templates\home\home.html:616
-#: .\obywatele\templates\obywatele\wspolnota.html:127
-msgid "Balance"
+#: .\bookkeeping\views.py:59
+msgid "Cannot delete asset because it is in use. Remove all transactions that use it first."
 msgstr ""
 
-#: .\bookkeeping\views.py:57
+#: .\bookkeeping\views.py:109
 msgid "Cannot delete category because it is in use. Remove all transactions that use it first."
 msgstr ""
 
-#: .\bookkeeping\views.py:112
+#: .\bookkeeping\views.py:158
 msgid "Cannot delete partner because it is in use. Remove all transactions that use it first."
 msgstr ""
 
@@ -2429,6 +2551,11 @@ msgstr ""
 msgid "Expenses"
 msgstr ""
 
+#: .\home\templates\home\home.html:616
+#: .\obywatele\templates\obywatele\wspolnota.html:127
+msgid "Balance"
+msgstr ""
+
 #: .\home\templates\home\login.html:40
 msgid "The username or password is incorrect."
 msgstr ""
@@ -3060,11 +3187,6 @@ msgstr "No tasks found."
 #: .\obywatele\templates\obywatele\_citizen_zalozono_partial.html:39
 msgid "Nothing created yet."
 msgstr "Nothing created yet."
-
-#: .\obywatele\templates\obywatele\assets.html:10
-#: .\obywatele\templates\obywatele\menu.html:20
-msgid "Assets"
-msgstr ""
 
 #: .\obywatele\templates\obywatele\candidate_edit.html:10
 msgid "Edit candidate profile"
