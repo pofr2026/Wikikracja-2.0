@@ -11,6 +11,7 @@ urlpatterns = (
     path('onboarding/waiting/', v.onboarding_waiting, name='onboarding_waiting'),
     path('poczekalnia/', v.poczekalnia, name='poczekalnia'),
     path('poczekalnia/<int:pk>/', v.obywatele_szczegoly, name='poczekalnia_szczegoly'),
+    path('poczekalnia/<int:pk>/edit/', v.candidate_edit, name='candidate_edit'),
     path('<int:pk>/', v.obywatele_szczegoly, name='obywatele_szczegoly'),
     path('<int:pk>/czaty/', v.citizen_czaty, name='citizen_czaty'),
     path('<int:pk>/zadania/', v.citizen_zadania, name='citizen_zadania'),

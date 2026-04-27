@@ -998,6 +998,35 @@ def obywatele_szczegoly(request: HttpRequest, pk: int):
     })
 
 
+@login_required
+def candidate_edit(request: HttpRequest, pk: int):
+    candidate_user = get_object_or_404(User, pk=pk, is_active=False)
+    candidate_profile = get_object_or_404(Uzytkownik, uid=candidate_user)
+
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=candidate_profile)
+        if form.is_valid():
+            candidate_user.first_name = form.cleaned_data.get('first_name') or candidate_user.first_name
+            candidate_user.last_name = form.cleaned_data.get('last_name') or candidate_user.last_name
+            candidate_user.save(update_fields=['first_name', 'last_name'])
+            form.save()
+            success(request, _('Candidate profile has been updated.'))
+            return redirect('obywatele:poczekalnia_szczegoly', pk=pk)
+        else:
+            error(request, _('Please correct the highlighted errors.'))
+    else:
+        form = ProfileForm(instance=candidate_profile, initial={
+            'first_name': candidate_user.first_name,
+            'last_name': candidate_user.last_name,
+        })
+
+    return render(request, 'obywatele/candidate_edit.html', {
+        'form': form,
+        'candidate_user': candidate_user,
+        'candidate_profile': candidate_profile,
+    })
+
+
 @receiver(user_signed_up)
 def DeactivateNewUser(sender, **kwargs):
     user = kwargs.get('user')

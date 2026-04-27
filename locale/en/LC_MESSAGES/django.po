@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-26 14:57+0200\n"
+"POT-Creation-Date: 2026-04-27 18:06+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -29,6 +29,7 @@ msgstr ""
 #: .\glosowania\templates\glosowania\edit_argument.html:31
 #: .\home\templates\home\haslo.html:25
 #: .\home\templates\home\site_admin.html:237
+#: .\obywatele\templates\obywatele\candidate_edit.html:56
 #: .\obywatele\templates\obywatele\change_email.html:23
 #: .\obywatele\templates\obywatele\change_username.html:18
 #: .\obywatele\templates\obywatele\dodaj.html:70
@@ -198,7 +199,7 @@ msgstr ""
 
 #: .\board\templates\board\board.html:44 .\obywatele\models.py:52
 #: .\obywatele\templates\obywatele\my_profile.html:158
-#: .\obywatele\templates\obywatele\szczegoly.html:242 .\obywatele\views.py:743
+#: .\obywatele\templates\obywatele\szczegoly.html:247 .\obywatele\views.py:743
 msgid "Other"
 msgstr ""
 
@@ -228,6 +229,8 @@ msgstr ""
 #: .\events\templates\events\event_confirm_delete.html:34
 #: .\glosowania\templates\glosowania\edit_argument.html:32
 #: .\home\templates\home\haslo.html:26
+#: .\obywatele\templates\obywatele\candidate_edit.html:12
+#: .\obywatele\templates\obywatele\candidate_edit.html:59
 #: .\obywatele\templates\obywatele\change_email.html:24
 #: .\obywatele\templates\obywatele\change_username.html:19
 #: .\obywatele\templates\obywatele\my_assets.html:99
@@ -298,6 +301,7 @@ msgstr ""
 #: .\glosowania\templates\glosowania\szczegoly.html:170
 #: .\glosowania\templates\glosowania\szczegoly.html:213
 #: .\obywatele\templates\obywatele\my_profile.html:140
+#: .\obywatele\templates\obywatele\szczegoly.html:182
 #: .\tasks\templates\tasks\task_detail.html:88
 msgid "Edit"
 msgstr "Edit"
@@ -470,7 +474,7 @@ msgstr ""
 #: .\bookkeeping\templates\bookkeeping\partner_list.html:26
 #: .\obywatele\models.py:39 .\obywatele\templates\obywatele\my_profile.html:144
 #: .\obywatele\templates\obywatele\start.html:49
-#: .\obywatele\templates\obywatele\szczegoly.html:194 .\obywatele\views.py:687
+#: .\obywatele\templates\obywatele\szczegoly.html:199 .\obywatele\views.py:687
 msgid "City"
 msgstr ""
 
@@ -1949,7 +1953,7 @@ msgstr ""
 
 #: .\home\models.py:12 .\home\models.py:42
 #: .\home\templatetags\feed_filters.py:32 .\home\views.py:674
-#: .\obywatele\views.py:1224
+#: .\obywatele\views.py:1253
 msgid "Task"
 msgstr ""
 
@@ -2797,7 +2801,7 @@ msgid "Tasks performed in our group"
 msgstr ""
 
 #: .\obywatele\models.py:40 .\obywatele\templates\obywatele\my_profile.html:147
-#: .\obywatele\templates\obywatele\szczegoly.html:198 .\obywatele\views.py:699
+#: .\obywatele\templates\obywatele\szczegoly.html:203 .\obywatele\views.py:699
 msgid "Responsibilities"
 msgstr ""
 
@@ -2806,7 +2810,7 @@ msgid "Hobbies one have"
 msgstr ""
 
 #: .\obywatele\models.py:41 .\obywatele\templates\obywatele\my_profile.html:149
-#: .\obywatele\templates\obywatele\szczegoly.html:202 .\obywatele\views.py:707
+#: .\obywatele\templates\obywatele\szczegoly.html:207 .\obywatele\views.py:707
 msgid "Hobby"
 msgstr ""
 
@@ -2815,7 +2819,7 @@ msgid "Things you are willing to give away for free"
 msgstr ""
 
 #: .\obywatele\models.py:42 .\obywatele\templates\obywatele\my_profile.html:153
-#: .\obywatele\templates\obywatele\szczegoly.html:206 .\obywatele\views.py:711
+#: .\obywatele\templates\obywatele\szczegoly.html:211 .\obywatele\views.py:711
 msgid "To give away"
 msgstr ""
 
@@ -2824,7 +2828,7 @@ msgid "Stuff you can borrow to others"
 msgstr ""
 
 #: .\obywatele\models.py:43 .\obywatele\templates\obywatele\my_profile.html:154
-#: .\obywatele\templates\obywatele\szczegoly.html:210 .\obywatele\views.py:715
+#: .\obywatele\templates\obywatele\szczegoly.html:215 .\obywatele\views.py:715
 msgid "To borrow"
 msgstr ""
 
@@ -2833,7 +2837,7 @@ msgid "Stuff you have for sale"
 msgstr ""
 
 #: .\obywatele\models.py:44 .\obywatele\templates\obywatele\my_profile.html:155
-#: .\obywatele\templates\obywatele\szczegoly.html:214 .\obywatele\views.py:719
+#: .\obywatele\templates\obywatele\szczegoly.html:219 .\obywatele\views.py:719
 msgid "For sale"
 msgstr ""
 
@@ -2842,7 +2846,7 @@ msgid "What do you need"
 msgstr ""
 
 #: .\obywatele\models.py:45 .\obywatele\templates\obywatele\my_profile.html:156
-#: .\obywatele\templates\obywatele\szczegoly.html:218 .\obywatele\views.py:723
+#: .\obywatele\templates\obywatele\szczegoly.html:223 .\obywatele\views.py:723
 msgid "I need"
 msgstr ""
 
@@ -2851,7 +2855,7 @@ msgid "Practical skills one have"
 msgstr ""
 
 #: .\obywatele\models.py:46 .\obywatele\templates\obywatele\my_profile.html:150
-#: .\obywatele\templates\obywatele\szczegoly.html:222 .\obywatele\views.py:731
+#: .\obywatele\templates\obywatele\szczegoly.html:227 .\obywatele\views.py:731
 msgid "Skills"
 msgstr ""
 
@@ -2860,7 +2864,7 @@ msgid "Knowledge one have"
 msgstr ""
 
 #: .\obywatele\models.py:47 .\obywatele\templates\obywatele\my_profile.html:151
-#: .\obywatele\templates\obywatele\szczegoly.html:226 .\obywatele\views.py:735
+#: .\obywatele\templates\obywatele\szczegoly.html:231 .\obywatele\views.py:735
 msgid "Knowledge"
 msgstr ""
 
@@ -2869,7 +2873,7 @@ msgid "Things one would like to learn"
 msgstr ""
 
 #: .\obywatele\models.py:48 .\obywatele\templates\obywatele\my_profile.html:152
-#: .\obywatele\templates\obywatele\szczegoly.html:230 .\obywatele\views.py:727
+#: .\obywatele\templates\obywatele\szczegoly.html:235 .\obywatele\views.py:727
 msgid "I want to learn"
 msgstr ""
 
@@ -2878,7 +2882,7 @@ msgid "If running a business"
 msgstr ""
 
 #: .\obywatele\models.py:49 .\obywatele\templates\obywatele\my_profile.html:148
-#: .\obywatele\templates\obywatele\szczegoly.html:234 .\obywatele\views.py:703
+#: .\obywatele\templates\obywatele\szczegoly.html:239 .\obywatele\views.py:703
 msgid "Business"
 msgstr ""
 
@@ -2887,7 +2891,7 @@ msgid "Profession"
 msgstr ""
 
 #: .\obywatele\models.py:50 .\obywatele\templates\obywatele\my_profile.html:146
-#: .\obywatele\templates\obywatele\szczegoly.html:190 .\obywatele\views.py:695
+#: .\obywatele\templates\obywatele\szczegoly.html:195 .\obywatele\views.py:695
 msgid "Job"
 msgstr ""
 
@@ -2896,7 +2900,7 @@ msgid "What gift would you like to receive"
 msgstr ""
 
 #: .\obywatele\models.py:51 .\obywatele\templates\obywatele\my_profile.html:157
-#: .\obywatele\templates\obywatele\szczegoly.html:238 .\obywatele\views.py:739
+#: .\obywatele\templates\obywatele\szczegoly.html:243 .\obywatele\views.py:739
 msgid "Gift"
 msgstr ""
 
@@ -2909,7 +2913,7 @@ msgid "In your own words please explain why do you want join our group"
 msgstr ""
 
 #: .\obywatele\models.py:53 .\obywatele\templates\obywatele\my_profile.html:159
-#: .\obywatele\templates\obywatele\szczegoly.html:246 .\obywatele\views.py:747
+#: .\obywatele\templates\obywatele\szczegoly.html:251 .\obywatele\views.py:747
 msgid "Why do you want to join?"
 msgstr ""
 
@@ -3060,6 +3064,10 @@ msgstr "Nothing created yet."
 #: .\obywatele\templates\obywatele\assets.html:10
 #: .\obywatele\templates\obywatele\menu.html:20
 msgid "Assets"
+msgstr ""
+
+#: .\obywatele\templates\obywatele\candidate_edit.html:10
+msgid "Edit candidate profile"
 msgstr ""
 
 #: .\obywatele\templates\obywatele\change_email.html:7
@@ -3385,7 +3393,7 @@ msgstr ""
 msgid "Profile Details"
 msgstr ""
 
-#: .\obywatele\templates\obywatele\szczegoly.html:186 .\obywatele\views.py:691
+#: .\obywatele\templates\obywatele\szczegoly.html:191 .\obywatele\views.py:691
 msgid "Communicator / Phone"
 msgstr ""
 
@@ -3459,7 +3467,7 @@ msgid ""
 "You can approve him/her here:"
 msgstr ""
 
-#: .\obywatele\views.py:663
+#: .\obywatele\views.py:663 .\obywatele\views.py:1016
 msgid "Please correct the highlighted errors."
 msgstr ""
 
@@ -3491,54 +3499,58 @@ msgstr "New messages only in rooms where I have sent at least one message"
 msgid "Changes was saved"
 msgstr ""
 
-#: .\obywatele\views.py:1024
+#: .\obywatele\views.py:1013
+msgid "Candidate profile has been updated."
+msgstr ""
+
+#: .\obywatele\views.py:1053
 msgid "Fill out your onboarding form"
 msgstr ""
 
-#: .\obywatele\views.py:1025
+#: .\obywatele\views.py:1054
 #, python-format
 msgid "Your email has been confirmed. Please fill out your onboarding form here: %(link)s"
 msgstr ""
 
-#: .\obywatele\views.py:1122
+#: .\obywatele\views.py:1151
 msgid "Created task"
 msgstr "Created task"
 
-#: .\obywatele\views.py:1133
+#: .\obywatele\views.py:1162
 msgid "Assigned task"
 msgstr "Assigned task"
 
-#: .\obywatele\views.py:1144
+#: .\obywatele\views.py:1173
 msgid "Voted on task"
 msgstr "Voted on task"
 
-#: .\obywatele\views.py:1155
+#: .\obywatele\views.py:1184
 msgid "Evaluated task"
 msgstr "Evaluated task"
 
-#: .\obywatele\views.py:1166
+#: .\obywatele\views.py:1195
 msgid "Added argument"
 msgstr "Added argument"
 
-#: .\obywatele\views.py:1178
+#: .\obywatele\views.py:1207
 msgid "Signed proposal"
 msgstr "Signed proposal"
 
-#: .\obywatele\views.py:1189
+#: .\obywatele\views.py:1218
 msgid "Voted in referendum"
 msgstr "Voted in referendum"
 
-#: .\obywatele\views.py:1200
+#: .\obywatele\views.py:1229
 msgid "Citizenship event"
 msgstr "Citizenship event"
 
-#: .\obywatele\views.py:1234
+#: .\obywatele\views.py:1263
 #, fuzzy
 #| msgid "Signed proposal"
 msgid "Voting proposal"
 msgstr "Signed proposal"
 
-#: .\obywatele\views.py:1244
+#: .\obywatele\views.py:1273
 msgid "Dokument (biblioteka)"
 msgstr "Document (library)"
 
