@@ -699,8 +699,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def send_online_update(self, proxy: HandledMessage, is_online):
         updated_user = self.scope['user']
         for room_with_user in await self.find_rooms_with(updated_user):
-
-            user_to_notify = await database_sync_to_async(lambda x: room_with_user.get_other(x))(updated_user)
+            user_to_notify = await database_sync_to_async(lambda x, room=room_with_user: room.get_other(x))(updated_user)
 
             if not ChatConsumer.online_registry.is_online(user_to_notify):
                 continue
@@ -1085,14 +1084,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         # Build user_votes from the votes JSONField
         user_votes = {}
-        str_user_id = str(user_id)
         for msg in messages:
             reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
             vote_up = reactions_dict.get('upvotes', [])
             vote_down = reactions_dict.get('downvotes', [])
-            if str_user_id in vote_up:
+            if user_id in vote_up:
                 user_votes[msg.id] = 'upvote'
-            elif str_user_id in vote_down:
+            elif user_id in vote_down:
                 user_votes[msg.id] = 'downvote'
 
         # Build message data
