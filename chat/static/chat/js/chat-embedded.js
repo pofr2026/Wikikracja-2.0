@@ -7,10 +7,10 @@
  *   <script type="module" src="{% static 'chat/js/chat-embedded.js' %}"></script>
  */
 
+import { clearReplyTarget, createEditHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
 import { Message } from './templates.js';
 import { _, formatDate, formatTime } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
-import { getInputHtml, updateCounter, uploadFiles, formatMessage, setReplyTarget, clearReplyTarget, handleEnterKey } from './chat-core.js';
 
 /**
  * Inicjalizuje embedded chat dla podanego elementu DOM.
@@ -367,68 +367,53 @@ async function initEmbeddedChat(container) {
         currentReplyId = clearReplyTarget(replyPreview);
     });
 
-    // Delegacja kliknięć wewnątrz messagesEl
-    messagesEl.addEventListener('click', (e) => {
-        // Cytowanie
-        const replyBtn = e.target.closest('.reply-btn');
-        if (replyBtn) {
-            currentReplyId = setReplyTarget(
-                replyBtn.dataset.messageId,
-                replyBtn.dataset.username,
-                replyBtn.dataset.snippet,
-                replyPreview,
-                replyPreviewText
-            );
-            inputEl.focus();
-            return;
-        }
-
-        // Skocz do cytowanej wiadomości
-        const jumpBtn = e.target.closest('.msg-quote-jump');
-        if (jumpBtn) {
-            const target = messagesEl.querySelector(`.message[data-message-id="${jumpBtn.dataset.targetId}"]`);
-            if (target) {
-                target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                target.classList.remove('msg-highlighted');
-                void target.offsetWidth;
-                target.classList.add('msg-highlighted');
-                setTimeout(() => target.classList.remove('msg-highlighted'), 2000);
-            }
-            return;
-        }
-
-        // Reakcje emoji
-        const reactionBtn = e.target.closest('.reaction-btn');
-        if (reactionBtn && joined) {
-            ws.sendJson({ command: 'message-react', reaction: reactionBtn.dataset.reaction, message_id: parseInt(reactionBtn.dataset.messageId) });
-            return;
-        }
-
-        // Edytuj własną wiadomość
-        const editBtn = e.target.closest('.edit-message');
-        if (editBtn) {
-            const msgDiv = messagesEl.querySelector(`.message[data-message-id="${editBtn.dataset.messageId}"]`);
-            const msgText = msgDiv?.querySelector('.msg-text')?.innerHTML ?? '';
-            inputEl.dataset.editMessage = editBtn.dataset.messageId;
-            inputEl.innerHTML = msgText;
-            inputEl.style.borderColor = 'var(--color-warning)';
-            inputEl.focus();
-            updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
-            return;
-        }
-
-        // Voting
-        const voteBtn = e.target.closest('.msg-vote');
-        if (voteBtn && joined) {
-            const isAdd = !voteBtn.classList.contains('active');
-            ws.sendJson({
-                command: isAdd ? 'message-add-vote' : 'message-remove-vote',
-                vote: voteBtn.dataset.eventName,
-                message_id: parseInt(voteBtn.dataset.messageId),
-            });
-            return;
-        }
+    // ── Shared handlers from chat-core.js ────────────────────────────────────
+    const voteHandler = createVoteHandler((eventName, messageId, isAdd) => {
+        // Toggle active state on button
+        const btn = messagesEl.querySelector(`.msg-vote[data-event-name="${eventName}"][data-message-id="${messageId}"]`);
+        if (btn) btn.classList.toggle('active', isAdd);
+        if (!joined) return;
+        ws.sendJson({
+            command: isAdd ? 'message-add-vote' : 'message-remove-vote',
+            vote: eventName,
+            message_id: messageId,
+        });
     });
+
+    const reactionHandler = createReactionHandler((reaction, messageId) => {
+        if (!joined) return;
+        ws.sendJson({ command: 'message-react', reaction, message_id: messageId });
+    });
+
+    function startEdit(messageId, inputElRef) {
+        const msgDiv = messagesEl.querySelector(`.message[data-message-id="${messageId}"]`);
+        const msgText = msgDiv?.querySelector('.msg-text')?.innerHTML ?? '';
+        inputElRef.dataset.editMessage = messageId;
+        inputElRef.innerHTML = msgText;
+        inputElRef.style.borderColor = 'var(--color-warning)';
+        inputElRef.focus();
+        updateCounter(inputElRef, counterEl, counterVal, sendBtn, EC_MAX);
+    }
+
+    const editHandler = createEditHandler(startEdit, inputEl);
+
+    const replyHandler = createReplyHandler(
+        (msgId, username, snippet, preview, previewText) => {
+            currentReplyId = setReplyTarget(msgId, username, snippet, preview, previewText);
+        },
+        replyPreview,
+        replyPreviewText,
+        inputEl
+    );
+
+    const quoteJumpHandler = createQuoteJumpHandler(messagesEl);
+
+    // Attach shared handlers
+    messagesEl.addEventListener('click', voteHandler);
+    messagesEl.addEventListener('click', reactionHandler);
+    messagesEl.addEventListener('click', replyHandler);
+    messagesEl.addEventListener('click', editHandler);
+    messagesEl.addEventListener('click', quoteJumpHandler);
 
     function submitInput() {
         if (inputEl.dataset.editMessage) {

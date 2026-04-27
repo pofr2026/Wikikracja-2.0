@@ -1,11 +1,18 @@
 /**
  * @file
  * Event handlers module for chat UI interactions.
- * Sets up DOM event listeners and routes events to appropriate handler functions.
  */
 
 import {
     clearReplyTarget,
+    createEditHandler,
+    createHistoryHandler,
+    createQuoteJumpHandler,
+    createReactionHandler,
+    createReplyHandler,
+    createVoteHandler
+} from './chat-core.js';
+import {
     copyMessageLink,
     copyRoomLink,
     onMessageHistory,
@@ -14,8 +21,7 @@ import {
     onToggleNotifications,
     onToggleReaction,
     onToggleSeen,
-    onUpdateVote,
-    setReplyTarget,
+    onUpdateVote
 } from './chat.js';
 import DomApi from './domapi.js';
 import { $, $$ } from './utility.js';
@@ -26,15 +32,12 @@ import { $, $$ } from './utility.js';
  */
 const DOM_API = new DomApi();
 
-document.addEventListener('DOMContentLoaded', () => {
-    // Auto-resize textarea functionality
-    function autoResizeTextarea(textarea) {
-        textarea.style.height = 'auto';
-        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
-    }
-
-    // Character counter
+document.addEventListener('DOMContentLoaded', function() {
     const MSG_MAX = window.SITE_SETTINGS?.messageMaxLength ?? 500;
+
+    if (window.SITE_SETTINGS && window.SITE_SETTINGS.messageMaxLength) {
+        MSG_MAX = window.SITE_SETTINGS.messageMaxLength;
+    }
 
     function updateCounter(text) {
         const remaining = MSG_MAX - text.length;
@@ -132,6 +135,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
+
+    function autoResizeTextarea(textarea) {
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+
     // Tree sidebar — nav-cat-btn collapse/expand
     // Restore cat states from localStorage (before click handler, so initial state is set)
     document.querySelectorAll('.nav-cat-btn').forEach(btn => {
@@ -144,8 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
             content.classList.add('open');
             btn.setAttribute('aria-expanded', 'true');
         } else {
-            // Default: collapsed
-            content.classList.remove('open');
+            // Default: collapsed            content.classList.remove('open');
             btn.setAttribute('aria-expanded', 'false');
         }
     });
@@ -404,34 +412,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    document.addEventListener("click", (e) => {
-        const btn = e.target.closest(".msg-vote");
-        if (btn) {
-            onUpdateVote.call(btn, btn.dataset.eventName, btn.dataset.messageId, !btn.classList.contains('active'));
-        }
-    });
+    // SHARED MESSAGE HANDLERS FROM chat-core.js
 
-    // Emoji reaction toggle
-    document.addEventListener("click", (e) => {
-        const btn = e.target.closest(".reaction-btn");
-        if (btn) {
-            const reaction = btn.dataset.reaction;
-            const messageId = btn.dataset.messageId;
-            if (reaction && messageId) {
-                onToggleReaction(reaction, parseInt(messageId));
-            }
-        }
-    });
+    document.addEventListener('click', createVoteHandler(function(eventName, messageId, isAdd) {
+        const btn = document.querySelector('.msg-vote[data-event-name="' + eventName + '"][data-message-id="' + messageId + '"]');
+        if (btn) btn.classList.toggle('active', isAdd);
+        onUpdateVote.call(btn, eventName, messageId, isAdd);
+    }));
 
-    document.addEventListener("click", (e) => {
-        const btn = e.target.closest(".show-history");
-        if (btn) onMessageHistory(btn.dataset.messageId);
-    });
+    document.addEventListener('click', createReactionHandler(function(reaction, messageId) {
+        onToggleReaction(reaction, messageId);
+    }));
 
-    document.addEventListener("click", (e) => {
-        const btn = e.target.closest(".edit-message");
-        if (btn) DOM_API.setEditing(btn.dataset.messageId);
-    });
+    document.addEventListener('click', createHistoryHandler(function(messageId) {
+        onMessageHistory(messageId);
+    }));
+
+    document.addEventListener('click', createEditHandler(function(messageId, inputEl) {
+        DOM_API.setEditing(messageId);
+    }, $('#message-input')));
 
     document.addEventListener("click", (e) => {
         const btn = e.target.closest(".remove-existing-attachment");
@@ -465,23 +464,29 @@ document.addEventListener('DOMContentLoaded', () => {
     // Quote/Reply
     let _replySourceMessageId = null; // ID of the message containing the clicked quote jump
 
-    document.addEventListener('click', (e) => {
-        // Reply button — set reply target
-        const replyBtn = e.target.closest('.reply-btn');
-        if (replyBtn) {
-            const msgId = replyBtn.dataset.messageId;
-            const username = replyBtn.dataset.username;
-            const snippet = replyBtn.dataset.snippet;
-            setReplyTarget(msgId, username, snippet);
-            $('#message-input')?.focus();
-            return;
+    document.addEventListener('click', createReplyHandler(
+        function(msgId, username, snippet, preview, previewText) {
+            setReplyTarget(msgId, username, snippet, preview, previewText);
+            const inputEl = $('#message-input');
+            if (inputEl) inputEl.focus();
+        },
+        document.getElementById('reply-preview'),
+        document.getElementById('reply-preview-text'),
+        $('#message-input')
+    ));
+
+    document.addEventListener('click', createQuoteJumpHandler(
+        document.querySelector('#room .messages'),
+        function(jumpBtn, targetId, targetMsg) {
+            const currentMsg = jumpBtn.closest('.message');
+            if (currentMsg) _replySourceMessageId = currentMsg.dataset.messageId;
+            if (targetMsg) showReturnBtn(targetMsg);
         }
-    });
+    ));
 
     document.addEventListener('click', (e) => {
-        // Cancel reply
         if (e.target.closest('#reply-preview-close')) {
-            clearReplyTarget();
+            clearReplyTarget(document.getElementById('reply-preview'));
             return;
         }
     });

@@ -4,7 +4,6 @@
  * Contains: input serialization, message formatting, file uploads, reply handling, and Enter key handling
  */
 
-import { _, formatDate, formatTime } from './utility.js';
 
 /**
  * Serialize contenteditable HTML to sanitized HTML string
@@ -170,4 +169,155 @@ export function handleEnterKey(e, submitCallback) {
 export function getVisibleTextLength(inputEl) {
     if (!inputEl) return 0;
     return inputEl.isContentEditable ? (inputEl.textContent || '').length : (inputEl.value || '').length;
+}
+
+/**
+ * Create a delegated vote handler for message vote buttons
+ * @param {Function} sendVote - Callback (eventName, messageId, isAdd) => void
+ * @returns {Function} Event handler (e) => void
+ */
+export function createVoteHandler(sendVote) {
+    return function(e) {
+        const btn = e.target.closest('.msg-vote');
+        if (!btn) return;
+        const eventName = btn.dataset.eventName;
+        const messageId = btn.dataset.messageId;
+        if (!eventName || !messageId) return;
+        const isAdd = !btn.classList.contains('active');
+        sendVote(eventName, messageId, isAdd);
+    };
+}
+
+/**
+ * Create a delegated reaction handler for message reaction buttons
+ * @param {Function} sendReaction - Callback (reaction, messageId) => void
+ * @returns {Function} Event handler (e) => void
+ */
+export function createReactionHandler(sendReaction) {
+    return function(e) {
+        const btn = e.target.closest('.reaction-btn');
+        if (!btn) return;
+        const reaction = btn.dataset.reaction;
+        const messageId = btn.dataset.messageId;
+        if (!reaction || !messageId) return;
+        sendReaction(reaction, parseInt(messageId, 10));
+    };
+}
+
+/**
+ * Create a delegated reply handler for reply buttons
+ * @param {Function} setReplyTarget - (messageId, username, snippet, previewEl, previewTextEl) => void
+ * @param {HTMLElement} replyPreview - Reply preview container
+ * @param {HTMLElement} replyPreviewText - Reply preview text element
+ * @param {HTMLElement} inputEl - Message input element
+ * @returns {Function} Event handler (e) => void
+ */
+export function createReplyHandler(setReplyTarget, replyPreview, replyPreviewText, inputEl) {
+    return function(e) {
+        const replyBtn = e.target.closest('.reply-btn');
+        if (!replyBtn) return;
+        const messageId = replyBtn.dataset.messageId;
+        const username = replyBtn.dataset.username;
+        const snippet = replyBtn.dataset.snippet;
+        if (!messageId) return;
+        setReplyTarget(messageId, username, snippet, replyPreview, replyPreviewText);
+        if (inputEl) inputEl.focus();
+    };
+}
+
+/**
+ * Create a delegated edit handler for edit buttons
+ * @param {Function} startEdit - (messageId, inputEl) => void
+ * @param {HTMLElement} inputEl - Message input element
+ * @returns {Function} Event handler (e) => void
+ */
+export function createEditHandler(startEdit, inputEl) {
+    return function(e) {
+        const editBtn = e.target.closest('.edit-message');
+        if (!editBtn) return;
+        const messageId = editBtn.dataset.messageId;
+        if (!messageId) return;
+        startEdit(messageId, inputEl);
+    };
+}
+
+/**
+ * Create a delegated quote jump handler for quote links
+ * @param {HTMLElement} messagesContainer - Container with messages
+ * @returns {Function} Event handler (e) => void
+ */
+export function createQuoteJumpHandler(messagesContainer, onJump = undefined) {
+    return function(e) {
+        const jumpBtn = e.target.closest('.msg-quote-jump') || e.target.closest('.msg-quote');
+        if (!jumpBtn) return;
+        const targetId = jumpBtn.dataset.targetId || jumpBtn.dataset.replyId
+            || jumpBtn.closest('.msg-quote')?.dataset.replyId;
+        if (!targetId) return;
+        const targetMsg = messagesContainer.querySelector(`.message[data-message-id="${targetId}"]`);
+        if (targetMsg) {
+            targetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            targetMsg.classList.remove('msg-highlighted');
+            void targetMsg.offsetWidth;
+            targetMsg.classList.add('msg-highlighted');
+            setTimeout(() => targetMsg.classList.remove('msg-highlighted'), 2000);
+        }
+        if (onJump) onJump(jumpBtn, targetId, targetMsg);
+    };
+}
+
+/**
+ * Create delegated handlers for copy room/message link buttons
+ * @param {Function} copyRoomLink - (roomId, button) => void
+ * @param {Function} copyMessageLink - (roomId, messageId, button) => void
+ * @returns {Object} { roomLinkHandler, messageLinkHandler }
+ */
+export function createCopyLinkHandler(copyRoomLink, copyMessageLink) {
+    return {
+        roomLinkHandler: function(e) {
+            const btn = e.target.closest('.copy-room-url');
+            if (!btn) return;
+            const roomId = btn.dataset.roomId;
+            if (!roomId) return;
+            copyRoomLink(roomId, btn);
+        },
+        messageLinkHandler: function(e) {
+            const btn = e.target.closest('.copy-message-url');
+            if (!btn) return;
+            const roomId = btn.dataset.roomId;
+            const messageId = btn.dataset.messageId;
+            if (!roomId || !messageId) return;
+            copyMessageLink(roomId, messageId, btn);
+        }
+    };
+}
+
+/**
+ * Create a delegated history handler for history buttons
+ * @param {Function} showHistory - (messageId) => void
+ * @returns {Function} Event handler (e) => void
+ */
+export function createHistoryHandler(showHistory) {
+    return function(e) {
+        const btn = e.target.closest('.show-history');
+        if (!btn) return;
+        const messageId = btn.dataset.messageId;
+        if (!messageId) return;
+        showHistory(messageId);
+    };
+}
+
+/**
+ * Create a file upload handler for file inputs
+ * @param {Function} handleFiles - (files, previewContainer, previewImagesDiv) => void
+ * @param {HTMLElement} previewContainer - Preview container element
+ * @param {HTMLElement} previewImagesDiv - Preview images container
+ * @returns {Function} Event handler (e) => void
+ */
+export function createFileUploadHandler(handleFiles, previewContainer, previewImagesDiv) {
+    return function(e) {
+        if (!e.target.classList.contains('file-input')) return;
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+        handleFiles(files, previewContainer, previewImagesDiv);
+    };
 }

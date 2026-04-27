@@ -4,11 +4,11 @@
  * Coordinates between WebSocket API (WsApi) and DOM API (DomApi) to provide chat functionality.
  */
 
+import { clearReplyTarget as coreClearReplyTarget, setReplyTarget as coreSetReplyTarget } from './chat-core.js';
 import DomApi from './domapi.js';
 import { MessageHistory } from './templates.js';
 import { $, $$, _, formatDate, formatDateTime, Lock, makeNotification, parseParms } from './utility.js';
 import WsApi from './wsapi.js';
-import { setReplyTarget as coreSetReplyTarget, clearReplyTarget as coreClearReplyTarget } from './chat-core.js';
 
 /**
  * Global WebSocket API instance
