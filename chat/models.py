@@ -36,6 +36,9 @@ class Room(models.Model):
     # Protected rooms (for tasks, voting) should not be auto-deleted by chat_rooms command
     protected = models.BooleanField(default=False)
 
+    # User who created this room (null for rooms created before this field was added)
+    founder = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='founded_rooms')
+
     def __str__(self):
         return self.title
 
