@@ -29,7 +29,7 @@ def create_or_update_task_chat_room(sender, instance, created, **kwargs):
             room_title = instance.get_chat_room_title()
 
             # Create new public room
-            room = Room.objects.create(title=room_title, public=True, archived=False, protected=True, last_activity=timezone.now())
+            room = Room.objects.create(title=room_title, public=True, archived=False, protected=True, last_activity=timezone.now(), founder=instance.created_by)
 
             # Allow all active users access to the room
             active_users = User.objects.filter(is_active=True)

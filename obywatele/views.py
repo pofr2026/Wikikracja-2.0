@@ -1248,6 +1248,14 @@ def citizen_zalozono(request: HttpRequest, pk: int):
             }),
         })
 
+    for room in Room.objects.filter(founder=target_user).order_by('-last_activity'):
+        items.append({
+            'title': room.displayed_name(target_user),
+            'ts': room.last_activity,
+            'label': _('Chat room'),
+            'url': reverse('chat:chat') + f'#room_id={room.pk}',
+        })
+
     epoch = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
     items.sort(key=lambda x: x['ts'] or epoch, reverse=True)
 

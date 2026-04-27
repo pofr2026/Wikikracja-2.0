@@ -5,7 +5,7 @@
       <thead>
         <tr>
           <th>{% trans "Room" %}</th>
-          <th>{% trans "Last message" %}</th>
+          <th>{% trans "Message" %}</th>
           <th>{% trans "Date" %}</th>
         </tr>
       </thead>
@@ -16,10 +16,10 @@
               <a href="{% url 'chat:chat' %}#room_id={{ row.room.id }}">{{ row.room_name }}</a>
             </td>
             <td class="td-link" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-              <a href="{% url 'chat:chat' %}#room_id={{ row.room.id }}">{% if row.last_msg %}{{ row.last_msg.text|plain_text|truncatechars:80 }}{% else %}—{% endif %}</a>
+              <a href="{% url 'chat:chat' %}#room_id={{ row.room.id }}">{{ row.msg.text|plain_text|truncatechars:80 }}</a>
             </td>
             <td class="text-muted text-nowrap">
-              {% if row.last_msg %}{{ row.last_msg.time|date:"d.m.Y H:i" }}{% endif %}
+              {{ row.msg.time|date:"d.m.Y H:i" }}
             </td>
           </tr>
         {% endfor %}
