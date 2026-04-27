@@ -105,7 +105,6 @@ def main():
 
     run(manage + ["migrate"])
     if args.full:
-        run(manage + ["makemessages", "-v", "0", "--no-wrap", "--no-obsolete", "-l", "en", "--ignore=.git/*", "--ignore=static/*", "--ignore=.mypy_cache/*"])
         run(manage + ["makemessages", "-v", "0", "--no-wrap", "--no-obsolete", "-l", "pl", "--ignore=.git/*", "--ignore=static/*", "--ignore=.mypy_cache/*"])
         run(manage + ["compilemessages", "-v", "0"], allow_failure=True)
         run(manage + ["collectstatic", "-v", "0", "--no-input", "-c"])

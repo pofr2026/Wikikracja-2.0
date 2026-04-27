@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-14 00:21+0200\n"
+"POT-Creation-Date: 2026-04-27 19:58+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -34,7 +34,7 @@ msgstr "Podtytuł"
 
 #: .\board\models.py:13 .\board\templates\board\post_detail.html:21
 #: .\bookkeeping\models.py:46
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:28
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:29
 #: .\elibrary\forms.py:12 .\elibrary\models.py:16
 #: .\elibrary\templates\elibrary\book_confirm_delete.html:15
 #: .\glosowania\models.py:122
@@ -45,7 +45,7 @@ msgstr "Autor"
 
 #: .\board\models.py:14 .\board\templates\board\post_detail.html:21
 #: .\bookkeeping\models.py:39
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:23
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:24
 #: .\events\templates\events\event_detail.html:107
 #: .\glosowania\templates\glosowania\delete_argument.html:20
 #: .\glosowania\templates\glosowania\discussion.html:33
@@ -116,7 +116,7 @@ msgstr "Utwórz ogłoszenie"
 #: .\bookkeeping\templates\bookkeeping\partner_list.html:60
 #: .\bookkeeping\templates\bookkeeping\report_list.html:67
 #: .\bookkeeping\templates\bookkeeping\report_list.html:108
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:75
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:76
 msgid "No records found."
 msgstr "Brak wpisów."
 
@@ -176,7 +176,7 @@ msgstr "Czy na pewno chcesz skasować ten ogłoszenie?"
 #: .\board\templates\board\post_detail.html:25
 #: .\bookkeeping\templates\bookkeeping\category_list.html:32
 #: .\bookkeeping\templates\bookkeeping\partner_list.html:54
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:63
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:64
 #: .\elibrary\templates\elibrary\book_detail.html:34
 #: .\events\templates\events\event_detail.html:16
 #: .\glosowania\templates\glosowania\szczegoly.html:54
@@ -196,7 +196,7 @@ msgstr "Prywatne"
 #: .\bookkeeping\templates\bookkeeping\category_list.html:31
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:58
 #: .\bookkeeping\templates\bookkeeping\partner_list.html:53
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:62
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:63
 #: .\elibrary\templates\elibrary\book_detail.html:35
 #: .\events\templates\events\event_detail.html:13
 #: .\events\templates\events\event_list.html:92
@@ -220,7 +220,7 @@ msgstr "Wróć"
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:48
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:48
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:26
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:45
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:46
 msgid "Incoming"
 msgstr "Przychodzący"
 
@@ -228,7 +228,7 @@ msgstr "Przychodzący"
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:50
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:50
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:28
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:47
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:48
 msgid "Outgoing"
 msgstr "Wychodzący"
 
@@ -236,14 +236,14 @@ msgstr "Wychodzący"
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:35
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:35
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:24
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:22
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:23
 msgid "Type"
 msgstr "Typ"
 
 #: .\bookkeeping\forms.py:52 .\bookkeeping\models.py:43
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:36
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:31
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:24
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:25
 msgid "Partner"
 msgstr "Partner"
 
@@ -255,7 +255,7 @@ msgstr "Wybierz partnera"
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:36
 #: .\bookkeeping\templates\bookkeeping\report_list.html:44
 #: .\bookkeeping\templates\bookkeeping\report_list.html:85
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:25
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:26
 msgid "Category"
 msgstr "Kategoria"
 
@@ -263,7 +263,7 @@ msgstr "Kategoria"
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:37
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:37
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:32
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:26
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:27
 msgid "Amount"
 msgstr "Kwota"
 
@@ -329,7 +329,7 @@ msgstr "Wychodząca ilość"
 #: .\bookkeeping\templates\bookkeeping\report_list.html:9
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:10
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:9
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:12
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:13
 msgid "Transactions"
 msgstr "Transakcje"
 
@@ -342,7 +342,7 @@ msgstr "Transakcje"
 #: .\bookkeeping\templates\bookkeeping\report_list.html:10
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:11
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:10
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:13
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:14
 msgid "Partners"
 msgstr "Partnerzy"
 
@@ -355,7 +355,7 @@ msgstr "Partnerzy"
 #: .\bookkeeping\templates\bookkeeping\report_list.html:11
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:12
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:11
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:14
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:15
 msgid "Categories"
 msgstr "Kategorie"
 
@@ -368,7 +368,7 @@ msgstr "Kategorie"
 #: .\bookkeeping\templates\bookkeeping\report_list.html:12
 #: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:13
 #: .\bookkeeping\templates\bookkeeping\transaction_form.html:12
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:15
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:16
 msgid "Reports"
 msgstr "Raporty"
 
@@ -392,7 +392,7 @@ msgstr "Data"
 #: .\bookkeeping\templates\bookkeeping\category_list.html:22
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:39
 #: .\bookkeeping\templates\bookkeeping\partner_list.html:28
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:29
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:30
 msgid "Actions"
 msgstr "Działania"
 
@@ -533,11 +533,11 @@ msgstr "Nowa Transakcja"
 msgid "Save Transaction"
 msgstr "Zapisz Transakcję"
 
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:10
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:11
 msgid "Add Transaction"
 msgstr "Dodaj Transakcję"
 
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:27
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:28
 msgid "Balance"
 msgstr "Bilans"
 
@@ -608,7 +608,7 @@ msgid "None"
 msgstr "Brak"
 
 #: .\chat\templates\chat\chat.html:108 .\chat\templates\chat\chat.html:221
-#: .\home\templates\home\base.html:80
+#: .\home\templates\home\base.html:77
 msgid "Tasks"
 msgstr "Zadania"
 
@@ -870,7 +870,7 @@ msgid "Enter a descriptive name for the event"
 msgstr "Wpisz opisową nazwę wydarzenia"
 
 #: .\events\models.py:43 .\tasks\templates\tasks\task_form.html:25
-#: .\zzz\scheduler.py:164
+#: .\zzz\scheduler.py:160
 msgid "Description"
 msgstr "Opis"
 
@@ -888,7 +888,7 @@ msgid "Optional link to event details, registration, or location"
 msgstr "Opcjonalny link do szczegółów wydarzenia, rejestrowania lub miejsca"
 
 #: .\events\models.py:45 .\events\templates\events\event_detail.html:41
-#: .\zzz\scheduler.py:157
+#: .\zzz\scheduler.py:153
 msgid "Place"
 msgstr "Miejsce"
 
@@ -1729,19 +1729,19 @@ msgstr "Wiadomość"
 msgid "Citizen Activity"
 msgstr "Aktywność obywatela"
 
-#: .\home\templates\home\base.html:67
+#: .\home\templates\home\base.html:64
 msgid "Start"
 msgstr "Start"
 
-#: .\home\templates\home\base.html:71
+#: .\home\templates\home\base.html:68
 msgid "Board"
 msgstr "Ogłoszenia"
 
-#: .\home\templates\home\base.html:75
+#: .\home\templates\home\base.html:72
 msgid "Calendar"
 msgstr "Kalendarz"
 
-#: .\home\templates\home\base.html:86 .\home\templates\home\home.html:13
+#: .\home\templates\home\base.html:83 .\home\templates\home\home.html:13
 #: .\home\templates\home\login.html:4 .\home\templates\home\login.html:13
 #: .\home\templates\home\login.html:34
 #: .\obywatele\management\commands\count_citizens.py:188
@@ -1749,51 +1749,51 @@ msgstr "Kalendarz"
 msgid "Login"
 msgstr "Zaloguj"
 
-#: .\home\templates\home\base.html:90 .\home\templates\home\home.html:16
+#: .\home\templates\home\base.html:87 .\home\templates\home\home.html:16
 #: .\home\templates\home\login.html:35
 #: .\templates\allauth\account\signup.html:28
 msgid "Sign Up"
 msgstr "Załóż konto"
 
-#: .\home\templates\home\base.html:98 .\obywatele\models.py:80
+#: .\home\templates\home\base.html:95 .\obywatele\models.py:80
 #: .\obywatele\templates\obywatele\menu.html:22
 #: .\obywatele\templates\obywatele\start.html:10
 msgid "Citizens"
 msgstr "Ludzie"
 
-#: .\home\templates\home\base.html:104 .\obywatele\views.py:532
+#: .\home\templates\home\base.html:101 .\obywatele\views.py:532
 msgid "Voting"
 msgstr "Głosowania"
 
-#: .\home\templates\home\base.html:108
+#: .\home\templates\home\base.html:105
 msgid "Bookkeeping"
 msgstr "Finanse"
 
-#: .\home\templates\home\base.html:112
+#: .\home\templates\home\base.html:109
 msgid "Library"
 msgstr "Biblioteka"
 
-#: .\home\templates\home\base.html:121 .\obywatele\views.py:538
+#: .\home\templates\home\base.html:118 .\obywatele\views.py:538
 msgid "Chat"
 msgstr "Czat"
 
-#: .\home\templates\home\base.html:143
+#: .\home\templates\home\base.html:140
 msgid "Enable notifications to stay updated with new messages and activities"
 msgstr "Włącz powiadomienia, aby być na bieżąco z nowymi wiadomościami i aktywnościami"
 
-#: .\home\templates\home\base.html:145
+#: .\home\templates\home\base.html:142
 msgid "Enable Notifications"
 msgstr "Włącz powiadomienia"
 
-#: .\home\templates\home\base.html:148
+#: .\home\templates\home\base.html:145
 msgid "Not now"
 msgstr "Nie teraz"
 
-#: .\home\templates\home\base.html:153
+#: .\home\templates\home\base.html:150
 msgid "Notifications are blocked. Please enable them in your browser settings"
 msgstr "Powiadomienia są zablokowane. Włącz je w ustawieniach przeglądarki"
 
-#: .\home\templates\home\base.html:155
+#: .\home\templates\home\base.html:152
 msgid "Dismiss"
 msgstr "Odrzuć"
 
@@ -1948,20 +1948,20 @@ msgstr "Członkostwo"
 msgid "Transaction"
 msgstr "Transakcja"
 
-#: .\home\views.py:157
+#: .\home\views.py:150
 msgid "Untitled Book"
 msgstr "Książka bez tytułu"
 
-#: .\home\views.py:227
+#: .\home\views.py:215
 #, python-format
 msgid "Messages in %(room_title)s"
 msgstr "Wiadomości w %(room_title)s"
 
-#: .\home\views.py:482
+#: .\home\views.py:489
 msgid "Your password has been changed."
 msgstr "Twoje hasło zostało zmienione."
 
-#: .\home\views.py:485
+#: .\home\views.py:492
 msgid "You typed something wrong. See what error appeared above and try again."
 msgstr "Coś źle wpisałeś. Zobacz, jaki błąd pojawił się powyżej i spróbuj ponownie."
 
@@ -3178,18 +3178,18 @@ msgstr ""
 msgid "<strong>Note:</strong> you can still <a href=\"%(email_url)s\">change your e-mail address</a>."
 msgstr "<strong>Uwaga:</strong> nadal możesz <a href=\"%(email_url)s\">zmienić swój adres e-mail</a>."
 
-#: .\zzz\scheduler.py:153
+#: .\zzz\scheduler.py:149
 msgid "Time"
 msgstr "Godzina"
 
-#: .\zzz\scheduler.py:168
+#: .\zzz\scheduler.py:164
 msgid "Reminder"
 msgstr "Przypomnienie"
 
-#: .\zzz\settings.py:102
+#: .\zzz\settings.py:104
 msgid "English"
 msgstr "Angielski"
 
-#: .\zzz\settings.py:103
+#: .\zzz\settings.py:105
 msgid "Polish"
 msgstr "Polski"
