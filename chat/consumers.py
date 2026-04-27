@@ -241,6 +241,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     latest_date=msg_data['time'],
                     attachments=attachments,
                     reply_to=msg_data.get('reply_to'),
+                    reactions={
+                        'bulb': msg_data.get('bulb_count', 0),
+                        'question': msg_data.get('question_count', 0)
+                    },
                 )
             except TypeError:
                 data = None
@@ -317,9 +321,14 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     latest_date=msg_data['time'],
                     attachments=msg_data['attachments'],
                     reply_to=msg_data.get('reply_to'),
+                    reactions={
+                        'bulb': msg_data.get('bulb_count', 0),
+                        'question': msg_data.get('question_count', 0)
+                    },
                 )
             except TypeError:
                 continue
+
             to_send.append(self.format_chat_message_data_batch(data, users_dict, user_votes_dict))
 
         proxy.send_json({
@@ -408,6 +417,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             latest_date=msg.time,
             attachments=attachments,
             reply_to=reply_to_data,
+            reactions={
+                'bulb': 0,
+                'question': 0
+            },
         ))
 
         # Make rooms appear unseen for online room members, send push for offline
@@ -874,7 +887,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             'username': 'Anonymous User' if event["anonymous"] else user.username if user else None,
             "new": event["new"] if self.scope['user'] != user else False,
             "your_vote": vote.vote if vote is not None else None,
-            "own": self.scope['user'] == user
+            "own": self.scope['user'] == user,
+            "bulb_count": event.get('bulb_count', 0),
+            "question_count": event.get('question_count', 0),
         }
 
     def format_chat_message_data_batch(self, event, users_dict, user_votes_dict, user_reactions_dict=None):
@@ -896,6 +911,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         del event_copy["user_id"]
         del event_copy["type"]
 
+        # Extract reaction counts from the reactions dict passed via format_chat_message
+        reactions = event.get('reactions', {})
+        bulb_count = reactions.get('bulb', 0) if isinstance(reactions, dict) else 0
+        question_count = reactions.get('question', 0) if isinstance(reactions, dict) else 0
+
         return {
             **event_copy,
             'username': 'Anonymous User' if event["anonymous"] else user.username if user else None,
@@ -903,6 +923,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             "your_vote": vote_value if vote_value else None,
             "own": self.scope['user'] == user,
             "your_reactions": your_reactions,
+            "bulb_count": bulb_count,
+            "question_count": question_count,
         }
 
     ###########################################################
@@ -974,9 +996,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 attachments[attachment.type] = attachments_of_type
 
             # Compute upvotes/downvotes from the votes JSONField
-            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
-            upvotes = sum(1 for v in votes_dict.values() if v == 1)
-            downvotes = sum(1 for v in votes_dict.values() if v == -1)
+            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
+            upvotes = len(reactions_dict.get('upvotes', []))
+            downvotes = len(reactions_dict.get('downvotes', []))
+            bulb = len(reactions_dict.get('bulb', []))
+            question = len(reactions_dict.get('question', []))
 
             result.append({
                 'id': msg.id,
@@ -987,6 +1011,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'anonymous': msg.anonymous,
                 'upvotes': upvotes,
                 'downvotes': downvotes,
+                'bulb': bulb,
+                'question': question,
                 'edited': edited,
                 'attachments': attachments,
             })
@@ -1018,9 +1044,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         all_messages = list(qs)
         # Compute votes count for each message
         for msg in all_messages:
-            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
-            msg.upvotes = sum(1 for v in votes_dict.values() if v == 1)
-            msg.downvotes = sum(1 for v in votes_dict.values() if v == -1)
+            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
+            msg.upvotes = len(reactions_dict.get('upvotes', []))
+            msg.downvotes = len(reactions_dict.get('downvotes', []))
 
         if popular_only:
             all_messages = [msg for msg in all_messages if msg.upvotes >= 1]
@@ -1061,11 +1087,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         user_votes = {}
         str_user_id = str(user_id)
         for msg in messages:
-            votes_dict = msg.votes if isinstance(msg.votes, dict) else {}
-            if str_user_id in votes_dict:
-                vote_value = votes_dict[str_user_id]
-                # Map to 'upvote' or 'downvote' string
-                user_votes[msg.id] = 'upvote' if vote_value == 1 else 'downvote'
+            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
+            vote_up = reactions_dict.get('upvotes', [])
+            vote_down = reactions_dict.get('downvotes', [])
+            if str_user_id in vote_up:
+                user_votes[msg.id] = 'upvote'
+            elif str_user_id in vote_down:
+                user_votes[msg.id] = 'downvote'
 
         # Build message data
         result = []
@@ -1090,6 +1118,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     'author_color': _username_to_color(ru),
                 }
 
+            # Get reaction counts (bulb, question)
+            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
+            bulb_count = len(reactions_dict.get('bulb', []))
+            question_count = len(reactions_dict.get('question', []))
+
             result.append({
                 'id': msg.id,
                 'sender_id': msg.sender_id,
@@ -1102,6 +1135,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 'edited': edited,
                 'attachments': attachments,
                 'reply_to': reply_to_data,
+                'bulb_count': bulb_count,
+                'question_count': question_count,
             })
 
         return {
