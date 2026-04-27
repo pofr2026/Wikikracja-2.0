@@ -1079,16 +1079,12 @@ def set_user_language(request: HttpRequest):
 @login_required
 def citizen_czaty(request: HttpRequest, pk: int):
     target_user = get_object_or_404(User, pk=pk)
-    qs = Room.objects.filter(allowed=target_user, public=True).order_by('-last_activity')
-    rows = []
-    for room in qs:
-        last_msg = Message.objects.filter(room=room, sender=target_user).order_by('-time').first()
-        if last_msg:
-            rows.append({
-                'room': room,
-                'room_name': room.displayed_name(request.user),
-                'last_msg': last_msg,
-            })
+    messages = (Message.objects.filter(sender=target_user).select_related('room').order_by('-time'))
+    rows = [{
+        'room': msg.room,
+        'room_name': msg.room.displayed_name(request.user),
+        'msg': msg,
+    } for msg in messages]
     template = 'obywatele/_citizen_czaty_partial.html' if request.headers.get('X-Requested-With') == 'XMLHttpRequest' else 'obywatele/citizen_czaty.html'
     return render(request, template, {
         'target_user': target_user,
