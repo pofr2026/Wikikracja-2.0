@@ -9,7 +9,8 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1 \
     DEBUG=False \
     SECRET_KEY=build-time-insecure-secret-key \
-    EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
+    EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend \
+    PATH=/root/.local/bin:$PATH
 
 # Install build dependencies only once
 RUN apk add --no-cache gettext-dev
