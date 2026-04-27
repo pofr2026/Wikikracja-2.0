@@ -1,10 +1,22 @@
-# Standard library imports
 from datetime import datetime
 
-# Third party imports
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+
+
+class Asset(models.Model):
+    code = models.CharField(max_length=10, unique=True, verbose_name=_("Code"))
+    name = models.CharField(max_length=100, verbose_name=_("Name"))
+    symbol = models.CharField(max_length=10, verbose_name=_("Symbol"))
+    decimal_places = models.PositiveSmallIntegerField(default=2, verbose_name=_("Decimal places"))
+    is_currency = models.BooleanField(default=True, verbose_name=_("Is currency"))
+
+    def __str__(self):
+        return f"{self.code} ({self.symbol})"
+
+    class Meta:
+        ordering = ['code']
 
 
 class Category(models.Model):
@@ -39,11 +51,12 @@ class Transaction(models.Model):
     created_date = models.DateField(auto_now_add=True, verbose_name=_("Created"))
     payment_received_date = models.DateField(null=True, blank=True, default=datetime.now, editable=True, verbose_name=_("Payment received date"))
 
+    asset = models.ForeignKey(Asset, on_delete=models.PROTECT, null=True, blank=False, verbose_name=_("Asset"))
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Category"))
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, null=True, blank=False, verbose_name=_("Partner"))
-    amount = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=False, verbose_name=_("Outgoing amount"))
+    amount = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=False, verbose_name=_("Amount"))
     note = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("Note"))
     author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name=_("Author"), related_name='transactions')
 
     def __str__(self):
-        return f"{self.payment_received_date} - {self.partner} {self.type} {self.amount}"
+        return f"{self.payment_received_date} - {self.partner} {self.type} {self.amount} {self.asset}"

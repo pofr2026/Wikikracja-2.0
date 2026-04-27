@@ -1,0 +1,70 @@
+{% load i18n %}
+{% comment %}
+  Wymaga z kontekstu: current_sort, current_order
+{% endcomment %}
+
+<div class="proposals-toolbar">
+
+  {# ── Add — całkiem po lewej ── #}
+  <a href="{% url 'glosowania:dodaj_nowy' %}" class="toolbar-add-btn">
+    <i class="fas fa-plus"></i> {% trans 'Add' %}
+  </a>
+
+  <span class="toolbar-divider"></span>
+
+  {# ── Sortowanie ── #}
+  <div class="toolbar-sort">
+    <span class="toolbar-sort-label">{% trans 'Sort' %}:</span>
+
+    {# Newest #}
+    {% if current_sort == 'date' %}
+      <a href="?sort=date&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-btn active">
+        <i class="fas fa-clock-rotate-left fa-fw"></i>
+        {% trans 'Newest' %}
+        <i class="fas fa-arrow-{% if current_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>
+      </a>
+    {% else %}
+      <a href="?sort=date&order=desc" class="sort-btn">
+        <i class="fas fa-clock-rotate-left fa-fw"></i> {% trans 'Newest' %}
+      </a>
+    {% endif %}
+
+    {# Signatures #}
+    {% if current_sort == 'signatures' %}
+      <a href="?sort=signatures&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-btn active">
+        <i class="fas fa-pen-nib fa-fw"></i>
+        {% trans 'Signatures' %}
+        <i class="fas fa-arrow-{% if current_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>
+      </a>
+    {% else %}
+      <a href="?sort=signatures&order=desc" class="sort-btn">
+        <i class="fas fa-pen-nib fa-fw"></i> {% trans 'Signatures' %}
+      </a>
+    {% endif %}
+
+    {# Buzz #}
+    {% if current_sort == 'buzz' %}
+      <a href="?sort=buzz&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}" class="sort-btn active">
+        <i class="fas fa-fire fa-fw"></i>
+        {% trans 'Buzz' %}
+        <i class="fas fa-arrow-{% if current_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>
+      </a>
+    {% else %}
+      <a href="?sort=buzz&order=desc" class="sort-btn">
+        <i class="fas fa-fire fa-fw"></i> {% trans 'Buzz' %}
+      </a>
+    {% endif %}
+
+  </div>
+
+  {# ── Widok lista/grid ── #}
+  <div class="toolbar-view">
+    <button class="view-toggle-btn" id="btn-list" onclick="setProposalsView('list')" title="{% trans 'List' %}">
+      <i class="fas fa-list"></i>
+    </button>
+    <button class="view-toggle-btn" id="btn-grid" onclick="setProposalsView('grid')" title="{% trans 'Grid' %}">
+      <i class="fas fa-grip"></i>
+    </button>
+  </div>
+
+</div>

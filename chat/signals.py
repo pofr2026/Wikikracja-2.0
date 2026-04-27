@@ -1,4 +1,3 @@
-# Third party imports
 from django.dispatch import Signal
 
 # Sends signal to @receiver(user_accepted) in views

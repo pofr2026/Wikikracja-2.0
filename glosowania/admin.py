@@ -1,7 +1,5 @@
-# Third party imports
 from django.contrib import admin
 
-# First party imports
 from glosowania.models import Decyzja
 
 

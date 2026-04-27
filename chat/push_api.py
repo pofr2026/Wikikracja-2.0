@@ -2,11 +2,9 @@
 Push Notification API endpoints for device registration and management.
 Supports WebPush, FCM (Android)
 """
-# Standard library imports
 import json
 import logging
 
-# Third party imports
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, JsonResponse
 from django.utils.decorators import method_decorator

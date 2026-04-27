@@ -1,0 +1,59 @@
+{% extends 'home/base.html' %}
+{% load i18n %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row mb-4">
+    <div>
+      <a href="{% url 'bookkeeping:transaction_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Transactions' %}</a>
+      <a href="{% url 'bookkeeping:partner_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Partners' %}</a>
+      <a href="{% url 'bookkeeping:category_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Categories' %}</a>
+      <a href="{% url 'bookkeeping:asset_list' %}" class="btn btn-sm me-1 mb-1 btn-primary">{% trans 'Assets' %}</a>
+      <a href="{% url 'bookkeeping:report_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Reports' %}</a>
+      <a href="{% url 'bookkeeping:asset_create' %}" class="btn btn-sm me-1 mb-1 btn-success float-end">
+        <i class="fas fa-plus-circle"></i> {% trans 'Add asset' %}
+      </a>
+    </div>
+  </div>
+
+  <table class="table">
+    <thead>
+      <tr>
+        <th>{% trans 'Code' %}</th>
+        <th>{% trans 'Name' %}</th>
+        <th>{% trans 'Symbol' %}</th>
+        <th>{% trans 'Decimal places' %}</th>
+        <th>{% trans 'Is currency' %}</th>
+        <th class="text-end">{% trans 'Actions' %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for asset in object_list %}
+        <tr>
+          <td>{{ asset.code }}</td>
+          <td>{{ asset.name }}</td>
+          <td>{{ asset.symbol }}</td>
+          <td>{{ asset.decimal_places }}</td>
+          <td>
+            {% if asset.is_currency %}
+              <i class="fas fa-check text-success"></i>
+            {% else %}
+              <i class="fas fa-times text-muted"></i>
+            {% endif %}
+          </td>
+          <td>
+            <div class="btn-group float-end" role="group">
+              <a href="{% url 'bookkeeping:asset_update' asset.id %}" class="btn btn-sm me-1 mb-1 btn-primary">{% trans 'Edit' %}</a>
+              <a href="{% url 'bookkeeping:asset_delete' asset.id %}" class="btn btn-sm me-1 mb-1 btn-danger">{% trans 'Delete' %}</a>
+            </div>
+          </td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="6">{% trans 'No records found.' %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

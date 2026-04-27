@@ -15,10 +15,8 @@ When it runs:
     Automatically on every container startup (see Dockerfile CMD).
     Can also be run manually: python manage.py update_site
 """
-# Standard library imports
 import os
 
-# Third party imports
 from django.contrib.sites.models import Site
 from django.core.management.base import BaseCommand
 

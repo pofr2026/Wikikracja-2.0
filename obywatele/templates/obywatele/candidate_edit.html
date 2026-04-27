@@ -1,0 +1,66 @@
+{% extends 'obywatele/menu.html' %}
+{% load static %}
+{% load i18n %}
+{% load crispy_forms_tags %}
+
+{% block citizens %}
+<div class="container section">
+  <div class="card">
+    <div class="card-header d-flex align-items-center justify-content-between">
+      <span class="section-heading">{% trans "Edit candidate profile" %}: <strong>{{ candidate_user.username }}</strong></span>
+      <a href="{% url 'obywatele:poczekalnia_szczegoly' pk=candidate_user.pk %}" class="btn btn-sm btn-outline-secondary">
+        {% trans "Cancel" %}
+      </a>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+        <div class="row">
+          <div class="col-md-6">{{ form.first_name|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.last_name|as_crispy_field }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ form.city|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.phone|as_crispy_field }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ form.job|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.responsibilities|as_crispy_field }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ form.business|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.hobby|as_crispy_field }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ form.skills|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.knowledge|as_crispy_field }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ form.want_to_learn|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.to_give_away|as_crispy_field }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ form.to_borrow|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.for_sale|as_crispy_field }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ form.i_need|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.gift|as_crispy_field }}</div>
+        </div>
+        <div class="row">
+          <div class="col-md-6">{{ form.other|as_crispy_field }}</div>
+          <div class="col-md-6">{{ form.why|as_crispy_field }}</div>
+        </div>
+        <div class="d-flex gap-2 mt-3">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="fas fa-save me-1"></i>{% trans "Save" %}
+          </button>
+          <a href="{% url 'obywatele:poczekalnia_szczegoly' pk=candidate_user.pk %}" class="btn btn-outline-secondary btn-sm">
+            {% trans "Cancel" %}
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock citizens %}

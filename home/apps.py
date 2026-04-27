@@ -1,7 +1,5 @@
-# Standard library imports
 import os
 
-# Third party imports
 from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 from django.dispatch import receiver
@@ -32,3 +30,5 @@ class HomeConfig(AppConfig):
                     Site.objects.create(id=1, domain=site_domain, name=site_name or site_domain)
                 except Exception:
                     pass
+
+        import home.signals  # noqa

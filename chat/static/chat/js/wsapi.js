@@ -26,7 +26,7 @@ export default class WsApi {
         let ws = getSharedWebSocket();
 
         // Set up this instance's message handler for non-TRACE messages
-        ws.setSocketMessageHandler(function (data) {
+        ws.setSocketMessageHandler(function(data) {
             if (data.error) {
                 alert(data.error);
                 return;
@@ -119,14 +119,22 @@ export default class WsApi {
      * @param {boolean} is_anonymous - Whether to send as anonymous
      * @param {Object} attachments - Attachment data (images array)
      */
-    sendMessage(room_id, message, is_anonymous, attachments) {
+    sendMessage(room_id, message, is_anonymous, attachments, reply_to_id = null) {
         this.sendJson({
             command: "send",
-            room_id, // room number
-            message, // value, message to send
+            room_id,
+            message,
             is_anonymous,
-            attachments
+            attachments,
+            ...(reply_to_id ? { reply_to_id } : {})
         });
+    }
+
+    /**
+     * ZMIANA 4B — toggle emoji reaction on a message.
+     */
+    toggleReaction(reaction, message_id) {
+        this.sendJson({ command: 'message-react', reaction, message_id });
     }
 
     /**
@@ -184,6 +192,23 @@ export default class WsApi {
             command: "message-remove-vote",
             vote: vote,
             message_id: message_id
+        });
+    }
+
+    /**
+     * Re-fetches messages with given sort/filter parameters (server-side).
+     * @param {number} room_id
+     * @param {string} sort_by - 'date' | 'likes'
+     * @param {string} order - 'asc' | 'desc'
+     * @param {boolean} popular_only
+     */
+    fetchMessages(room_id, sort_by = 'date', order = 'desc', popular_only = false) {
+        this.sendJson({
+            command: 'fetch-messages',
+            room_id,
+            sort_by,
+            order,
+            popular_only,
         });
     }
 

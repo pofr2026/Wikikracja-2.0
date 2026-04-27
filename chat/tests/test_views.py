@@ -1,0 +1,117 @@
+# Standard library imports
+import json
+
+# Third party imports
+from django.test import TestCase
+from django.urls import reverse
+
+# Local folder imports
+from chat.models import Room
+from chat.tests.utils import make_user
+
+
+class ChatViewsTest(TestCase):
+    def setUp(self):
+        # self.client is provided by default in Django TestCase
+        self.user = make_user("chatuser")
+        self.room = Room.objects.create(title="PublicRoom", public=True)
+        self.room.allowed.add(self.user)
+
+    def test_chat_view_requires_login(self):
+        response = self.client.get(reverse("chat:chat"))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/", response["Location"])
+
+    def test_chat_view_authenticated(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("chat:chat"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_add_room_get_requires_login(self):
+        response = self.client.get(reverse("chat:add_room"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_add_room_get_authenticated(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("chat:add_room"))
+        self.assertEqual(response.status_code, 200)
+
+    def test_add_room_post_creates_room_and_redirects(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse("chat:add_room"), {"title": "NowyPokój"})
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Room.objects.filter(title="NowyPokój").exists())
+
+    def test_add_room_post_duplicate_title_shows_form_errors(self):
+        self.client.force_login(self.user)
+        self.client.post(reverse("chat:add_room"), {"title": "Powtórzony"})
+        response = self.client.post(reverse("chat:add_room"), {"title": "powtórzony"})
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Room.objects.filter(title="powtórzony").exists())
+
+    def test_add_room_post_empty_title_shows_form_errors(self):
+        self.client.force_login(self.user)
+        response = self.client.post(reverse("chat:add_room"), {"title": ""})
+        self.assertEqual(response.status_code, 200)
+
+    def test_toggle_notifications_disables_notifications(self):
+        # enabled=False → dodaje do muted_by
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("chat:toggle_notifications"),
+            data=json.dumps({"room_id": self.room.id, "enabled": False}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(self.user, self.room.muted_by.all())
+
+    def test_toggle_notifications_enables_notifications(self):
+        # enabled=True → usuwa z muted_by
+        self.room.muted_by.add(self.user)
+        self.client.force_login(self.user)
+        self.client.post(
+            reverse("chat:toggle_notifications"),
+            data=json.dumps({"room_id": self.room.id, "enabled": True}),
+            content_type="application/json",
+        )
+        self.assertNotIn(self.user, self.room.muted_by.all())
+
+    def test_toggle_notifications_missing_params_returns_400(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("chat:toggle_notifications"),
+            data=json.dumps({"room_id": self.room.id}),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_room_data_api_returns_json(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("chat:room_data", kwargs={"room_id": self.room.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/json")
+
+    def test_upload_image_no_auth_returns_json(self):
+        # upload_image jest @csrf_exempt bez @login_required — celowo publiczny
+        response = self.client.post("/chat/upload/")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("filenames", response.json())
+
+
+class ChatRoomAccessTest(TestCase):
+    def setUp(self):
+        self.member = make_user("member")
+        self.outsider = make_user("outsider")
+        self.private_room = Room.objects.create(title="Private", public=False)
+        self.private_room.allowed.add(self.member)
+
+    def test_room_data_accessible_by_member(self):
+        self.client.force_login(self.member)
+        response = self.client.get(reverse("chat:room_data", kwargs={"room_id": self.private_room.id}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_room_data_returns_404_for_non_member(self):
+        self.client.force_login(self.outsider)
+        response = self.client.get(reverse("chat:room_data", kwargs={"room_id": self.private_room.id}))
+        self.assertEqual(response.status_code, 404)
+

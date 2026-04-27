@@ -4,26 +4,28 @@
 {% load filters %}
 
 <!DOCTYPE html>
-<html lang="{{ request.LANGUAGE_CODE }}">
+<html lang="{{ request.LANGUAGE_CODE }}" data-theme="dark">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
 	<title>{{ request.site.name }}</title>
+	<meta charset="utf-8">
 	<meta name="description" content="{{ site_description|default:'' }}">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
 
 	<!-- PWA Meta Tags -->
 	<link rel="manifest" href="{% url 'manifest' %}">
-	<meta name="theme-color" content="#375a7f">
 	<link rel="apple-touch-icon" href="{% static 'home/images/favicon.ico' %}">
+	<meta name="theme-color" content="#00d1b2">
 	<meta name="mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
+	<!-- Anti-FOUC: restore theme before CSS loads -->
+	<script>(function(){var t=localStorage.getItem('app-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
 	<!-- https://fontawesome.com/ -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-	<!-- Chat rooms styling: -->
 	<link rel="stylesheet" type="text/css" href="{% static 'home/css/darkly.css' %}">
 	<link rel="stylesheet" type="text/css" href="{% static 'home/css/app.css' %}">
+	<link rel="stylesheet" type="text/css" href="{% static 'home/css/components.css' %}">
 
   <!-- Main app script with config data -->
   <script src="{% static 'home/js/app.js' %}"></script>
@@ -36,146 +38,309 @@
   <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-messaging-compat.js"></script>
 
   <script>
-    // VAPID public key for WebPush
     window.VAPID_PUBLIC_KEY = "{{ vapid_public_key|default:'' }}";
   </script>
-
   <!-- Push notifications manager must be after window.VAPID_PUBLIC_KEY -->
   <script src="{% static 'chat/js/push-notifications.js' %}" type="module"></script>
+  <script src="{% static 'chat/js/notifications.js' %}" type="module"></script>
 
   {% block extra_css %}{% endblock %}
-  {% bootstrap_messages %}
   {% bootstrap_javascript %}
 </head>
 
 <body>
-	<div class="page-main">
-		<nav class="navbar navbar-expand-md navbar-dark bg-primary justify-content-end">
-			<button class="navbar-toggler mx-2 px-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup" aria-controls="navbarNavAltMarkup" aria-expanded="false" aria-label="Toggle navigation">
-			{{ request.site.name }}
-				<span class="navbar-toggler-icon"></span>
-			</button>
+<div class="layout-wrapper">
 
-			<div class="collapse navbar-collapse justify-content-center" id="navbarNavAltMarkup">
-				<div class="navbar-nav text-end">
+  {% if user.is_authenticated %}
+  <!-- ==================== SIDEBAR ==================== -->
+  <aside class="sidebar" id="sidebar">
 
-					<a {% if request.resolver_match.url_name == 'home' %} class="nav-item nav-link active mx-1 px-2"
-					{% else %} class="nav-item nav-link mx-1 px-2"
-					{% endif %} href="{% url 'home' %}">{% trans 'Start' %}</a>
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <a href="{% url 'home' %}" style="text-decoration:none;">
+        <span class="logo-title"><i class="fas fa-fw fa-building-columns"></i><span class="logo-label ms-1">{{ request.site.name }}</span></span>
+        <a href="{% url 'site_admin' %}" style="text-decoration:none;"><span class="logo-sub">v.{{ app_version }}</span></a>
+      </a>
+    </div>
 
-					<a {% if request.resolver_match.namespace == 'board' %} class="nav-item nav-link active mx-1 px-2"
-					{% else %} class="nav-item nav-link mx-1 px-2"
-					{% endif %} href="{% url 'board:start' %}">{% trans "Board" %}</a>
+    <!-- Main navigation -->
+    <nav class="sidebar-nav">
+      <ul class="list-unstyled mb-0">
 
-					<a {% if request.resolver_match.namespace == 'events' %} class="nav-item nav-link active mx-1 px-2"
-					{% else %} class="nav-item nav-link mx-1 px-2"
-					{% endif %} href="{% url 'events:list' %}">{% trans "Calendar" %}</a>
+        <li class="nav-item">
+          <a href="{% url 'home' %}"
+             title="{% trans 'Desktop' %}"
+             class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+            <i class="fas fa-fw fa-house nav-icon"></i>
+            <span class="nav-text">{% trans "Desktop" %}</span>
+            {% comment %} {% if unread_items %}
+              <span class="nav-badge">{{ unread_items|length }}</span>
+            {% endif %} {% endcomment %}
+          </a>
+        </li>
 
-					{% if user.is_authenticated %}
-					<a {% if request.resolver_match.namespace == 'tasks' %} class="nav-item nav-link active mx-1 px-2"
-					{% else %} class="nav-item nav-link mx-1 px-2"
-					{% endif %} href="{% url 'tasks:list' %}">{% trans "Tasks" %}</a>
-					{% endif %}
+        <li class="nav-item">
+          <a href="{% url 'glosowania:proposition' %}"
+             title="{% trans 'Agora / Democracy' %}"
+             class="{% if request.resolver_match.namespace == 'glosowania' or request.resolver_match.namespace == 'board' %}active{% endif %}">
+            <i class="fas fa-fw fa-landmark nav-icon"></i>
+            <span class="nav-text">{% trans "Agora / Democracy" %}</span>
+          </a>
+        </li>
 
-					{% if not user.is_authenticated %}
-						<a {% if request.resolver_match.url_name == 'login' %} class="nav-item nav-link active mx-1 px-2"
-						{% else %} class="nav-item nav-link mx-1 px-2"
-						{% endif %} href="{% url 'login' %}">{% trans "Login" %}</a>
+        <li class="nav-item">
+          <a href="{% url 'tasks:list' %}"
+             title="{% trans 'Action' %}"
+             class="{% if request.resolver_match.namespace == 'tasks' or request.resolver_match.namespace == 'events' %}active{% endif %}">
+            <i class="fas fa-fw fa-bolt nav-icon"></i>
+            <span class="nav-text">{% trans "Action" %}</span>
+          </a>
+        </li>
 
-						<a {% if request.resolver_match.url_name == 'account_signup' %} class="nav-item nav-link active mx-1 px-2"
-						{% else %} class="nav-item nav-link mx-1 px-2"
-						{% endif %} href="{% url 'account_signup' %}">{% trans "Sign Up" %}</a>
-					{% endif %}
+        <li class="nav-item">
+          <a href="{% url 'elibrary:book_list' %}"
+             title="{% trans 'Knowledge Base' %}"
+             class="{% if request.resolver_match.namespace == 'elibrary' %}active{% endif %}">
+            <i class="fas fa-fw fa-book nav-icon"></i>
+            <span class="nav-text">{% trans "Knowledge Base" %}</span>
+          </a>
+        </li>
 
-					{% if user.is_authenticated %}
-						{% comment %} OBYWATELE: Has to be one by one because User Profile is Obywatele too: {% endcomment %}
-						<a {% if request.resolver_match.namespace == 'obywatele' %} class="nav-item nav-link active mx-1 px-2"
-						{% else %} class="nav-item nav-link mx-1 px-2"
-						{% endif %} href="{% url 'obywatele:obywatele' %}">{% trans "Citizens" %}</a>
+        <li class="nav-item">
+          <a href="{% url 'obywatele:wspolnota' %}"
+             title="{% trans 'Community' %}"
+             class="{% if request.resolver_match.namespace == 'obywatele' and request.resolver_match.url_name != 'my_profile' and request.resolver_match.url_name != 'haslo' and request.resolver_match.url_name != 'my_assets' and request.resolver_match.url_name != 'change_email' and request.resolver_match.url_name != 'change_username' %}active{% endif %}">
+            <i class="fas fa-fw fa-users nav-icon"></i>
+            <span class="nav-text">{% trans "Community" %}</span>
+          </a>
+        </li>
 
-						{% comment %} GŁOSOWANIA: {% endcomment %}
-						<a {% if request.resolver_match.namespace == 'glosowania' %} class="nav-item nav-link active mx-1 px-2"
-						{% else %} class="nav-item nav-link mx-1 px-2"
-						{% endif %} href="{% url 'glosowania:approved' %}">{% trans "Voting" %}</a>
+      </ul>
+    </nav>
 
-						<a {% if request.resolver_match.namespace == 'bookkeeping' %} class="nav-item nav-link active mx-1 px-2"
-						{% else %} class="nav-item nav-link mx-1 px-2"
-						{% endif %} href="{% url 'bookkeeping:transaction_list' %}">{% trans 'Bookkeeping' %}</a>
+    <!-- Bottom links: settings + logout -->
+    <div class="sidebar-bottom">
+      <ul class="list-unstyled mb-0">
+        <li class="nav-item">
+          <a href="{% url 'obywatele:my_profile' %}"
+             title="{% trans 'Settings' %}"
+             class="{% if request.resolver_match.url_name == 'my_profile' or request.resolver_match.url_name == 'haslo' or request.resolver_match.url_name == 'my_assets' or request.resolver_match.url_name == 'change_email' or request.resolver_match.url_name == 'change_username' %}active{% endif %}">
+            <i class="fas fa-fw fa-gear nav-icon"></i>
+            <span class="nav-text">{% trans "Settings" %}</span>
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="{% url 'account_logout' %}" title="{% trans 'Log out' %}">
+            <i class="fas fa-fw fa-right-from-bracket nav-icon"></i>
+            <span class="nav-text">{% trans "Log out" %}</span>
+          </a>
+        </li>
+      </ul>
+    </div>
 
-						<a {% if request.resolver_match.namespace == 'elibrary' %} class="nav-item nav-link active mx-1 px-2"
-						{% else %} class="nav-item nav-link mx-1 px-2"
-						{% endif %} href="{% url 'elibrary:book_list' %}">{% trans "Library" %}</a>
+    <!-- User card -->
+    <a href="{% url 'obywatele:obywatele_szczegoly' pk=user.pk %}" class="sidebar-user"
+       style="text-decoration:none;transition:background .15s;"
+       onmouseover="this.style.background='var(--accent-muted)'"
+       onmouseout="this.style.background=''">
+      {% if user.uzytkownik.avatar %}
+      <img class="user-avatar" src="{{ user.uzytkownik.avatar.url }}" alt="avatar" style="object-fit:cover;">
+      {% else %}
+      <div class="user-avatar">{{ user.username|slice:":2"|upper }}</div>
+      {% endif %}
+      <div class="user-info">
+        <span class="user-name">{{ user.username }}</span>
+        <span class="user-role">{% trans "Citizen" %}</span>
+      </div>
+    </a>
 
+    <!-- Collapse toggle -->
+    <button class="sidebar-toggle-btn d-none d-md-flex" id="sidebar-collapse-btn"
+            title="{% trans 'Collapse/expand menu' %}">
+      <i class="fas fa-angles-left" id="sidebar-collapse-icon"></i>
+      <span class="sidebar-toggle-label ms-2">{% trans "Collapse" %}</span>
+    </button>
 
-						<a class="nav-item nav-link rounded mx-1 px-2
-						{% if request.resolver_match.namespace == 'chat' %}
-							active
-						{% else %}
-							{{ request.user|has_messages }}
-						{% endif %}"
-						data-route="chat" href="/chat/">{% trans "Chat" %}</a>
+  </aside>
+  <!-- ==================== END SIDEBAR ==================== -->
+  {% endif %}
 
-						<a {% if request.resolver_match.url_name == 'my_profile' or request.resolver_match.url_name == 'haslo' or request.resolver_match.url_name == 'my_assets' or request.resolver_match.url_name == 'change_email' or request.resolver_match.url_name == 'change_username' %}
-							class="nav-item nav-link mx-1 px-2 fas fa-user active fs-3"
-						{% else %}
-							class="nav-item nav-link mx-1 px-2 fas fa-user fs-3"
-						{% endif %}
-						href="{% url 'obywatele:my_profile' %}"></a>
+  <!-- ==================== MAIN AREA ==================== -->
+  <div class="main-area">
 
-						<a class="nav-item nav-link mx-1 px-2" href="{% url 'account_logout' %}">
-							<i class="fas fa-right-from-bracket fs-3"></i>
-						</a>
+    {% if user.is_authenticated %}
+    <!-- ==== TOPBAR ==== -->
+    <header class="topbar">
 
-					{% endif %}
-				</div>
-			</div>
-		</nav>
+      <!-- Breadcrumb -->
+      <div class="topbar-breadcrumb">
+        <button class="btn btn-sm d-md-none me-2 p-1" id="sidebar-toggle">
+          <i class="fas fa-bars"></i>
+        </button>
+        <a href="{% url 'home' %}">{{ request.site.name }}</a>
+        <span class="sep">›</span>
+        <span class="current">
+          {% if request.resolver_match.url_name == 'home' %}{% trans "Desktop" %}
+          {% elif request.resolver_match.namespace == 'glosowania' %}{% trans "Votings" %}
+          {% elif request.resolver_match.namespace == 'board' %}{% trans "Board" %}
+          {% elif request.resolver_match.namespace == 'tasks' %}{% trans "Tasks" %}
+          {% elif request.resolver_match.namespace == 'events' %}{% trans "Calendar" %}
+          {% elif request.resolver_match.namespace == 'elibrary' %}{% trans "Library" %}
+          {% elif request.resolver_match.namespace == 'obywatele' %}{% trans "Citizens" %}
+          {% elif request.resolver_match.namespace == 'bookkeeping' %}{% trans "Bookkeeping" %}
+          {% elif request.resolver_match.namespace == 'chat' %}{% trans "Chat" %}
+          {% else %}…{% endif %}
+        </span>
+      </div>
 
-		<!-- Global notification permission banner -->
-		{% if user.is_authenticated %}
-		<div id="notification-permission-banner" class="alert alert-info m-0 text-center">
-			<i class="far fa-bell-slash"></i>
-			<span id="notification-banner-message">{% trans "Enable notifications to stay updated with new messages and activities" %}</span>
-			<button type="button" class="btn btn-sm btn-primary mx-2" id="enable-notifications-global">
-				{% trans "Enable Notifications" %}
-			</button>
-			<button type="button" class="btn btn-sm btn-secondary" id="dismiss-notifications-banner">
-				{% trans "Not now" %}
-			</button>
-		</div>
-		<div id="notification-blocked-banner" class="alert alert-warning m-0 text-center">
-			<i class="fas fa-exclamation-triangle"></i>
-			<span>{% trans "Notifications are blocked. Please enable them in your browser settings" %}</span>
-			<button type="button" class="btn btn-sm btn-secondary mx-2" id="dismiss-blocked-banner">
-				{% trans "Dismiss" %}
-			</button>
-		</div>
-		{% endif %}
+      <!-- Search + Filter -->
+      <div class="d-none d-sm-block" style="position:relative;" id="topbar-search-wrapper">
+        <form method="get" action="{% url 'search' %}" id="topbar-search-form" autocomplete="off">
 
-		<div class="container-fluid">
-			{% block content_fullscreen %}{% endblock content_fullscreen%}
-		</div>
+          <!-- Filter dropdown (inside form so checkboxes are submitted) -->
+          <div id="topbar-filter-panel" style="display:none;position:absolute;top:calc(100% + 6px);right:0;
+               background:var(--bg-sidebar);border:1px solid var(--border);border-radius:.6rem;
+               padding:.85rem 1rem;z-index:300;min-width:340px;
+               box-shadow:0 8px 32px rgba(0,0,0,.45);">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <span style="font-size:.75rem;color:var(--text-muted);">
+                <i class="fas fa-filter me-1"></i>{% trans "Search in categories" %}
+              </span>
+              <button type="button" id="topbar-select-all"
+                      style="font-size:.72rem;color:var(--accent);background:none;border:none;cursor:pointer;padding:0;">
+                {% trans "Everywhere" %}
+              </button>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              <label class="tb-chip" data-color="primary">
+                <input type="checkbox" name="cat" value="post" class="d-none tb-cb">
+                <i class="fas fa-chalkboard me-1"></i>{% trans "Board" %}
+              </label>
+              <label class="tb-chip" data-color="warning">
+                <input type="checkbox" name="cat" value="task" class="d-none tb-cb">
+                <i class="fas fa-list-check me-1"></i>{% trans "Tasks" %}
+              </label>
+              <label class="tb-chip" data-color="danger">
+                <input type="checkbox" name="cat" value="decision" class="d-none tb-cb">
+                <i class="fas fa-landmark me-1"></i>{% trans "Votings" %}
+              </label>
+              <label class="tb-chip" data-color="success">
+                <input type="checkbox" name="cat" value="event" class="d-none tb-cb">
+                <i class="fas fa-calendar me-1"></i>{% trans "Event" %}
+              </label>
+              <label class="tb-chip" data-color="info">
+                <input type="checkbox" name="cat" value="book" class="d-none tb-cb">
+                <i class="fas fa-book me-1"></i>{% trans "Library" %}
+              </label>
+              <label class="tb-chip" data-color="secondary">
+                <input type="checkbox" name="cat" value="citizen" class="d-none tb-cb">
+                <i class="fas fa-users me-1"></i>{% trans "Citizens" %}
+              </label>
+              <label class="tb-chip" data-color="primary">
+                <input type="checkbox" name="cat" value="chat" class="d-none tb-cb">
+                <i class="fas fa-comments me-1"></i>{% trans "Chat" %}
+              </label>
+            </div>
+          </div>
 
-		<div class="container body-content">
-			<p>{% block content %}{% endblock content %}</p>
-		</div>
+          <!-- Input row -->
+          <div style="display:flex;gap:.35rem;align-items:center;">
+            <input type="search" name="q" id="topbar-q" class="search-box"
+                   value="{{ request.GET.q|default:'' }}"
+                   placeholder="{% trans 'Search' %}…" aria-label="{% trans 'Search' %}">
+            <button type="button" id="topbar-filter-btn"
+                    title="{% trans 'Search filters' %}"
+                    style="background:transparent;border:1px solid var(--border);border-radius:.4rem;
+                           padding:.36rem .55rem;cursor:pointer;color:var(--text-muted);
+                           transition:color .15s,border-color .15s;flex-shrink:0;">
+              <i class="fas fa-sliders"></i>
+            </button>
+          </div>
 
-	</div>
+        </form>
+      </div>
 
-{% if request.resolver_match.namespace != 'chat' %}
-	<div class="container page-footer">
-		{{ footer.text|safe }}
-	</div>
-{% endif %}
+      <!-- Theme toggle -->
+      <button id="theme-toggle-btn" class="notif-bell"
+              title="{% trans 'Toggle light / dark mode' %}"
+              style="background:none;border:none;cursor:pointer;">
+        <i id="theme-toggle-icon" class="fas fa-circle-half-stroke"></i>
+      </button>
 
-{% comment %} Needed for chat {% endcomment %}
+      <!-- Notification bell -->
+      <a href="{% url 'activity' %}" class="notif-bell" title="{% trans 'Activity' %}">
+        <i class="far fa-bell"></i>
+        {% if unread_items %}<span class="notif-dot"></span>{% endif %}
+      </a>
+
+    </header>
+    {% endif %}
+
+    {% if not user.is_authenticated %}
+    <!-- Minimal top bar for unauthenticated users -->
+    <nav class="topbar">
+      <div class="topbar-breadcrumb">
+        <a href="{% url 'home' %}" style="color:var(--accent);font-weight:700;font-size:1rem;">
+          <i class="fas fa-building-columns me-1"></i>{{ request.site.name }}
+        </a>
+      </div>
+      <div class="anon-nav">
+        <a href="{% url 'board:start' %}"
+           class="anon-nav-link {% if request.resolver_match.namespace == 'board' %}active{% endif %}">
+          <i class="fas fa-bullhorn"></i><span class="anon-nav-text">{% trans "Announcements" %}</span>
+        </a>
+        <a href="{% url 'events:list' %}"
+           class="anon-nav-link {% if request.resolver_match.namespace == 'events' %}active{% endif %}">
+          <i class="fas fa-calendar-days"></i><span class="anon-nav-text">{% trans "Calendar" %}</span>
+        </a>
+      </div>
+      <a href="{% url 'login' %}" class="btn btn-sm btn-outline-secondary me-1">{% trans "Login" %}</a>
+      <a href="{% url 'account_signup' %}" class="btn-cta">{% trans "Register" %}</a>
+    </nav>
+    {% endif %}
+
+    <!-- Global notification permission banner -->
+    {% if user.is_authenticated %}
+    <div id="notification-permission-banner" class="alert alert-info m-0 text-center" style="border-radius:0;">
+      <i class="far fa-bell-slash"></i>
+      <span id="notification-banner-message">{% trans "Enable notifications to stay updated with new messages and activities" %}</span>
+      <button type="button" class="btn btn-sm btn-primary mx-2" id="enable-notifications-global">
+        {% trans "Enable Notifications" %}
+      </button>
+      <button type="button" class="btn btn-sm btn-secondary" id="dismiss-notifications-banner">
+        {% trans "Not now" %}
+      </button>
+    </div>
+    <div id="notification-blocked-banner" class="alert alert-warning m-0 text-center" style="border-radius:0;">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>{% trans "Notifications are blocked. Please enable them in your browser settings" %}</span>
+      <button type="button" class="btn btn-sm btn-secondary mx-2" id="dismiss-blocked-banner">
+        {% trans "Dismiss" %}
+      </button>
+    </div>
+    {% endif %}
+
+    <!-- ==== CONTENT ==== -->
+    <main class="main-content">
+      {% bootstrap_messages %}
+      {% block content_fullscreen %}{% endblock content_fullscreen %}
+      {% block content %}{% endblock content %}
+    </main>
+
+    {% if request.resolver_match.namespace != 'chat' %}
+    <footer class="px-4 pb-3 mt-auto" style="color:var(--text-muted);font-size:0.78rem;">{{ footer.text|safe }}</footer>
+    {% endif %}
+
+  </div>
+  <!-- ==================== END MAIN AREA ==================== -->
+
+</div>
+
+<div id="sidebar-overlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:99;"
+  onclick="document.getElementById('sidebar').classList.remove('sidebar-open');this.style.display='none';">
+</div>
+
 {% block extra_body %}{% endblock %}
-
-{% block notifications_script %}
-	<script src="{% static 'chat/js/notifications.js' %}" type="module"></script>
-{% endblock notifications_script %}
-
 {% block extra_js %}{% endblock %}
-
 </body>
 </html>

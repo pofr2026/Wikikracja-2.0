@@ -1,7 +1,5 @@
-# Third party imports
 from django.urls import path
 
-# First party imports
 from elibrary import views as v
 
 app_name = 'elibrary'

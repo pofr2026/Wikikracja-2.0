@@ -1,10 +1,9 @@
-# Third party imports
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Column, Field, Layout, Row, Submit
 from django import forms
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-# Local folder imports
 from .models import Event
 
 
@@ -16,7 +15,6 @@ class DateTimeLocalInput(forms.DateTimeInput):
             return ''
         if hasattr(value, 'strftime'):
             # Convert to local timezone for datetime-local input
-            from django.utils import timezone
             if timezone.is_naive(value):
                 # If naive, assume it's already in local timezone
                 local_time = value
@@ -98,7 +96,6 @@ class EventForm(forms.ModelForm):
         if start_date:
             # datetime-local input comes without timezone info
             # Django treats it as current timezone, which is correct
-            from django.utils import timezone
             if timezone.is_naive(start_date):
                 # Make timezone-aware using current timezone
                 start_date = timezone.make_aware(start_date)
@@ -109,7 +106,6 @@ class EventForm(forms.ModelForm):
         if end_date:
             # datetime-local input comes without timezone info
             # Django treats it as current timezone, which is correct
-            from django.utils import timezone
             if timezone.is_naive(end_date):
                 # Make timezone-aware using current timezone
                 end_date = timezone.make_aware(end_date)

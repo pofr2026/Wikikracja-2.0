@@ -1,14 +1,10 @@
-# Standard library imports
 import logging
 import traceback
 from datetime import datetime
 
-# Third party imports
 from django.core.management.base import BaseCommand
-from django.db import transaction, DatabaseError
-from django.db.models import Count
+from django.db import DatabaseError, transaction
 
-# First party imports
 from chat.models import Room
 from glosowania.models import Decyzja
 from tasks.models import Task
@@ -23,7 +19,7 @@ class Command(BaseCommand):
     - update_chat_room_relations.py (votes + tasks)
     - fix_task_chat_connections.py (advanced task fixing)
     - backfill_task_chat_rooms.py (simple task backfill)
-    
+
     SAFETY FEATURES:
     - Dry run mode by default
     - Transaction safety
@@ -120,10 +116,10 @@ class Command(BaseCommand):
 
     def process_votes(self):
         """Process vote (Decyzja) chat room connections"""
-        self.stdout.write("\n" + "="*60)
+        self.stdout.write("\n" + "=" * 60)
         self.stdout.write("PROCESSING VOTES (DECYZJE)")
-        self.stdout.write("="*60)
-        
+        self.stdout.write("=" * 60)
+
         decisions = Decyzja.objects.all()
         self.stats['votes']['total'] = decisions.count()
         self.debug(f"Found {decisions.count()} decisions to process")
@@ -132,7 +128,7 @@ class Command(BaseCommand):
         for i in range(0, decisions.count(), batch_size):
             batch = decisions[i:i + batch_size]
             self.debug(f"Processing vote batch {i//batch_size + 1}: {batch.count()} items")
-            
+
             for decyzja in batch:
                 self.safe_execute(f"vote_{decyzja.pk}", self._process_single_vote, decyzja)
 
@@ -147,7 +143,7 @@ class Command(BaseCommand):
         # Try to find room by old title format
         old_title = f"Vote #{decyzja.pk}: {decyzja.title[:20]}"
         new_title = f"{decyzja.title[:20]}"
-        
+
         room = None
         for title_format, format_name in [(old_title, "old"), (new_title, "new")]:
             try:
@@ -158,9 +154,7 @@ class Command(BaseCommand):
                 self.debug(f"No room found for vote #{decyzja.pk} with {format_name} format: '{title_format}'")
                 continue
             except Room.MultipleObjectsReturned:
-                self.stdout.write(self.style.ERROR(
-                    f"Multiple rooms found for vote #{decyzja.pk} with title '{title_format}'"
-                ))
+                self.stdout.write(self.style.ERROR(f"Multiple rooms found for vote #{decyzja.pk} with title '{title_format}'"))
                 return
 
         if room:
@@ -170,23 +164,19 @@ class Command(BaseCommand):
             else:
                 with transaction.atomic():
                     Decyzja.objects.filter(pk=decyzja.pk).update(chat_room=room)
-                self.stdout.write(self.style.SUCCESS(
-                    f"  Linked vote #{decyzja.pk} -> room '{room.title}'"
-                ))
+                self.stdout.write(self.style.SUCCESS(f"  Linked vote #{decyzja.pk} -> room '{room.title}'"))
                 self.stats['votes']['newly_linked'] += 1
         else:
             self.stats['votes']['missing_rooms'] += 1
             if not self.dry_run:
-                self.stdout.write(self.style.WARNING(
-                    f"  No room found for vote #{decyzja.pk}: '{decyzja.title[:20]}'"
-                ))
+                self.stdout.write(self.style.WARNING(f"  No room found for vote #{decyzja.pk}: '{decyzja.title[:20]}'"))
 
     def process_tasks(self):
         """Process task chat room connections with advanced logic"""
-        self.stdout.write("\n" + "="*60)
+        self.stdout.write("\n" + "=" * 60)
         self.stdout.write("PROCESSING TASKS")
-        self.stdout.write("="*60)
-        
+        self.stdout.write("=" * 60)
+
         tasks = Task.objects.all()
         self.stats['tasks']['total'] = tasks.count()
         self.debug(f"Found {tasks.count()} tasks to process")
@@ -195,7 +185,7 @@ class Command(BaseCommand):
         for i in range(0, tasks.count(), batch_size):
             batch = tasks[i:i + batch_size]
             self.debug(f"Processing task batch {i//batch_size + 1}: {batch.count()} items")
-            
+
             for task in batch:
                 self.safe_execute(f"task_{task.pk}", self._process_single_task, task)
 
@@ -210,13 +200,13 @@ class Command(BaseCommand):
         # Expected room title pattern
         expected_pattern = f"Task #{task.id}:"
         expected_title = task.get_chat_room_title()
-        
+
         # Find rooms that match the pattern for this task ID
         matching_rooms = Room.objects.filter(
             title__startswith=expected_pattern,
             protected=True  # Task rooms are protected
         )
-        
+
         if not matching_rooms.exists():
             # Try simple title match as fallback
             room = Room.objects.filter(title=expected_title).first()
@@ -226,27 +216,21 @@ class Command(BaseCommand):
             else:
                 self.stats['tasks']['missing_rooms'] += 1
                 if not self.dry_run:
-                    self.stdout.write(self.style.WARNING(
-                        f"  No room found for task #{task.id}: '{task.title}'"
-                    ))
+                    self.stdout.write(self.style.WARNING(f"  No room found for task #{task.id}: '{task.title}'"))
             return
-            
+
         if matching_rooms.count() > 1:
             self.stats['tasks']['multiple_rooms'] += 1
-            self.stdout.write(self.style.ERROR(
-                f"  Multiple rooms found for task #{task.id}: {list(matching_rooms.values_list('title', flat=True))}"
-            ))
+            self.stdout.write(self.style.ERROR(f"  Multiple rooms found for task #{task.id}: {list(matching_rooms.values_list('title', flat=True))}"))
             return
-            
+
         room = matching_rooms.first()
-        
+
         # Check if this looks like the correct room
         if room.title != expected_title:
             # Title mismatch - this might be a broken link due to title change
             if self.dry_run:
-                self.stdout.write(
-                    f"  [DRY RUN] Would fix task #{task.id}: '{room.title}' -> '{expected_title}'"
-                )
+                self.stdout.write(f"  [DRY RUN] Would fix task #{task.id}: '{room.title}' -> '{expected_title}'")
                 self.stats['tasks']['fixed_broken_links'] += 1
             else:
                 # Update room title to match current task title
@@ -255,10 +239,8 @@ class Command(BaseCommand):
                     room.save(update_fields=['title'])
                     task.chat_room = room
                     task.save(update_fields=['chat_room'])
-                
-                self.stdout.write(self.style.SUCCESS(
-                    f"  Fixed task #{task.id}: updated room title '{room.title}' -> '{expected_title}'"
-                ))
+
+                self.stdout.write(self.style.SUCCESS(f"  Fixed task #{task.id}: updated room title '{room.title}' -> '{expected_title}'"))
                 self.stats['tasks']['fixed_broken_links'] += 1
         else:
             # Perfect match, just link
@@ -273,37 +255,37 @@ class Command(BaseCommand):
             with transaction.atomic():
                 task.chat_room = room
                 task.save(update_fields=['chat_room'])
-            
+
             self.stdout.write(f"  Linked task #{task.id} -> room '{expected_title}'")
             self.stats['tasks']['newly_linked'] += 1
 
     def validate_environment(self):
         """Validate that required models and relationships exist"""
         self.stdout.write("Validating environment...")
-        
+
         try:
             # Test basic model access
             room_count = Room.objects.count()
             task_count = Task.objects.count()
             decision_count = Decyzja.objects.count()
-            
+
             self.stdout.write(f"  Rooms: {room_count}")
             self.stdout.write(f"  Tasks: {task_count}")
             self.stdout.write(f"  Decisions: {decision_count}")
-            
+
             # Test foreign key relationships
             sample_task = Task.objects.first()
             if sample_task:
                 has_chat_room = hasattr(sample_task, 'chat_room')
                 self.stdout.write(f"  Task.chat_room field exists: {has_chat_room}")
-            
+
             sample_decision = Decyzja.objects.first()
             if sample_decision:
                 has_chat_room = hasattr(sample_decision, 'chat_room')
                 self.stdout.write(f"  Decision.chat_room field exists: {has_chat_room}")
-            
+
             return True
-            
+
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"Environment validation failed: {e}"))
             if self.debug_enabled:
@@ -312,10 +294,10 @@ class Command(BaseCommand):
 
     def print_summary(self):
         """Print comprehensive summary of operations"""
-        self.stdout.write("\n" + "="*60)
+        self.stdout.write("\n" + "=" * 60)
         self.stdout.write("OPERATION SUMMARY")
-        self.stdout.write("="*60)
-        
+        self.stdout.write("=" * 60)
+
         if not self.votes_only:
             self.stdout.write("\nTASKS:")
             self.stdout.write(f"  Total processed: {self.stats['tasks']['total']}")
@@ -325,7 +307,7 @@ class Command(BaseCommand):
             self.stdout.write(f"  No room found: {self.stats['tasks']['missing_rooms']}")
             self.stdout.write(f"  Multiple rooms found: {self.stats['tasks']['multiple_rooms']}")
             self.stdout.write(f"  Errors: {self.stats['tasks']['errors']}")
-        
+
         if not self.tasks_only:
             self.stdout.write("\nVOTES:")
             self.stdout.write(f"  Total processed: {self.stats['votes']['total']}")
@@ -333,33 +315,29 @@ class Command(BaseCommand):
             self.stdout.write(f"  Newly linked: {self.stats['votes']['newly_linked']}")
             self.stdout.write(f"  No room found: {self.stats['votes']['missing_rooms']}")
             self.stdout.write(f"  Errors: {self.stats['votes']['errors']}")
-        
+
         total_processed = self.stats['tasks']['total'] + self.stats['votes']['total']
         total_new_links = self.stats['tasks']['newly_linked'] + self.stats['votes']['newly_linked']
         total_fixed = self.stats['tasks']['fixed_broken_links']
         total_errors = self.stats['tasks']['errors'] + self.stats['votes']['errors']
-        
-        self.stdout.write(f"\nOVERALL:")
+
+        self.stdout.write("\nOVERALL:")
         self.stdout.write(f"  Total items processed: {total_processed}")
         self.stdout.write(f"  New links created: {total_new_links}")
         self.stdout.write(f"  Broken links fixed: {total_fixed}")
         self.stdout.write(f"  Total errors: {total_errors}")
-        
+
         if self.dry_run:
-            self.stdout.write(self.style.WARNING(
-                f"\nDRY RUN MODE - No changes were made. "
-                f"Use --no-dry-run to apply changes."
-            ))
+            self.stdout.write(self.style.WARNING("\nDRY RUN MODE - No changes were made. "
+                                                 "Use --no-dry-run to apply changes."))
         else:
-            self.stdout.write(self.style.SUCCESS(
-                f"\nOperations completed! "
-                f"New links: {total_new_links}, Fixed: {total_fixed}, Errors: {total_errors}"
-            ))
+            self.stdout.write(self.style.SUCCESS(f"\nOperations completed! "
+                                                 f"New links: {total_new_links}, Fixed: {total_fixed}, Errors: {total_errors}"))
 
     def handle(self, *args, **options):
         self.stdout.write(self.style.HTTP_INFO("Chat Room Connection Fixer"))
-        self.stdout.write("="*60)
-        
+        self.stdout.write("=" * 60)
+
         # Parse options
         self.dry_run = options['dry_run']
         self.force = options['force']
@@ -367,30 +345,30 @@ class Command(BaseCommand):
         self.tasks_only = options['tasks_only']
         self.votes_only = options['votes_only']
         self.batch_size = options['batch_size']
-        
+
         # Validate options
         if self.tasks_only and self.votes_only:
             self.stdout.write(self.style.ERROR("Cannot specify both --tasks-only and --votes-only"))
             return
-            
+
         if self.dry_run:
             self.stdout.write(self.style.WARNING("DRY RUN MODE - No changes will be made. Use --no-dry-run to apply changes."))
-        
+
         if self.debug_enabled:
             self.stdout.write(self.style.HTTP_INFO("DEBUG MODE ENABLED"))
-        
+
         # Validate environment
         if not self.validate_environment():
             return
-        
+
         # Process items
         try:
             if not self.votes_only:
                 self.process_tasks()
-            
+
             if not self.tasks_only:
                 self.process_votes()
-                
+
         except KeyboardInterrupt:
             self.stdout.write(self.style.ERROR("\nOperation interrupted by user"))
             return
@@ -399,6 +377,6 @@ class Command(BaseCommand):
             if self.debug_enabled:
                 self.stdout.write(traceback.format_exc())
             return
-        
+
         # Print summary
         self.print_summary()

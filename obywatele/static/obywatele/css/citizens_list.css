@@ -2,10 +2,9 @@ tr.user-row {
   cursor: pointer;
 }
 tr.user-row:hover {
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: rgba(0, 209, 178, 0.05);
   cursor: pointer;
 }
-
 tr.user-row .copy-btn {
   padding: 0px 5px;
   margin-left: 5px;
@@ -15,11 +14,9 @@ tr.user-row .copy-btn {
   opacity: 0;
   transition: opacity 0.2s ease-in-out;
 }
-
 tr.user-row:hover .copy-btn {
   opacity: 1;
 }
-
 .email-cell {
   white-space: nowrap;
 }

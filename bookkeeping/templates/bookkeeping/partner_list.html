@@ -11,6 +11,7 @@
       <a href="{% url 'bookkeeping:transaction_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Transactions' %}</a>
       <a href="{% url 'bookkeeping:partner_list' %}" class="btn btn-sm me-1 mb-1 btn-primary">{% trans 'Partners' %}</a>
       <a href="{% url 'bookkeeping:category_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Categories' %}</a>
+      <a href="{% url 'bookkeeping:asset_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Assets' %}</a>
       <a href="{% url 'bookkeeping:report_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Reports' %}</a>
     </div>
   </div>
@@ -20,7 +21,7 @@
       <tr>
         <th>{% trans 'Name' %}</th>
         <th>{% trans 'Email' %}</th>
-        <th>{% trans 'Phone Number' %}</th>
+        <th>{% trans 'Phone number' %}</th>
         <th>{% trans 'Web Page' %}</th>
         <th>{% trans 'Address' %}</th>
         <th>{% trans 'City' %}</th>

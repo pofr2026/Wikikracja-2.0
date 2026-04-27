@@ -1,22 +1,21 @@
-# Standard library imports
 import logging
 import random
 import threading
 import time
 from datetime import datetime, timedelta
 
-# Third party imports
 from django.conf import settings as s
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
+from django.db import transaction
+from django.db.models import Count, F
 from django.http import HttpRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
-# First party imports
 from glosowania.forms import ArgumentForm, DecyzjaForm
 from glosowania.models import Argument, Decyzja, KtoJuzGlosowal, VoteCode, ZebranePodpisy
 from zzz.utils import build_site_url, get_site_domain
@@ -67,10 +66,12 @@ def edit(request: HttpRequest, pk: int):
     except Decyzja.DoesNotExist:
         return redirect('glosowania:index')
 
+    if decision.author != request.user:
+        return redirect('glosowania:details', pk)
+
     if request.method == 'POST':
         form = DecyzjaForm(request.POST)
         if form.is_valid():
-            decision.author = request.user  # type: ignore
             decision.title = form.cleaned_data['title']
             decision.tresc = form.cleaned_data['tresc']
             decision.kara = form.cleaned_data['kara']
@@ -108,44 +109,56 @@ def details(request: HttpRequest, pk: int):
 
     szczegoly = get_object_or_404(Decyzja, pk=pk)
 
-    if request.GET.get('sign'):
-        try:
-            nowy_projekt = Decyzja.objects.get(pk=pk)
-        except Decyzja.DoesNotExist:
-            return redirect('glosowania:index')
-        osoba_podpisujaca = request.user
-        podpis = ZebranePodpisy(projekt=nowy_projekt, podpis_uzytkownika=osoba_podpisujaca)
-        nowy_projekt.ile_osob_podpisalo += 1
-        podpis.save()
-        nowy_projekt.save()
+    if request.POST.get('sign'):
+        with transaction.atomic():
+            try:
+                nowy_projekt = Decyzja.objects.select_for_update().get(pk=pk)
+            except Decyzja.DoesNotExist:
+                return redirect('glosowania:index')
+            osoba_podpisujaca = request.user
+            __, created = ZebranePodpisy.objects.get_or_create(
+                projekt=nowy_projekt,
+                podpis_uzytkownika=osoba_podpisujaca,
+            )
+            if created:
+                Decyzja.objects.filter(pk=pk).update(ile_osob_podpisalo=F('ile_osob_podpisalo') + 1)
         message = _('You signed this motion for a referendum.')
         messages.success(request, (message))
         return redirect('glosowania:details', pk)
 
-    if request.GET.get('withdraw'):
-        try:
-            nowy_projekt = Decyzja.objects.get(pk=pk)
-        except Decyzja.DoesNotExist:
-            return redirect('glosowania:index')
-        osoba_podpisujaca = request.user
-        podpis = ZebranePodpisy.objects.get(projekt=nowy_projekt, podpis_uzytkownika=osoba_podpisujaca)
-        podpis.delete()
-        nowy_projekt.ile_osob_podpisalo -= 1
-        nowy_projekt.save()
+    if request.POST.get('withdraw'):
+        with transaction.atomic():
+            try:
+                nowy_projekt = Decyzja.objects.select_for_update().get(pk=pk)
+            except Decyzja.DoesNotExist:
+                return redirect('glosowania:index')
+            osoba_podpisujaca = request.user
+            deleted, __ = ZebranePodpisy.objects.filter(
+                projekt=nowy_projekt,
+                podpis_uzytkownika=osoba_podpisujaca,
+            ).delete()
+            if deleted:
+                Decyzja.objects.filter(pk=pk).update(ile_osob_podpisalo=F('ile_osob_podpisalo') - 1)
         message = _('Not signed.')
         messages.success(request, (message))
         return redirect('glosowania:details', pk)
 
-    if request.GET.get('tak'):
-        try:
-            nowy_projekt = Decyzja.objects.get(pk=pk)
-        except Decyzja.DoesNotExist:
-            return redirect('glosowania:index')
-        osoba_glosujaca = request.user
-        glos = KtoJuzGlosowal(projekt=nowy_projekt, ktory_uzytkownik_juz_zaglosowal=osoba_glosujaca)
-        nowy_projekt.za += 1
-        glos.save()
-        nowy_projekt.save()
+    if request.POST.get('tak'):
+        with transaction.atomic():
+            try:
+                nowy_projekt = Decyzja.objects.select_for_update().get(pk=pk)
+            except Decyzja.DoesNotExist:
+                return redirect('glosowania:index')
+            osoba_glosujaca = request.user
+            already_voted = KtoJuzGlosowal.objects.filter(
+                projekt=nowy_projekt,
+                ktory_uzytkownik_juz_zaglosowal=osoba_glosujaca,
+            ).exists()
+            if already_voted:
+                return redirect('glosowania:details', pk)
+            glos = KtoJuzGlosowal(projekt=nowy_projekt, ktory_uzytkownik_juz_zaglosowal=osoba_glosujaca)
+            Decyzja.objects.filter(pk=pk).update(za=F('za') + 1)
+            glos.save()
 
         # TODO: Kod oddanego głosu
         # - wygeneruj kod
@@ -169,16 +182,22 @@ def details(request: HttpRequest, pk: int):
 
         return redirect('glosowania:details', pk)
 
-    if request.GET.get('nie'):
-        try:
-            nowy_projekt = Decyzja.objects.get(pk=pk)
-        except Decyzja.DoesNotExist:
-            return redirect('glosowania:index')
-        osoba_glosujaca = request.user
-        glos = KtoJuzGlosowal(projekt=nowy_projekt, ktory_uzytkownik_juz_zaglosowal=osoba_glosujaca)
-        nowy_projekt.przeciw += 1
-        glos.save()
-        nowy_projekt.save()
+    if request.POST.get('nie'):
+        with transaction.atomic():
+            try:
+                nowy_projekt = Decyzja.objects.select_for_update().get(pk=pk)
+            except Decyzja.DoesNotExist:
+                return redirect('glosowania:index')
+            osoba_glosujaca = request.user
+            already_voted = KtoJuzGlosowal.objects.filter(
+                projekt=nowy_projekt,
+                ktory_uzytkownik_juz_zaglosowal=osoba_glosujaca,
+            ).exists()
+            if already_voted:
+                return redirect('glosowania:details', pk)
+            glos = KtoJuzGlosowal(projekt=nowy_projekt, ktory_uzytkownik_juz_zaglosowal=osoba_glosujaca)
+            Decyzja.objects.filter(pk=pk).update(przeciw=F('przeciw') + 1)
+            glos.save()
 
         # TODO: Kod oddanego głosu
         # - wygeneruj kod
@@ -242,7 +261,6 @@ def details(request: HttpRequest, pk: int):
     all_arguments = list(arguments)
 
     # Count arguments per author for this decision
-    # Standard library imports
     from collections import Counter
     author_counts = Counter(arg.author_id for arg in all_arguments if arg.author_id)
 
@@ -379,10 +397,7 @@ def SendEmail(subject: str, message: str):
     email_footer = _("Why you received this email? Here is explanation: {url}").format(url=info_url)
 
     # Filter users based on voting notification preferences
-    recipients = list(User.objects.filter(
-        is_active=True,
-        uzytkownik__email_notifications_glosowania=True
-    ).values_list('email', flat=True))
+    recipients = list(User.objects.filter(is_active=True, uzytkownik__email_notifications_glosowania=True).values_list('email', flat=True))
     email_message = EmailMessage(
         from_email=str(s.DEFAULT_FROM_EMAIL),
         bcc=recipients,
@@ -421,56 +436,83 @@ def parameters(request: HttpRequest):
     })
 
 
+def _apply_sort(queryset, sort, order='desc'):
+    """Zastosuj sortowanie do querysetu Decyzja."""
+    p = '' if order == 'asc' else '-'
+    if sort == 'signatures':
+        return queryset.order_by(f'{p}ile_osob_podpisalo', '-data_powstania')
+    elif sort == 'buzz':
+        return queryset.annotate(chat_msg_count=Count('chat_room__messages', distinct=True)).order_by(f'{p}chat_msg_count', '-data_powstania')
+    else:  # 'date' — domyślne
+        return queryset.order_by(f'{p}data_powstania')
+
+
+def _sort_context(request):
+    sort = request.GET.get('sort', 'date')
+    order = request.GET.get('order', 'desc')
+    if order not in ('asc', 'desc'):
+        order = 'desc'
+    return sort, order
+
+
 @login_required
 def rejected(request: HttpRequest):
-    votings = Decyzja.objects.filter(status=4).order_by('id')
+    sort, order = _sort_context(request)
+    votings = _apply_sort(Decyzja.objects.filter(status=4), sort, order)
     return render(request, 'glosowania/rejected.html', {
-        'votings': votings
+        'votings': votings,
+        'current_sort': sort,
+        'current_order': order,
     })
 
 
 @login_required
 def proposition(request: HttpRequest):
-    votings = Decyzja.objects.filter(status=1).order_by('data_referendum_start')
-
-    # Add chat room pulse class for each voting
+    sort, order = _sort_context(request)
+    votings = _apply_sort(Decyzja.objects.filter(status=1), sort, order)
     for voting in votings:
         voting.chat_room_pulse_class = voting.get_chat_room_pulse_class(request.user)
-
     return render(request, 'glosowania/proposition.html', {
-        'votings': votings
+        'votings': votings,
+        'current_sort': sort,
+        'current_order': order,
     })
 
 
 @login_required
 def discussion(request: HttpRequest):
-    votings = [voting for voting in Decyzja.objects.filter(status=2).order_by('data_referendum_start') if voting.is_author_signed]
-
-    # Add chat room pulse class for each voting
+    sort, order = _sort_context(request)
+    qs = _apply_sort(Decyzja.objects.filter(status=2), sort, order)
+    votings = [v for v in qs if v.is_author_signed]
     for voting in votings:
         voting.chat_room_pulse_class = voting.get_chat_room_pulse_class(request.user)
-
     return render(request, 'glosowania/discussion.html', {
-        'votings': votings
+        'votings': votings,
+        'current_sort': sort,
+        'current_order': order,
     })
 
 
 @login_required
 def referendum(request: HttpRequest):
-    votings = [voting for voting in Decyzja.objects.filter(status=3).order_by('data_referendum_start') if voting.is_author_signed]
-
-    # Add chat room pulse class for each voting
+    sort, order = _sort_context(request)
+    qs = _apply_sort(Decyzja.objects.filter(status=3), sort, order)
+    votings = [v for v in qs if v.is_author_signed]
     for voting in votings:
         voting.chat_room_pulse_class = voting.get_chat_room_pulse_class(request.user)
-
     return render(request, 'glosowania/referendum.html', {
-        'votings': votings
+        'votings': votings,
+        'current_sort': sort,
+        'current_order': order,
     })
 
 
 @login_required
 def approved(request: HttpRequest):
-    votings = Decyzja.objects.filter(status=5).order_by('data_referendum_start')
+    sort, order = _sort_context(request)
+    votings = _apply_sort(Decyzja.objects.filter(status=5), sort, order)
     return render(request, 'glosowania/approved.html', {
-        'votings': votings
+        'votings': votings,
+        'current_sort': sort,
+        'current_order': order,
     })

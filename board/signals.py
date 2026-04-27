@@ -1,19 +1,15 @@
-# Third party imports
 from django.conf import settings
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-# First party imports
 from zzz.utils import get_site_domain
 
-# Local folder imports
 from .models import Post
 
 # Import the utility function we created
 try:
-    # First party imports
     from chat.utils import send_message_to_room
 except ImportError:
     # Fallback if the function isn't available

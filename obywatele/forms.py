@@ -1,9 +1,9 @@
-# Standard library imports
 import logging
+import secrets
+import string
 import threading
 import time
 
-# Third party imports
 from allauth.account.forms import SignupForm
 from captcha.fields import CaptchaField
 from django import forms
@@ -15,7 +15,6 @@ from django.http import HttpRequest
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
-# First party imports
 from obywatele.models import Uzytkownik
 from zzz.utils import build_site_url, get_site_domain
 
@@ -137,6 +136,25 @@ class ProfileForm(forms.ModelForm):
         self.fields['job'].error_messages['required'] = _('Job is required.')
 
 
+class AvatarForm(forms.ModelForm):
+    class Meta:
+        model = Uzytkownik
+        fields = ('avatar',)
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Delete old avatar file if being replaced
+        if commit:
+            try:
+                old = Uzytkownik.objects.get(pk=instance.pk)
+                if old.avatar and old.avatar != instance.avatar:
+                    old.avatar.delete(save=False)
+            except Uzytkownik.DoesNotExist:
+                pass
+            instance.save()
+        return instance
+
+
 class OnboardingDetailsForm(forms.ModelForm):
     first_name = forms.CharField(max_length=150, label=_('First name'), required=True)
     last_name = forms.CharField(max_length=150, label=_('Last name'), required=True)
@@ -162,10 +180,10 @@ class OnboardingDetailsForm(forms.ModelForm):
 class CustomSignupForm(SignupForm):
     """
     Custom signup form for Wikikracja onboarding process.
-    
+
     KEY DESIGN NOTES:
     - Only email and captcha are shown to user (simplified signup)
-    - Password is auto-generated (12 chars, alphanumeric) 
+    - Password is auto-generated (12 chars, alphanumeric)
     - User never sees password - login via email only
     - Email confirmation is manually triggered (allauth auto-send disabled)
     - After signup: user redirected to onboarding form
@@ -180,10 +198,7 @@ class CustomSignupForm(SignupForm):
         # This prevents "field required" validation errors while keeping UI simple
         self.fields['password1'].widget = forms.HiddenInput()
         self.fields['password1'].required = False
-        
-        # Auto-generate secure password (user never sees it)
-        import secrets
-        import string
+
         password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
         self.fields['password1'].initial = password
 
@@ -202,13 +217,11 @@ class CustomSignupForm(SignupForm):
     def clean_password1(self):
         """
         Auto-generate password for hidden password1 field.
-        
+
         DESIGN NOTE: allauth requires password validation but we want email-only signup.
         This method satisfies allauth's requirements while keeping UI simple.
         Password is secure (12 chars, alphanumeric) but user never sees it.
         """
-        import secrets
-        import string
         password = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(12))
         return password
 
@@ -240,16 +253,15 @@ class CustomSignupForm(SignupForm):
         # DESIGN NOTE: allauth auto-send is disabled due to custom form structure
         # We must manually trigger email confirmation with proper HMAC signing
         try:
-            from allauth.account.models import EmailAddress, EmailConfirmationHMAC
             from allauth.account.adapter import get_adapter
-            
+            from allauth.account.models import EmailAddress, EmailConfirmationHMAC
+
             # Ensure EmailAddress exists (allauth requirement for email confirmation)
-            email_address, created = EmailAddress.objects.get_or_create(
-                user=user,
-                email=user.email,
-                defaults={'verified': False, 'primary': True}
-            )
-            
+            email_address, created = EmailAddress.objects.get_or_create(user=user, email=user.email, defaults={
+                'verified': False,
+                'primary': True
+            })
+
             if created or not email_address.verified:
                 # IMPORTANT: Use EmailConfirmationHMAC (not EmailConfirmation)
                 # HMAC provides secure signed links that don't expire quickly
@@ -257,7 +269,7 @@ class CustomSignupForm(SignupForm):
                 confirmation = EmailConfirmationHMAC.create(email_address)
                 adapter = get_adapter()
                 adapter.send_confirmation_mail(request, confirmation, signup=True)
-                
+
         except Exception as e:
             log.error(f'Failed to send confirmation email: {e}', exc_info=True)
 
@@ -278,24 +290,12 @@ def SendEmailToAll(subject, message, notification_type='obywatele'):
     info_url = "https://wikikracja.pl/powiadomienia-email/"
     email_footer = _("Why you received this email? Here is explanation: {url}").format(url=info_url)
 
-    # Filter users based on notification preferences
-    from django.db.models import Q
-    
     if notification_type == 'obywatele':
-        recipients = list(User.objects.filter(
-            is_active=True,
-            uzytkownik__email_notifications_obywatele=True
-        ).values_list('email', flat=True))
+        recipients = list(User.objects.filter(is_active=True, uzytkownik__email_notifications_obywatele=True).values_list('email', flat=True))
     elif notification_type == 'glosowania':
-        recipients = list(User.objects.filter(
-            is_active=True,
-            uzytkownik__email_notifications_glosowania=True
-        ).values_list('email', flat=True))
+        recipients = list(User.objects.filter(is_active=True, uzytkownik__email_notifications_glosowania=True).values_list('email', flat=True))
     elif notification_type == 'chat':
-        recipients = list(User.objects.filter(
-            is_active=True,
-            uzytkownik__email_notifications_chat=True
-        ).values_list('email', flat=True))
+        recipients = list(User.objects.filter(is_active=True, uzytkownik__email_notifications_chat=True).values_list('email', flat=True))
     else:
         # Default to all active users for unknown types
         recipients = list(User.objects.filter(is_active=True).values_list('email', flat=True))

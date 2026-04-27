@@ -1,8 +1,10 @@
-# Third party imports
 from django.urls import path
 
-# Local folder imports
 from .views import (
+    AssetCreateView,
+    AssetDeleteView,
+    AssetListView,
+    AssetUpdateView,
     CategoryCreateView,
     CategoryDeleteView,
     CategoryListView,
@@ -26,6 +28,12 @@ urlpatterns = [
     path('transaction/create/', TransactionCreateView.as_view(), name='transaction_create'),
     path('transaction/<int:pk>/update/', TransactionUpdateView.as_view(), name='transaction_update'),
     path('transaction/<int:pk>/delete/', TransactionDeleteView.as_view(), name='transaction_delete'),
+
+    # Asset URLs
+    path('asset/', AssetListView.as_view(), name='asset_list'),
+    path('asset/create/', AssetCreateView.as_view(), name='asset_create'),
+    path('asset/<int:pk>/update/', AssetUpdateView.as_view(), name='asset_update'),
+    path('asset/<int:pk>/delete/', AssetDeleteView.as_view(), name='asset_delete'),
 
     # Partner URLs
     path('partner/', PartnerListView.as_view(), name='partner_list'),

@@ -1,7 +1,5 @@
-# Third party imports
 from django.contrib import admin
 
-# Local folder imports
 from .models import Room
 
 admin.site.register(

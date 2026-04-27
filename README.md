@@ -1,6 +1,7 @@
 # Wikikracja
 
 **Democratic platform for collaborative decision-making and community building.**
+**Hardcoded Direct Democracy**
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![GitHub last commit](https://img.shields.io/github/last-commit/soma115/wikikracja)

@@ -1,15 +1,12 @@
 .board-section {
   position: relative;
 }
-
 .board-section--pinned {
   margin-bottom: 1.75rem;
 }
-
 .board-section--regular {
   padding-top: 0.5rem;
 }
-
 .board-post-card {
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 14px;
@@ -20,12 +17,10 @@
   box-shadow: 0 14px 30px rgba(6, 8, 12, 0.35);
   transition: transform 180ms ease, box-shadow 200ms ease;
 }
-
 .board-post-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px rgba(6, 8, 12, 0.45);
 }
-
 .board-post-card--pinned {
   border: none;
   background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 255, 255, 0.08));
@@ -33,7 +28,6 @@
   position: relative;
   overflow: hidden;
 }
-
 .board-post-card--pinned::before {
   content: "";
   position: absolute;
@@ -46,11 +40,9 @@
   -webkit-mask-composite: xor;
   mask-composite: exclude;
 }
-
 .board-post-card--pinned h3 a {
   color: #00ff229d;
 }
-
 /* Post detail styling */
 .post-header {
   border-bottom: 2px solid rgba(255, 255, 255, 0.15);
@@ -63,7 +55,6 @@
   margin-bottom: 2rem;
   backdrop-filter: blur(2px);
 }
-
 .post-title {
   color: #ecf0f1 !important;
   font-size: 2.5rem;
@@ -76,7 +67,6 @@
   background-clip: text;
   letter-spacing: 0.5px;
 }
-
 .post-subtitle {
   color: #bdc3c7 !important;
   font-size: 1.5rem;
@@ -86,14 +76,12 @@
   opacity: 0.9;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
-
 .post-content {
   color: #ecf0f1;
   line-height: 1.8;
   font-size: 1.1rem;
   padding: 1rem 0;
 }
-
 .post-content h1,
 .post-content h2,
 .post-content h3,
@@ -105,25 +93,33 @@
   margin-bottom: 1rem;
   font-weight: 600;
 }
-
-.post-content h1 { font-size: 2rem; }
-.post-content h2 { font-size: 1.75rem; }
-.post-content h3 { font-size: 1.5rem; }
-.post-content h4 { font-size: 1.25rem; }
-.post-content h5 { font-size: 1.1rem; }
-.post-content h6 { font-size: 1rem; }
-
+.post-content h1 {
+  font-size: 2rem;
+}
+.post-content h2 {
+  font-size: 1.75rem;
+}
+.post-content h3 {
+  font-size: 1.5rem;
+}
+.post-content h4 {
+  font-size: 1.25rem;
+}
+.post-content h5 {
+  font-size: 1.1rem;
+}
+.post-content h6 {
+  font-size: 1rem;
+}
 .post-content p {
   margin-bottom: 0.5rem;
   text-align: justify;
 }
-
 .post-content ul,
 .post-content ol {
   margin-bottom: 1rem;
   padding-left: 2rem;
 }
-
 .post-content blockquote {
   border-left: 4px solid #3498db;
   padding-left: 1.5rem;
@@ -131,7 +127,6 @@
   font-style: italic;
   color: #95a5a6;
 }
-
 .post-content code {
   background: rgba(52, 152, 219, 0.2);
   padding: 0.2rem 0.4rem;
@@ -139,7 +134,6 @@
   font-family: 'Courier New', monospace;
   color: #3498db;
 }
-
 .post-content pre {
   background: rgba(0, 0, 0, 0.3);
   padding: 1.5rem;
@@ -148,14 +142,12 @@
   margin: 2rem 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
-
 /* Simple table styling - only cell borders */
 .board-post-card table,
 .board-post-card .table {
   border-collapse: collapse;
   width: 100%;
 }
-
 .board-post-card table td,
 .board-post-card table th,
 .board-post-card .table td,
@@ -163,7 +155,6 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 8px;
 }
-
 /* Mobile responsive styles */
 @media (max-width: 768px) {
   .board-post-card {
@@ -172,15 +163,16 @@
     max-width: 98%;
     box-sizing: border-box;
   }
-
-  .board-post-card h3 { font-size: 1.2rem; }
-  .board-post-card h5 { font-size: 1rem; }
-
+  .board-post-card h3 {
+    font-size: 1.2rem;
+  }
+  .board-post-card h5 {
+    font-size: 1rem;
+  }
   .board-post-card table,
   .board-post-card .table {
     font-size: 0.8rem;
   }
-
   .board-post-card table td,
   .board-post-card table th,
   .board-post-card .table td,
@@ -189,13 +181,15 @@
     white-space: normal;
   }
 }
-
 @media (max-width: 480px) {
   .board-post-card {
     padding: 0.75rem;
     margin: 0.25rem 0.25rem 0.25rem 0;
   }
-
-  .board-post-card h3 { font-size: 1.1rem; }
-  .board-post-card h5 { font-size: 0.9rem; }
+  .board-post-card h3 {
+    font-size: 1.1rem;
+  }
+  .board-post-card h5 {
+    font-size: 0.9rem;
+  }
 }
