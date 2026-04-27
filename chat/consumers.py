@@ -8,21 +8,16 @@ import bleach
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
-from django.contrib.auth.models import User
-from django.db.models import Prefetch
-from firebase_admin import messaging
-from push_notifications.models import GCMDevice, WebPushDevice
 
 from zzz.utils import get_site_domain
 
 from .exceptions import ClientError
 from .group_messages import format_chat_message
-from .models import Message, MessageAttachment, MessageHistory, MessageHistoryEntry, MessageReadBy, Room
+from .models import Message, Room
+from .services import ChatRepository
 from .utils import HandledMessage, Handlers, OnlineUserRegistry, RoomRegistry, helper_method
 
-# HTML sanitizer config for rich text (ZMIANA 6)
 ALLOWED_HTML_TAGS = ['b', 'i', 'u', 'br']
-ALLOWED_HTML_ATTRS = {}
 
 log = logging.getLogger(__name__)
 domain = get_site_domain()
@@ -31,17 +26,14 @@ domain = get_site_domain()
 class ChatConsumer(AsyncJsonWebsocketConsumer):
     """
     This chat consumer handles websocket connections for chat clients.
-
-    It uses AsyncJsonWebsocketConsumer, which means all the handling functions
-    must be async functions, and any sync work (like ORM access) has to be
-    behind database_sync_to_async or sync_to_async. For more, read
-    http://channels.readthedocs.io/en/latest/topics/consumers.html
     """
 
-    # map of commands and handlers
     handlers = Handlers()
-
     online_registry = OnlineUserRegistry()
+
+    @property
+    def repo(self):
+        return ChatRepository(self.scope['user'])
 
     # WebSocket event handlers
     async def connect(self):
@@ -101,8 +93,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         # trace id is a identifier attached to the message by client,
         # that makes request and hopes to get response back with same trace id.
-        # therefore, trace id must be attached to the message sent to client
-        # who sent message containing it.
         trace_id = content.get("__TRACE_ID")
 
         handler_data = ChatConsumer.handlers.map.get(command)
@@ -133,54 +123,34 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
         try:
             result = HandledMessage()
-            # Each handler must have named argument 'proxy', that will collect prepared ws messages for post-processing.
-            # After handler has executed and prepared all the messages, we can insert trace ID to the messages,
-            # unless it was explicitly specified not to.
-            # It is done to prevent some messages sent by handler to be treated as response to request.
-            # For example, client asks for messages history and server needs to notify everyone
-            # that user fetches changes history. It will be done in same handler, but notification will not have trace id,
-            # unlike changes history sent to user.
-            # bruh that's a lot of text.
             await handler(self=self, proxy=result, **args)
-            # there are 3 possible scenarios:
-            #  1) handler sends message to the consumer who sent command
-            #  2) handler sends message to another consumer
-            #  3) handler sends message to group
             for group, message, to_consumer, ignore_trace in result.get_messages():
                 if group is None:
                     if to_consumer:
                         await to_consumer.send_json(message)
                     else:
-                        # Attach trace id only to messages sent to same client,
-                        # As it is the one awaiting this response
                         if not ignore_trace:
                             message['__TRACE_ID'] = trace_id
                         await self.send_json(message)
                 else:
                     await self.channel_layer.group_send(group, message)
         except ClientError as e:
-            # Catch any errors and send it back
             await self.send_json({
                 "error": e.code,
                 "__TRACE_ID": trace_id
-            })  # fix exceptions
+            })
 
     #################################################
     # Command helper methods called by receive_json #
     #################################################
 
     @handlers.register("join")
-    async def join_room(self, proxy: HandledMessage, room_id: int):  # and scope{user, }!
-        """
-        Called by receive_json when someone sent a join command.
-        """
-        # The logged-in user is in our scope thanks to
-        # the authentication ASGI middleware
-        room = await self.get_room_or_error(room_id, self.scope["user"])
+    async def join_room(self, proxy: HandledMessage, room_id: int):
+        room = await self.repo.get_room_or_error(room_id)
 
         user_id = self.scope["user"].id
         if not room.public:
-            is_allowed = await self.allowed_in_room(room)
+            is_allowed = await self.repo.allowed_in_room(room)
             log.info(f"User {user_id} trying to join private room {room_id} ({room.title}): allowed={is_allowed}")
             if not is_allowed:
                 log.warning(f"ACCESS_DENIED: User {user_id} not in room.allowed for private room {room_id}")
@@ -189,32 +159,27 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         # user can only be in one room at the time
         for room_id_to_leave in self.rooms.items():
             try:
-                room_to_leave = await self.get_room(room_id_to_leave)
+                room_to_leave = await self.repo.get_room(room_id_to_leave)
             except ClientError:
                 self.rooms.leave(room_id_to_leave)
                 continue
             await self.handle_leave_room(room_to_leave)
 
-        # Store that we're in the room
-        self.rooms.join(room_id)  # 1
+        self.rooms.join(room_id)
 
-        # Add them to the group so they get room messages
         await self.channel_layer.group_add(
-            room.group_name,  # room-1
-            self.channel_name,  # specific.BZcPrnWw!vvvelNWGEgbE
+            room.group_name,
+            self.channel_name,
         )
 
-        # Instruct their client to finish opening the room
         proxy.send_json({
-            "join": str(room.id),  # 1
-            "title": room.title,  # "Room 1"
+            "join": str(room.id),
+            "title": room.title,
             "public": room.public,
-            "notifications": not await self.has_muted_room(room.id)
+            "notifications": not await self.repo.has_muted_room(room.id)
         })
 
-        # Load recent messages from DB to Chat (paginated)
-        # Uses optimized batch query to avoid N+1 problems for user lookups and vote checks
-        batch_data = await self.get_recent_messages_batch(room_id, self.scope['user'].id, limit=100)
+        batch_data = await self.repo.get_recent_messages_batch(room_id, self.scope['user'].id, limit=100)
         messages_list = batch_data['messages']
         users_dict = batch_data['users']
         user_votes_dict = batch_data['user_votes']
@@ -250,7 +215,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 data = None
                 continue
 
-            # Use pre-fetched data instead of making individual DB queries
             to_send.append(self.format_chat_message_data_batch(data, users_dict, user_votes_dict))
 
         if to_send:
@@ -260,29 +224,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @handlers.register("leave")
     async def leave_room(self, proxy: HandledMessage, room_id):
-        """
-        Called by receive_json when someone sent a leave command.
-        """
-        # The logged-in user is in our scope thanks to
-        # the authentication ASGI middleware
-        room = await self.get_room_or_error(room_id, self.scope["user"])
-
+        room = await self.repo.get_room_or_error(room_id)
         await self.handle_leave_room(room)
-
-        # Instruct their client to finish closing the room
         proxy.send_json({
             "leave": str(room.id)
         })
 
     @handlers.register("fetch-messages")
     async def fetch_messages(self, proxy: HandledMessage, room_id, sort_by='date', order='desc', popular_only=False):
-        """
-        Re-fetches messages for the current room with given sort/filter parameters.
-        Server-side sorting and filtering since client only has last 100 messages in DOM.
-        """
-        room = await self.get_room_or_error(room_id, self.scope["user"])
+        room = await self.repo.get_room_or_error(room_id)
         if not room.public:
-            is_allowed = await self.allowed_in_room(room)
+            is_allowed = await self.repo.allowed_in_room(room)
             if not is_allowed:
                 raise ClientError("ACCESS_DENIED")
 
@@ -292,7 +244,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             order = 'desc'
         popular_only = bool(popular_only)
 
-        batch_data = await self.get_recent_messages_batch(
+        batch_data = await self.repo.get_recent_messages_batch(
             room_id,
             self.scope['user'].id,
             limit=100,
@@ -339,16 +291,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @handlers.register("send")
     async def send_message_to_room(self, proxy: HandledMessage, room_id, message, is_anonymous, attachments, reply_to_id=None):
-        """
-        Called by receive_json when someone sends a message to a room.
-        Opcjonalny parametr reply_to_id obsługuje cytowanie (ZMIANA 2).
-        """
-        # VALIDATION START
-
         if int(room_id) not in self.rooms.items():
             raise ClientError("ROOM_ACCESS_DENIED")
 
-        # verify that all attachments are valid
         for key, value in attachments.items():
             if key not in ('images',):
                 raise ClientError("BAD_ATTACHMENT_TYPE")
@@ -356,34 +301,29 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 if not os.path.exists(f"{settings.BASE_DIR}/media/uploads/{filename}"):
                     raise ClientError("FILE_NOT_FOUND")
 
-        # Sanitize HTML (ZMIANA 6 — rich text)
-        message_clean = bleach.clean(message, tags=ALLOWED_HTML_TAGS, attributes=ALLOWED_HTML_ATTRS, strip=True)
+        message_clean = bleach.clean(message, tags=ALLOWED_HTML_TAGS, strip=True)
         message_clean = re.sub(r'(<br\s*/?>)+$', '', message_clean).rstrip()
 
         if not message_clean.strip().replace('<br>', '').replace('<br/>', '') and not attachments:
             raise ClientError("EMPTY_MESSAGE")
 
         sender = self.scope["user"]
-        room = await self.get_room_or_error(room_id, sender)
+        room = await self.repo.get_room_or_error(room_id)
 
         if not room.public and is_anonymous:
             raise ClientError("ANONYMOUS_IN_PRIVATE")
 
-        # VALIDATION END
-
-        user = await self.get_user_by_name(sender.username)
-        room = await self.get_room(room_id)
+        user = await self.repo.get_user_by_name(sender.username)
+        room = await self.repo.get_room(room_id)
 
         msg = Message(sender=user, text=message_clean, room=room, anonymous=is_anonymous)
 
-        # ZMIANA 2 — zapisz reply_to
         if reply_to_id:
             msg.reply_to_id = int(reply_to_id)
 
-        message_id = await self.save_message(msg)
+        message_id = await self.repo.save_message(msg)
         msg.id = message_id
 
-        # Auto-track room for sender if they have participated-only mode enabled
         participated_only = await database_sync_to_async(lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False))()
         if participated_only:
             already_tracked = await database_sync_to_async(lambda: room.tracked_by.filter(id=user.id).exists())()
@@ -395,14 +335,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     'tracked': True,
                 }))
 
-        await self.save_attachments(message_id, attachments)
+        await self.repo.save_attachments(message_id, attachments)
 
-        # Pobierz dane cytowanej wiadomości (ZMIANA 2)
         reply_to_data = None
         if reply_to_id:
-            reply_to_data = await self.get_reply_to_data(int(reply_to_id))
+            reply_to_data = await self.repo.get_reply_to_data(int(reply_to_id))
 
-        # ...and send to the group info about it
         proxy.group_send(room.group_name, format_chat_message(
             room_id=room_id,
             user_id=sender.id,
@@ -423,25 +361,19 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             },
         ))
 
-        # Make rooms appear unseen for online room members, send push for offline
         room_members = await database_sync_to_async(lambda x: list(x.allowed.all()))(room)
-
-        # Skip notification processing for sender
         other_members = [m for m in room_members if m.id != sender.id]
         if not other_members:
             return
-        # Bulk fetch membership preferences (seen/muted status) for all other members
-        other_member_ids = [m.id for m in other_members]
 
+        other_member_ids = [m.id for m in other_members]
         online_ids = ChatConsumer.online_registry.get_online()
         offline_ids = [mid for mid in other_member_ids if mid not in online_ids]
-        # Delete seen_by entries for offline users (mark room as unseen), online will be handled later in code
         if offline_ids:
             await database_sync_to_async(lambda: Room.seen_by.through.objects.filter(room_id=room_id, user_id__in=offline_ids).delete())()
 
         membership_prefs = await database_sync_to_async(lambda: Room.get_membership_preferences_bulk(room_id, other_member_ids))()
 
-        # Process each member with pre-fetched preferences
         for member in other_members:
             prefs = membership_prefs.get(member.id, {
                 'seen': False,
@@ -449,36 +381,26 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             })
             consumer = ChatConsumer.online_registry.get_consumer(member)
 
-            # OFFLINE: Send push notification
             if not consumer and not prefs['muted']:
                 await self.send_push_notification_async(proxy, member, msg, room_id)
                 continue
 
-            # ONLINE: Skip if user is currently in this room (they'll see the message directly)
-            if consumer.rooms.present(room):
+            if consumer and consumer.rooms.present(room):
                 continue
 
-            # Unsee room if it was previously seen (mark as unread)
             if prefs['seen']:
                 await consumer.unsee_room(room)
                 await consumer.send_unsee_room(proxy=proxy, room=room)
 
-            # Send notification if room is not muted
             if not prefs['muted']:
                 await consumer.send_notification(proxy, message_id)
 
     @handlers.register("get-online-users")
     async def send_online_users(self, proxy: HandledMessage):
-        """ Send list of private chats with online user in it. Sent on request. """
         scoped_user = self.scope['user']
         online_users = ChatConsumer.online_registry.get_online()
-
-        # Filter out self from online users
         other_user_ids = [uid for uid in online_users if uid != scoped_user.id]
-
-        # Use optimized batch query to get all private rooms at once
-        rooms_dict = await self.find_private_rooms_for_user_pairs(scoped_user, other_user_ids)
-
+        rooms_dict = await self.repo.find_private_rooms_for_user_pairs(scoped_user, other_user_ids)
         online_data = []
         for online_user_id in other_user_ids:
             room = rooms_dict.get(online_user_id)
@@ -488,57 +410,44 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     'room_id': room.id,
                     'online': True,
                 })
-
         proxy.send_json({
             'online_data': online_data
         })
 
     @handlers.register("room-seen")
     async def handle_seen_room(self, proxy: HandledMessage, room_id):
-        """ Handle user reading channel """
         try:
-            room = await self.get_room(room_id)
+            room = await self.repo.get_room(room_id)
         except ClientError:
             return
-
-        if not await self.room_is_seen(room):
-            await self.see_room(room)
+        if not await self.repo.room_is_seen(room):
+            await self.repo.see_room(room)
 
     @handlers.register("room-unseen")
     async def handle_unseen_room(self, proxy: HandledMessage, room_id):
-        """ Handle user marking room as unread/unseen """
         try:
-            room = await self.get_room(room_id)
+            room = await self.repo.get_room(room_id)
         except ClientError:
             return
-
-        await self.unsee_room(room)
-        # Notify the client that the room is now unseen
-        # proxy.send_json({
-        #     "unsee_room": room_id,
-        # })
+        await self.repo.unsee_room(room)
 
     @handlers.register("message-add-vote")
     async def handle_add_vote(self, proxy: HandledMessage, vote: str, message_id: int):
-        existing_vote = await self.get_vote(message_id)
+        existing_vote = await self.repo.get_vote(message_id)
         opposite_vote_events = {
             "upvote": "downvote",
             "downvote": "upvote",
         }
 
         if existing_vote is not None:
-            # Prevent duplicate votes
             if existing_vote.vote == vote:
                 return
-
             opposite_event = opposite_vote_events.get(vote)
-            # If two vote events conflict with each other e.g. (upvote and downvote)
-            # remove conflicting vote and then add new one
             if opposite_event is not None:
-                await self.remove_vote(opposite_event, message_id)
+                await self.repo.remove_vote(opposite_event, message_id)
 
-        upvotes, downvotes = await self.add_vote(vote, message_id)
-        room = await self.get_room_by_message(message_id)
+        upvotes, downvotes = await self.repo.add_vote(vote, message_id)
+        room = await self.repo.get_room_by_message(message_id)
 
         proxy.group_send(room.group_name, {
             "type": "chat.vote",
@@ -554,10 +463,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @handlers.register("message-remove-vote")
     async def handle_remove_vote(self, proxy: HandledMessage, vote: str, message_id: int):
-        upvotes, downvotes = await self.remove_vote(vote, message_id)
-
-        room = await self.get_room_by_message(message_id)
-
+        upvotes, downvotes = await self.repo.remove_vote(vote, message_id)
+        room = await self.repo.get_room_by_message(message_id)
         proxy.group_send(room.group_name, {
             "type": "chat.vote",
             "update_votes": {
@@ -572,17 +479,13 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @handlers.register("message-react")
     async def handle_message_react(self, proxy: HandledMessage, reaction: str, message_id: int):
-        """
-        ZMIANA 4B — toggle emoji-reakcji (💡 ❓).
-        Broadcast update_reactions do całego pokoju.
-        """
         valid_reactions = dict([('bulb', '💡'), ('question', '❓')])
         if reaction not in valid_reactions:
             raise ClientError("INVALID_REACTION")
 
-        added = await self.toggle_reaction(reaction, message_id)
-        counts = await self.get_reaction_counts(message_id)
-        room = await self.get_room_by_message(message_id)
+        added = await self.repo.toggle_reaction(reaction, message_id)
+        counts = await self.repo.get_reaction_counts(message_id)
+        room = await self.repo.get_room_by_message(message_id)
 
         proxy.group_send(room.group_name, {
             "type": "chat.reaction",
@@ -597,14 +500,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @handlers.register("message-mark-read")
     async def handle_mark_read(self, proxy: HandledMessage, message_id: int):
-        """
-        ZMIANA 4C — oznacz wiadomość jako przeczytaną przez bieżącego użytkownika.
-        Broadcast messages_read do pokoju.
-        """
-        await self.mark_message_read(message_id)
-        read_by = await self.get_read_by_data(message_id)
-        room = await self.get_room_by_message(message_id)
-
+        await self.repo.mark_message_read(message_id)
+        read_by = await self.repo.get_read_by_data(message_id)
+        room = await self.repo.get_room_by_message(message_id)
         proxy.group_send(room.group_name, {
             "type": "chat.read",
             "messages_read": {
@@ -615,21 +513,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @handlers.register("edit-message")
     async def handle_edit_message(self, proxy: HandledMessage, message_id: int, new_message: str = None, attachments: dict = None, removed_attachments: list = None):
-        message = await self.get_message(message_id)
-
-        # only sender can edit own message
-        if await self.get_message_sender(message) != self.scope['user']:
+        message = await self.repo.get_message(message_id)
+        if await self.repo.get_message_sender(message) != self.scope['user']:
             return
 
-        # If new_message is not provided, use the current message text
         if new_message is None:
             new_message = message.text
         else:
-            # Sanitize HTML (ZMIANA 6 — rich text)
-            new_message = bleach.clean(new_message, tags=ALLOWED_HTML_TAGS, attributes=ALLOWED_HTML_ATTRS, strip=True)
+            new_message = bleach.clean(new_message, tags=ALLOWED_HTML_TAGS, strip=True)
             new_message = re.sub(r'(<br\s*/?>)+$', '', new_message).rstrip()
 
-        # verify that all new attachments are valid
         if attachments:
             for key, value in attachments.items():
                 if key not in ('images',):
@@ -638,32 +531,26 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     if not os.path.exists(f"{settings.BASE_DIR}/media/uploads/{filename}"):
                         raise ClientError("FILE_NOT_FOUND")
 
-        # Remove specified attachments
         if removed_attachments:
-            await self.remove_attachments(message_id, removed_attachments)
+            await self.repo.remove_attachments(message_id, removed_attachments)
 
-        # Add new attachments
         if attachments:
-            await self.save_attachments(message_id, attachments)
+            await self.repo.save_attachments(message_id, attachments)
 
-        # Get updated attachments list
-        updated_attachments = await self.load_attachments(message_id)
+        updated_attachments = await self.repo.load_attachments(message_id)
 
-        # Check if anything changed
         text_changed = message.text != new_message
         attachments_changed = bool(attachments) or bool(removed_attachments)
 
         if not text_changed and not attachments_changed:
             return
 
-        room = await self.get_room_by_message(message_id)
+        room = await self.repo.get_room_by_message(message_id)
 
-        # Save old state and update current state in database (only if text changed)
         if text_changed:
-            state = await self.edit_message_and_history(message_id, new_message)
+            state = await self.repo.edit_message_and_history(message_id, new_message)
             timestamp = int(state.time.timestamp()) * 1000
         else:
-            # If only attachments changed, use current timestamp
             timestamp = int(datetime.now().timestamp()) * 1000
 
         proxy.group_send(room.group_name, {
@@ -679,7 +566,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     @handlers.register("get-message-history")
     async def send_message_history(self, proxy: HandledMessage, message_id):
-        message_states = await self.get_message_states(message_id)
+        message_states = await self.repo.get_message_states(message_id)
         proxy.send_json({
             "message_history": message_states
         })
@@ -687,9 +574,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @handlers.register("toggle-notifications")
     async def toggle_notifications(self, proxy, room_id, enabled):
         if enabled:
-            await self.unmute_room(room_id)
+            await self.repo.unmute_room(room_id)
         else:
-            await self.mute_room(room_id)
+            await self.repo.mute_room(room_id)
+
+    @handlers.register("get-notifications-data")
+    async def get_notifications_data(self, proxy):
+        rooms = await self.repo.get_rooms_with_notifications_enabled()
+        proxy.send_json({
+            'rooms': [room.id for room in rooms]
+        })
 
     ##########################################################
     # Helper functions called by custom or built-in handlers #
@@ -698,12 +592,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     @helper_method
     async def send_online_update(self, proxy: HandledMessage, is_online):
         updated_user = self.scope['user']
-        for room_with_user in await self.find_rooms_with(updated_user):
+        for room_with_user in await self.repo.find_rooms_with(updated_user):
             user_to_notify = await database_sync_to_async(lambda x, room=room_with_user: room.get_other(x))(updated_user)
-
             if not ChatConsumer.online_registry.is_online(user_to_notify):
                 continue
-
             consumer = ChatConsumer.online_registry.get_consumer(user_to_notify)
             proxy.send_json({
                 'online_data': [{
@@ -713,176 +605,66 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 }]
             }, to_consumer=consumer)
 
-    @handlers.register("get-notifications-data")
-    async def get_notifications_data(self, proxy):
-        """
-            Returns list of rooms that have notifications enabled
-        """
-        rooms = await self.get_rooms_with_notifications_enabled()
-        proxy.send_json({
-            'rooms': [room.id for room in rooms]
-        })
-
     @helper_method
     async def send_notification(self, proxy: HandledMessage, message_id):
-        message = await self.get_message(message_id)
-        sender = await self.get_message_sender(message_id)
-        # send update to user
+        message = await self.repo.get_message(message_id)
+        sender = await self.repo.get_message_sender(message_id)
         proxy.send_json({
             "notification": {
                 'title': "Anonymous User" if message.anonymous else sender.username,
                 'body': message.text[:100],
                 'link': None,
-                'room_id': (await self.get_room_by_message(message.id)).id
+                'room_id': (await self.repo.get_room_by_message(message.id)).id
             }
         })
 
     @helper_method
     async def send_unsee_room(self, proxy, room):
-        # if user is in this room right now do not send
         if self.rooms.present(room):
             return
-
-        # send update to user
         proxy.send_json({
             "unsee_room": room.id,
         })
 
     @helper_method
     async def send_push_notification_async(self, proxy, user, message, room_id):
-        """
-        Send push notification via django-push-notifications.
-        This runs asynchronously and fires regardless of WebSocket connection state.
-        """
         try:
-            # Check if user has muted room
-            if await self.user_has_muted_room(user.id, room_id):
+            if await self.repo.user_has_muted_room(user.id, room_id):
                 return
-
-            # Check if user has "participated only" mode enabled
             participated_only = await database_sync_to_async(lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False))()
             if participated_only:
                 has_participated = await database_sync_to_async(lambda: Message.objects.filter(room_id=room_id, sender=user).exists())()
                 if not has_participated:
                     return
-
-            # Prepare notification data
             title = "Anonymous User" if message.anonymous else message.sender.username
             body = message.text[:100]
-
-            # Build deep link to room (get_site_domain does DB query, needs async wrapper)
             site_url = f"https://{domain}"
             deep_link = f"{site_url}/chat#room_id={room_id}"
-
-            # Send via django-push-notifications
-            # Use sync_to_async to call the synchronous push notification API
-            success = await self.send_push_notification_sync(user=user, title=title, body=body, deep_link=deep_link, room_id=room_id)
-
+            success = await self.repo.send_push_notification_sync(user=user, title=title, body=body, deep_link=deep_link, room_id=room_id)
             if success:
                 log.info(f"Push notification sent to user {user.id} for message {message.id}")
             else:
                 log.debug(f"No push devices active for user {user.id}")
-
         except Exception as e:
             log.error(f"Error sending push notification: {e}")
 
-    @database_sync_to_async
-    def get_room_or_error(self, room_id, user):
-        """
-        Tries to fetch a room for the user, checking permissions along the way.
-        """
-        # Check if the user is logged in
-        if not user.is_authenticated:
-            raise ClientError("USER_HAS_TO_LOGIN")
-
-        # Find the room they requested (by ID)
-        try:
-            room = Room.objects.get(pk=room_id)
-            # room = Room.objects.filter(pk=room_id, allowed=user.id).first()
-        except Room.DoesNotExist:
-            # raise ClientError("ROOM_INVALID")  # Blocks user from clicking on different room so not the best approach
-            room = Room.objects.first()
-            # TODO: Create room START autmatically if there is no public rooms at all
-        return room
-
-    @database_sync_to_async
-    def send_push_notification_sync(self, user, title, body, deep_link, room_id):
-        """
-        Synchronous push notification sending using django-push-notifications.
-        This is called via database_sync_to_async.
-        """
-        try:
-            # Track if any notification was sent
-            any_sent = False
-
-            # Send to WebPush devices (browser)
-            webpush_devices = WebPushDevice.objects.filter(user=user, active=True)
-            if webpush_devices.exists():
-                try:
-                    message = json.dumps({
-                        "title": title,
-                        "body": body,
-                        "icon": '/favicon.ico',
-                        "badge": '/favicon.ico',
-                        "data": {
-                            'click_action': deep_link,
-                            'room_id': room_id,
-                            'platform': 'webpush',  # 'webpush', 'fcm'
-                        }
-                    })
-                    webpush_devices.send_message(message)
-                    any_sent = True
-                except Exception as e:
-                    log.error(f"WebPush failed for user {user.id}: {e}")
-
-            fcm_devices = GCMDevice.objects.filter(user=user, active=True)
-            if fcm_devices.exists():
-                try:
-                    message = messaging.Message(notification=messaging.Notification(
-                        title=title,
-                        body=body,
-                    ), webpush=messaging.WebpushConfig(
-                        notification=messaging.WebpushNotification(icon=f"https://{domain}/favicon.ico"),
-                        fcm_options=messaging.WebpushFCMOptions(link=deep_link),
-                    ))
-                    fcm_devices.send_message(message)
-                    any_sent = True
-                except Exception as e:
-                    log.error(f"FCM failed for user {user.id}: {e}")
-
-            return any_sent
-
-        except Exception as e:
-            log.error(f"Error in _send_push_notification_sync: {e}")
-            return False
-
-    ###################
-    # Utility methods #
-    ###################
-
     async def handle_leave_room(self, room):
-        # Remove info that we're in the room
         self.rooms.leave(room.id)
-
-        # Remove them from the group so they no longer get room messages
         await self.channel_layer.group_discard(
             room.group_name,
             self.channel_name,
         )
 
     async def format_chat_message_data(self, event):
-        user = await self.get_user_by_id(event["user_id"])
-        vote = await self.get_vote(event['message_id'])
-
+        user = await self.repo.get_user_by_id(event["user_id"])
+        vote = await self.repo.get_vote(event['message_id'])
         event_copy = {
             **event
         }
-        del event_copy["user_id"]  # delete user id to not give away author of anonymous message
+        del event_copy["user_id"]
         del event_copy["type"]
-
         return {
-            **event_copy,  # copy event
-            # Override some of fields based on receiver
+            **event_copy,
             'username': 'Anonymous User' if event["anonymous"] else user.username if user else None,
             "new": event["new"] if self.scope['user'] != user else False,
             "your_vote": vote.vote if vote is not None else None,
@@ -892,29 +674,19 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         }
 
     def format_chat_message_data_batch(self, event, users_dict, user_votes_dict, user_reactions_dict=None):
-        """
-        Optimized version of format_chat_message_data that uses pre-fetched data
-        from get_recent_messages_batch() instead of making individual DB queries.
-        Eliminates N+1 query problem.
-        """
         sender_id = event["user_id"]
         message_id = event['message_id']
-
         user = users_dict.get(sender_id)
         vote_value = user_votes_dict.get(message_id)
         your_reactions = (user_reactions_dict or {}).get(message_id, [])
-
         event_copy = {
             **event
         }
         del event_copy["user_id"]
         del event_copy["type"]
-
-        # Extract reaction counts from the reactions dict passed via format_chat_message
         reactions = event.get('reactions', {})
         bulb_count = reactions.get('bulb', 0) if isinstance(reactions, dict) else 0
         question_count = reactions.get('question', 0) if isinstance(reactions, dict) else 0
-
         return {
             **event_copy,
             'username': 'Anonymous User' if event["anonymous"] else user.username if user else None,
@@ -931,21 +703,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     ###########################################################
 
     async def chat_message(self, event):
-        """Called when someone has messaged our chat"""
         message = await self.format_chat_message_data(event)
         await self.send_json({
             "messages": [message]
         })
 
     async def chat_vote(self, event):
-        """Send vote updates to each interested client."""
-        # copy sub dictionary, as same event object is sent to every consumer
         update = {
             **event['update_votes']
         }
         who_triggered = update['user_id']
-        # Tell client if it was this client who triggered update to highlight button
-        # None if it was not this client, event name string e.g. 'upvote' if it was
         update["your_vote"] = update['vote'] if who_triggered == self.scope["user"].id else None
         del update['vote']
         await self.send_json({
@@ -959,556 +726,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         })
 
     async def chat_reaction(self, event):
-        """ZMIANA 4B — broadcast aktualizacji reakcji emoji."""
         update = {
             **event['update_reactions']
         }
         who_triggered = update['user_id']
-        # Informuj klienta czy to on zareagował
         update['your_reaction'] = update['reaction'] if who_triggered == self.scope['user'].id else None
         await self.send_json({
             "update_reactions": update
         })
 
     async def chat_read(self, event):
-        """ZMIANA 4C — broadcast informacji o przeczytaniu wiadomości."""
         await self.send_json({
             "messages_read": event['messages_read']
         })
-
-    ###########################
-    # Sync to async functions #
-    ###########################
-
-    @database_sync_to_async
-    def get_recent_messages(self, room_id, limit=100):
-        messages = Message.objects.filter(room=room_id).select_related('sender').prefetch_related(Prefetch('attachments', queryset=MessageAttachment.objects.all()), 'messagehistory').order_by('-time')[:limit]
-
-        result = []
-        for msg in reversed(list(messages)):
-            edited = hasattr(msg, 'messagehistory')
-
-            attachments = {}
-            for attachment in msg.attachments.all():
-                attachments_of_type = attachments.get(attachment.type, [])
-                attachments_of_type.append(attachment.filename)
-                attachments[attachment.type] = attachments_of_type
-
-            # Compute upvotes/downvotes from the votes JSONField
-            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
-            upvotes = len(reactions_dict.get('upvotes', []))
-            downvotes = len(reactions_dict.get('downvotes', []))
-            bulb = len(reactions_dict.get('bulb', []))
-            question = len(reactions_dict.get('question', []))
-
-            result.append({
-                'id': msg.id,
-                'sender_id': msg.sender_id,
-                'time': msg.time,
-                'text': msg.text,
-                'room_id': msg.room_id,
-                'anonymous': msg.anonymous,
-                'upvotes': upvotes,
-                'downvotes': downvotes,
-                'bulb': bulb,
-                'question': question,
-                'edited': edited,
-                'attachments': attachments,
-            })
-
-        return result
-
-    @database_sync_to_async
-    def get_recent_messages_batch(self, room_id, user_id, limit=100, sort_by='date', order='desc', popular_only=False):
-        """
-        Optimized version that batch-fetches messages, users, and user's votes in one go.
-        Eliminates N+1 query problem by pre-fetching all users and votes upfront.
-        Returns dict with 'messages' list, 'users' dict {user_id: user_obj}, and 'user_votes' dict {message_id: vote_str}.
-
-        sort_by: 'date' (default) or 'likes'
-        order: 'asc' or 'desc'
-        popular_only: if True, only return messages with >= 1 upvote
-        """
-        # Fetch messages without annotation; we'll compute upvotes/downvotes from votes JSONField
-        qs = Message.objects.filter(room=room_id) \
-            .select_related('sender', 'reply_to__sender') \
-            .prefetch_related(
-                Prefetch('attachments', queryset=MessageAttachment.objects.all()),
-                'messagehistory'
-            )
-
-        # Compute upvotes/downvotes in Python after fetching, but for sorting by likes we need to sort by upvotes count.
-        # We'll fetch all messages first, then sort manually.
-        # For large limits this might be inefficient, but limit is 100.
-        all_messages = list(qs)
-        # Compute votes count for each message
-        for msg in all_messages:
-            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
-            msg.upvotes = len(reactions_dict.get('upvotes', []))
-            msg.downvotes = len(reactions_dict.get('downvotes', []))
-
-        if popular_only:
-            all_messages = [msg for msg in all_messages if msg.upvotes >= 1]
-
-        # Sorting
-        if sort_by == 'likes':
-            reverse = (order == 'desc')
-            all_messages.sort(key=lambda m: (m.upvotes, m.time), reverse=reverse)
-        else:
-            reverse = (order == 'desc')
-            all_messages.sort(key=lambda m: m.time, reverse=reverse)
-
-        messages = all_messages[:limit]
-
-        # Always display chronologically in UI (oldest first) when sorting by date desc
-        if sort_by == 'date' and order == 'desc':
-            messages = list(reversed(messages))
-
-        if not messages:
-            return {
-                'messages': [],
-                'users': {},
-                'user_votes': {}
-            }
-
-        # Collect unique sender IDs and message IDs
-        sender_ids = {msg.sender_id for msg in messages if msg.sender_id}
-        # message_ids = [msg.id for msg in messages]
-
-        # Batch fetch all users in one query
-        users = {}
-        if sender_ids:
-            users = {
-                u.id: u for u in User.objects.filter(id__in=sender_ids)
-            }
-
-        # Build user_votes from the votes JSONField
-        user_votes = {}
-        for msg in messages:
-            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
-            vote_up = reactions_dict.get('upvotes', [])
-            vote_down = reactions_dict.get('downvotes', [])
-            if user_id in vote_up:
-                user_votes[msg.id] = 'upvote'
-            elif user_id in vote_down:
-                user_votes[msg.id] = 'downvote'
-
-        # Build message data
-        result = []
-        for msg in messages:
-            edited = hasattr(msg, 'messagehistory')
-
-            attachments = {}
-            for attachment in msg.attachments.all():
-                attachments_of_type = attachments.get(attachment.type, [])
-                attachments_of_type.append(attachment.filename)
-                attachments[attachment.type] = attachments_of_type
-
-            reply_to_data = None
-            if msg.reply_to_id and msg.reply_to:
-                rm = msg.reply_to
-                ru = 'Anonymous User' if rm.anonymous else (rm.sender.username if rm.sender else 'Unknown')
-                plain = re.sub(r'<[^>]+>', '', rm.text)
-                reply_to_data = {
-                    'id': rm.id,
-                    'username': ru,
-                    'text_snippet': plain[:120],
-                    'author_color': _username_to_color(ru),
-                }
-
-            # Get reaction counts (bulb, question)
-            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
-            bulb_count = len(reactions_dict.get('bulb', []))
-            question_count = len(reactions_dict.get('question', []))
-
-            result.append({
-                'id': msg.id,
-                'sender_id': msg.sender_id,
-                'time': msg.time,
-                'text': msg.text,
-                'room_id': msg.room_id,
-                'anonymous': msg.anonymous,
-                'upvotes': msg.upvotes,
-                'downvotes': msg.downvotes,
-                'edited': edited,
-                'attachments': attachments,
-                'reply_to': reply_to_data,
-                'bulb_count': bulb_count,
-                'question_count': question_count,
-            })
-
-        return {
-            'messages': result,
-            'users': users,
-            'user_votes': user_votes,
-        }
-
-    @database_sync_to_async
-    def get_room(self, room_id):
-        try:
-            return Room.objects.get(id=room_id)
-        except Room.DoesNotExist:
-            raise ClientError("ROOM_INVALID") from None
-
-    @database_sync_to_async
-    def find_room_with(self, *users):
-        """ Find private 1 to 1 room with given users """
-        return Room.find_with_users(*users)
-
-    @database_sync_to_async
-    def find_rooms_with(self, *users):
-        """ Find private 1 to 1 room with given users """
-        # convert to list to avoid lazy evaluation inside async context
-        return list(Room.find_all_with_users(*users))
-
-    @database_sync_to_async
-    def find_private_rooms_for_user_pairs(self, user, other_user_ids):
-        """
-        Optimized batch version: Find all private 1-to-1 rooms between the given user
-        and multiple other users. Returns a dictionary mapping other_user_id to Room.
-        """
-        return Room.find_private_rooms_for_user_pairs(user, other_user_ids)
-
-    @database_sync_to_async
-    def get_user_by_id(self, id):
-        if id is None:
-            log.debug("Attempted to fetch user with ID None; returning None")
-            return None
-        try:
-            return User.objects.get(id=id)
-        except User.DoesNotExist:
-            log.error(f"User with ID {id} does not exist")
-            return None
-
-    @database_sync_to_async
-    def get_user_by_name(self, user):
-        try:
-            u = User.objects.get(username=user)
-            return u
-        except User.DoesNotExist:
-            log.error(f"User {user} does not exist")
-            return None
-
-    @database_sync_to_async
-    def save_message(self, message):
-        message.save()
-        return message.id
-
-    @database_sync_to_async
-    def get_own_latest_message(self, room):
-        return room.messages.filter(sender=self.scope['user']).order_by("-time").first()
-
-    @database_sync_to_async
-    def room_is_seen(self, room):
-        return room.messages.all().count() == 0 or self.scope['user'].seen_rooms.filter(id=room.id).exists()
-
-    @database_sync_to_async
-    def see_room(self, room):
-        room.seen_by.add(self.scope['user'])
-
-    @database_sync_to_async
-    def unsee_room(self, room):
-        room.seen_by.remove(self.scope['user'])
-
-    @database_sync_to_async
-    def get_message(self, message_id):
-        try:
-            return Message.objects.get(pk=message_id)
-        except Message.DoesNotExist:
-            log.error(f"Message with ID {message_id} does not exist")
-            return None
-
-    @database_sync_to_async
-    def add_vote(self, event: str, message_id: int):
-        """Add a vote directly to the message's reactions JSONField."""
-        m = Message.objects.get(pk=message_id)
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
-        user_id = self.scope['user'].id
-
-        # Initialize lists if not present
-        if 'upvotes' not in reactions_dict:
-            reactions_dict['upvotes'] = []
-        if 'downvotes' not in reactions_dict:
-            reactions_dict['downvotes'] = []
-
-        # Remove from both lists first (in case user is changing vote)
-        if user_id in reactions_dict['upvotes']:
-            reactions_dict['upvotes'].remove(user_id)
-        if user_id in reactions_dict['downvotes']:
-            reactions_dict['downvotes'].remove(user_id)
-
-        # Add to appropriate list
-        if event == 'upvote':
-            reactions_dict['upvotes'].append(user_id)
-        else:
-            reactions_dict['downvotes'].append(user_id)
-
-        m.reactions = reactions_dict
-        m.save(update_fields=['reactions'])
-
-        return len(reactions_dict.get('upvotes', [])), len(reactions_dict.get('downvotes', []))
-
-    @database_sync_to_async
-    def remove_vote(self, event: str, message_id: int):
-        """Remove a vote directly from the message's reactions JSONField."""
-        m = Message.objects.get(pk=message_id)
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
-        user_id = self.scope['user'].id
-
-        # Remove from appropriate list
-        if event == 'upvote' and user_id in reactions_dict.get('upvotes', []):
-            reactions_dict['upvotes'].remove(user_id)
-        elif event == 'downvote' and user_id in reactions_dict.get('downvotes', []):
-            reactions_dict['downvotes'].remove(user_id)
-
-        m.reactions = reactions_dict
-        m.save(update_fields=['reactions'])
-
-        return len(reactions_dict.get('upvotes', [])), len(reactions_dict.get('downvotes', []))
-
-    @database_sync_to_async
-    def get_vote(self, message_id: int):
-        """Check the reactions JSONField on the message."""
-        try:
-            m = Message.objects.get(pk=message_id)
-        except Message.DoesNotExist:
-            return None
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
-        user_id = self.scope['user'].id
-
-        if user_id in reactions_dict.get('upvotes', []):
-            return type('Vote', (), {
-                'vote': 'upvote'
-            })()
-        elif user_id in reactions_dict.get('downvotes', []):
-            return type('Vote', (), {
-                'vote': 'downvote'
-            })()
-        return None
-
-    @database_sync_to_async
-    def get_room_by_message(self, message_id: int):
-        try:
-            return Message.objects.get(pk=message_id).room
-        except Message.DoesNotExist:
-            log.error(f"Message with ID {message_id} does not exist")
-            return None
-
-    @database_sync_to_async
-    def edit_message_and_history(self, message_id: int, new_message: str):
-        """
-        Save current message state as old and update message text
-        """
-        message = Message.objects.get(pk=message_id)
-
-        # Each message has one associated history object
-        msg_history, created = MessageHistory.objects.get_or_create(message=message)
-
-        # Create old message state based on current message text
-        state = MessageHistoryEntry.objects.create(history=msg_history, text=message.text)
-
-        # Update current text
-        message.text = new_message
-        message.save(update_fields=('text',))
-        return state
-
-    @database_sync_to_async
-    def get_message_sender(self, message):
-        if isinstance(message, (int, str)):
-            return Message.objects.get(pk=message).sender
-        return message.sender
-
-    @database_sync_to_async
-    def get_message_states(self, message_id):
-        history = MessageHistory.objects.filter(message_id=message_id)
-        if not history.exists():
-            return []
-        history = history.first()
-        states = [{
-            "text": state.text,
-            "timestamp": int(state.time.timestamp()) * 1000
-        } for state in history.entries.all().order_by("time")]
-        return states
-
-    @database_sync_to_async
-    def save_attachments(self, message_id, attachments):
-        for attachment_type, filenames in attachments.items():
-            for filename in filenames:
-                MessageAttachment.objects.create(message_id=message_id, type=attachment_type, filename=filename)
-
-    @database_sync_to_async
-    def load_attachments(self, message_id):
-        attachments = {}
-        for attachment in MessageAttachment.objects.filter(message_id=message_id):
-            attachments_of_type = attachments.get(attachment.type, [])
-            attachments_of_type.append(attachment.filename)
-            attachments[attachment.type] = attachments_of_type
-        return attachments
-
-    @database_sync_to_async
-    def remove_attachments(self, message_id, filenames):
-        """Remove specific attachments from a message"""
-        for filename in filenames:
-            MessageAttachment.objects.filter(message_id=message_id, filename=filename).delete()
-
-    @database_sync_to_async
-    def get_message_history(self, message_id):
-        return list(MessageHistoryEntry.objects.filter(history__message_id=message_id))
-
-    @database_sync_to_async
-    def has_muted_room(self, room_id):
-        # Single query using through table instead of fetching room then filtering muted_by
-        return Room.muted_by.through.objects.filter(room_id=room_id, user_id=self.scope['user'].id).exists()
-
-    @database_sync_to_async
-    def user_has_muted_room(self, user_id, room_id):
-        # Single query using through table instead of fetching room then filtering muted_by
-        return Room.muted_by.through.objects.filter(room_id=room_id, user_id=user_id).exists()
-
-    @database_sync_to_async
-    def unmute_room(self, room_id):
-        Room.objects.get(pk=room_id).muted_by.remove(self.scope['user'])
-
-    @database_sync_to_async
-    def mute_room(self, room_id):
-        room = Room.objects.get(pk=room_id)
-        user = self.scope['user']
-        if not room.muted_by.filter(id=user.id).exists():
-            room.muted_by.add(self.scope['user'])
-
-    @database_sync_to_async
-    def allowed_in_room(self, room):
-        return room.allowed.filter(id=self.scope['user'].id).exists()
-
-    @database_sync_to_async
-    def get_rooms_with_notifications_enabled(self):
-        """
-        Returns list of rooms where:
-        1. User is in the allowed list
-        2. User has NOT muted notifications for the room
-        """
-        user = self.scope['user']
-        return list(Room.objects.filter(allowed=user).exclude(muted_by=user))
-
-    # ── ZMIANA 2 — cytowanie ────────────────────────────────────────
-
-    @database_sync_to_async
-    def get_reply_to_data(self, message_id: int):
-        """Pobiera dane cytowanej wiadomości do wyświetlenia w mini-pill."""
-        try:
-            msg = Message.objects.select_related('sender').get(pk=message_id)
-            username = 'Anonymous User' if msg.anonymous else (msg.sender.username if msg.sender else 'Unknown')
-            # Snippet 120 znaków z treści (tekst widzialny, bez HTML)
-            plain = re.sub(r'<[^>]+>', '', msg.text)
-            snippet = plain[:120]
-            return {
-                'id': msg.id,
-                'username': username,
-                'text_snippet': snippet,
-                # Kolor autora (hash username → hue dla border-left)
-                'author_color': _username_to_color(username),
-            }
-        except Message.DoesNotExist:
-            return None
-
-    # ── ZMIANA 4B — emoji-reakcje ────────────────────────────────────
-
-    @database_sync_to_async
-    def toggle_reaction(self, reaction: str, message_id: int) -> bool:
-        """Toggle reakcji dla bieżącego użytkownika. Zwraca True jeśli dodano, False jeśli usunięto."""
-        m = Message.objects.get(pk=message_id)
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
-        user_id = self.scope['user'].id
-
-        # Initialize list if not present
-        if reaction not in reactions_dict:
-            reactions_dict[reaction] = []
-
-        # Toggle: if user_id in list, remove it; otherwise add it
-        if user_id in reactions_dict[reaction]:
-            reactions_dict[reaction].remove(user_id)
-            added = False
-        else:
-            reactions_dict[reaction].append(user_id)
-            added = True
-
-        m.reactions = reactions_dict
-        m.save(update_fields=['reactions'])
-        return added
-
-    @database_sync_to_async
-    def get_reaction_counts(self, message_id: int) -> dict:
-        """Zwraca słownik {reaction: count} dla danej wiadomości."""
-        try:
-            m = Message.objects.get(pk=message_id)
-        except Message.DoesNotExist:
-            return {
-                'bulb': 0,
-                'question': 0
-            }
-
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
-        return {
-            'bulb': len(reactions_dict.get('bulb', [])),
-            'question': len(reactions_dict.get('question', []))
-        }
-
-    @database_sync_to_async
-    def get_user_reactions(self, user_id: int, message_id: int) -> list:
-        """Zwraca listę reakcji danego użytkownika dla wiadomości."""
-        try:
-            m = Message.objects.get(pk=message_id)
-        except Message.DoesNotExist:
-            return []
-
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
-        result = []
-        for reaction_type, user_list in reactions_dict.items():
-            if reaction_type in ('bulb', 'question') and user_id in user_list:
-                result.append(reaction_type)
-        return result
-
-    # ── ZMIANA 4C — "przeczytane przez" ─────────────────────────────
-
-    @database_sync_to_async
-    def mark_message_read(self, message_id: int):
-        """Oznacza wiadomość jako przeczytaną przez bieżącego użytkownika."""
-        MessageReadBy.objects.get_or_create(
-            message_id=message_id,
-            user=self.scope['user'],
-        )
-
-    @database_sync_to_async
-    def get_read_by_data(self, message_id: int) -> list:
-        """Zwraca listę {user_id, username, avatar_url} dla wiadomości."""
-        entries = (MessageReadBy.objects.filter(message_id=message_id).select_related('user__profile').order_by('id')[:10])
-        result = []
-        for entry in entries:
-            user = entry.user
-            avatar_url = _get_avatar_url(user)
-            result.append({
-                'user_id': user.id,
-                'username': user.username,
-                'avatar_url': avatar_url,
-            })
-        return result
-
-
-# ── Funkcje pomocnicze (poza klasą) ─────────────────────────────────────────
-
-
-def _username_to_color(username: str) -> str:
-    """Deterministyczny kolor hex dla nazwy użytkownika (na potrzeby cytatu border-left)."""
-    hue = sum(ord(c) for c in username) % 360
-    return f"hsl({hue}, 60%, 55%)"
-
-
-def _get_avatar_url(user) -> str:
-    """Pobierz URL avatara użytkownika. Fallback do inicjałów przez placeholder."""
-    try:
-        profile = user.profile
-        if profile.avatar:
-            return profile.avatar.url
-    except Exception:
-        pass
-    return "/static/home/images/favicon.ico"

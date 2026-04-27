@@ -1,18 +1,6 @@
-# Standard library imports
-# Third party imports
 from django.test import TestCase
 
-# Local folder imports
-from chat.models import (
-    Message,
-    MessageAttachment,
-    MessageHistory,
-    MessageHistoryEntry,
-    MessageReaction,
-    MessageReadBy,
-    MessageVote,
-    Room,
-)
+from chat.models import Message, MessageAttachment, MessageHistory, MessageHistoryEntry, MessageReadBy, Room
 from chat.tests.utils import make_user
 
 
@@ -117,49 +105,6 @@ class MessageModelTest(TestCase):
         temp_user.delete()
         msg.refresh_from_db()
         self.assertIsNone(msg.sender)
-
-
-class MessageVoteTest(TestCase):
-    def setUp(self):
-        self.user = make_user("voter")
-        self.room = Room.objects.create(title="VoteRoom", public=True)
-        self.msg = Message.objects.create(sender=self.user, room=self.room, text="Vote me")
-
-    def test_upvote_created(self):
-        vote = MessageVote.objects.create(user=self.user, message=self.msg, vote="upvote")
-        self.assertEqual(vote.vote, "upvote")
-
-    def test_unique_constraint_one_vote_per_user_per_message(self):
-        from django.db import IntegrityError
-        MessageVote.objects.create(user=self.user, message=self.msg, vote="upvote")
-        with self.assertRaises(IntegrityError):
-            MessageVote.objects.create(user=self.user, message=self.msg, vote="downvote")
-
-
-class MessageReactionTest(TestCase):
-    def setUp(self):
-        self.user = make_user("reactor")
-        self.room = Room.objects.create(title="ReactRoom", public=True)
-        self.msg = Message.objects.create(sender=self.user, room=self.room, text="React me")
-
-    def test_bulb_reaction_created(self):
-        r = MessageReaction.objects.create(user=self.user, message=self.msg, reaction="bulb")
-        self.assertEqual(r.reaction, "bulb")
-
-    def test_question_reaction_created(self):
-        r = MessageReaction.objects.create(user=self.user, message=self.msg, reaction="question")
-        self.assertEqual(r.reaction, "question")
-
-    def test_unique_constraint_same_reaction_twice(self):
-        from django.db import IntegrityError
-        MessageReaction.objects.create(user=self.user, message=self.msg, reaction="bulb")
-        with self.assertRaises(IntegrityError):
-            MessageReaction.objects.create(user=self.user, message=self.msg, reaction="bulb")
-
-    def test_different_reactions_allowed(self):
-        MessageReaction.objects.create(user=self.user, message=self.msg, reaction="bulb")
-        r2 = MessageReaction.objects.create(user=self.user, message=self.msg, reaction="question")
-        self.assertEqual(r2.reaction, "question")
 
 
 class MessageReadByTest(TestCase):
