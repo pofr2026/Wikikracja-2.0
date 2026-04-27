@@ -179,10 +179,18 @@ document.addEventListener('DOMContentLoaded', () => {
             DOM_API.setRoomNotifications(parseInt(btn.dataset.roomId), enabledRooms.has(parseInt(btn.dataset.roomId)));
         });
 
+        // On reconnect: rejoin the current room (server lost state after disconnect)
+        if (CurrentRoomId) {
+            const roomToRejoin = CurrentRoomId;
+            CurrentRoomId = null; // reset so onRoomTryJoin doesn't short-circuit
+            onRoomTryJoin(roomToRejoin);
+            return;
+        }
+
         let room_id = 0;
         if (window.location.hash) {
             const obj = parseParms(window.location.hash.slice(1));
-            if (obj.room_id) room_id = obj.room_id;
+            if (obj.room_id) room_id = parseInt(obj.room_id);
             if (obj.message_id) ScrollToMessageId = obj.message_id;
         }
 
@@ -306,7 +314,8 @@ function deriveBreadcrumb(room_id) {
 }
 
 export async function onRoomTryJoin(room_id) {
-    if (room_id == CurrentRoomId) return; // already in this room
+    room_id = parseInt(room_id);
+    if (room_id === CurrentRoomId) return; // already in this room
     if (RoomLock.locked()) await RoomLock.wait();
     if (CurrentRoomId) await onRoomTryLeave(false);
 
@@ -378,8 +387,8 @@ export async function onRoomTryLeave(sync_with_server) {
  * @param {Array} messages - Array of message objects from server
  */
 export async function onReceiveMessages(messages) {
-    const room_id = messages[0].room_id;
-    if (room_id != CurrentRoomId) {
+    const room_id = parseInt(messages[0].room_id);
+    if (room_id !== CurrentRoomId) {
         console.warn("received message for wrong room");
         return;
     }
@@ -387,14 +396,15 @@ export async function onReceiveMessages(messages) {
     const msgdiv = DOM_API.getMessagesDiv();
     DOM_API.removeNoMessagesBanner();
 
-    for (const message of messages) {
+    if (messages.length === 1) {
+        // Single message (real-time) — normal path
+        const message = messages[0];
         const current_banner = formatDate(message.timestamp);
         const banners = DOM_API.getLastMessageBanner();
         const previous_banner = banners.length ? banners[banners.length - 1].textContent : null;
         if (previous_banner != current_banner) {
             msgdiv.insertAdjacentHTML('beforeend', `<div class='date-banner'>${current_banner}</div>`);
         }
-
         DOM_API.addMessage(
             message.room_id, message.message_id, message.username, message.message,
             message.upvotes, message.downvotes, message.your_vote, message.own, message.edited,
@@ -404,13 +414,38 @@ export async function onReceiveMessages(messages) {
             message.your_reactions ?? [],
             message.read_by ?? []
         );
-
         if (message.new && document.hidden && !message.own) {
             makeNotification({ title: message.username, body: message.message });
         }
-        if (message.your_vote/* You voted for this message e.g. 'upvote' or 'downvote' */) {
-            // find message div and make button appear active
-            DOM_API.getVoteDiv(message.message_id, message.your_vote)?.classList.add('active');
+    } else {
+        // Batch load (join room) — build all HTML at once, single DOM insertion
+        let batchHtml = '';
+        let lastBannerText = DOM_API.getLastMessageBanner();
+        lastBannerText = lastBannerText.length ? lastBannerText[lastBannerText.length - 1].textContent : null;
+
+        for (const message of messages) {
+            const current_banner = formatDate(message.timestamp);
+            if (current_banner !== lastBannerText) {
+                batchHtml += `<div class='date-banner'>${current_banner}</div>`;
+                lastBannerText = current_banner;
+            }
+            batchHtml += DOM_API.buildMessageHtml(
+                message.room_id, message.message_id, message.username, message.message,
+                message.upvotes, message.downvotes, message.your_vote, message.own, message.edited,
+                message.attachments, message.timestamp, message.latest_timestamp,
+                message.reply_to ?? null,
+                message.reactions ?? { bulb: 0, question: 0 },
+                message.your_reactions ?? [],
+                message.read_by ?? []
+            );
+        }
+        if (batchHtml) msgdiv.insertAdjacentHTML('beforeend', batchHtml);
+
+        // Apply active vote states after batch insert
+        for (const message of messages) {
+            if (message.your_vote) {
+                DOM_API.getVoteDiv(message.message_id, message.your_vote)?.classList.add('active');
+            }
         }
     }
 

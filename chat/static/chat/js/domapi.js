@@ -43,8 +43,8 @@ export default class DomApi {
         return room ? $('.messages', room) : null;
     }
 
-    addMessage(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
-        const html = Message({
+    buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
+        return Message({
             room_id, message_id, username,
             message: this.formatMessage(message),
             upvotes, downvotes, vote, own, edited, attachments,
@@ -55,6 +55,10 @@ export default class DomApi {
             your_reactions: your_reactions ?? [],
             read_by: read_by ?? [],
         });
+    }
+
+    addMessage(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
+        const html = this.buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to, reactions, your_reactions, read_by);
 
         this.getMessagesDiv()?.insertAdjacentHTML('beforeend', html);
         this.getVoteDiv(message_id, vote)?.classList.add('active');
