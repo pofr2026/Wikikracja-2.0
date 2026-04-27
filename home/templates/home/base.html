@@ -110,6 +110,15 @@
           </a>
         </li>
 
+        <li class="nav-item">
+          <a href="{% url 'chat:chat' %}"
+             title="{% trans 'Chat' %}"
+             class="{% if request.resolver_match.namespace == 'chat' %}active{% endif %}">
+            <i class="fas fa-fw fa-comment-dots nav-icon"></i>
+            <span class="nav-text">{% trans "Chat" %}</span>
+          </a>
+        </li>
+
       </ul>
     </nav>
 
