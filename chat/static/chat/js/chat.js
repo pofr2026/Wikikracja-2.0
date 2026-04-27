@@ -8,6 +8,7 @@ import DomApi from './domapi.js';
 import { MessageHistory } from './templates.js';
 import { $, $$, _, formatDate, formatDateTime, Lock, makeNotification, parseParms } from './utility.js';
 import WsApi from './wsapi.js';
+import { setReplyTarget as coreSetReplyTarget, clearReplyTarget as coreClearReplyTarget } from './chat-core.js';
 
 /**
  * Global WebSocket API instance
@@ -576,22 +577,17 @@ export async function onRoomSeen(room_id) {
  * Updates the reply-preview bar in the input area.
  */
 export function setReplyTarget(message_id, username, snippet) {
-    currentReplyId = message_id;
     const preview = document.getElementById('reply-preview');
     const previewText = document.getElementById('reply-preview-text');
-    if (preview && previewText) {
-        previewText.textContent = `${username}: ${snippet}`;
-        preview.style.display = '';
-    }
+    currentReplyId = coreSetReplyTarget(message_id, username, snippet, preview, previewText);
 }
 
 /**
  * Clear the current reply target.
  */
 export function clearReplyTarget() {
-    currentReplyId = null;
     const preview = document.getElementById('reply-preview');
-    if (preview) preview.style.display = 'none';
+    currentReplyId = coreClearReplyTarget(preview);
 }
 
 /**

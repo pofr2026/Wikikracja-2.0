@@ -14,6 +14,7 @@ import {
     removeNotification,
     setCaretPosition
 } from './utility.js';
+import { formatMessage as coreFormatMessage } from './chat-core.js';
 
 /**
  * DOM API class for managing chat interface DOM operations
@@ -165,15 +166,7 @@ export default class DomApi {
     }
 
     formatMessage(raw_message) {
-        const ALLOWED_TAGS = ['b', 'i', 'u', 'br'];
-        const clean = (typeof DOMPurify !== 'undefined')
-            ? DOMPurify.sanitize(raw_message, { ALLOWED_TAGS, ALLOWED_ATTR: [] })
-            : escapeHtml(raw_message);
-        const URL_REGEX = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/g;
-        return clean.replace(URL_REGEX, (match) => {
-            const isInternal = match.replace(/^https?/, 'http').startsWith(window.location.origin.replace(/^https?/, 'http'));
-            return `<a href='${match}'${isInternal ? '' : ' target="_blank" rel="noopener"'}>${match}</a>`;
-        });
+        return coreFormatMessage(raw_message);
     }
 
     getPreviewDiv() {

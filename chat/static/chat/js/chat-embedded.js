@@ -10,7 +10,7 @@
 import { Message } from './templates.js';
 import { _, formatDate, formatTime } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
-
+import { getInputHtml, updateCounter, uploadFiles, formatMessage, setReplyTarget, clearReplyTarget, handleEnterKey } from './chat-core.js';
 
 /**
  * Inicjalizuje embedded chat dla podanego elementu DOM.
@@ -84,51 +84,7 @@ async function initEmbeddedChat(container) {
     let isAnonymous = false;
     let selectedFiles = [];
 
-    // ── 2. Helpers ────────────────────────────────────────────────────────────
-
-    function formatMessage(raw) {
-        const ALLOWED_TAGS = ['b', 'i', 'u', 'br'];
-        const clean = (typeof DOMPurify !== 'undefined')
-            ? DOMPurify.sanitize(raw, { ALLOWED_TAGS, ALLOWED_ATTR: [] })
-            : raw.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        const URL_REGEX = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*)/g;
-        return clean.replace(URL_REGEX, (url) => {
-            const isInternal = url.replace(/^https?/, 'http').startsWith(window.location.origin.replace(/^https?/, 'http'));
-            return `<a href="${url}"${isInternal ? '' : ' target="_blank" rel="noopener"'}>${url}</a>`;
-        });
-    }
-
-    function getInputHtml() {
-        const ALLOWED_TAGS = ['b', 'i', 'u', 'br'];
-        const BLOCK = new Set(['DIV', 'P', 'SECTION', 'BLOCKQUOTE', 'LI']);
-        function serialize(node, isFirst) {
-            if (node.nodeType === Node.TEXT_NODE) return node.textContent;
-            if (node.nodeType !== Node.ELEMENT_NODE) return '';
-            const tag = node.tagName.toUpperCase();
-            if (tag === 'BR') return '<br>';
-            const inner = Array.from(node.childNodes).map((c, i) => serialize(c, i === 0)).join('');
-            if (BLOCK.has(tag)) return (isFirst ? '' : '<br>') + inner;
-            if (tag === 'B') return `<b>${inner}</b>`;
-            if (tag === 'I') return `<i>${inner}</i>`;
-            if (tag === 'U') return `<u>${inner}</u>`;
-            return inner;
-        }
-        const html = Array.from(inputEl.childNodes).map((c, i) => serialize(c, i === 0)).join('');
-        return (typeof DOMPurify !== 'undefined')
-            ? DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR: [] })
-            : html.replace(/<(?!\/?(?:b|i|u|br)\b)[^>]*>/gi, '');
-    }
-
-    function updateCounter() {
-        const len = (inputEl.textContent || '').length;
-        const rem = EC_MAX - len;
-        if (counterVal) counterVal.textContent = rem;
-        if (!counterEl) return;
-        counterEl.classList.remove('counter--warn', 'counter--error');
-        if (rem <= 0 || rem <= 10) counterEl.classList.add('counter--error');
-        else if (rem <= 50) counterEl.classList.add('counter--warn');
-        if (sendBtn) sendBtn.disabled = rem <= 0;
-    }
+    // ── 2. Helpers (imported from chat-core.js) ─────────────────────────────
 
     function updateToolbarState() {
         container.querySelectorAll('.fmt-btn').forEach(btn => {
@@ -137,7 +93,6 @@ async function initEmbeddedChat(container) {
     }
 
     function appendMessage(msg) {
-
         const dateStr = formatDate(msg.timestamp);
         if (dateStr !== lastDateBanner) {
             lastDateBanner = dateStr;
@@ -180,60 +135,8 @@ async function initEmbeddedChat(container) {
         if (timeEl) timeEl.textContent = formatTime(latest_timestamp);
     }
 
-    function setReplyTarget(message_id, username, snippet) {
-        currentReplyId = message_id;
-        if (replyPreview && replyPreviewText) {
-            replyPreviewText.textContent = `${username}: ${snippet}`;
-            replyPreview.style.display = '';
-        }
-    }
-
-    function clearReplyTarget() {
-        currentReplyId = null;
-        if (replyPreview) replyPreview.style.display = 'none';
-    }
-
-    async function uploadFiles(files) {
-        if (!files || files.length === 0) {
-            return { filenames: [] };
-        }
-
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            const formData = new FormData();
-
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                if (file.size > 10000000) {
-                    alert('File is too big');
-                    continue;
-                }
-                formData.append('files', file);
-            }
-
-            xhr.onreadystatechange = () => {
-                if (xhr.readyState === 4 && xhr.status === 200) {
-                    try {
-                        const response = JSON.parse(xhr.responseText);
-                        resolve(response);
-                    } catch (e) {
-                        reject(e);
-                    }
-                }
-            };
-
-            xhr.onerror = () => {
-                reject(new Error('Upload failed'));
-            };
-
-            xhr.open('POST', '/chat/upload/', true);
-            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
-            xhr.send(formData);
-        });
-    }
-
     function sendMessage() {
-        const html = getInputHtml();
+        const html = getInputHtml(inputEl);
         const text = (inputEl.textContent || '').trim();
         if (!text && selectedFiles.length === 0) return;
         if (!joined) return;
@@ -251,12 +154,12 @@ async function initEmbeddedChat(container) {
                     ...(currentReplyId ? { reply_to_id: currentReplyId } : {}),
                 });
                 inputEl.innerHTML = '';
-                clearReplyTarget();
+                currentReplyId = clearReplyTarget(replyPreview);
                 selectedFiles = [];
                 fileInput.value = '';
                 if (previewContainer) previewContainer.style.display = 'none';
                 if (previewImagesDiv) previewImagesDiv.innerHTML = '';
-                updateCounter();
+                updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
             }).catch((err) => {
                 console.error('Upload error:', err);
             });
@@ -270,8 +173,8 @@ async function initEmbeddedChat(container) {
                 ...(currentReplyId ? { reply_to_id: currentReplyId } : {}),
             });
             inputEl.innerHTML = '';
-            clearReplyTarget();
-            updateCounter();
+            currentReplyId = clearReplyTarget(replyPreview);
+            updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
         }
     }
 
@@ -424,7 +327,7 @@ async function initEmbeddedChat(container) {
         });
     }
 
-    inputEl.addEventListener('input', updateCounter);
+    inputEl.addEventListener('input', () => updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX));
 
     inputEl.addEventListener('paste', (e) => {
         e.preventDefault();
@@ -434,7 +337,7 @@ async function initEmbeddedChat(container) {
         const selLen = sel?.toString().length ?? 0;
         const available = EC_MAX - currentLen + selLen;
         document.execCommand('insertText', false, pasted.slice(0, Math.max(0, available)));
-        updateCounter();
+        updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
     });
 
     inputEl.addEventListener('keydown', (e) => {
@@ -442,7 +345,8 @@ async function initEmbeddedChat(container) {
         if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); updateToolbarState(); return; }
         if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
         if (mod && e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateToolbarState(); return; }
-        if (e.key === 'Enter' && mod) { e.preventDefault(); submitInput(); return; }
+        // Handle Enter key via chat-core
+        if (handleEnterKey(e, submitInput)) return;
         // zwykły Enter = nowa linia (domyślne zachowanie contenteditable)
     });
 
@@ -459,17 +363,21 @@ async function initEmbeddedChat(container) {
     });
 
     // Anuluj odpowiedź
-    container.querySelector('.ec-reply-cancel')?.addEventListener('click', clearReplyTarget);
+    container.querySelector('.ec-reply-cancel')?.addEventListener('click', () => {
+        currentReplyId = clearReplyTarget(replyPreview);
+    });
 
     // Delegacja kliknięć wewnątrz messagesEl
     messagesEl.addEventListener('click', (e) => {
         // Cytowanie
         const replyBtn = e.target.closest('.reply-btn');
         if (replyBtn) {
-            setReplyTarget(
+            currentReplyId = setReplyTarget(
                 replyBtn.dataset.messageId,
                 replyBtn.dataset.username,
                 replyBtn.dataset.snippet,
+                replyPreview,
+                replyPreviewText
             );
             inputEl.focus();
             return;
@@ -505,7 +413,7 @@ async function initEmbeddedChat(container) {
             inputEl.innerHTML = msgText;
             inputEl.style.borderColor = 'var(--color-warning)';
             inputEl.focus();
-            updateCounter();
+            updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
             return;
         }
 
@@ -524,11 +432,11 @@ async function initEmbeddedChat(container) {
 
     function submitInput() {
         if (inputEl.dataset.editMessage) {
-            ws.sendJson({ command: 'edit-message', message_id: parseInt(inputEl.dataset.editMessage), new_message: getInputHtml() });
+            ws.sendJson({ command: 'edit-message', message_id: parseInt(inputEl.dataset.editMessage), new_message: getInputHtml(inputEl) });
             delete inputEl.dataset.editMessage;
             inputEl.innerHTML = '';
             inputEl.style.borderColor = '';
-            updateCounter();
+            updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
         } else {
             sendMessage();
         }
@@ -541,7 +449,7 @@ async function initEmbeddedChat(container) {
             delete inputEl.dataset.editMessage;
             inputEl.innerHTML = '';
             inputEl.style.borderColor = '';
-            updateCounter();
+            updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
         }
     });
 
