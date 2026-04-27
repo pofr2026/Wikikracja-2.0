@@ -20,9 +20,3 @@ def site_description(request):
         'site_description': settings.SITE_DESCRIPTION,
         'app_version': settings.APP_VERSION,
     }
-
-
-def vapid_public_key(request):
-    return {
-        'vapid_public_key': settings.PUSH_NOTIFICATIONS['WEBPUSH'].get('VAPID_PUBLIC_KEY', '')
-    }

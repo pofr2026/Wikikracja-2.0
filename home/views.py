@@ -919,6 +919,14 @@ def firebase_messaging_sw(request):
     return response
 
 
+def vapid_config(request: HttpRequest):
+    """Serve dynamic JS file with various settings for js scripts"""
+    js_content = f"export const VAPID_PUBLIC_KEY = '{settings.VAPID_PUBLIC_KEY}';\n"
+    response = HttpResponse(js_content, content_type='application/javascript')
+    response['Cache-Control'] = 'public, max-age=3600'  # Cache for 1 hour
+    return response
+
+
 @login_required
 def onboarding_posts_for_category(request):
     cat_id = request.GET.get('cat_id')

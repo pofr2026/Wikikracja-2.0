@@ -191,7 +191,6 @@ TEMPLATES = [
                 'django.template.context_processors.media',
                 'zzz.context_processors.footer',
                 'zzz.context_processors.site_description',
-                'zzz.context_processors.vapid_public_key',
             ],
             'debug': False
         },
@@ -440,11 +439,7 @@ DEBUG_SKIP_AUTH = env_bool("DEBUG_SKIP_AUTH", False)
 # Push Notifications Configuration
 #########################
 
-PUSH_NOTIFICATIONS = {
-    'WEBPUSH': {
-        'VAPID_PUBLIC_KEY': getenv('VAPID_PUBLIC_KEY', ''),
-    }
-}
+VAPID_PUBLIC_KEY = getenv('VAPID_PUBLIC_KEY', '')
 
 # Initialize the default app (either use `GOOGLE_APPLICATION_CREDENTIALS` environment variable, or pass a firebase_admin.credentials.Certificate instance)
 FIREBASE_CERT_PATH = getenv('FIREBASE_CERT_PATH', '')

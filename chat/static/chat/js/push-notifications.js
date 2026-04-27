@@ -1,3 +1,5 @@
+import { VAPID_PUBLIC_KEY } from '/dynamic-settings.js';
+
 document.addEventListener('DOMContentLoaded', async function() {
     const enabled = await PushNotificationManager.initialize();
     console.log('Push notifications enabled:', enabled);
@@ -30,13 +32,13 @@ const PushNotificationManager = {
                 return false;
             }
 
-            if (!window.VAPID_PUBLIC_KEY || window.VAPID_PUBLIC_KEY.trim() === '') {
+            if (!VAPID_PUBLIC_KEY || VAPID_PUBLIC_KEY.trim() === '') {
                 console.error('VAPID public key is empty or missing. Please set VAPID_PUBLIC_KEY in your .env file.');
                 return false;
             }
             const subscription = await swRegistration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: window.VAPID_PUBLIC_KEY
+                applicationServerKey: VAPID_PUBLIC_KEY
             });
             await this.registerDevice('webpush', subscription);
             return true;

@@ -36,11 +36,6 @@
 	<!-- Firebase SDK (for FCM on Android) , needed for initFCM -->
   <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/12.10.0/firebase-messaging-compat.js"></script>
-
-  <script>
-    window.VAPID_PUBLIC_KEY = "{{ vapid_public_key|default:'' }}";
-  </script>
-  <!-- Push notifications manager must be after window.VAPID_PUBLIC_KEY -->
   <script src="{% static 'chat/js/push-notifications.js' %}" type="module"></script>
   <script src="{% static 'chat/js/notifications.js' %}" type="module"></script>
 
