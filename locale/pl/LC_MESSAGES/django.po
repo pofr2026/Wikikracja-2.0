@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-27 19:09+0200\n"
+"POT-Creation-Date: 2026-04-28 00:52+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -562,7 +562,7 @@ msgstr "Partnerzy"
 #: .\obywatele\templates\obywatele\assets.html:10
 #: .\obywatele\templates\obywatele\menu.html:20
 msgid "Assets"
-msgstr "Zasoby"
+msgstr "Aktywa"
 
 #: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:12
 #: .\bookkeeping\templates\bookkeeping\asset_form.html:13
@@ -643,7 +643,7 @@ msgstr "Powrót do Kategorii"
 
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:82
 msgid "Yes, Delete Category"
-msgstr "Tak, usuń Partnera"
+msgstr "Tak, usuń Kategorię"
 
 #: .\bookkeeping\templates\bookkeeping\category_form.html:26
 msgid "Update Category"
@@ -2078,16 +2078,16 @@ msgstr "Agora / Demokracja"
 
 #: .\home\templates\home\base.html:94 .\home\templates\home\base.html:97
 msgid "Action"
-msgstr "Działanie"
+msgstr "Działania"
 
 #: .\home\templates\home\base.html:103 .\home\templates\home\base.html:106
 msgid "Knowledge Base"
-msgstr "Baza Wiedzy"
+msgstr "Baza wiedzy"
 
 #: .\home\templates\home\base.html:112 .\home\templates\home\base.html:115
 #: .\obywatele\templates\obywatele\wspolnota.html:9
 msgid "Community"
-msgstr "Wspólnota"
+msgstr "Społeczności"
 
 #: .\home\templates\home\base.html:127 .\home\templates\home\base.html:130
 msgid "Settings"
@@ -2100,7 +2100,7 @@ msgstr "Wyloguj"
 #: .\home\templates\home\base.html:154 .\home\templatetags\feed_filters.py:38
 #: .\home\views.py:767 .\obywatele\models.py:79
 msgid "Citizen"
-msgstr "Obywatel"
+msgstr "Ludzie"
 
 #: .\home\templates\home\base.html:160
 msgid "Collapse/expand menu"
@@ -2139,7 +2139,7 @@ msgstr "Finanse"
 
 #: .\home\templates\home\base.html:208
 msgid "Search in categories"
-msgstr "Szukaj w kategoriach"
+msgstr "Szukaj w Kategoriach"
 
 #: .\home\templates\home\base.html:212 .\home\templates\home\search.html:100
 msgid "Everywhere"
@@ -2174,7 +2174,7 @@ msgstr "Zaloguj"
 
 #: .\home\templates\home\base.html:299
 msgid "Register"
-msgstr "Zarejestruj się"
+msgstr "Zarejestruj"
 
 #: .\home\templates\home\base.html:307
 msgid "Enable notifications to stay updated with new messages and activities"
@@ -2265,7 +2265,7 @@ msgstr "Finanse społeczności — ewidencja dochodów i wydatków, zapewnienie 
 
 #: .\home\templates\home\home.html:80
 msgid "Digital library — upload, browse and download documents, books and resources shared by the community."
-msgstr "Biblioteka cyfrowa — przesyłaj, przeglądaj i pobieraj dokumenty, książki i zasobyudostępniane przez społeczność."
+msgstr "Biblioteka cyfrowa — przesyłaj, przeglądaj i pobieraj dokumenty, książki i zasoby udostępniane przez społeczność."
 
 #: .\home\templates\home\home.html:88
 msgid "Real-time messaging — communicate in topic-based chat rooms linked to referendums and community groups."
@@ -2646,15 +2646,15 @@ msgstr "Wiadomości w %(room_title)s"
 
 #: .\home\views.py:699 .\home\views.py:721
 msgid "argument for"
-msgstr "Argument"
+msgstr "argumenty za"
 
 #: .\home\views.py:701 .\home\views.py:721
 msgid "argument against"
-msgstr "Argumenty"
+msgstr "argumenty przeciw"
 
 #: .\home\views.py:724 .\tasks\templates\tasks\task_detail.html:41
 msgid "Unknown"
-msgstr "Nieznany"
+msgstr "Nieznane"
 
 #: .\home\views.py:756
 msgid "Untitled"
@@ -2666,7 +2666,7 @@ msgstr "Anonimowy"
 
 #: .\home\views.py:799
 msgid "Chat message"
-msgstr "wiadomości"
+msgstr "Wiadomość"
 
 #: .\home\views.py:836
 msgid "Your password has been changed."
@@ -3647,7 +3647,7 @@ msgstr "Rozwój Wikikracji, poprawki kodu, hosting, administracja techniczna."
 
 #: .\tasks\models.py:48
 msgid "My, nasi ludzie i zasady — onboarding, rekrutacja, powitania, spotkania."
-msgstr ""
+msgstr "My, nasi ludzie i zasady — onboarding, rekrutacja, powitanie, spotkania."
 
 #: .\tasks\models.py:49
 msgid "Baza wiedzy, informacje dot. DB, linki, listy, manuale."
