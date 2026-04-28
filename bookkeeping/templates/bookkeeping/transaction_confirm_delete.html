@@ -10,6 +10,7 @@
       <a href="{% url 'bookkeeping:transaction_list' %}" class="btn btn-sm me-1 mb-1 btn-primary">{% trans 'Transactions' %}</a>
       <a href="{% url 'bookkeeping:partner_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Partners' %}</a>
       <a href="{% url 'bookkeeping:category_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Categories' %}</a>
+      <a href="{% url 'bookkeeping:asset_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Assets' %}</a>
       <a href="{% url 'bookkeeping:report_list' %}" class="btn btn-sm me-1 mb-1 btn-secondary">{% trans 'Reports' %}</a>
     </div>
   </div>
@@ -29,7 +30,8 @@
           {% endif %}
         </p>
         <p><strong>{% trans "Partner" %}:</strong> {{ object.partner }}</p>
-        <p><strong>{% trans "Amount" %}:</strong> {{ object.amount }}</p>
+        <p><strong>{% trans "Asset" %}:</strong> {{ object.asset }}</p>
+        <p><strong>{% trans "Amount" %}:</strong> {{ object.amount }} {{ object.asset.symbol }}</p>
         <p><strong>{% trans "Date" %}:</strong> {{ object.payment_received_date|date:"Y-m-d" }}</p>
       </div>
 

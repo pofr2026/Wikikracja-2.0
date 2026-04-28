@@ -5,7 +5,20 @@ from crispy_forms.layout import Submit
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
-from .models import Category, Partner, Transaction
+from .models import Asset, Category, Partner, Transaction
+
+
+class AssetForm(forms.ModelForm):
+    """Form for creating and updating Asset records."""
+    class Meta:
+        model = Asset
+        fields = ['code', 'name', 'symbol', 'decimal_places', 'is_currency']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.add_input(Submit('submit', _('Save'), css_class='btn-primary'))
 
 
 class PartnerForm(forms.ModelForm):
@@ -46,13 +59,16 @@ class TransactionForm(forms.ModelForm):
         'class': 'form-check-inline'
     }))
 
+    asset = forms.ModelChoiceField(queryset=Asset.objects.all().order_by('code'), label=_('Asset'), empty_label=None)
+
     partner = forms.ModelChoiceField(queryset=Partner.objects.all().order_by('name'), label=_('Partner'), empty_label=_('Select partner'))
 
     category = forms.ModelChoiceField(queryset=Category.objects.all().order_by('name'), required=True, label=_('Category'))
 
-    amount = forms.DecimalField(label=_('Amount'), min_value=0.00000001, decimal_places=8, widget=forms.NumberInput(attrs={
+    amount = forms.DecimalField(label=_('Amount'), min_value=0, decimal_places=8, widget=forms.NumberInput(attrs={
         'class': 'form-control',
-        'step': '0.00000001'
+        'step': 'any',
+        'id': 'id_amount',
     }))
 
     payment_received_date = forms.DateField(initial=datetime.now, label=_('Payment received date'), widget=forms.DateInput(attrs={
@@ -67,7 +83,7 @@ class TransactionForm(forms.ModelForm):
 
     class Meta:
         model = Transaction
-        fields = ['type', 'partner', 'category', 'amount', 'payment_received_date', 'note']
+        fields = ['type', 'asset', 'partner', 'category', 'amount', 'payment_received_date', 'note']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
