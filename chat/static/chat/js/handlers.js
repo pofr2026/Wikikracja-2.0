@@ -47,18 +47,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const row = $('#msg-counter');
         if (!row) return;
         row.classList.remove('counter--warn', 'counter--error');
-        const input = $('#message-input');
+        const composeBox = $('.compose-box');
         if (remaining <= 0) {
             row.classList.add('counter--error');
-            input?.classList.add('input--error');
+            composeBox?.classList.add('input--error');
         } else if (remaining <= 10) {
             row.classList.add('counter--error');
-            input?.classList.remove('input--error');
+            composeBox?.classList.remove('input--error');
         } else if (remaining <= 50) {
             row.classList.add('counter--warn');
-            input?.classList.remove('input--error');
+            composeBox?.classList.remove('input--error');
         } else {
-            input?.classList.remove('input--error');
+            composeBox?.classList.remove('input--error');
         }
         const sendBtn = $('.send-message');
         if (sendBtn) sendBtn.disabled = remaining <= 0;

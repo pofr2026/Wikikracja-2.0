@@ -57,37 +57,47 @@ const room_template = `
       <span class="reply-preview-text" id="reply-preview-text"></span>
       <button class="reply-preview-close" id="reply-preview-close" type="button" title="Anuluj odpowiedź">✕</button>
     </div>
-    <div class='chat-controls-row'>
-      <!-- Image upload button -->
-      <input type='file' id='file-input' class='file-input' multiple='multiple'/>
-      <label class='btn btn-primary chat-control' for='file-input'>
-        <i class='fas fa-image'></i>
-      </label>
-
-      <!-- Anonymous toggle button (icon only) -->
-      <% if (is_public) { %>
-        <button class='btn chat-control anonymous-toggle' id='anonymous-toggle' type='button' title='${_("Anonymous")}'>
-          <i class='fas fa-user-secret'></i>
-        </button>
-      <% } %>
-
+    <div class="compose-box">
       <!-- Rich text input -->
       <div id="message-input" class="message-input-rich" contenteditable="true"
            role="textbox" aria-multiline="true" aria-label="${_("Reply to the appropriate message...")}"
            data-placeholder="${_("Reply to the appropriate message...")}"></div>
 
-      <!-- Send button -->
-      <button class='send-message chat-control btn btn-primary'>
-        <i class='fas fa-paper-plane'></i>
-      </button>
-    </div>
-    <div class="fmt-toolbar" id="fmt-toolbar">
-      <button class="fmt-btn" data-cmd="bold"      title="Ctrl+B"><b>B</b></button>
-      <button class="fmt-btn" data-cmd="italic"    title="Ctrl+I"><i>I</i></button>
-      <button class="fmt-btn" data-cmd="underline" title="Ctrl+U"><u>U</u></button>
-    </div>
-    <div class="msg-counter" id="msg-counter">
-      <span id="msg-counter-val"><%- messageMaxLength %></span> / <%- messageMaxLength %>
+      <!-- Bottom bar: tools left, counter+send right -->
+      <div class="compose-bar">
+        <div class="compose-bar-left">
+          <!-- Image upload button -->
+          <input type='file' id='file-input' class='file-input' multiple='multiple'/>
+          <label class='fmt-btn' for='file-input' title='${_("Attach image")}'>
+            <i class='fas fa-image'></i>
+          </label>
+
+          <div class="compose-separator"></div>
+
+          <div class="fmt-toolbar" id="fmt-toolbar">
+            <button class="fmt-btn" data-cmd="bold"      title="Ctrl+B"><b>B</b></button>
+            <button class="fmt-btn" data-cmd="italic"    title="Ctrl+I"><i>I</i></button>
+            <button class="fmt-btn" data-cmd="underline" title="Ctrl+U"><u>U</u></button>
+          </div>
+
+          <!-- Anonymous toggle button -->
+          <% if (is_public) { %>
+            <div class="compose-separator"></div>
+            <button class='fmt-btn anonymous-toggle' id='anonymous-toggle' type='button' title='${_("Anonymous")}'>
+              <i class='fas fa-user-secret'></i>
+            </button>
+          <% } %>
+        </div>
+
+        <div class="compose-bar-right">
+          <div class="msg-counter" id="msg-counter">
+            <span id="msg-counter-val"><%- messageMaxLength %></span> / <%- messageMaxLength %>
+          </div>
+          <button class='send-message btn btn-primary compose-send'>
+            <i class='fas fa-paper-plane'></i>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

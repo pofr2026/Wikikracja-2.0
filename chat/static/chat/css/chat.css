@@ -400,6 +400,51 @@ body:has(.chat-rooms) .main-area {
     display: flex;
     gap: .1rem;
 }
+/* ============================================================ */
+/* COMPOSE BOX — unified input container                        */
+/* ============================================================ */
+.compose-box {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: .5rem;
+    background-color: var(--bg-base);
+    overflow: hidden;
+    transition: border-color .15s;
+}
+.compose-box:focus-within {
+    border-color: var(--accent-muted);
+}
+.compose-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .25rem;
+    padding: .3rem .4rem;
+    border-top: 1px solid var(--border);
+    background-color: var(--bg-card);
+}
+.compose-bar-left {
+    display: flex;
+    align-items: center;
+    gap: .2rem;
+}
+.compose-bar-right {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+.compose-separator {
+    width: 1px;
+    height: 1.2rem;
+    background-color: var(--border);
+    margin: 0 .15rem;
+}
+.compose-send {
+    padding: .3rem .6rem;
+    font-size: 1rem;
+    line-height: 1;
+}
 .anonymous-toggle {
     background-color: var(--color-surface-offset);
     border-color: var(--border);
@@ -441,17 +486,16 @@ body:has(.chat-rooms) .main-area {
 /* RICH TEXT INPUT (contenteditable)               */
 /* ============================================================ */
 .message-input-rich {
-    border: 1px solid var(--border);
-    border-radius: .3rem;
-    background-color: var(--bg-base);
+    border: none;
+    background-color: transparent;
     color: var(--color-text);
     flex: 1;
-    padding: 0.5rem;
+    padding: 0.5rem 0.6rem;
     font-size: 1rem;
     line-height: 1.5;
     font-family: inherit;
     overflow-y: auto;
-    min-height: 6rem;
+    min-height: 4rem;
     max-height: 180px;
     outline: none;
     word-break: break-word;
@@ -462,10 +506,7 @@ body:has(.chat-rooms) .main-area {
     pointer-events: none;
     opacity: .6;
 }
-.message-input-rich:focus {
-    border-color: var(--accent-muted);
-}
-.message-input-rich.input--error {
+.compose-box.input--error {
     border-color: var(--color-error);
 }
 /* ============================================================ */
@@ -473,8 +514,7 @@ body:has(.chat-rooms) .main-area {
 /* ============================================================ */
 .fmt-toolbar {
     display: flex;
-    gap: .25rem;
-    padding: .25rem 0 .1rem;
+    gap: .2rem;
     flex-shrink: 0;
 }
 .fmt-btn {
