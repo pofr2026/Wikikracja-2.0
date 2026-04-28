@@ -21,7 +21,8 @@ import {
     onToggleNotifications,
     onToggleReaction,
     onToggleSeen,
-    onUpdateVote
+    onUpdateVote,
+    setReplyTarget
 } from './chat.js';
 import DomApi from './domapi.js';
 import { $, $$ } from './utility.js';
