@@ -40,28 +40,36 @@ async function initEmbeddedChat(container) {
                         <i class="fas fa fa-times"></i>
                     </div>
                 </div>
-                <div class="chat-controls-row ec-form-row" id="ec-form-row-${roomId}">
-                    <input type="file" id="ec-file-input-${roomId}" class="file-input ec-file-input" multiple="multiple" style="display:none;"/>
-                    <label class="btn btn-primary chat-control" for="ec-file-input-${roomId}">
-                        <i class="fas fa-image"></i>
-                    </label>
-                    <button class="btn chat-control anonymous-toggle ec-anonymous-toggle" id="ec-anonymous-${roomId}" type="button" title="${_('Anonymous')}">
-                        <i class="fas fa-user-secret"></i>
-                    </button>
+                <div class="compose-box ec-form-row" id="ec-form-row-${roomId}">
                     <div id="ec-input-${roomId}" class="message-input-rich" role="textbox"
                          contenteditable="true" aria-multiline="true"
                          data-placeholder="${_('Reply to the appropriate message...')}"></div>
-                    <button class="send-message chat-control btn btn-primary ec-send-btn" id="ec-send-${roomId}" type="button">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </div>
-                <div class="fmt-toolbar">
-                    <button class="fmt-btn" data-cmd="bold"      type="button" title="Ctrl+B"><b>B</b></button>
-                    <button class="fmt-btn" data-cmd="italic"    type="button" title="Ctrl+I"><i>I</i></button>
-                    <button class="fmt-btn" data-cmd="underline" type="button" title="Ctrl+U"><u>U</u></button>
-                </div>
-                <div class="msg-counter" id="ec-counter-${roomId}">
-                    <span id="ec-counter-val-${roomId}">${EC_MAX}</span> / ${EC_MAX}
+                    <div class="compose-bar">
+                        <div class="compose-bar-left">
+                            <input type="file" id="ec-file-input-${roomId}" class="file-input ec-file-input" multiple="multiple" style="display:none;"/>
+                            <label class="fmt-btn" for="ec-file-input-${roomId}" title="${_('Attach image')}">
+                                <i class="fas fa-image"></i>
+                            </label>
+                            <div class="compose-separator"></div>
+                            <div class="fmt-toolbar">
+                                <button class="fmt-btn" data-cmd="bold"      type="button" title="Ctrl+B"><b>B</b></button>
+                                <button class="fmt-btn" data-cmd="italic"    type="button" title="Ctrl+I"><i>I</i></button>
+                                <button class="fmt-btn" data-cmd="underline" type="button" title="Ctrl+U"><u>U</u></button>
+                            </div>
+                            <div class="compose-separator"></div>
+                            <button class="fmt-btn anonymous-toggle ec-anonymous-toggle" id="ec-anonymous-${roomId}" type="button" title="${_('Anonymous')}">
+                                <i class="fas fa-user-secret"></i>
+                            </button>
+                        </div>
+                        <div class="compose-bar-right">
+                            <div class="msg-counter" id="ec-counter-${roomId}">
+                                <span id="ec-counter-val-${roomId}">${EC_MAX}</span> / ${EC_MAX}
+                            </div>
+                            <button class="send-message btn btn-primary compose-send ec-send-btn" id="ec-send-${roomId}" type="button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
