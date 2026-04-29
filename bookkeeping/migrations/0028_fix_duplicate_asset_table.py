@@ -6,7 +6,7 @@ from django.db import connection, migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('bookkeeping', '0025_alter_transaction_amount'),
+        ('bookkeeping', '0027_data_default_assets'),
     ]
 
     def fix_asset_migration_issues(apps, schema_editor):
