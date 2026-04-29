@@ -5,19 +5,23 @@ def create_default_assets(apps, schema_editor):
     Asset = apps.get_model('bookkeeping', 'Asset')
     Transaction = apps.get_model('bookkeeping', 'Transaction')
 
-    pln = Asset.objects.create(
+    pln, _ = Asset.objects.get_or_create(
         code='PLN',
-        name='Polski złoty',
-        symbol='zł',
-        decimal_places=2,
-        is_currency=True,
+        defaults=dict(
+            name='Polski złoty',
+            symbol='zł',
+            decimal_places=2,
+            is_currency=True,
+        ),
     )
-    Asset.objects.create(
+    Asset.objects.get_or_create(
         code='BTC',
-        name='Bitcoin',
-        symbol='₿',
-        decimal_places=8,
-        is_currency=True,
+        defaults=dict(
+            name='Bitcoin',
+            symbol='₿',
+            decimal_places=8,
+            is_currency=True,
+        ),
     )
 
     Transaction.objects.filter(asset__isnull=True).update(asset=pln)
