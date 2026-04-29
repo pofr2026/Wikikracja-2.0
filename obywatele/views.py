@@ -119,14 +119,14 @@ def required_reputation():
 
     Rozwiązanie:
     populacja - docelowy_próg_akceptacji = chwilowy_próg_akceptacji
-    1 -> 1-3=-2
-    2 -> 2-3=-1
-    3 -> 3-3=0
-    4 -> 4-3=+1
-    5 -> 5-3=+2
-    6 -> 6-3=+3
-    7 -> 7-3=+3
-    8 -> 8-3=+3
+    1 - 3 = -2
+    2 - 3 = -1
+    3 - 3 =  0
+    4 - 3 = +1
+    5 - 3 = +2
+    6 - 3 = +3
+    7 - 3 = +3
+    8 - 3 = +3
 
     To rozwiązanie rodzi następny problem:
     Ponieważ próg akceptacji rośnie,

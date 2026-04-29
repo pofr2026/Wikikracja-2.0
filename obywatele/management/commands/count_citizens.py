@@ -18,6 +18,7 @@ from django.utils.translation import gettext as _
 from chat import signals
 from chat.models import Room
 from obywatele.models import CitizenActivity, Rate, Uzytkownik
+from obywatele.views import population
 from obywatele.signals import track_user_blocked
 from obywatele.views import SendEmailToAll, required_reputation
 from zzz.utils import get_site_domain
@@ -159,14 +160,18 @@ class Command(BaseCommand):
                 log.info(f'EMAIL_DIAG trigger=user_accepted_signal user_id={i.uid.id} email={i.uid.email} username={i.uid.username} source=count_citizens.activate_eligible_users')
                 signals.user_accepted.send(sender='user_accepted', user=i)
 
-                # New person accepts automatically every other active user
-                for k in Uzytkownik.objects.filter(uid__is_active=True):
-                    if i == k:  # but not yourself
-                        continue
-                    obj, created = Rate.objects.update_or_create(obywatel=i, kandydat=k, defaults={
-                        'rate': '1'
-                    })
-                    obj.save()
+                # New person automatically gives reputation to all existing active users
+                # This happens only when group size is <= ACCEPTANCE * 2 members
+                # For larger groups, new users do not give automatic reputation
+                current_population = population()
+                if current_population <= s.ACCEPTANCE * 2:
+                    for k in Uzytkownik.objects.filter(uid__is_active=True):
+                        if i == k:  # but not yourself
+                            continue
+                        obj, created = Rate.objects.update_or_create(obywatel=i, kandydat=k, defaults={
+                            'rate': '1'
+                        })
+                        obj.save()
 
                 uname = str(i.uid.username)
                 uemail = str(i.uid.email)
