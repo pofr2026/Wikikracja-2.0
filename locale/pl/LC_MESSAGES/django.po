@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-29 11:49+0200\n"
+"POT-Creation-Date: 2026-04-29 16:39+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -261,8 +261,8 @@ msgstr "Czy na pewno chcesz usunąć to ogłoszenie?"
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:62
 #: .\elibrary\templates\elibrary\book_detail.html:75
 #: .\events\templates\events\event_detail.html:16
-#: .\glosowania\templates\glosowania\szczegoly.html:171
-#: .\glosowania\templates\glosowania\szczegoly.html:214
+#: .\glosowania\templates\glosowania\szczegoly.html:167
+#: .\glosowania\templates\glosowania\szczegoly.html:210
 msgid "Delete"
 msgstr "Usuń"
 
@@ -300,8 +300,8 @@ msgstr "Prywatne"
 #: .\events\templates\events\event_detail.html:13
 #: .\events\templates\events\event_list.html:92
 #: .\glosowania\templates\glosowania\szczegoly.html:69
-#: .\glosowania\templates\glosowania\szczegoly.html:170
-#: .\glosowania\templates\glosowania\szczegoly.html:213
+#: .\glosowania\templates\glosowania\szczegoly.html:166
+#: .\glosowania\templates\glosowania\szczegoly.html:209
 #: .\obywatele\templates\obywatele\my_profile.html:140
 #: .\obywatele\templates\obywatele\szczegoly.html:182
 #: .\tasks\templates\tasks\task_detail.html:88
@@ -1531,7 +1531,7 @@ msgstr "Wpisz krótki tytuł opisujący nowe prawo."
 
 #: .\glosowania\models.py:26
 #: .\glosowania\templates\glosowania\_proposal_card.html:116
-#: .\glosowania\templates\glosowania\szczegoly.html:117
+#: .\glosowania\templates\glosowania\szczegoly.html:113
 msgid "Law text"
 msgstr "Treść przepisu"
 
@@ -1549,7 +1549,7 @@ msgstr "Jakie są konsekwencje za nieprzestrzeganie tej zasady. Może to być na
 
 #: .\glosowania\models.py:28
 #: .\glosowania\templates\glosowania\_proposal_card.html:134
-#: .\glosowania\templates\glosowania\szczegoly.html:132 .\home\views.py:703
+#: .\glosowania\templates\glosowania\szczegoly.html:128 .\home\views.py:703
 msgid "Reasoning"
 msgstr "Uzasadnienie"
 
@@ -1661,7 +1661,7 @@ msgid "Proposal"
 msgstr "Propozycja"
 
 #: .\glosowania\templates\glosowania\_proposal_card.html:125
-#: .\glosowania\templates\glosowania\szczegoly.html:126
+#: .\glosowania\templates\glosowania\szczegoly.html:122
 msgid "Consequences"
 msgstr "Konsekwencje"
 
@@ -1675,8 +1675,8 @@ msgstr "Koniec"
 
 #: .\glosowania\templates\glosowania\_view_toggle.html:10
 #: .\glosowania\templates\glosowania\proposition.html:9
-#: .\glosowania\templates\glosowania\szczegoly.html:188
-#: .\glosowania\templates\glosowania\szczegoly.html:231
+#: .\glosowania\templates\glosowania\szczegoly.html:184
+#: .\glosowania\templates\glosowania\szczegoly.html:227
 msgid "Add"
 msgstr "Dodaj"
 
@@ -1815,18 +1815,10 @@ msgid "Withdraw signature"
 msgstr "Wycofaj podpis"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:76
-msgid "I voted"
-msgstr "Zagłosowałem"
-
-#: .\glosowania\templates\glosowania\szczegoly.html:76
-msgid "Your vote"
-msgstr "Zagłosowałeś"
-
-#: .\glosowania\templates\glosowania\szczegoly.html:80
 msgid "Would you like to implement this rule?"
-msgstr "Czy chcesz wprowadzić ten przepis?"
+msgstr "Czy chcesz wprowadzenia tego przepisu?"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:83
+#: .\glosowania\templates\glosowania\szczegoly.html:79
 #: .\obywatele\templates\obywatele\poczekalnia.html:56
 #: .\obywatele\templates\obywatele\poczekalnia.html:57
 #: .\obywatele\templates\obywatele\szczegoly.html:67
@@ -1834,7 +1826,7 @@ msgstr "Czy chcesz wprowadzić ten przepis?"
 msgid "Yes"
 msgstr "Tak"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:84
+#: .\glosowania\templates\glosowania\szczegoly.html:80
 #: .\obywatele\templates\obywatele\poczekalnia.html:56
 #: .\obywatele\templates\obywatele\poczekalnia.html:57
 #: .\obywatele\templates\obywatele\szczegoly.html:69
@@ -1842,56 +1834,56 @@ msgstr "Tak"
 msgid "No"
 msgstr "Nie"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:88
+#: .\glosowania\templates\glosowania\szczegoly.html:84
 #: .\home\templates\home\home.html:488
 msgid "You have already voted in this referendum"
-msgstr "Już zagłosowałeś w tym referendum"
+msgstr "Już zagłosowała/eś w tym referendum"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:93
+#: .\glosowania\templates\glosowania\szczegoly.html:89
 msgid "Results"
 msgstr "Wyniki"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:98 .\tasks\models.py:130
+#: .\glosowania\templates\glosowania\szczegoly.html:94 .\tasks\models.py:130
 msgid "For"
 msgstr "Za"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:99 .\tasks\models.py:129
+#: .\glosowania\templates\glosowania\szczegoly.html:95 .\tasks\models.py:129
 msgid "Against"
 msgstr "Przeciw"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:138
+#: .\glosowania\templates\glosowania\szczegoly.html:134
 msgid "Abolishes regulations"
 msgstr "Znosi przepisy"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:153
+#: .\glosowania\templates\glosowania\szczegoly.html:149
 msgid "Arguments FOR"
 msgstr "Argumenty ZA"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:177
+#: .\glosowania\templates\glosowania\szczegoly.html:173
 msgid "No arguments for."
 msgstr "Brak argumentów za."
 
-#: .\glosowania\templates\glosowania\szczegoly.html:181
+#: .\glosowania\templates\glosowania\szczegoly.html:177
 msgid "Add an argument for"
 msgstr "Dodaj argument za"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:187
+#: .\glosowania\templates\glosowania\szczegoly.html:183
 msgid "Your argument for..."
 msgstr "Twój argument za..."
 
-#: .\glosowania\templates\glosowania\szczegoly.html:196
+#: .\glosowania\templates\glosowania\szczegoly.html:192
 msgid "Arguments AGAINST"
 msgstr "Argumenty PRZECIW"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:220
+#: .\glosowania\templates\glosowania\szczegoly.html:216
 msgid "No arguments against."
 msgstr "Brak argumentów przeciw."
 
-#: .\glosowania\templates\glosowania\szczegoly.html:224
+#: .\glosowania\templates\glosowania\szczegoly.html:220
 msgid "Add an argument against"
 msgstr "Dodaj argument przeciw"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:230
+#: .\glosowania\templates\glosowania\szczegoly.html:226
 msgid "Your argument against..."
 msgstr "Twój argument przeciw..."
 

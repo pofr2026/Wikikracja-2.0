@@ -105,7 +105,7 @@ class Decyzja(models.Model):
         if self.is_author_signed:
             return self.title
         return f"{self.title} [{_('draft')}]"
-
+    
 
 class Argument(models.Model):
     ARGUMENT_TYPE_CHOICES = [
