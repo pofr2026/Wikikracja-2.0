@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-28 00:35+0200\n"
+"POT-Creation-Date: 2026-04-30 12:43+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -679,21 +679,21 @@ msgstr ""
 msgid "Cannot delete partner because it is in use. Remove all transactions that use it first."
 msgstr ""
 
-#: .\chat\management\commands\chat_messages.py:34
+#: .\chat\management\commands\chat_messages.py:35
 #, python-brace-format
 msgid "{HOST} New messages on chat"
 msgstr ""
 
-#: .\chat\management\commands\chat_messages.py:35
+#: .\chat\management\commands\chat_messages.py:36
 #, python-brace-format
 msgid "New messages on {HOST}/chat"
 msgstr ""
 
-#: .\chat\management\commands\chat_messages.py:36
+#: .\chat\management\commands\chat_messages.py:37
 msgid "You can disable those messages by unchecking bell icon next to chat room name."
 msgstr ""
 
-#: .\chat\management\commands\chat_messages.py:37
+#: .\chat\management\commands\chat_messages.py:38
 #, python-brace-format
 msgid "Go to chat to do so {HOST}/chat"
 msgstr ""
@@ -1500,7 +1500,7 @@ msgid "The path this bill took."
 msgstr ""
 
 #: .\glosowania\models.py:60 .\home\templatetags\feed_filters.py:36
-#: .\home\views.py:783 .\obywatele\views.py:1258 .\tasks\models.py:90
+#: .\home\views.py:783 .\obywatele\views.py:1251 .\tasks\models.py:90
 msgid "Chat room"
 msgstr ""
 
@@ -1950,7 +1950,7 @@ msgstr ""
 
 #: .\home\models.py:12 .\home\models.py:42
 #: .\home\templatetags\feed_filters.py:32 .\home\views.py:674
-#: .\obywatele\views.py:1228
+#: .\obywatele\views.py:1221
 msgid "Task"
 msgstr ""
 
@@ -3498,45 +3498,45 @@ msgstr ""
 msgid "Your email has been confirmed. Please fill out your onboarding form here: %(link)s"
 msgstr ""
 
-#: .\obywatele\views.py:1126
+#: .\obywatele\views.py:1119
 msgid "Created task"
 msgstr "Created task"
 
-#: .\obywatele\views.py:1137
+#: .\obywatele\views.py:1130
 msgid "Assigned task"
 msgstr "Assigned task"
 
-#: .\obywatele\views.py:1148
+#: .\obywatele\views.py:1141
 msgid "Voted on task"
 msgstr "Voted on task"
 
-#: .\obywatele\views.py:1159
+#: .\obywatele\views.py:1152
 msgid "Evaluated task"
 msgstr "Evaluated task"
 
-#: .\obywatele\views.py:1170
+#: .\obywatele\views.py:1163
 msgid "Added argument"
 msgstr "Added argument"
 
-#: .\obywatele\views.py:1182
+#: .\obywatele\views.py:1175
 msgid "Signed proposal"
 msgstr "Signed proposal"
 
-#: .\obywatele\views.py:1193
+#: .\obywatele\views.py:1186
 msgid "Voted in referendum"
 msgstr "Voted in referendum"
 
-#: .\obywatele\views.py:1204
+#: .\obywatele\views.py:1197
 msgid "Citizenship event"
 msgstr "Citizenship event"
 
-#: .\obywatele\views.py:1238
+#: .\obywatele\views.py:1231
 #, fuzzy
 #| msgid "Signed proposal"
 msgid "Voting proposal"
 msgstr "Signed proposal"
 
-#: .\obywatele\views.py:1248
+#: .\obywatele\views.py:1241
 msgid "Dokument (biblioteka)"
 msgstr "Document (library)"
 

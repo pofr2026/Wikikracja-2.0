@@ -1,4 +1,5 @@
 import logging
+import re
 import threading
 from collections import defaultdict
 from datetime import datetime as dt
@@ -85,7 +86,9 @@ class Command(BaseCommand):
                     log.info(f'Found messages for user {u.uid}: {m.text}')
                     if m.anonymous:
                         m.sender = None
-                    b.append(f'{m.sender}: {m.text}')
+                    plain = re.sub(r'<br\s*/?>', '\n', m.text)
+                    plain = re.sub(r'<[^>]+>', '', plain)
+                    b.append(f'{m.sender}: {plain}')
 
                 b.append("")  # Empty line between rooms
 
