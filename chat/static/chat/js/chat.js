@@ -56,6 +56,34 @@ function resetSortState() {
     SortState = { sort_by: 'date', order: 'desc', popular_only: false };
 }
 
+function saveDraft() {
+    const input = DOM_API?.getMessageInput();
+    if (!input || !CurrentRoomId) return;
+    const content = input.isContentEditable ? input.innerHTML : input.value;
+    if (content.replace(/<[^>]*>/g, '').trim()) {
+        localStorage.setItem(`chat_draft_${CurrentRoomId}`, content);
+    } else {
+        localStorage.removeItem(`chat_draft_${CurrentRoomId}`);
+    }
+}
+
+function restoreDraft(roomId) {
+    const input = DOM_API?.getMessageInput();
+    if (!input) return;
+    const draft = localStorage.getItem(`chat_draft_${roomId}`);
+    if (!draft) return;
+    if (input.isContentEditable) {
+        input.innerHTML = draft;
+    } else {
+        input.value = draft;
+    }
+    input.dispatchEvent(new Event('input'));
+}
+
+function clearDraft(roomId) {
+    localStorage.removeItem(`chat_draft_${roomId}`);
+}
+
 function bindSortToolbar() {
     const dateBtn = $('#chat-sort-date');
     const likesBtn = $('#chat-sort-likes');
@@ -111,6 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set the WebSocket message handler to break circular dependency
     WS_API.socketMessageHandler = onSocketMessage;
+
+    document.addEventListener('input', (e) => {
+        if (e.target.id === 'message-input') saveDraft();
+    });
 
     // Handle unread filter functionality
     const unreadFilterBtn = $('#unread-filter-btn');
@@ -363,6 +395,7 @@ export async function onRoomTryJoin(room_id) {
     if (messageInput) {
         messageInput.focus();
     }
+    restoreDraft(room_id);
 }
 
 /**
@@ -734,6 +767,7 @@ export async function onSubmitMessage(message, editing_message_id) {
             attachments.images = (await WS_API.uploadFiles(files)).filenames;
         }
         WS_API.sendMessage(CurrentRoomId, message, DOM_API.getAnonymousValue(), attachments, currentReplyId);
+        clearDraft(CurrentRoomId);
         clearReplyTarget();
         // remove files from input and image preview
         DOM_API.clearFiles();
