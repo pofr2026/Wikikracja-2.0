@@ -62,7 +62,7 @@
 
       {% if object.abstract %}
       <div style="font-size:.88rem;line-height:1.6;color:var(--text-secondary);">
-        {{ object.abstract }}
+        {{ object.abstract|safe }}
       </div>
       {% endif %}
 

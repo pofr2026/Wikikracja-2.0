@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load richtext %}
 {% comment %}
   Partial: kafelek zadania (Agora-style).
   Oczekiwana zmienna: task — obiekt Task (z with_metrics + chat_msg_count)
@@ -105,7 +106,7 @@
       <div class="proposal-section-label">
         <i class="fas fa-file-lines fa-fw"></i> {% trans 'Description' %}
       </div>
-      <div class="proposal-section-text">{{ task.description|linebreaksbr }}</div>
+      <div class="proposal-section-text">{{ task.description|richtext }}</div>
     </div>
     {% endif %}
 

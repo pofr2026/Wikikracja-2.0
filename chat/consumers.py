@@ -4,11 +4,11 @@ import os
 import re
 from datetime import datetime
 
-import bleach
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
 
+from zzz.richtext import sanitize
 from zzz.utils import get_site_domain
 
 from .exceptions import ClientError
@@ -16,8 +16,6 @@ from .group_messages import format_chat_message
 from .models import Message, Room
 from .services import ChatRepository
 from .utils import HandledMessage, Handlers, OnlineUserRegistry, RoomRegistry, helper_method
-
-ALLOWED_HTML_TAGS = ['b', 'i', 'u', 'br']
 
 log = logging.getLogger(__name__)
 domain = get_site_domain()
@@ -301,7 +299,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 if not os.path.exists(f"{settings.BASE_DIR}/media/uploads/{filename}"):
                     raise ClientError("FILE_NOT_FOUND")
 
-        message_clean = bleach.clean(message, tags=ALLOWED_HTML_TAGS, strip=True)
+        message_clean = sanitize(message, linkify=False)
         message_clean = re.sub(r'(<br\s*/?>)+$', '', message_clean).rstrip()
 
         if not message_clean.strip().replace('<br>', '').replace('<br/>', '') and not attachments:
@@ -520,7 +518,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if new_message is None:
             new_message = message.text
         else:
-            new_message = bleach.clean(new_message, tags=ALLOWED_HTML_TAGS, strip=True)
+            new_message = sanitize(new_message, linkify=False)
             new_message = re.sub(r'(<br\s*/?>)+$', '', new_message).rstrip()
 
         if attachments:
