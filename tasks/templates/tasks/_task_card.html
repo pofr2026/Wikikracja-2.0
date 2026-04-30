@@ -50,7 +50,7 @@
 
     {# Podgląd opisu #}
     {% if task.description %}
-    <p class="proposal-preview">{{ task.description }}</p>
+    <p class="proposal-preview">{{ task.description|richtext }}</p>
     {% endif %}
 
     {# Meta strip #}

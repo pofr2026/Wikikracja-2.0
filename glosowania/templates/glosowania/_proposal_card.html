@@ -57,7 +57,7 @@
 
     {# Podgląd treści — widoczny przed rozwinięciem, chowa się po #}
     {% if i.tresc %}
-    <p class="proposal-preview">{{ i.tresc }}</p>
+    <p class="proposal-preview">{{ i.tresc|richtext }}</p>
     {% endif %}
 
     {# Pasek meta: autor (klikalny → profil) + data + podpisy + szczegóły #}
