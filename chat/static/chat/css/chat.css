@@ -476,12 +476,6 @@ body:has(.chat-rooms) .main-area {
 .chat-control {
     font-size: 1.25rem;
 }
-.chat-controls-row {
-    display: flex;
-    flex: 1;
-    gap: .1rem;
-    align-items: flex-end;
-}
 /* ============================================================ */
 /* RICH TEXT INPUT (contenteditable)               */
 /* ============================================================ */
@@ -1171,10 +1165,6 @@ body:has(.chat-rooms) .main-area {
         width: 100% !important;
         max-width: 100% !important;
     }
-    /* Mobile: show send button always */
-    .send-message {
-        display: inline-flex !important;
-    }
     #room .chat-controls {
         background-color: var(--bg-card);
         padding: 0.2rem 0.5rem;
@@ -1231,6 +1221,13 @@ body:has(.chat-rooms) .main-area {
     .message-input-rich {
         min-height: 2.5rem;
         max-height: 120px;
+    }
+    /* Mobile: wrap compose bar if too narrow — send button always visible */
+    .compose-bar {
+        flex-wrap: wrap;
+    }
+    .compose-bar-right {
+        margin-left: auto;
     }
     /* Mobile: read-by in own row */
     .msg-read-by {

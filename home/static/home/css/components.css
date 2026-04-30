@@ -1479,6 +1479,17 @@
   min-height: 4rem;
   max-height: 120px;
 }
+@media (max-width: 767px) {
+  .ec-messages {
+    padding: .5rem .3rem;
+  }
+  .ec-input-area {
+    padding: .25rem;
+  }
+  .ec-wrapper .compose-bar {
+    padding: .3rem .15rem;
+  }
+}
 /* ══════════════════════════════════════════════════
    ACTIVITY FEED
    ══════════════════════════════════════════════════ */
