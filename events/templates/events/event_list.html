@@ -1,6 +1,7 @@
 {% extends "home/base.html" %}
 {% load i18n %}
 {% load django_bootstrap5 %}
+{% load richtext %}
 
 {% block content %}
 <div class="row">
@@ -53,7 +54,7 @@
                                     </div>
                                 {% endif %}
 
-                                <p class="card-text">{{ event.description|urlize|linebreaks|truncatewords_html:20 }}</p>
+                                <p class="card-text">{{ event.description|richtext|truncatewords_html:20 }}</p>
 
                                 {% if event.place %}
                                     <div class="mb-2">

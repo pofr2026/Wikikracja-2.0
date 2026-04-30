@@ -3,6 +3,8 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% block extra_css %}{{ form.media }}{% endblock %}
+
 {% block glosowania %}
 <h2>{% trans 'Add new law proposal' %}</h2>
 <form action="." method="POST" class="post-form">

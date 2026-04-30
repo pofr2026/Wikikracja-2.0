@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load richtext %}
 {% comment %}
   Partial: kafelek propozycji.
   Oczekiwane zmienne z {% include ... with i=item %}:
@@ -56,7 +57,7 @@
 
     {# Podgląd treści — widoczny przed rozwinięciem, chowa się po #}
     {% if i.tresc %}
-    <p class="proposal-preview">{{ i.tresc }}</p>
+    <p class="proposal-preview">{{ i.tresc|richtext }}</p>
     {% endif %}
 
     {# Pasek meta: autor (klikalny → profil) + data + podpisy + szczegóły #}
@@ -115,7 +116,7 @@
       <div class="proposal-section-label">
         <i class="fas fa-scroll fa-fw"></i> {% trans 'Law text' %}
       </div>
-      <div class="proposal-section-text">{{ i.tresc|linebreaksbr }}</div>
+      <div class="proposal-section-text">{{ i.tresc|richtext }}</div>
     </div>
     {% endif %}
 
@@ -124,7 +125,7 @@
       <div class="proposal-section-label">
         <i class="fas fa-triangle-exclamation fa-fw"></i> {% trans 'Consequences' %}
       </div>
-      <div class="proposal-section-text">{{ i.kara|linebreaksbr }}</div>
+      <div class="proposal-section-text">{{ i.kara|richtext }}</div>
     </div>
     {% endif %}
 
@@ -133,7 +134,7 @@
       <div class="proposal-section-label">
         <i class="fas fa-lightbulb fa-fw"></i> {% trans 'Reasoning' %}
       </div>
-      <div class="proposal-section-text">{{ i.uzasadnienie|linebreaksbr }}</div>
+      <div class="proposal-section-text">{{ i.uzasadnienie|richtext }}</div>
     </div>
     {% endif %}
 

@@ -18,8 +18,7 @@ exclude = [".bzr", ".direnv", ".eggs", ".git", ".git-rewrite", ".hg", ".mypy_cac
 [tool.ruff.format]
 docstring-code-format = true
 # indent-style = "space" # set to tab after first format all files ??
-line-ending = "auto"
-# set to lf ??
+line-ending = "lf"
 # preview = true
 quote-style = "preserve"
 # set to double ??  "preserve" now? single
@@ -170,3 +169,4 @@ version_toml = ["pyproject.toml:project.version"]
 branch = "main"
 upload_to_pypi = false
 upload_to_release = true
+build_command = ""

@@ -1,21 +1,18 @@
 import json
 import logging
 import os
-import re
 from datetime import datetime
 
-import bleach
 from channels.db import database_sync_to_async
-from django.conf import settings
 from django.contrib.auth.models import User
 from django.db.models import Prefetch
 from firebase_admin import messaging
 from push_notifications.models import GCMDevice, WebPushDevice
 
+from zzz.richtext import strip_tags
 from zzz.utils import get_site_domain
 
 from .exceptions import ClientError
-from .group_messages import format_chat_message
 from .models import (
     Message,
     MessageAttachment,
@@ -365,8 +362,7 @@ class ChatRepository:
         try:
             msg = Message.objects.select_related('sender').get(pk=message_id)
             username = 'Anonymous User' if msg.anonymous else (msg.sender.username if msg.sender else 'Unknown')
-            plain = re.sub(r'<[^>]+>', '', msg.text)
-            snippet = plain[:120]
+            snippet = strip_tags(msg.text)[:120]
             return {
                 'id': msg.id,
                 'username': username,
@@ -477,11 +473,10 @@ class ChatRepository:
             if msg.reply_to_id and msg.reply_to:
                 rm = msg.reply_to
                 ru = 'Anonymous User' if rm.anonymous else (rm.sender.username if rm.sender else 'Unknown')
-                plain = re.sub(r'<[^>]+>', '', rm.text)
                 reply_to_data = {
                     'id': rm.id,
                     'username': ru,
-                    'text_snippet': plain[:120],
+                    'text_snippet': strip_tags(rm.text)[:120],
                     'author_color': _username_to_color(ru),
                 }
 

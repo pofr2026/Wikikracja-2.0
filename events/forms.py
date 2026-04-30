@@ -4,6 +4,8 @@ from django import forms
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
+from home.widgets import RichTextWidget
+
 from .models import Event
 
 
@@ -53,9 +55,7 @@ class EventForm(forms.ModelForm):
         widgets = {
             'start_date': DateTimeLocalInput(),
             'end_date': DateTimeLocalInput(),
-            'description': forms.Textarea(attrs={
-                'rows': 4
-            }),
+            'description': RichTextWidget(),
             'link': forms.URLInput(attrs={
                 'placeholder': 'https://example.com'
             }),

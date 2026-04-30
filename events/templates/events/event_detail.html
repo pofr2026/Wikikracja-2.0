@@ -1,6 +1,7 @@
 {% extends "home/base.html" %}
 {% load i18n %}
 {% load django_bootstrap5 %}
+{% load richtext %}
 
 {% block content %}
 <div class="row">
@@ -24,7 +25,7 @@
                 {% if event.description %}
                     <div class="mb-4">
                         <h5>{% trans "Agenda" %}</h5>
-                        <p>{{ event.description|urlize|linebreaks }}</p>
+                        <p>{{ event.description|richtext }}</p>
                     </div>
                 {% endif %}
 

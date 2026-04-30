@@ -1,6 +1,7 @@
 {% extends "home/base.html" %}
 {% load i18n %}
 {% load django_bootstrap5 %}
+{% load richtext %}
 
 {% block content %}
 <div class="row justify-content-center">
@@ -15,7 +16,7 @@
                 <div class="alert alert-warning">
                     <h5>{{ event.title }}</h5>
                     {% if event.description %}
-                        <p>{{ event.description|truncatewords:30 }}</p>
+                        <p>{{ event.description|richtext|truncatewords_html:30 }}</p>
                     {% endif %}
                     <small class="text-muted">
                         <i class="fas fa-calendar"></i> {{ event.start_date|date:"Y-m-d H:i" }}

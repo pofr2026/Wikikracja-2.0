@@ -3,6 +3,8 @@
 {% load crispy_forms_tags %}
 {% load i18n %}
 
+{% block extra_css %}{{ form.media }}{% endblock %}
+
 {% block glosowania %}
 <div class="card">
   <div class="card-header">

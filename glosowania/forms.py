@@ -1,5 +1,7 @@
 from django import forms
 
+from home.widgets import RichTextWidget
+
 from .models import Argument, Decyzja
 
 
@@ -9,6 +11,9 @@ class DecyzjaForm(forms.ModelForm):
         fields = ('title', 'tresc', 'uzasadnienie', 'kara', 'znosi')
         widgets = {
             'title': forms.TextInput(),
+            'tresc': RichTextWidget(max_length=1000),
+            'uzasadnienie': RichTextWidget(max_length=2000),
+            'kara': RichTextWidget(max_length=500),
         }
 
 
@@ -17,7 +22,5 @@ class ArgumentForm(forms.ModelForm):
         model = Argument
         fields = ('argument_type', 'content')
         widgets = {
-            'content': forms.Textarea(attrs={
-                'rows': 3
-            }),
+            'content': RichTextWidget(max_length=1000),
         }

@@ -1,5 +1,8 @@
 {% extends 'glosowania/menu.html' %}
 {% load i18n %}
+{% load richtext %}
+
+{% block extra_css %}{{ argument_form.media }}{% endblock %}
 
 {% block glosowania %}
 
@@ -118,19 +121,19 @@
       </div>
       {% if id.tresc %}
       <div class="detail-subsection">
-        <div class="detail-section-text" style="font-size:.82rem;">{{ id.tresc|linebreaksbr }}</div>
+        <div class="detail-section-text" style="font-size:.82rem;">{{ id.tresc|richtext }}</div>
       </div>
       {% endif %}
       {% if id.kara %}
       <div class="detail-subsection">
         <div class="detail-section-label"><i class="fas fa-triangle-exclamation"></i>{% trans 'Consequences' %}</div>
-        <div class="detail-section-text" style="font-size:.82rem;">{{ id.kara|linebreaksbr }}</div>
+        <div class="detail-section-text" style="font-size:.82rem;">{{ id.kara|richtext }}</div>
       </div>
       {% endif %}
       {% if id.uzasadnienie %}
       <div class="detail-subsection">
         <div class="detail-section-label"><i class="fas fa-lightbulb"></i>{% trans 'Reasoning' %}</div>
-        <div class="detail-section-text" style="font-size:.82rem;">{{ id.uzasadnienie|linebreaksbr }}</div>
+        <div class="detail-section-text" style="font-size:.82rem;">{{ id.uzasadnienie|richtext }}</div>
       </div>
       {% endif %}
       {% if id.znosi %}
@@ -164,7 +167,7 @@
             <span class="arg-author-date">{{ arg.created_at|date:"d.m.Y" }}</span>
           </div>
         {% if arg.author %}</a>{% else %}</span>{% endif %}
-        <div class="arg-card-content">{{ arg.content|urlize|linebreaksbr }}</div>
+        <div class="arg-card-content">{{ arg.content|richtext }}</div>
         {% if arg.author == current_user and id.status not in "4,5"|make_list %}
         <div class="arg-card-footer">
           <a href="{% url 'glosowania:edit_argument' arg.id %}" class="arg-edit-btn">{% trans 'Edit' %}</a>
@@ -207,7 +210,7 @@
             <span class="arg-author-date">{{ arg.created_at|date:"d.m.Y" }}</span>
           </div>
         {% if arg.author %}</a>{% else %}</span>{% endif %}
-        <div class="arg-card-content">{{ arg.content|urlize|linebreaksbr }}</div>
+        <div class="arg-card-content">{{ arg.content|richtext }}</div>
         {% if arg.author == current_user and id.status not in "4,5"|make_list %}
         <div class="arg-card-footer">
           <a href="{% url 'glosowania:edit_argument' arg.id %}" class="arg-edit-btn">{% trans 'Edit' %}</a>

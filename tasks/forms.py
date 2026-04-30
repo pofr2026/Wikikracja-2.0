@@ -1,6 +1,8 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 
+from home.widgets import RichTextWidget
+
 from .models import Task
 
 
@@ -12,10 +14,9 @@ class TaskForm(forms.ModelForm):
             "title": forms.TextInput(attrs={
                 "class": "form-control"
             }),
-            "description": forms.Textarea(attrs={
-                "class": "form-control",
-                "rows": 6
-            }),
+            "description": RichTextWidget(
+                placeholder=_("Describe the task. Ctrl+B / Ctrl+I / Ctrl+U for formatting."),
+            ),
             "category": forms.Select(attrs={
                 "class": "form-select"
             }),

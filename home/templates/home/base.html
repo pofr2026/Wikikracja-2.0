@@ -30,6 +30,9 @@
   <!-- Main app script with config data -->
   <script src="{% static 'home/js/app.js' %}"></script>
 
+	<!-- DOMPurify (used by chat input AND RichTextWidget) -->
+	<script src="{% static 'chat/js/dompurify.min.js' %}"></script>
+
 	<!-- Chat rooms engine: -->
 	<script src="{% static 'chat/js/reconnecting-websocket.js' %}"></script>
 
