@@ -463,8 +463,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // Quote/Reply
-    let _replySourceMessageId = null; // ID of the message containing the clicked quote jump
-
     document.addEventListener('click', createReplyHandler(
         function(msgId, username, snippet, preview, previewText) {
             setReplyTarget(msgId, username, snippet, preview, previewText);
@@ -477,12 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
     ));
 
     document.addEventListener('click', createQuoteJumpHandler(
-        document.querySelector('#room .messages'),
-        function(jumpBtn, targetId, targetMsg) {
-            const currentMsg = jumpBtn.closest('.message');
-            if (currentMsg) _replySourceMessageId = currentMsg.dataset.messageId;
-            if (targetMsg) showReturnBtn(targetMsg);
-        }
+        () => document.querySelector('#room .messages')
     ));
 
     document.addEventListener('click', (e) => {
@@ -492,72 +485,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.addEventListener('click', (e) => {
-        // Quote jump — scroll to original message
-        const jumpBtn = e.target.closest('.msg-quote-jump') || e.target.closest('.msg-quote');
-        if (jumpBtn) {
-            const targetId = jumpBtn.dataset.targetId || jumpBtn.dataset.replyId
-                || jumpBtn.closest('.msg-quote')?.dataset.replyId;
-            const currentMsg = jumpBtn.closest('.message');
-            if (currentMsg) _replySourceMessageId = currentMsg.dataset.messageId;
-
-            const targetMsg = document.querySelector(`.message[data-message-id="${targetId}"]`);
-            if (targetMsg) {
-                targetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                targetMsg.classList.remove('msg-highlighted');
-                void targetMsg.offsetWidth;
-                targetMsg.classList.add('msg-highlighted');
-                setTimeout(() => targetMsg.classList.remove('msg-highlighted'), 2000);
-
-                showReturnBtn(targetMsg);
-            }
-        }
-    });
-
-    function showReturnBtn(targetMsg) {
-        // Remove any existing return button
-        document.getElementById('msg-return-btn')?.remove();
-
-        const btn = document.createElement('button');
-        btn.id = 'msg-return-btn';
-        btn.type = 'button';
-        btn.innerHTML = '↙';
-        btn.title = 'Wróć do odpowiedzi';
-        const content = targetMsg.querySelector('.message-content') || targetMsg;
-        content.appendChild(btn);
-        requestAnimationFrame(() => btn.classList.add('visible'));
-
-        // Hide only when user manually scrolls to the bottom (ignore scroll from scrollIntoView)
-        const messagesContainer = document.querySelector('#room .messages');
-        if (messagesContainer) {
-            let listenActive = false;
-            // Wait for scrollIntoView animation to finish before attaching listener
-            setTimeout(() => { listenActive = true; }, 800);
-            const onScroll = () => {
-                if (!listenActive) return;
-                const atBottom = messagesContainer.scrollHeight - messagesContainer.scrollTop - messagesContainer.clientHeight < 60;
-                if (atBottom) {
-                    btn.remove();
-                    messagesContainer.removeEventListener('scroll', onScroll);
-                }
-            };
-            messagesContainer.addEventListener('scroll', onScroll);
-            btn._removeScroll = () => messagesContainer.removeEventListener('scroll', onScroll);
-        }
-    }
-
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('#msg-return-btn');
-        if (btn) {
-            btn._removeScroll?.();
-            btn.remove();
-            if (_replySourceMessageId) {
-                const src = document.querySelector(`.message[data-message-id="${_replySourceMessageId}"]`);
-                src?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                _replySourceMessageId = null;
-            }
-        }
-    });
 
     document.addEventListener('click', handleRoomNameClick);
 

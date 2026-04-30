@@ -156,26 +156,73 @@ export function createEditHandler(startEdit, inputEl) {
 }
 
 /**
- * Create a delegated quote jump handler for quote links
- * @param {HTMLElement} messagesContainer - Container with messages
+ * Create a delegated quote jump handler with built-in return button.
+ * Handles both jumping to the quoted message and returning to the reply.
+ * @param {HTMLElement|Function} containerOrGetter - Messages container or a getter function (for lazy resolution)
  * @returns {Function} Event handler (e) => void
  */
-export function createQuoteJumpHandler(messagesContainer, onJump = undefined) {
+export function createQuoteJumpHandler(containerOrGetter) {
+    let _sourceMessageId = null;
+    const getContainer = typeof containerOrGetter === 'function'
+        ? containerOrGetter
+        : () => containerOrGetter;
+
+    function showReturnBtn(targetMsg) {
+        document.getElementById('msg-return-btn')?.remove();
+        const btn = document.createElement('button');
+        btn.id = 'msg-return-btn';
+        btn.type = 'button';
+        btn.innerHTML = '↙';
+        btn.title = 'Wróć do odpowiedzi';
+        (targetMsg.querySelector('.message-content') || targetMsg).appendChild(btn);
+        requestAnimationFrame(() => btn.classList.add('visible'));
+        const container = getContainer();
+        if (container) {
+            let listenActive = false;
+            setTimeout(() => { listenActive = true; }, 800);
+            const onScroll = () => {
+                if (!listenActive) return;
+                if (container.scrollHeight - container.scrollTop - container.clientHeight < 60) {
+                    btn.remove();
+                    container.removeEventListener('scroll', onScroll);
+                }
+            };
+            container.addEventListener('scroll', onScroll);
+            btn._removeScroll = () => container.removeEventListener('scroll', onScroll);
+        }
+    }
+
     return function(e) {
+        const retBtn = e.target.closest('#msg-return-btn');
+        if (retBtn) {
+            retBtn._removeScroll?.();
+            retBtn.remove();
+            if (_sourceMessageId) {
+                const src = (getContainer() || document).querySelector(`.message[data-message-id="${_sourceMessageId}"]`);
+                src?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                _sourceMessageId = null;
+            }
+            return;
+        }
+
         const jumpBtn = e.target.closest('.msg-quote-jump') || e.target.closest('.msg-quote');
         if (!jumpBtn) return;
         const targetId = jumpBtn.dataset.targetId || jumpBtn.dataset.replyId
             || jumpBtn.closest('.msg-quote')?.dataset.replyId;
         if (!targetId) return;
-        const targetMsg = messagesContainer.querySelector(`.message[data-message-id="${targetId}"]`);
+        const currentMsg = jumpBtn.closest('.message');
+        if (currentMsg) _sourceMessageId = currentMsg.dataset.messageId;
+        const container = getContainer();
+        const targetMsg = container?.querySelector(`.message[data-message-id="${targetId}"]`)
+            || document.querySelector(`.message[data-message-id="${targetId}"]`);
         if (targetMsg) {
             targetMsg.scrollIntoView({ behavior: 'smooth', block: 'center' });
             targetMsg.classList.remove('msg-highlighted');
             void targetMsg.offsetWidth;
             targetMsg.classList.add('msg-highlighted');
             setTimeout(() => targetMsg.classList.remove('msg-highlighted'), 2000);
+            showReturnBtn(targetMsg);
         }
-        if (onJump) onJump(jumpBtn, targetId, targetMsg);
     };
 }
 
