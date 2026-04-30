@@ -8,12 +8,12 @@
 	<form method="post" enctype="multipart/form-data">{% csrf_token %}
 		<div class="container">
 			<div class="row">
-				<div class="col-md-6">
+				<div class="col-md-8">
 					{{ form.title|as_crispy_field }}
 					{{ form.author|as_crispy_field }}
 					{{ form.abstract|as_crispy_field }}
 				</div>
-				<div class="col-md-6">
+				<div class="col-md-4">
 					<div class="card">
 						<div class="card-header">{% trans 'File Uploads' %}</div>
 						<div class="card-body">

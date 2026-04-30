@@ -5,6 +5,9 @@ tinymce.init({
   content_css: 'dark',
 
   menubar: false,
+  toolbar_mode: 'sliding',
+  resize: true,
+  height: 500,
   // menubar: "file edit view insert format tools table help",
 
   image_title: false,
@@ -16,7 +19,7 @@ tinymce.init({
   image_upload_url: 'uploads/',
 
   // plugins: "advlist anchor autolink autoresize autosave charmap code codesample directionality emoticons fullscreen help image importcss insertdatetime link lists media nonbreaking pagebreak preview quickbars save searchreplace table template visualblocks visualchars wordcount",
-  plugins: "advlist anchor autolink autoresize autosave codesample fullscreen image importcss link lists media nonbreaking searchreplace table code",
+  plugins: "advlist anchor autolink autosave codesample fullscreen image importcss link lists media nonbreaking searchreplace table code",
 
   // toolbar: "fullscreen undo redo | bold italic underline strikethrough | formatselect fontselect fontsizeselect | alignleft alignright aligncenter alignjustify | image media | link anchor codesample | pagebreak emoticons save searchreplace visualblocks insertdatetime table code help wordcount outdent indent numlist bullist forecolor backcolor removeformat charmap template preview paste",
   toolbar: "fullscreen | undo redo | blocks | forecolor bold italic underline strikethrough codesample removeformat | alignjustify alignleft aligncenter alignright | numlist bullist | table image | anchor link | code searchreplace",

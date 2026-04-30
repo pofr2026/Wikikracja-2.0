@@ -1472,3 +1472,12 @@ a:hover {
   color: #aaa;
   border-color: rgba(255, 255, 255, .15);
 }
+/* TinyMCE — global responsive styles */
+.tox-tinymce {
+  width: 100% !important;
+}
+@media (max-width: 576px) {
+  .tox-tinymce {
+    max-height: 60vh;
+  }
+}
