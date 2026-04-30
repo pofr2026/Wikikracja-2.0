@@ -2,12 +2,10 @@ from typing import List
 
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.urls import URLPattern, URLResolver, include, path, re_path
 from django.views.generic import RedirectView
 from django.views.static import serve
-from filebrowser.sites import site
 
 from home import views as hv
 from obywatele import views as ov
@@ -22,10 +20,6 @@ urlpatterns: List[URLPattern | URLResolver] = [
     path('change_email/', ov.change_email, name='change_email'),
     path('accounts/confirm-email/', RedirectView.as_view(url='/obywatele/onboarding/', permanent=False)),
     path('accounts/', include('allauth.urls')),
-    path('admin/', admin.site.urls),
-    path('admin/filebrowser/', site.urls),
-    # path('grappelli/', include('grappelli.urls')), # only needed for django-filebrowser but it is actually breaking admin panel
-    path('tinymce/', include('tinymce.urls')),
     path('favicon.ico', RedirectView.as_view(url='/static/home/images/favicon.ico')),  # TODO: robots.txt this way?
     path('captcha/', include('captcha.urls')),
     path('glosowania/', include('glosowania.urls', namespace='glosowania')),
