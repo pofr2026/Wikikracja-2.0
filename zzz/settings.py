@@ -97,7 +97,6 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 ASGI_APPLICATION = 'zzz.routing.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 ROOT_URLCONF = 'zzz.urls'
-FILEBROWSER_DIRECTORY = 'uploads/'
 
 if DEBUG:
     ASGI_THREADS = 1
@@ -216,13 +215,10 @@ INSTALLED_APPS = [
     'allauth.account',
     # 'allauth.socialaccount',
     'django.contrib.staticfiles',
-    'django.contrib.admindocs',
     'django_bootstrap5',
     'crispy_forms',
     'crispy_bootstrap5',
     'tinymce',
-    'filebrowser',
-    'django.contrib.admin',
     'django_tables2',
     'django_filters',
     'corsheaders',  # https://stackoverflow.com/questions/22355540/access-control-allow-origin-in-django-app

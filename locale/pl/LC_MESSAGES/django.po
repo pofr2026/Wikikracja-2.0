@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-30 07:13+0200\n"
+"POT-Creation-Date: 2026-04-30 12:59+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -259,10 +259,10 @@ msgstr "Czy na pewno chcesz usunąć to ogłoszenie?"
 #: .\bookkeeping\templates\bookkeeping\category_list.html:33
 #: .\bookkeeping\templates\bookkeeping\partner_list.html:55
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:62
-#: .\elibrary\templates\elibrary\book_detail.html:76
-#: .\events\templates\events\event_detail.html:17
-#: .\glosowania\templates\glosowania\szczegoly.html:174
-#: .\glosowania\templates\glosowania\szczegoly.html:217
+#: .\elibrary\templates\elibrary\book_detail.html:75
+#: .\events\templates\events\event_detail.html:16
+#: .\glosowania\templates\glosowania\szczegoly.html:167
+#: .\glosowania\templates\glosowania\szczegoly.html:210
 msgid "Delete"
 msgstr "Usuń"
 
@@ -296,12 +296,12 @@ msgstr "Prywatne"
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:59
 #: .\bookkeeping\templates\bookkeeping\partner_list.html:54
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:61
-#: .\elibrary\templates\elibrary\book_detail.html:73
-#: .\events\templates\events\event_detail.html:14
-#: .\events\templates\events\event_list.html:93
-#: .\glosowania\templates\glosowania\szczegoly.html:72
-#: .\glosowania\templates\glosowania\szczegoly.html:173
-#: .\glosowania\templates\glosowania\szczegoly.html:216
+#: .\elibrary\templates\elibrary\book_detail.html:72
+#: .\events\templates\events\event_detail.html:13
+#: .\events\templates\events\event_list.html:92
+#: .\glosowania\templates\glosowania\szczegoly.html:69
+#: .\glosowania\templates\glosowania\szczegoly.html:166
+#: .\glosowania\templates\glosowania\szczegoly.html:209
 #: .\obywatele\templates\obywatele\my_profile.html:140
 #: .\obywatele\templates\obywatele\szczegoly.html:182
 #: .\tasks\templates\tasks\task_detail.html:89
@@ -1531,8 +1531,8 @@ msgid "Enter short title describing new law."
 msgstr "Wpisz krótki tytuł opisujący nowe prawo."
 
 #: .\glosowania\models.py:26
-#: .\glosowania\templates\glosowania\_proposal_card.html:117
-#: .\glosowania\templates\glosowania\szczegoly.html:120
+#: .\glosowania\templates\glosowania\_proposal_card.html:116
+#: .\glosowania\templates\glosowania\szczegoly.html:113
 msgid "Law text"
 msgstr "Treść przepisu"
 
@@ -1549,8 +1549,8 @@ msgid "What is the penalty for non-compliance with this rule. This can be, for e
 msgstr "Jakie są konsekwencje za nieprzestrzeganie tej zasady. Może to być na przykład: \"Wygnanie na 3 miesiące\", \"Wygnanie na zawsze itd.\""
 
 #: .\glosowania\models.py:28
-#: .\glosowania\templates\glosowania\_proposal_card.html:135
-#: .\glosowania\templates\glosowania\szczegoly.html:135 .\home\views.py:703
+#: .\glosowania\templates\glosowania\_proposal_card.html:134
+#: .\glosowania\templates\glosowania\szczegoly.html:128 .\home\views.py:703
 msgid "Reasoning"
 msgstr "Uzasadnienie"
 
@@ -1661,8 +1661,8 @@ msgstr ""
 msgid "Proposal"
 msgstr "Propozycja"
 
-#: .\glosowania\templates\glosowania\_proposal_card.html:126
-#: .\glosowania\templates\glosowania\szczegoly.html:129
+#: .\glosowania\templates\glosowania\_proposal_card.html:125
+#: .\glosowania\templates\glosowania\szczegoly.html:122
 msgid "Consequences"
 msgstr "Konsekwencje"
 
@@ -1676,8 +1676,8 @@ msgstr "Koniec"
 
 #: .\glosowania\templates\glosowania\_view_toggle.html:10
 #: .\glosowania\templates\glosowania\proposition.html:9
-#: .\glosowania\templates\glosowania\szczegoly.html:191
-#: .\glosowania\templates\glosowania\szczegoly.html:234
+#: .\glosowania\templates\glosowania\szczegoly.html:184
+#: .\glosowania\templates\glosowania\szczegoly.html:227
 msgid "Add"
 msgstr "Dodaj"
 
@@ -1825,7 +1825,7 @@ msgstr "Zagłosowałeś"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:83
 msgid "Would you like to implement this rule?"
-msgstr "Czy chcesz wprowadzić ten przepis?"
+msgstr "Czy chcesz wprowadzenia tego przepisu?"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:86
 #: .\obywatele\templates\obywatele\poczekalnia.html:56
@@ -1846,7 +1846,7 @@ msgstr "Nie"
 #: .\glosowania\templates\glosowania\szczegoly.html:91
 #: .\home\templates\home\home.html:488
 msgid "You have already voted in this referendum"
-msgstr "Już zagłosowałeś w tym referendum"
+msgstr "Już zagłosowała/eś w tym referendum"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:96
 msgid "Results"
@@ -2169,7 +2169,7 @@ msgstr "Aktywność"
 #: .\home\templates\home\base.html:305 .\home\templates\home\home.html:13
 #: .\home\templates\home\login.html:4 .\home\templates\home\login.html:13
 #: .\home\templates\home\login.html:34
-#: .\obywatele\management\commands\count_citizens.py:181
+#: .\obywatele\management\commands\count_citizens.py:186
 #: .\obywatele\templates\obywatele\szczegoly.html:53
 msgid "Login"
 msgstr "Zaloguj"
@@ -2199,7 +2199,7 @@ msgid "Dismiss"
 msgstr "Odrzuć"
 
 #: .\home\templates\home\haslo.html:3
-#: .\obywatele\management\commands\count_citizens.py:182
+#: .\obywatele\management\commands\count_citizens.py:187
 msgid "Password"
 msgstr "Hasło"
 
@@ -2756,50 +2756,50 @@ msgstr "Nowa osoba poprosiła o dołączenie do grupy"
 msgid "User %(username)s just requested membership"
 msgstr "Użytkownik %(username)s właśnie poprosił/a o dołączenie do grupy"
 
-#: .\obywatele\management\commands\count_citizens.py:152
+#: .\obywatele\management\commands\count_citizens.py:153
 msgid "Candidate has been accepted as a citizen"
 msgstr "Kandydat został zaakceptowany"
 
-#: .\obywatele\management\commands\count_citizens.py:177
+#: .\obywatele\management\commands\count_citizens.py:182
 msgid "You have been accepted in our community"
 msgstr "Zostałeś/aś zaakceptowany/a w naszej społeczności"
 
-#: .\obywatele\management\commands\count_citizens.py:179
-#: .\obywatele\management\commands\count_citizens.py:218
+#: .\obywatele\management\commands\count_citizens.py:184
+#: .\obywatele\management\commands\count_citizens.py:223
 msgid "Welcome"
 msgstr "Witaj"
 
-#: .\obywatele\management\commands\count_citizens.py:180
-#: .\obywatele\management\commands\count_citizens.py:219
+#: .\obywatele\management\commands\count_citizens.py:185
+#: .\obywatele\management\commands\count_citizens.py:224
 msgid "Your account on"
 msgstr "Twoje konto na"
 
-#: .\obywatele\management\commands\count_citizens.py:180
+#: .\obywatele\management\commands\count_citizens.py:185
 msgid "is now active"
 msgstr "jest teraz aktywne"
 
-#: .\obywatele\management\commands\count_citizens.py:183
+#: .\obywatele\management\commands\count_citizens.py:188
 msgid "You may login here"
 msgstr "Możesz się zalogować tutaj"
 
-#: .\obywatele\management\commands\count_citizens.py:184
+#: .\obywatele\management\commands\count_citizens.py:189
 msgid "You may change password here"
 msgstr "Możesz zmienić hasło tutaj"
 
-#: .\obywatele\management\commands\count_citizens.py:216
+#: .\obywatele\management\commands\count_citizens.py:221
 msgid "Your account has been blocked"
 msgstr "Twoje konto zostało zablokowane"
 
-#: .\obywatele\management\commands\count_citizens.py:219
-#: .\obywatele\management\commands\count_citizens.py:228
+#: .\obywatele\management\commands\count_citizens.py:224
+#: .\obywatele\management\commands\count_citizens.py:233
 msgid "has been blocked"
 msgstr "zostało zablokowane"
 
-#: .\obywatele\management\commands\count_citizens.py:228
+#: .\obywatele\management\commands\count_citizens.py:233
 msgid "Citizen has been banned"
 msgstr "Ta osoba została zbanowana"
 
-#: .\obywatele\management\commands\count_citizens.py:228
+#: .\obywatele\management\commands\count_citizens.py:233
 msgid "User"
 msgstr "Użytkownik"
 
@@ -4223,10 +4223,10 @@ msgstr "Godzina"
 msgid "Reminder"
 msgstr "Przypomnienie"
 
-#: .\zzz\settings.py:107
+#: .\zzz\settings.py:106
 msgid "English"
 msgstr "Angielski"
 
-#: .\zzz\settings.py:108
+#: .\zzz\settings.py:107
 msgid "Polish"
 msgstr "Polski"

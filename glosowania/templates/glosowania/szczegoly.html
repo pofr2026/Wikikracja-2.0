@@ -74,10 +74,6 @@
       </div>
 
       {% elif id.status == 3 and id.is_author_signed %}
-      <div class="d-flex align-items-center gap-1" style="font-size:.78rem;color:var(--text-muted);">
-        <i class="fas fa-person-booth" style="color:var(--accent);"></i>
-        {% if voted %}{% trans 'I voted' %}{% else %}{% trans 'Your vote' %}{% endif %}
-      </div>
       {% if not voted %}
       <div class="d-flex align-items-center gap-2 flex-wrap">
         <span style="font-size:.78rem;color:var(--text-muted);">{% trans 'Would you like to implement this rule?' %}</span>
