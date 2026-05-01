@@ -6,6 +6,7 @@
  */
 
 import { getSharedWebSocket } from './websocket-manager.js';
+import { UPLOAD_MAX_BYTES } from './chat-core.js';
 
 /**
  * WebSocket API class for managing chat WebSocket connection
@@ -288,7 +289,7 @@ export default class WsApi {
             let file = files.item(i);
             let name = file.name;
             let size = file.size;
-            if (size > 5000000) {
+            if (size > UPLOAD_MAX_BYTES) {
                 alert("file is too big");
                 continue;
             }

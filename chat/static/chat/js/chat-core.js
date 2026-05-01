@@ -13,6 +13,8 @@ export {
     getVisibleTextLength,
 } from '../../common/js/richtext-core.js';
 
+export const UPLOAD_MAX_BYTES = 5_000_000;
+
 /**
  * Upload files via XHR
  * @param {FileList|Array} files - Files to upload
@@ -30,7 +32,7 @@ export async function uploadFiles(files, uploadUrl = '/chat/upload/') {
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            if (file.size > 5000000) {
+            if (file.size > UPLOAD_MAX_BYTES) {
                 alert('File is too big');
                 continue;
             }
