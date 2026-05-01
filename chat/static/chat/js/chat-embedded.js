@@ -7,7 +7,7 @@
  *   <script type="module" src="{% static 'chat/js/chat-embedded.js' %}"></script>
  */
 
-import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
+import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, initFormattingToolbar, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
 import { Message } from './templates.js';
 import { _, formatDate, formatTime } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
@@ -92,13 +92,7 @@ async function initEmbeddedChat(container) {
     let isAnonymous = false;
     let selectedFiles = [];
 
-    // ── 2. Helpers (imported from chat-core.js) ─────────────────────────────
-
-    function updateToolbarState() {
-        container.querySelectorAll('.fmt-btn').forEach(btn => {
-            btn.classList.toggle('active', document.queryCommandState(btn.dataset.cmd));
-        });
-    }
+    // ── 2. Local helpers ─────────────────────────────────────────────────────
 
     function appendMessage(msg) {
         const dateStr = formatDate(msg.timestamp);
@@ -348,6 +342,8 @@ async function initEmbeddedChat(container) {
         updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
     });
 
+    const { updateToolbarState } = initFormattingToolbar(container, inputEl);
+
     inputEl.addEventListener('keydown', (e) => {
         const mod = e.ctrlKey || e.metaKey;
         if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); updateToolbarState(); return; }
@@ -356,18 +352,6 @@ async function initEmbeddedChat(container) {
         // Handle Enter key via chat-core
         if (handleEnterKey(e, submitInput)) return;
         // zwykły Enter = nowa linia (domyślne zachowanie contenteditable)
-    });
-
-    document.addEventListener('selectionchange', () => {
-        if (document.activeElement === inputEl) updateToolbarState();
-    });
-
-    container.querySelectorAll('.fmt-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.execCommand(btn.dataset.cmd);
-            inputEl.focus();
-            updateToolbarState();
-        });
     });
 
     // Anuluj odpowiedź

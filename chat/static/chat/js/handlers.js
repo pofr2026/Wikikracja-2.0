@@ -11,7 +11,8 @@ import {
     createQuoteJumpHandler,
     createReactionHandler,
     createReplyHandler,
-    createVoteHandler
+    createVoteHandler,
+    initFormattingToolbar,
 } from './chat-core.js';
 import {
     copyMessageLink,
@@ -36,10 +37,6 @@ const DOM_API = new DomApi();
 
 document.addEventListener('DOMContentLoaded', function() {
     const MSG_MAX = window.SITE_SETTINGS?.messageMaxLength ?? 500;
-
-    if (window.SITE_SETTINGS && window.SITE_SETTINGS.messageMaxLength) {
-        MSG_MAX = window.SITE_SETTINGS.messageMaxLength;
-    }
 
     function updateCounter(text) {
         const remaining = MSG_MAX - text.length;
@@ -81,13 +78,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 2500);
     }
 
-    // Rich text toolbar state
-    function updateToolbarState() {
-        ['bold', 'italic', 'underline'].forEach(cmd => {
-            const btn = $(`[data-cmd="${cmd}"]`);
-            btn?.classList.toggle('active', document.queryCommandState(cmd));
-        });
-    }
+    const { updateToolbarState } = initFormattingToolbar(document, () => $('#message-input'));
 
     // Update counter on input; no auto-resize needed for contenteditable
     document.addEventListener('input', (e) => {
@@ -155,7 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
             content.classList.add('open');
             btn.setAttribute('aria-expanded', 'true');
         } else {
-            // Default: collapsed            content.classList.remove('open');
+            content.classList.remove('open');
             btn.setAttribute('aria-expanded', 'false');
         }
     });
@@ -245,24 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!DOM_API.isEditing()) {
                 DOM_API.setEditing(message?.dataset.messageId);
             }
-        }
-    });
-
-    // Toolbar button clicks
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.fmt-btn');
-        if (btn && btn.dataset.cmd) {
-            e.preventDefault();
-            document.execCommand(btn.dataset.cmd);
-            $('#message-input')?.focus();
-            updateToolbarState();
-        }
-    });
-
-    // Update toolbar active state on cursor move
-    document.addEventListener('selectionchange', () => {
-        if (document.activeElement?.id === 'message-input') {
-            updateToolbarState();
         }
     });
 
@@ -404,7 +377,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // SHARED MESSAGE HANDLERS FROM chat-core.js
+    // ── Shared handlers from chat-core.js ────────────────────────────────────
 
     document.addEventListener('click', createVoteHandler(function(eventName, messageId, isAdd) {
         const btn = document.querySelector('.msg-vote[data-event-name="' + eventName + '"][data-message-id="' + messageId + '"]');

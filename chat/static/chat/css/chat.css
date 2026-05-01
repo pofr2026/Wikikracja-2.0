@@ -456,14 +456,6 @@ body:has(.chat-rooms) .main-area {
     border-color: var(--border);
     color: var(--color-text);
 }
-.anonymous-toggle.active {
-    background-color: var(--color-success);
-    border-color: var(--color-success);
-    color: var(--bg-base);
-}
-.anonymous-toggle.active:hover {
-    opacity: .85;
-}
 #room .chat-controls input[type="file"] {
     display: none;
 }

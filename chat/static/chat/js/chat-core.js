@@ -345,6 +345,43 @@ export function openBigImage(srcs, startIndex = 0) {
 }
 
 /**
+ * Initialize the rich-text formatting toolbar (B / I / U buttons).
+ * Uses event delegation so it works for dynamically rendered rooms.
+ * Prevents mousedown focus-theft so selection is preserved when clicking buttons.
+ *
+ * @param {Document|HTMLElement} root - Delegation root (document for main chat, container for embedded)
+ * @param {HTMLElement|Function} inputEl - The contenteditable input, or a getter () => element
+ * @returns {{ updateToolbarState: Function }}
+ */
+export function initFormattingToolbar(root, inputEl) {
+    const resolveInput = typeof inputEl === 'function' ? inputEl : () => inputEl;
+
+    function updateToolbarState() {
+        root.querySelectorAll('.fmt-btn[data-cmd]').forEach(btn => {
+            btn.classList.toggle('active', document.queryCommandState(btn.dataset.cmd));
+        });
+    }
+
+    root.addEventListener('mousedown', (e) => {
+        if (e.target.closest('.fmt-btn[data-cmd]')) e.preventDefault();
+    });
+
+    root.addEventListener('click', (e) => {
+        const btn = e.target.closest('.fmt-btn[data-cmd]');
+        if (!btn) return;
+        document.execCommand(btn.dataset.cmd);
+        updateToolbarState();
+    });
+
+    document.addEventListener('selectionchange', () => {
+        const el = resolveInput();
+        if (el && document.activeElement === el) updateToolbarState();
+    });
+
+    return { updateToolbarState };
+}
+
+/**
  * Create a delegated click handler that opens the image viewer
  * when user clicks an .attached-image inside .attachment-image-container.
  * @returns {Function} click event handler
