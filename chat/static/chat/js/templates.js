@@ -125,7 +125,7 @@ const message_template = `
       <div class='attachment-image-container'>
         <% if (attachments && attachments.images) { %>
           <% for (let filename of attachments.images) { %>
-            <img class='attached-image' src='/media/uploads/<%-filename %>'>
+            <img class='attached-image' loading='lazy' src='/media/uploads/<%-filename %>'>
           <% } %>
         <% } %>
       </div>

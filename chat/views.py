@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import uuid
@@ -166,31 +167,36 @@ def check_image_type(file_path):
         return None
 
 
+MAX_LONG_SIDE = 1920
+
+
 @csrf_exempt
 def upload_image(request: HttpRequest):
     filenames = []
     for image in request.FILES.getlist('images'):
-        file_type = check_image_type(image)
-        if file_type is None:
-            return JsonResponse({
-                'error': 'bad type'
-            })
+        if check_image_type(image) is None:
+            return JsonResponse({'error': 'bad type'})
 
         image.seek(0)
-        file_bytes = image.read()
-        if len(file_bytes) > (settings.UPLOAD_IMAGE_MAX_SIZE_MB * 1000000):
-            return JsonResponse({
-                'error': 'file too big'
-            })
+        if image.size > (settings.UPLOAD_IMAGE_MAX_SIZE_MB * 1000000):
+            return JsonResponse({'error': 'file too big'})
 
-        filename = f"{uuid.uuid4()}.{file_type}"
+        image.seek(0)
+        with Image.open(image) as img:
+            img = img.convert('RGBA') if img.mode in ('RGBA', 'LA', 'P') else img.convert('RGB')
+            if max(img.width, img.height) > MAX_LONG_SIDE:
+                img.thumbnail((MAX_LONG_SIDE, MAX_LONG_SIDE), Image.LANCZOS)
+
+            buffer = io.BytesIO()
+            img.save(buffer, format='WEBP', quality=85, method=4)
+            file_bytes = buffer.getvalue()
+
+        filename = f"{uuid.uuid4()}.webp"
         with open(f"{settings.BASE_DIR}/media/uploads/{filename}", "wb") as f:
             f.write(file_bytes)
         filenames.append(filename)
 
-    return JsonResponse({
-        'filenames': filenames
-    })
+    return JsonResponse({'filenames': filenames})
 
 
 def get_translations():
