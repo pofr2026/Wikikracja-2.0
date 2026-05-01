@@ -30,11 +30,11 @@ export async function uploadFiles(files, uploadUrl = '/chat/upload/') {
 
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
-            if (file.size > 10000000) {
+            if (file.size > 5000000) {
                 alert('File is too big');
                 continue;
             }
-            formData.append('files', file);
+            formData.append('images', file);
         }
 
         xhr.onreadystatechange = () => {
@@ -280,5 +280,80 @@ export function createFileUploadHandler(handleFiles, previewContainer, previewIm
         const files = e.target.files;
         if (!files || files.length === 0) return;
         handleFiles(files, previewContainer, previewImagesDiv);
+    };
+}
+
+/**
+ * Open a fullscreen image viewer lightbox.
+ * @param {string[]} srcs - Array of image URLs to display
+ * @param {number} [startIndex=0] - Index of the first image to show
+ */
+export function openBigImage(srcs, startIndex = 0) {
+    document.getElementById('image-viewer-overlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'image-viewer-overlay';
+    overlay.className = 'image-viewer-overlay';
+    overlay.innerHTML = `
+        <button class="image-viewer-close" aria-label="Close">&times;</button>
+        <button class="image-viewer-nav image-viewer-prev" aria-label="Previous">&#10094;</button>
+        <button class="image-viewer-nav image-viewer-next" aria-label="Next">&#10095;</button>
+        <div class="image-viewer-container">
+            <img class="image-viewer-img" src="" alt="">
+        </div>
+        <div class="image-viewer-counter"></div>
+    `;
+    document.body.appendChild(overlay);
+    document.body.classList.add('modal-open');
+
+    let currentIndex = startIndex;
+    const imgEl = overlay.querySelector('.image-viewer-img');
+    const counterEl = overlay.querySelector('.image-viewer-counter');
+    const prevBtn = overlay.querySelector('.image-viewer-prev');
+    const nextBtn = overlay.querySelector('.image-viewer-next');
+
+    function show(index) {
+        currentIndex = (index + srcs.length) % srcs.length;
+        imgEl.src = srcs[currentIndex];
+        const multi = srcs.length > 1;
+        counterEl.textContent = multi ? `${currentIndex + 1} / ${srcs.length}` : '';
+        prevBtn.style.display = multi ? 'block' : 'none';
+        nextBtn.style.display = multi ? 'block' : 'none';
+    }
+
+    function close() {
+        document.removeEventListener('keydown', onKey);
+        overlay.remove();
+        document.body.classList.remove('modal-open');
+    }
+
+    function onKey(e) {
+        if (e.key === 'Escape') close();
+        if (e.key === 'ArrowLeft') show(currentIndex - 1);
+        if (e.key === 'ArrowRight') show(currentIndex + 1);
+    }
+
+    overlay.querySelector('.image-viewer-close').addEventListener('click', close);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    prevBtn.addEventListener('click', (e) => { e.stopPropagation(); show(currentIndex - 1); });
+    nextBtn.addEventListener('click', (e) => { e.stopPropagation(); show(currentIndex + 1); });
+    document.addEventListener('keydown', onKey);
+
+    show(currentIndex);
+}
+
+/**
+ * Create a delegated click handler that opens the image viewer
+ * when user clicks an .attached-image inside .attachment-image-container.
+ * @returns {Function} click event handler
+ */
+export function createImageClickHandler() {
+    return function(e) {
+        const img = e.target.closest('.attached-image');
+        if (!img) return;
+        const container = img.closest('.attachment-image-container');
+        if (!container) return;
+        const images = Array.from(container.querySelectorAll('.attached-image'));
+        openBigImage(images.map(i => i.src), images.indexOf(img));
     };
 }

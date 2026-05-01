@@ -288,7 +288,7 @@ export default class WsApi {
             let file = files.item(i);
             let name = file.name;
             let size = file.size;
-            if (size > 10000000) {
+            if (size > 5000000) {
                 alert("file is too big");
                 continue;
             }

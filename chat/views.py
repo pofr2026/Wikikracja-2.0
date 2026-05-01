@@ -178,7 +178,7 @@ def upload_image(request: HttpRequest):
 
         image.seek(0)
         file_bytes = image.read()
-        if len(file_bytes) > (settings.UPLOAD_IMAGE_MAX_SIZE_MB * 1000000 * 2):
+        if len(file_bytes) > (settings.UPLOAD_IMAGE_MAX_SIZE_MB * 1000000):
             return JsonResponse({
                 'error': 'file too big'
             })

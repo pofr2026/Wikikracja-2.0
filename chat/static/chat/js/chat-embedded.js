@@ -7,7 +7,7 @@
  *   <script type="module" src="{% static 'chat/js/chat-embedded.js' %}"></script>
  */
 
-import { clearReplyTarget, createEditHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
+import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
 import { Message } from './templates.js';
 import { _, formatDate, formatTime } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
@@ -422,6 +422,7 @@ async function initEmbeddedChat(container) {
     messagesEl.addEventListener('click', replyHandler);
     messagesEl.addEventListener('click', editHandler);
     messagesEl.addEventListener('click', quoteJumpHandler);
+    messagesEl.addEventListener('click', createImageClickHandler());
 
     function submitInput() {
         if (inputEl.dataset.editMessage) {

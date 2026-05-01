@@ -7,6 +7,7 @@ import {
     clearReplyTarget,
     createEditHandler,
     createHistoryHandler,
+    createImageClickHandler,
     createQuoteJumpHandler,
     createReactionHandler,
     createReplyHandler,
@@ -250,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Toolbar button clicks
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.fmt-btn');
-        if (btn) {
+        if (btn && btn.dataset.cmd) {
             e.preventDefault();
             document.execCommand(btn.dataset.cmd);
             $('#message-input')?.focus();
@@ -265,17 +266,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    document.addEventListener('click', (e) => {
-        const container = e.target.closest('.attachment-image-container');
-        if (container) {
-            const images = Array.from(container.querySelectorAll('.attached-image'));
-            const index = images.indexOf(e.target);
-            if (index !== -1) {
-                const imageSrcs = images.map(img => img.src);
-                DOM_API.openBigImage(imageSrcs);
-            }
-        }
-    });
+    document.addEventListener('click', createImageClickHandler());
 
     document.addEventListener('click', (e) => {
         const archiveBtn = e.target.closest('.archive-toggle');
