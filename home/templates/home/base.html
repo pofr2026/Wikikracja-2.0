@@ -80,12 +80,12 @@
         <li class="nav-item">
           <a href="{% url 'glosowania:proposition' %}"
              title="{% trans 'Agora / Democracy' %}"
-             class="{% if request.resolver_match.namespace == 'glosowania' or request.resolver_match.namespace == 'board' %}active{% endif %}">
+             class="{% if request.resolver_match.namespace == 'glosowania' %}active{% endif %}">
             <i class="fas fa-fw fa-landmark nav-icon"></i>
             <span class="nav-text">{% trans "Agora / Democracy" %}</span>
           </a>
         </li>
-
+        
         <li class="nav-item">
           <a href="{% url 'tasks:list' %}"
              title="{% trans 'Action' %}"
@@ -103,7 +103,16 @@
             <span class="nav-text">{% trans "Knowledge Base" %}</span>
           </a>
         </li>
-
+        
+        <li class="nav-item">
+          <a href="{% url 'board:start' %}"
+              title="{% trans 'Documents' %}"
+              class="{% if request.resolver_match.namespace == 'board' %}active{% endif %}">
+            <i class="fas fa-fw fa-chalkboard nav-icon"></i>
+            <span class="nav-text">{% trans "Documents" %}</span>
+          </a>
+        </li>
+        
         <li class="nav-item">
           <a href="{% url 'obywatele:wspolnota' %}"
              title="{% trans 'Community' %}"
@@ -189,7 +198,7 @@
         <span class="current">
           {% if request.resolver_match.url_name == 'home' %}{% trans "Desktop" %}
           {% elif request.resolver_match.namespace == 'glosowania' %}{% trans "Votings" %}
-          {% elif request.resolver_match.namespace == 'board' %}{% trans "Board" %}
+          {% elif request.resolver_match.namespace == 'board' %}{% trans "Documents" %}
           {% elif request.resolver_match.namespace == 'tasks' %}{% trans "Tasks" %}
           {% elif request.resolver_match.namespace == 'events' %}{% trans "Calendar" %}
           {% elif request.resolver_match.namespace == 'elibrary' %}{% trans "Library" %}

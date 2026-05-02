@@ -46,10 +46,10 @@ class PostCategoryDeleteView(LoginRequiredMixin, DeleteView):
             context['error'] = self.request.session.pop('delete_error')
         return context
 
-    def post(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
         if Post.objects.filter(category=self.object).exists():
-            request.session['delete_error'] = _("Cannot delete category because it is in use. Remove all posts that use it first.")
+            request.session['delete_error'] = _("Cannot delete category because it is in use. Remove all documents that use it first.")
             return redirect('board:category_delete', pk=self.object.pk)
         try:
             return super().delete(request, *args, **kwargs)
@@ -59,21 +59,64 @@ class PostCategoryDeleteView(LoginRequiredMixin, DeleteView):
 
 
 def board(request: HttpRequest) -> HttpResponse:
+    sort = request.GET.get('sort', 'date')
+    order = request.GET.get('order', 'desc')
+    category_id = request.GET.get('category')
+    reverse_order = (order == 'desc')
+
     if request.user.is_authenticated:
-        posts_all = Post.objects.filter(is_archived=False)
-        posts_pinned = posts_all.filter(is_important=True).order_by('-updated')
-        posts_not_pinned = posts_all.filter(is_important=False).order_by('-updated')
+        posts_all = Post.objects.filter(is_archived=False).select_related('category', 'author')
     else:
-        posts_public = Post.objects.filter(is_public=True, is_archived=False)
-        posts_pinned = posts_public.filter(is_important=True).order_by('-updated')
-        posts_not_pinned = posts_public.filter(is_important=False).order_by('-updated')
+        posts_all = Post.objects.filter(is_public=True, is_archived=False).select_related('category', 'author')
+
+    # Filter by category if specified
+    if category_id and category_id != 'all':
+        try:
+            category_id = int(category_id)
+            posts_all = posts_all.filter(category_id=category_id)
+            active_category = category_id
+        except (ValueError, TypeError):
+            active_category = None
+    else:
+        active_category = None
+
+    # Group by category
+    categories = list(PostCategory.objects.all())
+    posts_by_cat = {}
+    uncategorized = []
+    for post in posts_all:
+        if post.category_id:
+            posts_by_cat.setdefault(post.category_id, []).append(post)
+        else:
+            uncategorized.append(post)
+
+    category_groups = []
+    for cat in categories:
+        cat_posts = posts_by_cat.get(cat.pk, [])
+        if cat_posts:
+            # Sort posts within category
+            sorted_posts = sorted(cat_posts, key=lambda p: p.updated, reverse=reverse_order)
+            category_groups.append({
+                'category': cat,
+                'posts': sorted_posts
+            })
+    if uncategorized:
+        # Sort uncategorized posts
+        sorted_uncategorized = sorted(uncategorized, key=lambda p: p.updated, reverse=reverse_order)
+        category_groups.append({
+            'category': None,
+            'posts': sorted_uncategorized
+        })
 
     return render(
         request,
         'board/board.html',
         {
-            'posts_pinned': posts_pinned,
-            'posts_not_pinned': posts_not_pinned
+            'category_groups': category_groups,
+            'categories': categories,
+            'current_sort': sort,
+            'current_order': order,
+            'active_category': active_category,
         },
     )
 
@@ -141,7 +184,7 @@ def edit_post(request: HttpRequest, pk: int):
 
 
 def view_post(request: HttpRequest, pk: int):
-    post = get_object_or_404(Post, pk=pk)  # Only published posts can be viewed
+    post = get_object_or_404(Post, pk=pk)  # Only published documents can be viewed
     return render(request, 'board/post_detail.html', {
         'post': post
     })

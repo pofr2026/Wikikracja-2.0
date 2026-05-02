@@ -1,64 +1,186 @@
 {% extends "home/base.html" %}
 {% load static %}
 {% load i18n %}
+{% load feed_filters %}
 
 {% block content %}
-<div class="section">
 
-  <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
-    <span class="section-heading" style="font-size:.9rem;">
-      <i class="fas fa-bullhorn me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Announcements" %}
-    </span>
-    {% if user.is_authenticated %}
-    <div class="d-flex gap-2">
-      <a href="{% url 'board:archive' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-box-archive me-1"></i>{% trans "Archive" %}
+<div class="section" id="proposals-list">
+
+{# ── TOOLBAR - TOP LINE ── #}
+<div class="proposals-toolbar mb-3">
+  <a href="{% url 'board:create_post' %}" class="toolbar-add-btn">
+    <i class="fas fa-plus"></i> {% trans 'Create document' %}
+  </a>
+
+  <a href="{% url 'board:category_list' %}" class="toolbar-add-btn">
+    <i class="fas fa-tags"></i> {% trans 'Categories' %}
+  </a>
+  <a href="{% url 'board:archive' %}" class="btn btn-sm btn-outline-secondary">
+    <i class="fas fa-box-archive me-1"></i>{% trans "Archive" %}
+  </a>
+
+  <span class="toolbar-divider"></span>
+
+  <div class="toolbar-sort">
+    <span class="toolbar-sort-label">{% trans 'Sort' %}:</span>
+
+    {% if current_sort == 'date' %}
+      <a href="{% url 'board:start' %}?sort=date&order={% if current_order == 'asc' %}desc{% else %}asc{% endif %}{% if active_category %}&category={{ active_category }}{% endif %}"
+         class="sort-btn active">
+        {% trans 'Date' %}
+        <i class="fas fa-arrow-{% if current_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>
       </a>
-      <a href="{% url 'board:category_list' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-tags me-1"></i>{% trans "Categories"%}
+    {% else %}
+      <a href="{% url 'board:start' %}?sort=date&order=desc{% if active_category %}&category={{ active_category }}{% endif %}" class="sort-btn">
+        {% trans 'Date' %}
       </a>
-      <a href="{% url 'board:create_post' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-plus me-1"></i>{% trans "Create announcement" %}
-      </a>
-    </div>
     {% endif %}
   </div>
 
-  {% if posts_pinned or posts_not_pinned %}
+  <span class="toolbar-divider"></span>
 
-  {% if posts_pinned %}
-  <div class="d-flex align-items-center gap-2 mb-2">
-    <i class="fas fa-thumbtack" style="color:var(--accent);font-size:.75rem;"></i>
-    <span style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;">{% trans "Featured" %}</span>
+  <div class="toolbar-view">
+    <button class="view-toggle-btn" id="btn-list" onclick="setBoardView('list')" title="{% trans 'List' %}">
+      <i class="fas fa-list"></i>
+    </button>
+    <button class="view-toggle-btn" id="btn-grid" onclick="setBoardView('grid')" title="{% trans 'Grid' %}">
+      <i class="fas fa-grip"></i>
+    </button>
   </div>
-  <div class="row g-3 mb-4">
-    {% for post in posts_pinned %}
-    {% include "board/_post_card.html" %}
+</div>
+
+{# ── TOOLBAR - BOTTOM LINE (CATEGORY FILTERS) ── #}
+<div class="proposals-toolbar mb-3">
+  <div class="toolbar-categories">
+    <button class="category-chip {% if not active_category %}active{% endif %}" data-category="all">
+      {% trans 'All' %}
+    </button>
+    {% for category in categories %}
+    <button class="category-chip {% if active_category == category.pk %}active{% endif %}" data-category="{{ category.pk }}">
+      {{ category.name }}
+    </button>
     {% endfor %}
   </div>
-  {% endif %}
+</div>
 
-  {% if posts_not_pinned %}
-  {% if posts_pinned %}
-  <div class="d-flex align-items-center gap-2 mb-2">
-    <span style="font-size:.78rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;">{% trans "Other" %}</span>
+{# ── KAFLE KATEGORII OGŁOSZEŃ ── #}
+{% for group in category_groups %}
+<div class="mb-4" style="position:relative;" {% if group.category %}id="category-{{ group.category.pk }}"{% endif %}>
+  <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+    <span class="section-heading" style="font-size:.9rem;">
+      <i class="fas fa-bullhorn me-2" style="color:var(--accent);opacity:.8;"></i>
+      {% if group.category %}{{ group.category.name }}{% else %}{% trans "Uncategorized" %}{% endif %}
+    </span>
   </div>
-  {% endif %}
-  <div class="row g-3">
-    {% for post in posts_not_pinned %}
-    {% include "board/_post_card.html" %}
+
+  {# lista #}
+  <div class="elibrary-posts-list">
+    {% for post in group.posts %}
+    <a href="{% url 'board:view_post' post.pk %}"
+       class="elibrary-post-row d-flex align-items-start gap-3"
+       style="text-decoration:none;color:inherit;padding:.6rem .75rem;border-radius:.4rem;transition:background .15s;">
+      {% if post.featured_image %}
+      <div class="flex-shrink-0">
+        <img src="{{ post.featured_image.url }}" alt="{{ post.title }}"
+             style="width:240px;height:240px;object-fit:cover;object-position:top center;border-radius:.4rem;">
+      </div>
+      {% endif %}
+      <div style="flex:1;min-width:0;">
+        <div class="fw-semibold" style="font-size:.875rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">
+          {{ post.title }}
+        </div>
+        {% if post.subtitle %}
+        <div style="font-size:.78rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">
+          {{ post.subtitle }}
+        </div>
+        {% endif %}
+      </div>
+      <div class="d-flex align-items-center gap-2 flex-shrink-0">
+        {% if post.author %}
+          {% if post.author.uzytkownik.avatar %}
+            <img src="{{ post.author.uzytkownik.avatar.url }}"
+                 alt="{{ post.author.username }}"
+                 class="rounded-circle"
+                 style="width:18px;height:18px;object-fit:cover;">
+          {% else %}
+            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                 style="width:18px;height:18px;font-size:.5rem;background:{{ post.author.username|citizen_color }};">
+              {{ post.author.username|slice:":2"|upper }}
+            </div>
+          {% endif %}
+        {% endif %}
+        <span style="font-size:.72rem;color:var(--text-muted);white-space:nowrap;">
+          {{ post.updated|date:"d.m.Y" }}
+        </span>
+      </div>
+    </a>
     {% endfor %}
   </div>
-  {% endif %}
 
-  {% else %}
-  <div class="card">
-    <div class="card-body text-center py-5" style="color:var(--text-muted);">
-      <i class="fas fa-bullhorn fa-2x d-block mb-2" style="opacity:.3;"></i>
-      <span style="font-size:.875rem;">{% trans "No announcements" %}</span>
+  {# siatka #}
+  <div class="elibrary-posts-grid">
+    <div class="row g-2">
+      {% for post in group.posts %}
+      <div class="col-12 col-sm-6 col-lg-3">
+        <a href="{% url 'board:view_post' post.pk %}"
+           class="card h-100 d-flex flex-column"
+           style="text-decoration:none;color:inherit;border:1px solid var(--border);transition:border-color .15s,background .15s;">
+          <div class="p-3 d-flex flex-column gap-2" style="flex:1;">
+            <div style="min-width:0;">
+              <div class="fw-semibold" style="font-size:.875rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                {{ post.title }}
+              </div>
+              {% if post.subtitle %}
+              <div style="font-size:.78rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
+                {{ post.subtitle }}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% if post.featured_image %}
+          <img src="{{ post.featured_image.url }}" alt="{{ post.title }}"
+               style="width:100%;height:200px;object-fit:cover;object-position:top center;border-bottom:1px solid var(--border);">
+          {% endif %}
+          <div class="p-3 d-flex flex-column gap-2">
+            <div class="d-flex align-items-center gap-2 mt-auto">
+              {% if post.author %}
+                {% if post.author.uzytkownik.avatar %}
+                  <img src="{{ post.author.uzytkownik.avatar.url }}"
+                       alt="{{ post.author.username }}"
+                       class="rounded-circle flex-shrink-0"
+                       style="width:20px;height:20px;object-fit:cover;">
+                {% else %}
+                  <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0"
+                       style="width:20px;height:20px;font-size:.55rem;background:{{ post.author.username|citizen_color }};">
+                    {{ post.author.username|slice:":2"|upper }}
+                  </div>
+                {% endif %}
+              {% endif %}
+              <span class="ms-auto flex-shrink-0" style="font-size:.72rem;color:var(--text-muted);">
+                {{ post.updated|date:"d.m.Y" }}
+              </span>
+            </div>
+          </div>
+        </a>
+      </div>
+      {% endfor %}
     </div>
   </div>
-  {% endif %}
 
 </div>
+{% empty %}
+<div class="card mb-4">
+  <div class="card-header">
+    <span class="section-heading" style="font-size:.9rem;">
+      <i class="fas fa-bullhorn me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Documents" %}
+    </span>
+  </div>
+  <div class="card-body py-2 px-3">
+    <span style="font-size:.82rem;color:var(--text-muted);">{% trans "No documents" %}</span>
+  </div>
+</div>
+{% endfor %}
+
+</div>{# /section #}
 {% endblock %}
