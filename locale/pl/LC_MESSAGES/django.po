@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-02 17:02+0200\n"
+"POT-Creation-Date: 2026-05-02 17:37+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -39,7 +39,7 @@ msgstr ""
 msgid "Save"
 msgstr "Zapisz"
 
-#: .\board\forms.py:23 .\board\models.py:24
+#: .\board\forms.py:23 .\board\models.py:25
 msgid "Text"
 msgstr "Treść"
 
@@ -47,7 +47,7 @@ msgstr "Treść"
 msgid "Attachments"
 msgstr "Załączniki"
 
-#: .\board\models.py:9
+#: .\board\models.py:10
 #: .\board\templates\board\postcategory_confirm_delete.html:59
 #: .\board\templates\board\postcategory_list.html:24 .\bookkeeping\models.py:10
 #: .\bookkeeping\models.py:23 .\bookkeeping\models.py:30
@@ -60,21 +60,21 @@ msgstr "Załączniki"
 msgid "Name"
 msgstr "Nazwa"
 
-#: .\board\models.py:10
+#: .\board\models.py:11
 #: .\board\templates\board\postcategory_confirm_delete.html:60
 #: .\board\templates\board\postcategory_list.html:25
 msgid "Priority"
 msgstr "Priorytet"
 
-#: .\board\models.py:14
+#: .\board\models.py:15
 msgid "Post Category"
 msgstr "Kategoria"
 
-#: .\board\models.py:15
+#: .\board\models.py:16
 msgid "Post Categories"
 msgstr "Kategorie"
 
-#: .\board\models.py:22
+#: .\board\models.py:23
 #: .\board\templates\board\postcategory_confirm_delete.html:32
 #: .\elibrary\forms.py:9 .\elibrary\models.py:14
 #: .\elibrary\templates\elibrary\book_confirm_delete.html:13
@@ -87,11 +87,11 @@ msgstr "Kategorie"
 msgid "Title"
 msgstr "Tytuł"
 
-#: .\board\models.py:23
+#: .\board\models.py:24
 msgid "Subtitle"
 msgstr "Podtytuł"
 
-#: .\board\models.py:25 .\board\templates\board\post_detail.html:49
+#: .\board\models.py:26 .\board\templates\board\post_detail.html:49
 #: .\bookkeeping\models.py:59
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:29
 #: .\elibrary\forms.py:10 .\elibrary\models.py:15
@@ -103,7 +103,7 @@ msgstr "Podtytuł"
 msgid "Author"
 msgstr "Autor"
 
-#: .\board\models.py:26 .\board\templates\board\post_detail.html:49
+#: .\board\models.py:27 .\board\templates\board\post_detail.html:49
 #: .\bookkeeping\models.py:51 .\events\templates\events\event_detail.html:108
 #: .\glosowania\templates\glosowania\delete_argument.html:21
 #: .\glosowania\templates\glosowania\edit_argument.html:14
@@ -111,12 +111,12 @@ msgstr "Autor"
 msgid "Created"
 msgstr "Utworzone"
 
-#: .\board\models.py:27 .\board\templates\board\post_detail.html:49
+#: .\board\models.py:28 .\board\templates\board\post_detail.html:49
 #: .\events\templates\events\event_detail.html:110
 msgid "Updated"
 msgstr "Zaktualizowane"
 
-#: .\board\models.py:28 .\bookkeeping\forms.py:66 .\bookkeeping\models.py:55
+#: .\board\models.py:29 .\bookkeeping\forms.py:66 .\bookkeeping\models.py:55
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:37
 #: .\bookkeeping\templates\bookkeeping\report_list.html:43
 #: .\bookkeeping\templates\bookkeeping\report_list.html:84
@@ -127,52 +127,56 @@ msgstr "Zaktualizowane"
 msgid "Category"
 msgstr "Kategoria"
 
-#: .\board\models.py:29 .\board\templates\board\post_detail.html:49
+#: .\board\models.py:30 .\board\templates\board\post_detail.html:49
 #: .\chat\templates\chat\chat.html:59 .\events\models.py:50
 #: .\events\templates\events\event_detail.html:81
 #: .\events\templates\events\event_list.html:78
 msgid "Public"
 msgstr "Publiczne"
 
-#: .\board\models.py:30
+#: .\board\models.py:31
 msgid "Archived"
 msgstr "Zarchiwizowane"
 
-#: .\board\models.py:31 .\tasks\templates\tasks\_task_card.html:25
+#: .\board\models.py:32 .\tasks\templates\tasks\_task_card.html:25
 #: .\tasks\views.py:85
 msgid "Important"
 msgstr "Ważne"
 
-#: .\board\models.py:32
+#: .\board\models.py:33
 msgid "Featured Image"
 msgstr "Obrazek wyróżniający"
 
-#: .\board\models.py:33
+#: .\board\models.py:34
 msgid "System Key"
 msgstr ""
 
-#: .\board\models.py:44 .\home\models.py:11 .\home\models.py:41
+#: .\board\models.py:41
+msgid "System posts cannot be deleted."
+msgstr "Dokumenty systemowe nie mogą być usunięte"
+
+#: .\board\models.py:50 .\home\models.py:11 .\home\models.py:41
 #: .\home\templatetags\feed_filters.py:31 .\home\views.py:661
 msgid "Post"
 msgstr "Ogłoszenie"
 
-#: .\board\models.py:45
+#: .\board\models.py:51
 msgid "File"
 msgstr "Plik"
 
-#: .\board\models.py:46
+#: .\board\models.py:52
 msgid "Filename"
 msgstr "Nazwa pliku"
 
-#: .\board\models.py:47
+#: .\board\models.py:53
 msgid "Uploaded At"
 msgstr "Wgrany"
 
-#: .\board\models.py:50
+#: .\board\models.py:56
 msgid "Post Attachment"
 msgstr "Załącznik"
 
-#: .\board\models.py:51
+#: .\board\models.py:57
 msgid "Post Attachments"
 msgstr "Załączniki"
 
@@ -467,7 +471,7 @@ msgstr "Dodaj kategorię"
 msgid "No categories"
 msgstr "Brak kategorii"
 
-#: .\board\views.py:52
+#: .\board\views.py:54
 msgid "Cannot delete category because it is in use. Remove all documents that use it first."
 msgstr "Nie można usunąć kategorii, ponieważ jest w użyciu. Usuń najpierw wszystkie dokumenty, które ją wykorzystują."
 
@@ -2205,7 +2209,6 @@ msgstr "Aktywność"
 #: .\home\templates\home\base.html:314 .\home\templates\home\home.html:13
 #: .\home\templates\home\login.html:4 .\home\templates\home\login.html:13
 #: .\home\templates\home\login.html:34
-#: .\obywatele\management\commands\count_citizens.py:186
 #: .\obywatele\templates\obywatele\szczegoly.html:53
 msgid "Login"
 msgstr "Zaloguj"
@@ -2235,7 +2238,6 @@ msgid "Dismiss"
 msgstr "Odrzuć"
 
 #: .\home\templates\home\haslo.html:3
-#: .\obywatele\management\commands\count_citizens.py:187
 msgid "Password"
 msgstr "Hasło"
 
@@ -2792,50 +2794,32 @@ msgstr "Nowa osoba poprosiła o dołączenie do grupy"
 msgid "User %(username)s just requested membership"
 msgstr "Użytkownik %(username)s właśnie poprosił/a o dołączenie do grupy"
 
-#: .\obywatele\management\commands\count_citizens.py:153
+#: .\obywatele\management\commands\count_citizens.py:154
 msgid "Candidate has been accepted as a citizen"
 msgstr "Kandydat został zaakceptowany"
 
-#: .\obywatele\management\commands\count_citizens.py:182
-msgid "You have been accepted in our community"
-msgstr "Zostałeś/aś zaakceptowany/a w naszej społeczności"
-
-#: .\obywatele\management\commands\count_citizens.py:184
-#: .\obywatele\management\commands\count_citizens.py:223
-msgid "Welcome"
-msgstr "Witaj"
-
-#: .\obywatele\management\commands\count_citizens.py:185
-#: .\obywatele\management\commands\count_citizens.py:224
-msgid "Your account on"
-msgstr "Twoje konto na"
-
-#: .\obywatele\management\commands\count_citizens.py:185
-msgid "is now active"
-msgstr "jest teraz aktywne"
-
-#: .\obywatele\management\commands\count_citizens.py:188
-msgid "You may login here"
-msgstr "Możesz się zalogować tutaj"
-
-#: .\obywatele\management\commands\count_citizens.py:189
-msgid "You may change password here"
-msgstr "Możesz zmienić hasło tutaj"
-
-#: .\obywatele\management\commands\count_citizens.py:221
+#: .\obywatele\management\commands\count_citizens.py:238
 msgid "Your account has been blocked"
 msgstr "Twoje konto zostało zablokowane"
 
-#: .\obywatele\management\commands\count_citizens.py:224
-#: .\obywatele\management\commands\count_citizens.py:233
+#: .\obywatele\management\commands\count_citizens.py:240
+msgid "Welcome"
+msgstr "Witaj"
+
+#: .\obywatele\management\commands\count_citizens.py:241
+msgid "Your account on"
+msgstr "Twoje konto na"
+
+#: .\obywatele\management\commands\count_citizens.py:241
+#: .\obywatele\management\commands\count_citizens.py:250
 msgid "has been blocked"
 msgstr "zostało zablokowane"
 
-#: .\obywatele\management\commands\count_citizens.py:233
+#: .\obywatele\management\commands\count_citizens.py:250
 msgid "Citizen has been banned"
 msgstr "Ta osoba została zbanowana"
 
-#: .\obywatele\management\commands\count_citizens.py:233
+#: .\obywatele\management\commands\count_citizens.py:250
 msgid "User"
 msgstr "Użytkownik"
 

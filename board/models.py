@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -34,6 +35,11 @@ class Post(models.Model):
 
     def __str__(self):
         return self.title
+
+    def delete(self, *args, **kwargs):
+        if self.system_key:
+            raise ValidationError(_("System posts cannot be deleted."))
+        return super().delete(*args, **kwargs)
 
     @classmethod
     def get_system_post(cls, system_key):

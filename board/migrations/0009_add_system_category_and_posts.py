@@ -31,7 +31,7 @@ def create_system_category_and_posts(apps, schema_editor):
         },
         {
             'title': 'Welcome E-mail after user was accepted',
-            'text': 'Witaj w grupie! Jesteśmy zadowoleni, że dołączyłeś do naszej społeczności.',
+            'text': '''Welcome {username}<br><br>Your account on {host} is now active<br><br>Login: {email}<br>Password: {password}<br><br>You may login here: {login_url}<br><br>You may change password here: {password_url}''',
             'subtitle': 'E-mail powitalny po przyjęciu do grupy',
             'system_key': 'welcome_email'
         }
@@ -72,7 +72,7 @@ def reverse_system_category_and_posts(apps, schema_editor):
     # Remove System category and its posts
     system_category = PostCategory.objects.filter(name='System').first()
     if system_category:
-        # Delete posts in System category
+        # Delete posts in System category (bypass validation for system posts)
         Post.objects.filter(category=system_category).delete()
         # Delete the category
         system_category.delete()

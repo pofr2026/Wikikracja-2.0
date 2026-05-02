@@ -1,5 +1,7 @@
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -194,8 +196,12 @@ def view_post(request: HttpRequest, pk: int):
 def delete_post(request: HttpRequest, pk: int):
     post = get_object_or_404(Post, pk=pk)
     if request.method == 'POST':
-        post.delete()
-        return redirect('board:start')
+        try:
+            post.delete()
+            return redirect('board:start')
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('board:view_post', pk=pk)
     return render(request, 'board/post_confirm_delete.html', {
         'post': post
     })
