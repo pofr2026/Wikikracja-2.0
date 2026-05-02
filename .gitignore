@@ -5,6 +5,8 @@ _inne_materialy/
 node_modules/
 /static
 !/*/static/
+media/board/attachments/*
+media/board/featured/*
 
 *.DS_Store
 *.cache

@@ -29,3 +29,22 @@ class Post(models.Model):
     is_public = models.BooleanField(default=False, verbose_name=_("Public"))
     is_archived = models.BooleanField(default=False, verbose_name=_("Archived"))
     is_important = models.BooleanField(default=False, verbose_name=_("Important"))
+    featured_image = models.ImageField(upload_to='board/featured/', null=True, blank=True, verbose_name=_("Featured Image"))
+
+    def __str__(self):
+        return self.title
+
+
+class PostAttachment(models.Model):
+    post = models.ForeignKey(Post, on_delete=models.CASCADE, related_name='attachments', verbose_name=_("Post"))
+    file = models.FileField(upload_to='board/attachments/', verbose_name=_("File"))
+    filename = models.CharField(max_length=255, verbose_name=_("Filename"))
+    uploaded_at = models.DateTimeField(auto_now_add=True, verbose_name=_("Uploaded At"))
+
+    class Meta:
+        verbose_name = _("Post Attachment")
+        verbose_name_plural = _("Post Attachments")
+        ordering = ['-uploaded_at']
+
+    def __str__(self):
+        return self.filename

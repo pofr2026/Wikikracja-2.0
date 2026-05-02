@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from .forms import PostCategoryForm, PostForm
-from .models import Post, PostCategory
+from .models import Post, PostAttachment, PostCategory
 
 # #########################  PostCategory ###########################
 
@@ -88,11 +88,21 @@ def archive(request: HttpRequest) -> HttpResponse:
 @login_required
 def create_post(request: HttpRequest):
     if request.method == "POST":
-        form = PostForm(request.POST)
+        form = PostForm(request.POST, request.FILES)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
             post.save()
+
+            # Handle attachments
+            attachments = request.FILES.getlist('attachments')
+            for attachment in attachments:
+                PostAttachment.objects.create(
+                    post=post,
+                    file=attachment,
+                    filename=attachment.name
+                )
+
             return redirect('board:view_post', post.pk)
     else:
         form = PostForm()
@@ -106,16 +116,27 @@ def edit_post(request: HttpRequest, pk: int):
     post = get_object_or_404(Post, pk=pk)
 
     if request.method == "POST":
-        form = PostForm(request.POST, instance=post)
+        form = PostForm(request.POST, request.FILES, instance=post)
         if form.is_valid():
             post = form.save(commit=False)
             post.author = request.user
             post.save()
+
+            # Handle attachments
+            attachments = request.FILES.getlist('attachments')
+            for attachment in attachments:
+                PostAttachment.objects.create(
+                    post=post,
+                    file=attachment,
+                    filename=attachment.name
+                )
+
             return redirect('board:view_post', pk)
     else:
         form = PostForm(instance=post)
     return render(request, 'board/edit_post.html', {
-        'form': form
+        'form': form,
+        'post': post
     })
 
 
@@ -133,5 +154,18 @@ def delete_post(request: HttpRequest, pk: int):
         post.delete()
         return redirect('board:start')
     return render(request, 'board/post_confirm_delete.html', {
+        'post': post
+    })
+
+
+@login_required
+def delete_attachment(request: HttpRequest, pk: int, attachment_id: int):
+    post = get_object_or_404(Post, pk=pk)
+    attachment = get_object_or_404(PostAttachment, pk=attachment_id, post=post)
+    if request.method == 'POST':
+        attachment.delete()
+        return redirect('board:edit_post', pk=pk)
+    return render(request, 'board/attachment_confirm_delete.html', {
+        'attachment': attachment,
         'post': post
     })
