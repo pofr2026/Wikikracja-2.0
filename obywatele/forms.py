@@ -1,4 +1,5 @@
 import logging
+import re
 import secrets
 import string
 import threading
@@ -16,6 +17,7 @@ from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
 from obywatele.models import Uzytkownik
+from zzz.richtext import strip_tags
 from zzz.utils import build_site_url, get_site_domain
 
 log = logging.getLogger(__name__)
@@ -280,6 +282,16 @@ class CustomSignupForm(SignupForm):
         return user
 
 
+def strip_html_tags(text):
+    """Strip HTML tags, converting <br> to newlines first."""
+    if not text:
+        return text
+    # Convert <br> variants to newlines
+    text = re.sub(r'<br\s*/?>', '\n', text, flags=re.IGNORECASE)
+    # Use existing strip_tags function
+    return strip_tags(text)
+
+
 def SendEmailToAll(subject, message, notification_type='obywatele'):
     # bcc: all active users with enabled notifications for this type
     # subject: Custom
@@ -288,6 +300,9 @@ def SendEmailToAll(subject, message, notification_type='obywatele'):
     # with signals that change user is_active status (e.g., DeactivateNewUser)
     translation.activate(s.LANGUAGE_CODE)
     HOST = get_site_domain()
+
+    # Strip HTML tags from message, preserving newlines
+    message = strip_html_tags(message)
 
     info_url = "https://wikikracja.pl/powiadomienia-email/"
     email_footer = _("Why you received this email? Here is explanation: {url}").format(url=info_url)
