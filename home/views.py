@@ -51,7 +51,7 @@ def build_read_status_map(user):
 
 def home(request: HttpRequest):
     if not request.user.is_authenticated:
-        start = Post.objects.filter(title='Start').order_by('-updated', '-created').first()
+        start = Post.get_system_post('start')
         if not start:
             log.info('Add Board Message title Start.')
             start = ''

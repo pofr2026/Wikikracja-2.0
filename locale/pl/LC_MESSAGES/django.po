@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-02 16:14+0200\n"
+"POT-Creation-Date: 2026-05-02 17:02+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -147,28 +147,32 @@ msgstr "Ważne"
 msgid "Featured Image"
 msgstr "Obrazek wyróżniający"
 
-#: .\board\models.py:39 .\home\models.py:11 .\home\models.py:41
+#: .\board\models.py:33
+msgid "System Key"
+msgstr ""
+
+#: .\board\models.py:44 .\home\models.py:11 .\home\models.py:41
 #: .\home\templatetags\feed_filters.py:31 .\home\views.py:661
 msgid "Post"
 msgstr "Ogłoszenie"
 
-#: .\board\models.py:40
+#: .\board\models.py:45
 msgid "File"
 msgstr "Plik"
 
-#: .\board\models.py:41
+#: .\board\models.py:46
 msgid "Filename"
 msgstr "Nazwa pliku"
 
-#: .\board\models.py:42
+#: .\board\models.py:47
 msgid "Uploaded At"
 msgstr "Wgrany"
 
-#: .\board\models.py:45
+#: .\board\models.py:50
 msgid "Post Attachment"
 msgstr "Załącznik"
 
-#: .\board\models.py:46
+#: .\board\models.py:51
 msgid "Post Attachments"
 msgstr "Załączniki"
 

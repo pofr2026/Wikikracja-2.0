@@ -30,9 +30,14 @@ class Post(models.Model):
     is_archived = models.BooleanField(default=False, verbose_name=_("Archived"))
     is_important = models.BooleanField(default=False, verbose_name=_("Important"))
     featured_image = models.ImageField(upload_to='board/featured/', null=True, blank=True, verbose_name=_("Featured Image"))
+    system_key = models.CharField(max_length=50, unique=True, null=True, blank=True, verbose_name=_("System Key"))
 
     def __str__(self):
         return self.title
+
+    @classmethod
+    def get_system_post(cls, system_key):
+        return cls.objects.filter(system_key=system_key).first()
 
 
 class PostAttachment(models.Model):
