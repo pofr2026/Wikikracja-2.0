@@ -1142,6 +1142,12 @@ body:has(.chat-rooms) .main-area {
         flex: 0 0 100% !important;
         display: flex !important;
     }
+    /* Mobile: toolbar stays pinned at top even if list content overflows */
+    .room-list-controls {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+    }
     /* Mobile: static toggle btn hidden by default; shown when room-list-showing */
     #room-list-toggle-static-btn {
         display: none !important;

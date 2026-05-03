@@ -219,7 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // ?unread=1 from home page badge: activate unread filter + open first unread room
+        // ?unread=1 from home page badge: activate unread filter
         const urlParams = new URLSearchParams(location.search);
         if (urlParams.get('unread') === '1') {
             history.replaceState(null, '', location.pathname + location.hash);
@@ -229,10 +229,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('chat-unread-filter', 'active');
                 applyUnreadFilter();
             }
-            const firstUnread = $('.room-link.room-not-seen[data-room-id]');
-            if (firstUnread) {
-                onRoomTryJoin(parseInt(firstUnread.dataset.roomId));
-                return;
+            // On desktop: open the first unread room immediately
+            // On mobile: stay on the room list so the user can pick a room
+            if (window.innerWidth >= 768) {
+                const firstUnread = $('.room-link.room-not-seen[data-room-id]');
+                if (firstUnread) {
+                    onRoomTryJoin(parseInt(firstUnread.dataset.roomId));
+                    return;
+                }
+            } else {
+                return; // stay on room list view with filter active
             }
         }
 
@@ -408,10 +414,9 @@ export async function onRoomTryJoin(room_id) {
         expandCategoryForRoom(roomLink);
     }
 
-    // Focus the message input field after joining a room
-    const messageInput = DOM_API.getMessageInput();
-    if (messageInput) {
-        messageInput.focus();
+    // Focus only on desktop — on mobile the keyboard would open immediately
+    if (window.innerWidth >= 768) {
+        DOM_API.getMessageInput()?.focus();
     }
     restoreDraft(room_id);
 }
