@@ -219,6 +219,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // ?unread=1 from home page badge: activate unread filter + open first unread room
+        const urlParams = new URLSearchParams(location.search);
+        if (urlParams.get('unread') === '1') {
+            history.replaceState(null, '', location.pathname + location.hash);
+            if (!isUnreadFilterActive) {
+                isUnreadFilterActive = true;
+                unreadFilterBtn?.classList.add('active');
+                localStorage.setItem('chat-unread-filter', 'active');
+                applyUnreadFilter();
+            }
+            const firstUnread = $('.room-link.room-not-seen[data-room-id]');
+            if (firstUnread) {
+                onRoomTryJoin(parseInt(firstUnread.dataset.roomId));
+                return;
+            }
+        }
+
         let room_id = 0;
         if (window.location.hash) {
             const obj = parseParms(window.location.hash.slice(1));
@@ -260,6 +277,7 @@ export async function onSocketMessage(data) {
     else if (data.update_reactions) onReceiveReactions(data.update_reactions);
     else if (data.messages_read) onReceiveReadBy(data.messages_read);
     else if (data.type === 'room-tracked') onRoomTracked(data.room_id, data.tracked);
+    // unread_count is consumed by the home page WS listener — ignore here
     else console.log("Cannot handle message!");
 }
 

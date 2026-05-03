@@ -7,6 +7,7 @@ from datetime import timedelta as td
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.db import IntegrityError
 from django.db.models import Count, Exists, OuterRef, Prefetch
 from django.dispatch import receiver
@@ -405,3 +406,15 @@ def toggle_track(request: HttpRequest):
         return JsonResponse({
             'error': 'Invalid JSON'
         }, status=400)
+
+
+
+@login_required
+def unread_count(request: HttpRequest):
+    from chat.services import CHAT_UNREAD_CACHE_KEY, CHAT_UNREAD_CACHE_TTL
+    key = CHAT_UNREAD_CACHE_KEY.format(user_id=request.user.id)
+    count = cache.get(key)
+    if count is None:
+        count = Room.objects.filter(allowed=request.user).exclude(seen_by=request.user).count()
+        cache.set(key, count, CHAT_UNREAD_CACHE_TTL)
+    return JsonResponse({"count": count})

@@ -5,6 +5,7 @@ from datetime import datetime
 
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.db.models import Prefetch
 from firebase_admin import messaging
 from push_notifications.models import GCMDevice, WebPushDevice
@@ -24,6 +25,9 @@ from .models import (
 
 log = logging.getLogger(__name__)
 domain = get_site_domain()
+
+CHAT_UNREAD_CACHE_KEY = "chat_unread:{user_id}"
+CHAT_UNREAD_CACHE_TTL = 300
 
 
 def _username_to_color(username: str) -> str:
@@ -115,10 +119,22 @@ class ChatRepository:
     @database_sync_to_async
     def see_room(self, room):
         room.seen_by.add(self.user)
+        cache.delete(CHAT_UNREAD_CACHE_KEY.format(user_id=self.user.id))
 
     @database_sync_to_async
     def unsee_room(self, room):
         room.seen_by.remove(self.user)
+        cache.delete(CHAT_UNREAD_CACHE_KEY.format(user_id=self.user.id))
+
+    @database_sync_to_async
+    def get_unread_count(self) -> int:
+        key = CHAT_UNREAD_CACHE_KEY.format(user_id=self.user.id)
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+        count = Room.objects.filter(allowed=self.user).exclude(seen_by=self.user).count()
+        cache.set(key, count, CHAT_UNREAD_CACHE_TTL)
+        return count
 
     # -- User methods --
     @database_sync_to_async

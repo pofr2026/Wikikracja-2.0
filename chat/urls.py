@@ -23,4 +23,7 @@ urlpatterns = [
 
     # Embedded chat widget API
     path('api/room/<int:room_id>/', views.room_data, name='room_data'),
+
+    # Unread count API (used by home page badge refresh)
+    path('api/unread-count/', views.unread_count, name='unread_count'),
 ]

@@ -109,15 +109,13 @@
   <a href="{% url 'activity' %}" class="badge-status" style="text-decoration:none;{% if unread_items_no_events %}background:rgba(59,130,246,.15);color:#60a5fa;border-color:rgba(59,130,246,.3);{% endif %}">
     <i class="{% if unread_items_no_events %}fas{% else %}far{% endif %} fa-bell me-1"></i>{% if unread_items_no_events %}{{ unread_items_no_events|length }}{% else %}0{% endif %}
   </a>
-  {% if chat_unread_count %}
-  <a href="{% url 'chat:chat' %}" class="badge-status" style="text-decoration:none;background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3);">
-    <i class="fas fa-comments me-1"></i>{{ chat_unread_count }} {% trans "unread" %}
+  <a id="chat-unread-badge"
+     href="{% url 'chat:chat' %}{% if chat_unread_count %}?unread=1{% endif %}"
+     class="badge-status"
+     style="text-decoration:none;{% if chat_unread_count %}background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3);{% endif %}">
+    <i class="fas fa-comments me-1"></i>
+    <span id="chat-unread-label">{% if chat_unread_count %}{{ chat_unread_count }} {% trans "unread" %}{% else %}{% trans "Chat" %}{% endif %}</span>
   </a>
-  {% else %}
-  <a href="{% url 'chat:chat' %}" class="badge-status" style="text-decoration:none;">
-    <i class="fas fa-comments me-1"></i>{% trans "Chat" %}
-  </a>
-  {% endif %}
   {% if ongoing_count %}
   <a href="{% url 'glosowania:referendum' %}" class="badge-status badge-referendum" style="text-decoration:none;">
     <i class="fas fa-landmark me-1"></i>{{ ongoing_count }} {% trans "referendums" %}
@@ -669,5 +667,57 @@ document.querySelectorAll('.onboarding-read-btn').forEach(function(btn) {
 });
 </script>
 {% endif %}
+
+<script>
+(function () {
+  var badge = document.getElementById('chat-unread-badge');
+  var label = document.getElementById('chat-unread-label');
+  if (!badge || !label) return;
+
+  var CHAT_URL = "{% url 'chat:chat' %}";
+  var UNREAD_LABEL = "{% trans 'unread' %}";
+  var CHAT_LABEL = "{% trans 'Chat' %}";
+
+  function applyCount(count) {
+    if (count > 0) {
+      label.textContent = count + ' ' + UNREAD_LABEL;
+      badge.href = CHAT_URL + '?unread=1';
+      badge.style.background = 'rgba(99,102,241,.15)';
+      badge.style.color = '#818cf8';
+      badge.style.border = '1px solid rgba(99,102,241,.3)';
+    } else {
+      label.textContent = CHAT_LABEL;
+      badge.href = CHAT_URL;
+      badge.style.background = '';
+      badge.style.color = '';
+      badge.style.border = '';
+    }
+  }
+
+  function fetchCount() {
+    fetch("{% url 'chat:unread_count' %}", {credentials: 'same-origin'})
+      .then(function (r) { return r.json(); })
+      .then(function (d) { applyCount(d.count); })
+      .catch(function () {});
+  }
+
+  // Refresh when user tabs back (handles browser bfcache / back navigation)
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) fetchCount();
+  });
+
+  // Live push via WebSocket
+  try {
+    var wsScheme = location.protocol === 'https:' ? 'wss' : 'ws';
+    var ws = new ReconnectingWebSocket(wsScheme + '://' + location.host + '/chat/stream/');
+    ws.onmessage = function (e) {
+      try {
+        var data = JSON.parse(e.data);
+        if (data.unread_count !== undefined) applyCount(data.unread_count);
+      } catch (_) {}
+    };
+  } catch (_) {}
+})();
+</script>
 
 {% endblock %}

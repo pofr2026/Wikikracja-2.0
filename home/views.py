@@ -22,6 +22,7 @@ from django.views.decorators.http import require_POST
 from board.models import Post, PostCategory
 from bookkeeping.models import Transaction
 from chat.models import Message, Room
+from chat.services import CHAT_UNREAD_CACHE_KEY, CHAT_UNREAD_CACHE_TTL
 from elibrary.models import Book
 from events.models import Event
 from glosowania.models import Argument as DecyzjaArgument
@@ -148,8 +149,12 @@ def home(request: HttpRequest):
     # Unread count without events (for home page display)
     unread_items_no_events = [item for item in feed_items if not item['is_read'] and item['content_type'] != 'event']
 
-    # Licznik nieprzeczytanych pokoi czatu
-    chat_unread_count = Room.objects.filter(allowed=request.user).exclude(seen_by=request.user).count()
+    # Licznik nieprzeczytanych pokoi czatu (z cache Redis, invalidowany przez ChatConsumer)
+    _unread_key = CHAT_UNREAD_CACHE_KEY.format(user_id=request.user.id)
+    chat_unread_count = cache.get(_unread_key)
+    if chat_unread_count is None:
+        chat_unread_count = Room.objects.filter(allowed=request.user).exclude(seen_by=request.user).count()
+        cache.set(_unread_key, chat_unread_count, CHAT_UNREAD_CACHE_TTL)
 
     # Licznik aktywnych zadań użytkownika
     my_tasks_count = Task.objects.filter(
