@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -396,7 +397,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             consumer = ChatConsumer.online_registry.get_consumer(member)
 
             if not consumer and not prefs['muted']:
-                await self.send_push_notification_async(proxy, member, msg, room_id)
+                asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room_id))
                 continue
 
             if consumer and consumer.rooms.present(room):

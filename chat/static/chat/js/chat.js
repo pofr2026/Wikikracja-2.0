@@ -470,6 +470,13 @@ export async function onReceiveMessages(messages) {
             message.your_reactions ?? [],
             message.read_by ?? []
         );
+        if (message.own) {
+            const sendBtn = document.querySelector('.send-message');
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                clearTimeout(window._sendLockTimeout);
+            }
+        }
         if (message.new && document.hidden && !message.own) {
             makeNotification({ title: message.username, body: message.message });
         }
@@ -788,6 +795,11 @@ export async function onSubmitMessage(message, editing_message_id) {
         if (messageText.length === 0 && (!files || files.length === 0)) return;
         if (files?.length) {
             attachments.images = (await WS_API.uploadFiles(files)).filenames;
+        }
+        const sendBtn = document.querySelector('.send-message');
+        if (sendBtn) {
+            sendBtn.disabled = true;
+            window._sendLockTimeout = setTimeout(() => { sendBtn.disabled = false; }, 5000);
         }
         WS_API.sendMessage(CurrentRoomId, message, DOM_API.getAnonymousValue(), attachments, currentReplyId);
         clearDraft(CurrentRoomId);
