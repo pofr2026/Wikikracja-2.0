@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.db import models, transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy
@@ -366,10 +366,17 @@ class TaskCloseView(LoginRequiredMixin, UpdateView):
 @login_required
 def vote_task(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task.objects.with_metrics(), pk=pk)
-    value = int(request.POST.get("value", 0))
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    try:
+        value = int(request.POST.get("value", 0))
+    except (ValueError, TypeError):
+        value = 0
     if value not in (TaskVote.Value.DOWN, TaskVote.Value.UP):
+        if is_ajax:
+            return JsonResponse({"error": "invalid value"}, status=400)
         return redirect(request.POST.get("next") or "tasks:list")
 
+    new_vote = None
     with transaction.atomic():
         vote = TaskVote.objects.filter(task=task, user=request.user).first()
         if vote and vote.value == value:
@@ -381,14 +388,27 @@ def vote_task(request: HttpRequest, pk: int) -> HttpResponse:
             else:
                 vote.value = value
                 vote.save(update_fields=["value", "updated_at"])
+            new_vote = value
 
         # Refresh score and set rejected if sum of votes <= -2
         task.refresh_from_db(fields=["status", "updated_at"])
-        metrics = Task.objects.filter(pk=task.pk).annotate(votes_score=Coalesce(Sum("votes__value"), 0)).values("votes_score", "status").first()
+        metrics = (
+            Task.objects.filter(pk=task.pk)
+            .annotate(
+                votes_score=Coalesce(Sum("votes__value"), 0),
+                votes_up=Count("votes", filter=Q(votes__value=1)),
+            )
+            .values("votes_score", "votes_up", "status")
+            .first()
+        )
         votes_score = metrics["votes_score"] if metrics else 0
+        votes_up = metrics["votes_up"] if metrics else 0
         if votes_score <= -2 and task.status != Task.Status.REJECTED:
             Task.objects.filter(pk=task.pk).update(status=Task.Status.REJECTED, updated_at=models.F("updated_at"))
             task.status = Task.Status.REJECTED
+
+    if is_ajax:
+        return JsonResponse({"vote": new_vote, "votes_score": votes_score, "votes_up": votes_up})
     return redirect(request.POST.get("next") or "tasks:list")
 
 

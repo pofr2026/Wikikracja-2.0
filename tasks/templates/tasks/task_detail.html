@@ -43,65 +43,110 @@
       <p class="text-muted small mb-1">{% trans "Owner" %}: {{ task.assigned_to|default:_("None") }}</p>
       <p class="text-muted small mb-1">{% trans "Status" %}: {{ task.get_status_display }}</p>
       <p class="text-muted small mb-1">{% trans "Created" %}: {{ task.created_at|date:"Y-m-d H:i" }}</p>
-      </p>
 
       <p>{{ task.description|richtext }}</p>
 
       <div class="mt-3">
-        <span class="badge bg-light text-dark me-2">{% trans "Votes" %}: {{ task.votes_score|default:0 }}</span>
+        <span class="badge bg-light text-dark me-2" data-votes-badge="{% trans "Votes" %}: ">{% trans "Votes" %}: {{ task.votes_score|default:0 }}</span>
         <span class="badge bg-light text-dark me-2">{% trans "Success" %}: {{ task.eval_success|default:0 }}</span>
         <span class="badge bg-light text-dark">{% trans "Failure" %}: {{ task.eval_failure|default:0 }}</span>
       </div>
     </div>
   </div>
 
-  <div class="task-actions mb-4">
+  <div class="task-actions d-flex flex-wrap gap-2 align-items-center mb-4">
     {% if task.is_active %}
       {% with vote_value=user_vote_value %}
-      <form method="post" action="{% url 'tasks:vote' task.pk %}">
+      <form class="d-inline" method="post" action="{% url 'tasks:vote' task.pk %}">
         {% csrf_token %}
         <input type="hidden" name="value" value="1">
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button class="btn {% if vote_value == 1 %}btn-info text-dark{% else %}btn-outline-info{% endif %}" type="submit">
-        <i class="fas fa-plus"></i> {% trans "I want to help" %}
+        <button type="submit"
+                class="task-vote-btn up{% if vote_value == 1 %} active-vote{% endif %}"
+                data-bs-toggle="tooltip"
+                data-text-active="{% trans 'Helping' %}"
+                data-text-inactive="{% trans 'I want to help' %}"
+                data-icon-active="fa-check"
+                data-icon-inactive="fa-plus"
+                data-tooltip-active="{% trans 'Click to withdraw your vote' %}"
+                data-tooltip-inactive="{% trans 'Vote to help with this task. Click again to withdraw.' %}"
+                title="{% if vote_value == 1 %}{% trans "Click to withdraw your vote" %}{% else %}{% trans "Vote to help with this task. Click again to withdraw." %}{% endif %}">
+          {% if vote_value == 1 %}
+            <i class="fas fa-check"></i> {% trans "Helping" %}
+          {% else %}
+            <i class="fas fa-plus"></i> {% trans "I want to help" %}
+          {% endif %}
         </button>
       </form>
 
-      <form method="post" action="{% url 'tasks:vote' task.pk %}">
+      <form class="d-inline" method="post" action="{% url 'tasks:vote' task.pk %}">
         {% csrf_token %}
         <input type="hidden" name="value" value="-1">
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button class="btn {% if vote_value == -1 %}btn-light text-dark{% else %}btn-outline-light{% endif %}" type="submit">
-          <i class="fas fa-minus"></i> {% trans "Let's not do that" %}
+        <button type="submit"
+                class="task-vote-btn down{% if vote_value == -1 %} active-vote{% endif %}"
+                data-bs-toggle="tooltip"
+                data-text-active="{% trans 'Against' %}"
+                data-text-inactive="{% trans "Let's not do that" %}"
+                data-icon-active="fa-check"
+                data-icon-inactive="fa-minus"
+                data-tooltip-active="{% trans 'Click to withdraw your vote' %}"
+                data-tooltip-inactive="{% trans 'Vote against this task. At -2 votes the task is rejected.' %}"
+                title="{% if vote_value == -1 %}{% trans "Click to withdraw your vote" %}{% else %}{% trans "Vote against this task. At -2 votes the task is rejected." %}{% endif %}">
+          {% if vote_value == -1 %}
+            <i class="fas fa-check"></i> {% trans "Against" %}
+          {% else %}
+            <i class="fas fa-minus"></i> {% trans "Let's not do that" %}
+          {% endif %}
         </button>
       </form>
       {% endwith %}
 
       {% if not task.assigned_to %}
-        <form method="post" action="{% url 'tasks:take' task.pk %}">
+        <form class="d-inline" method="post" action="{% url 'tasks:take' task.pk %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button class="btn btn-info text-white" type="submit">{% trans "Take task" %}</button>
+          <button type="submit"
+                  class="task-take-btn"
+                  data-bs-toggle="tooltip"
+                  title="{% trans "Take responsibility for this task" %}">
+            <i class="fas fa-hand-paper"></i> {% trans "Take task" %}
+          </button>
         </form>
       {% endif %}
 
       {% if task.assigned_to == request.user %}
-        <a class="btn btn-secondary" href="{% url 'tasks:edit' task.pk %}">{% trans "Edit" %}</a>
-        <a class="btn btn-warning" href="{% url 'tasks:close' task.pk %}">{% trans "Close task" %}</a>
-        <form method="post" action="{% url 'tasks:resign' task.pk %}">
+        <a class="action-btn action-btn-edit"
+           href="{% url 'tasks:edit' task.pk %}"
+           data-bs-toggle="tooltip"
+           title="{% trans "Edit title, description and category" %}">
+          <i class="fas fa-pen"></i> {% trans "Edit" %}
+        </a>
+        <a class="action-btn action-btn-sign"
+           href="{% url 'tasks:close' task.pk %}"
+           data-bs-toggle="tooltip"
+           title="{% trans "Mark task as completed or cancelled" %}">
+          <i class="fas fa-check-circle"></i> {% trans "Close task" %}
+        </a>
+        <form class="d-inline" method="post" action="{% url 'tasks:resign' task.pk %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button class="btn btn-outline-danger" type="submit">{% trans "Resign" %}</button>
+          <button type="submit"
+                  class="task-resign-btn"
+                  data-bs-toggle="tooltip"
+                  title="{% trans "Release this task back to the waiting pool" %}">
+            <i class="fas fa-sign-out-alt"></i> {% trans "Resign" %}
+          </button>
         </form>
       {% endif %}
     {% endif %}
 
     {% if task.created_by == request.user and task.is_active %}
       <button type="button"
-        class="btn btn-outline-danger"
-        data-bs-toggle="modal"
-        data-bs-target="#confirmDeleteModal">
-        {% trans "Delete task" %}
+              class="action-btn action-btn-withdraw"
+              data-bs-toggle="modal"
+              data-bs-target="#confirmDeleteModal">
+        <i class="fas fa-trash"></i> {% trans "Delete task" %}
       </button>
     {% endif %}
   </div>
@@ -128,24 +173,30 @@
       <form method="post" action="{% url 'tasks:reopen' task.pk %}">
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
-        <button class="btn btn-outline-primary" type="submit">{% trans "Reopen task" %}</button>
+        <button type="submit" class="action-btn action-btn-sign">
+          <i class="fas fa-redo"></i> {% trans "Reopen task" %}
+        </button>
       </form>
     </div>
     <div class="card">
       <div class="card-body">
         <h2 class="h5 mb-3">{% trans "Evaluate outcome" %}</h2>
-        <div class="d-flex">
+        <div class="d-flex gap-2">
           <form method="post" action="{% url 'tasks:evaluate' task.pk %}">
             {% csrf_token %}
             <input type="hidden" name="value" value="success">
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button class="btn btn-success me-2" type="submit">{% trans "Success" %}</button>
+            <button type="submit" class="action-btn action-btn-yes">
+              <i class="fas fa-thumbs-up"></i> {% trans "Success" %}
+            </button>
           </form>
           <form method="post" action="{% url 'tasks:evaluate' task.pk %}">
             {% csrf_token %}
             <input type="hidden" name="value" value="failure">
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button class="btn btn-danger" type="submit">{% trans "Failure" %}</button>
+            <button type="submit" class="action-btn action-btn-no">
+              <i class="fas fa-thumbs-down"></i> {% trans "Failure" %}
+            </button>
           </form>
         </div>
       </div>
@@ -168,7 +219,7 @@
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
           <form method="post" action="{% url 'tasks:delete' task.pk %}">
             {% csrf_token %}
-            <button type="submit" class="btn btn-danger">{% trans "Yes, delete" %}</button>
+            <button type="submit" class="action-btn action-btn-withdraw">{% trans "Yes, delete" %}</button>
           </form>
         </div>
       </div>
@@ -180,4 +231,9 @@
     {% include 'chat/_embedded_chat.html' %}
   {% endwith %}
 </div>
+{% endblock %}
+
+{% load static %}
+{% block extra_js %}
+<script src="{% static 'tasks/js/tasks.js' %}"></script>
 {% endblock %}

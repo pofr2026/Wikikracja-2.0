@@ -1,5 +1,6 @@
 {% extends 'tasks/menu.html' %}
 {% load i18n %}
+{% load static %}
 
 {% block tasks %}
 
@@ -156,6 +157,7 @@
 {% endblock tasks %}
 
 {% block extra_js %}
+<script src="{% static 'tasks/js/tasks.js' %}"></script>
 <script>
 (function () {
   var btn      = document.getElementById('catFilterBtn');

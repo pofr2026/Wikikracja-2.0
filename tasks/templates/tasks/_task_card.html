@@ -139,9 +139,21 @@
         <input type="hidden" name="value" value="1">
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
         <button type="submit"
-                class="task-vote-btn up {% if task.user_vote_value == 1 %}active-vote{% endif %}"
-                onclick="event.stopPropagation()">
-          <i class="fas fa-plus"></i> {% trans 'I want to help' %}
+                class="task-vote-btn up{% if task.user_vote_value == 1 %} active-vote{% endif %}"
+                onclick="event.stopPropagation()"
+                data-text-active="{% trans 'Helping' %}"
+                data-text-inactive="{% trans 'I want to help' %}"
+                data-icon-active="fa-check"
+                data-icon-inactive="fa-plus"
+                data-tooltip-active="{% trans 'Click to withdraw your vote' %}"
+                data-tooltip-inactive="{% trans 'Vote to help with this task. Click again to withdraw.' %}"
+                data-bs-toggle="tooltip"
+                title="{% if task.user_vote_value == 1 %}{% trans 'Click to withdraw your vote' %}{% else %}{% trans 'Vote to help with this task. Click again to withdraw.' %}{% endif %}">
+          {% if task.user_vote_value == 1 %}
+            <i class="fas fa-check"></i> {% trans 'Helping' %}
+          {% else %}
+            <i class="fas fa-plus"></i> {% trans 'I want to help' %}
+          {% endif %}
         </button>
       </form>
 
@@ -150,9 +162,21 @@
         <input type="hidden" name="value" value="-1">
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
         <button type="submit"
-                class="task-vote-btn down {% if task.user_vote_value == -1 %}active-vote{% endif %}"
-                onclick="event.stopPropagation()">
-          <i class="fas fa-minus"></i> {% trans "Let's not do that" %}
+                class="task-vote-btn down{% if task.user_vote_value == -1 %} active-vote{% endif %}"
+                onclick="event.stopPropagation()"
+                data-text-active="{% trans 'Against' %}"
+                data-text-inactive="{% trans "Let's not do that" %}"
+                data-icon-active="fa-check"
+                data-icon-inactive="fa-minus"
+                data-tooltip-active="{% trans 'Click to withdraw your vote' %}"
+                data-tooltip-inactive="{% trans 'Vote against this task. At -2 votes the task is rejected.' %}"
+                data-bs-toggle="tooltip"
+                title="{% if task.user_vote_value == -1 %}{% trans 'Click to withdraw your vote' %}{% else %}{% trans 'Vote against this task. At -2 votes the task is rejected.' %}{% endif %}">
+          {% if task.user_vote_value == -1 %}
+            <i class="fas fa-check"></i> {% trans 'Against' %}
+          {% else %}
+            <i class="fas fa-minus"></i> {% trans "Let's not do that" %}
+          {% endif %}
         </button>
       </form>
 
