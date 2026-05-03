@@ -6,7 +6,7 @@ from datetime import datetime
 from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.db.models import Prefetch
+from django.db.models import Count, Prefetch
 from firebase_admin import messaging
 from push_notifications.models import GCMDevice, WebPushDevice
 
@@ -28,6 +28,25 @@ domain = get_site_domain()
 
 CHAT_UNREAD_CACHE_KEY = "chat_unread:{user_id}"
 CHAT_UNREAD_CACHE_TTL = 300
+
+
+def get_unread_count_for_user(user) -> int:
+    key = CHAT_UNREAD_CACHE_KEY.format(user_id=user.id)
+    cached = cache.get(key)
+    if cached is not None:
+        return cached
+    count = (Room.objects
+             .filter(allowed=user, archived=False)
+             .exclude(seen_by=user)
+             .annotate(messages_count=Count('messages'))
+             .filter(messages_count__gt=0)
+             .count())
+    cache.set(key, count, CHAT_UNREAD_CACHE_TTL)
+    return count
+
+
+def _reactions(message) -> dict:
+    return message.reactions if isinstance(message.reactions, dict) else {}
 
 
 def _username_to_color(username: str) -> str:
@@ -128,13 +147,7 @@ class ChatRepository:
 
     @database_sync_to_async
     def get_unread_count(self) -> int:
-        key = CHAT_UNREAD_CACHE_KEY.format(user_id=self.user.id)
-        cached = cache.get(key)
-        if cached is not None:
-            return cached
-        count = Room.objects.filter(allowed=self.user).exclude(seen_by=self.user).count()
-        cache.set(key, count, CHAT_UNREAD_CACHE_TTL)
-        return count
+        return get_unread_count_for_user(self.user)
 
     # -- User methods --
     @database_sync_to_async
@@ -240,7 +253,7 @@ class ChatRepository:
     def add_vote(self, event: str, message_id: int):
         """Add a vote directly to the message's reactions JSONField."""
         m = Message.objects.get(pk=message_id)
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        reactions_dict = _reactions(m)
         user_id = self.user.id
 
         if 'upvotes' not in reactions_dict:
@@ -267,7 +280,7 @@ class ChatRepository:
     def remove_vote(self, event: str, message_id: int):
         """Remove a vote directly from the message's reactions JSONField."""
         m = Message.objects.get(pk=message_id)
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        reactions_dict = _reactions(m)
         user_id = self.user.id
 
         if event == 'upvote' and user_id in reactions_dict.get('upvotes', []):
@@ -287,7 +300,7 @@ class ChatRepository:
             m = Message.objects.get(pk=message_id)
         except Message.DoesNotExist:
             return None
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        reactions_dict = _reactions(m)
         user_id = self.user.id
 
         if user_id in reactions_dict.get('upvotes', []):
@@ -301,7 +314,7 @@ class ChatRepository:
     def toggle_reaction(self, reaction: str, message_id: int) -> bool:
         """Toggle reaction for current user. Returns True if added, False if removed."""
         m = Message.objects.get(pk=message_id)
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        reactions_dict = _reactions(m)
         user_id = self.user.id
 
         if reaction not in reactions_dict:
@@ -326,7 +339,7 @@ class ChatRepository:
         except Message.DoesNotExist:
             return {'bulb': 0, 'question': 0}
 
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        reactions_dict = _reactions(m)
         return {
             'bulb': len(reactions_dict.get('bulb', [])),
             'question': len(reactions_dict.get('question', []))
@@ -340,7 +353,7 @@ class ChatRepository:
         except Message.DoesNotExist:
             return []
 
-        reactions_dict = m.reactions if isinstance(m.reactions, dict) else {}
+        reactions_dict = _reactions(m)
         result = []
         for reaction_type, user_list in reactions_dict.items():
             if reaction_type in ('bulb', 'question') and user_id in user_list:
@@ -405,7 +418,7 @@ class ChatRepository:
                 attachments_of_type.append(attachment.filename)
                 attachments[attachment.type] = attachments_of_type
 
-            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
+            reactions_dict = _reactions(msg)
             upvotes = len(reactions_dict.get('upvotes', []))
             downvotes = len(reactions_dict.get('downvotes', []))
             bulb = len(reactions_dict.get('bulb', []))
@@ -439,7 +452,7 @@ class ChatRepository:
 
         all_messages = list(qs)
         for msg in all_messages:
-            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
+            reactions_dict = _reactions(msg)
             msg.upvotes = len(reactions_dict.get('upvotes', []))
             msg.downvotes = len(reactions_dict.get('downvotes', []))
 
@@ -468,7 +481,7 @@ class ChatRepository:
 
         user_votes = {}
         for msg in messages:
-            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
+            reactions_dict = _reactions(msg)
             vote_up = reactions_dict.get('upvotes', [])
             vote_down = reactions_dict.get('downvotes', [])
             if user_id in vote_up:
@@ -496,7 +509,7 @@ class ChatRepository:
                     'author_color': _username_to_color(ru),
                 }
 
-            reactions_dict = msg.reactions if isinstance(msg.reactions, dict) else {}
+            reactions_dict = _reactions(msg)
             bulb_count = len(reactions_dict.get('bulb', []))
             question_count = len(reactions_dict.get('question', []))
 

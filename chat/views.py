@@ -69,6 +69,14 @@ def add_room(request: HttpRequest):
     return redirect(f"{reverse('chat:chat')}#room_id={room.id}")
 
 
+def _chat_room_prefetches():
+    return [
+        Prefetch('chat_room__seen_by', queryset=User.objects.only('id')),
+        Prefetch('chat_room__muted_by', queryset=User.objects.only('id')),
+        Prefetch('chat_room__tracked_by', queryset=User.objects.only('id')),
+    ]
+
+
 @login_required
 def chat(request: HttpRequest):
     """
@@ -93,46 +101,29 @@ def chat(request: HttpRequest):
     public_rooms_active = public_active.exclude(id__in=task_room_ids).exclude(id__in=vote_room_ids)
     public_rooms_archived = public_archived.exclude(id__in=task_room_ids).exclude(id__in=vote_room_ids)
 
-    # ZMIANA 1: querysets drzewa — obiekty Task/Decyzja z chat_room
     tasks_tree_active = Task.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=False,
-    ).select_related('chat_room').prefetch_related(
-        Prefetch('chat_room__seen_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__muted_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__tracked_by', queryset=User.objects.only('id')),
-    ).order_by('title')
+    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     tasks_tree_archived = Task.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=True,
-    ).select_related('chat_room').prefetch_related(
-        Prefetch('chat_room__seen_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__muted_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__tracked_by', queryset=User.objects.only('id')),
-    ).order_by('title')
+    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     votes_tree_active = Decyzja.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=False,
-    ).select_related('chat_room').prefetch_related(
-        Prefetch('chat_room__seen_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__muted_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__tracked_by', queryset=User.objects.only('id')),
-    ).order_by('title')
+    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     votes_tree_archived = Decyzja.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=True,
-    ).select_related('chat_room').prefetch_related(
-        Prefetch('chat_room__seen_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__muted_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__tracked_by', queryset=User.objects.only('id')),
-    ).order_by('title')
+    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     # For "participated only" visual mute: get rooms where user has sent a message
     participated_only = getattr(request.user.uzytkownik, 'email_notifications_chat_participated', False)
@@ -411,10 +402,6 @@ def toggle_track(request: HttpRequest):
 
 @login_required
 def unread_count(request: HttpRequest):
-    from chat.services import CHAT_UNREAD_CACHE_KEY, CHAT_UNREAD_CACHE_TTL
-    key = CHAT_UNREAD_CACHE_KEY.format(user_id=request.user.id)
-    count = cache.get(key)
-    if count is None:
-        count = Room.objects.filter(allowed=request.user).exclude(seen_by=request.user).count()
-        cache.set(key, count, CHAT_UNREAD_CACHE_TTL)
+    from chat.services import get_unread_count_for_user
+    count = get_unread_count_for_user(request.user)
     return JsonResponse({"count": count})
