@@ -15,6 +15,7 @@ from django.db.models import Sum
 from django.utils.timezone import now
 from django.utils.translation import gettext as _
 
+from board.models import Post
 from chat import signals
 from chat.models import Room
 from obywatele.models import CitizenActivity, Rate, Uzytkownik
@@ -179,15 +180,31 @@ class Command(BaseCommand):
                 # Get the domain from django_site table
                 host = get_site_domain()
 
-                subject = '[' + host + '] ' + _('You have been accepted in our community')
-                message = f"""\
-{_('Welcome')} {uname} \n\
-{_('Your account on')} {host} {_('is now active')} \n\n\
-{_('Login')}: {uemail} \n\
-{_('Password')}: {password}\n\n\
-{_('You may login here')}: {host}/login/\n\n\
-{_('You may change password here')}: {host}/haslo/\
-"""
+                # Get welcome email content from system post
+                welcome_post = Post.get_system_post('welcome_email')
+
+                if welcome_post and welcome_post.text:
+                    # Use system post content with placeholders
+                    try:
+                        message = welcome_post.text.format(
+                            username=uname,
+                            email=uemail,
+                            password=password,
+                            host=host,
+                            login_url=f"{host}/login/",
+                            password_url=f"{host}/haslo/"
+                        )
+                        # Convert HTML <br> to newlines for plain text email
+                        message = message.replace('<br>', '\n')
+                        subject = f"[{host}] {welcome_post.title}"
+                        log.info(f'Using welcome email from system post for user {uemail}')
+                    except KeyError as e:
+                        log.error(f'Missing placeholder in welcome email template: {e}')
+                        return
+                else:
+                    log.warning(f'Welcome email system post not found, skipping email for user {uemail}')
+                    return
+
                 try:
                     log.info(f'EMAIL_DIAG trigger=welcome_email user_id={i.uid.id} email={uemail} username={uname} source=count_citizens.activate_eligible_users subject={subject}')
                     time.sleep(s.EMAIL_SEND_DELAY_SECONDS)

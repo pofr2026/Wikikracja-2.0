@@ -17,12 +17,14 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=4; plural=(n==1 ? 0 : (n%10>=2 && n%10<=4) && (n%100<12 || n%100>14) ? 1 : n!=1 && (n%10>=0 && n%10<=1) || (n%10>=5 && n%10<=9) || (n%100>=12 && n%100<=14) ? 2 : 3);\n"
 
-#: .\board\forms.py:19 .\board\templates\board\create_post.html:29
-#: .\board\templates\board\edit_post.html:29
+#: .\board\forms.py:19 .\board\forms.py:35
+#: .\board\templates\board\create_post.html:34
+#: .\board\templates\board\edit_post.html:34
 #: .\board\templates\board\postcategory_form.html:28 .\bookkeeping\forms.py:21
 #: .\bookkeeping\forms.py:34 .\bookkeeping\forms.py:47
 #: .\bookkeeping\forms.py:92 .\chat\templates\chat\add.html:15
 #: .\elibrary\templates\elibrary\add.html:35
+#: .\elibrary\templates\elibrary\book_form.html:31
 #: .\elibrary\templates\elibrary\book_form.html:31
 #: .\glosowania\templates\glosowania\dodaj.html:38
 #: .\glosowania\templates\glosowania\edit.html:22
@@ -38,11 +40,15 @@ msgstr ""
 msgid "Save"
 msgstr "Zapisz"
 
-#: .\board\forms.py:23 .\board\models.py:24
+#: .\board\forms.py:23 .\board\models.py:25
 msgid "Text"
 msgstr "Treść"
 
-#: .\board\models.py:9
+#: .\board\forms.py:24 .\board\templates\board\post_detail.html:34
+msgid "Attachments"
+msgstr "Załączniki"
+
+#: .\board\models.py:10
 #: .\board\templates\board\postcategory_confirm_delete.html:59
 #: .\board\templates\board\postcategory_list.html:24 .\bookkeeping\models.py:10
 #: .\bookkeeping\models.py:23 .\bookkeeping\models.py:30
@@ -55,22 +61,23 @@ msgstr "Treść"
 msgid "Name"
 msgstr "Nazwa"
 
-#: .\board\models.py:10
+#: .\board\models.py:11
 #: .\board\templates\board\postcategory_confirm_delete.html:60
 #: .\board\templates\board\postcategory_list.html:25
 msgid "Priority"
 msgstr "Priorytet"
 
-#: .\board\models.py:14
+#: .\board\models.py:15
 msgid "Post Category"
 msgstr "Kategoria"
 
-#: .\board\models.py:15
+#: .\board\models.py:16
 msgid "Post Categories"
 msgstr "Kategorie"
 
-#: .\board\models.py:22
+#: .\board\models.py:23
 #: .\board\templates\board\postcategory_confirm_delete.html:32
+#: .\elibrary\forms.py:9 .\elibrary\models.py:14
 #: .\elibrary\forms.py:9 .\elibrary\models.py:14
 #: .\elibrary\templates\elibrary\book_confirm_delete.html:13
 #: .\events\models.py:40 .\glosowania\models.py:25
@@ -82,13 +89,14 @@ msgstr "Kategorie"
 msgid "Title"
 msgstr "Tytuł"
 
-#: .\board\models.py:23
+#: .\board\models.py:24
 msgid "Subtitle"
 msgstr "Podtytuł"
 
-#: .\board\models.py:25 .\board\templates\board\post_detail.html:27
+#: .\board\models.py:26 .\board\templates\board\post_detail.html:49
 #: .\bookkeeping\models.py:59
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:29
+#: .\elibrary\forms.py:10 .\elibrary\models.py:15
 #: .\elibrary\forms.py:10 .\elibrary\models.py:15
 #: .\elibrary\templates\elibrary\book_confirm_delete.html:15
 #: .\glosowania\models.py:117
@@ -98,7 +106,7 @@ msgstr "Podtytuł"
 msgid "Author"
 msgstr "Autor"
 
-#: .\board\models.py:26 .\board\templates\board\post_detail.html:27
+#: .\board\models.py:27 .\board\templates\board\post_detail.html:49
 #: .\bookkeeping\models.py:51 .\events\templates\events\event_detail.html:108
 #: .\glosowania\templates\glosowania\delete_argument.html:21
 #: .\glosowania\templates\glosowania\edit_argument.html:14
@@ -106,12 +114,12 @@ msgstr "Autor"
 msgid "Created"
 msgstr "Utworzone"
 
-#: .\board\models.py:27 .\board\templates\board\post_detail.html:27
+#: .\board\models.py:28 .\board\templates\board\post_detail.html:49
 #: .\events\templates\events\event_detail.html:110
 msgid "Updated"
 msgstr "Zaktualizowane"
 
-#: .\board\models.py:28 .\bookkeeping\forms.py:66 .\bookkeeping\models.py:55
+#: .\board\models.py:29 .\bookkeeping\forms.py:66 .\bookkeeping\models.py:55
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:37
 #: .\bookkeeping\templates\bookkeeping\report_list.html:43
 #: .\bookkeeping\templates\bookkeeping\report_list.html:84
@@ -122,54 +130,151 @@ msgstr "Zaktualizowane"
 msgid "Category"
 msgstr "Kategoria"
 
-#: .\board\models.py:29 .\board\templates\board\post_detail.html:27
+#: .\board\models.py:30 .\board\templates\board\post_detail.html:49
 #: .\chat\templates\chat\chat.html:59 .\events\models.py:50
 #: .\events\templates\events\event_detail.html:81
 #: .\events\templates\events\event_list.html:78
 msgid "Public"
 msgstr "Publiczne"
 
-#: .\board\models.py:30
+#: .\board\models.py:31
 msgid "Archived"
 msgstr "Zarchiwizowane"
 
-#: .\board\models.py:31 .\tasks\templates\tasks\_task_card.html:25
+#: .\board\models.py:32 .\tasks\templates\tasks\_task_card.html:25
 #: .\tasks\views.py:85
 msgid "Important"
 msgstr "Ważne"
 
+#: .\board\models.py:33
+msgid "Featured Image"
+msgstr "Obrazek wyróżniający"
+
+#: .\board\models.py:34
+msgid "System Key"
+msgstr ""
+
+#: .\board\models.py:41
+msgid "System posts cannot be deleted."
+msgstr "Dokumenty systemowe nie mogą być usunięte"
+
+#: .\board\models.py:50 .\home\models.py:11 .\home\models.py:41
+#: .\home\templatetags\feed_filters.py:31 .\home\views.py:661
+msgid "Post"
+msgstr "Ogłoszenie"
+
+#: .\board\models.py:51
+msgid "File"
+msgstr "Plik"
+
+#: .\board\models.py:52
+msgid "Filename"
+msgstr "Nazwa pliku"
+
+#: .\board\models.py:53
+msgid "Uploaded At"
+msgstr "Wgrany"
+
+#: .\board\models.py:56
+msgid "Post Attachment"
+msgstr "Załącznik"
+
+#: .\board\models.py:57
+msgid "Post Attachments"
+msgstr "Załączniki"
+
 #: .\board\signals.py:42
 #, python-format
-msgid "New important announcement by %(username)s: %(title)s - %(post_url)s"
-msgstr "Nowe ważne ogłoszenie od %(username)s: %(title)s - %(post_url)s"
+msgid "New important document by %(username)s: %(title)s - %(post_url)s"
+msgstr "Nowy ważny dokument od %(username)s: %(title)s - %(post_url)s"
 
 #: .\board\signals.py:48
 #, python-format
-msgid "Updated important announcement by %(username)s: %(title)s - %(post_url)s"
-msgstr "Zaktualizowane ważne ogłoszenie od %(username)s: %(title)s - %(post_url)s"
+msgid "Updated important document by %(username)s: %(title)s - %(post_url)s"
+msgstr "Zaktualizowane ważny dokument od %(username)s: %(title)s - %(post_url)s"
 
 #: .\board\templates\board\archive.html:13
-msgid "Announcement archive"
-msgstr "Archiwum ogłoszeń"
+msgid "Document archive"
+msgstr "Archiwum dokumentów"
 
 #: .\board\templates\board\archive.html:16
-#: .\board\templates\board\board.html:10
+#: .\board\templates\board\board.html:176
 #: .\board\templates\board\postcategory_list.html:13
 #: .\elibrary\templates\elibrary\book_list.html:165
 #: .\home\templates\home\base.html:298 .\home\views.py:414
 msgid "Announcements"
 msgstr "Ogłoszenia"
 
+#: .\home\templates\home\base.html:110 .\home\templates\home\base.html:113
+#: .\home\templates\home\base.html:202
+msgid "Documents"
+msgstr "Dokumenty"
+
 #: .\board\templates\board\archive.html:30
 msgid "Archive is empty"
 msgstr "Archiwum jest puste"
 
-#: .\board\templates\board\board.html:15
-#: .\elibrary\templates\elibrary\book_list.html:20
-msgid "Archive"
-msgstr "Archiwum"
+#: .\board\templates\board\attachment_confirm_delete.html:8
+msgid "Delete attachment"
+msgstr "Usuń załącznik"
 
-#: .\board\templates\board\board.html:18
+#: .\board\templates\board\attachment_confirm_delete.html:11
+msgid "Are you sure you want to delete the attachment"
+msgstr "Czy na pewno chcesz usunąć ten załącznik?"
+
+#: .\board\templates\board\attachment_confirm_delete.html:14
+#: .\board\templates\board\post_confirm_delete.html:19
+#: .\board\templates\board\post_detail.html:53
+#: .\board\templates\board\postcategory_list.html:37
+#: .\bookkeeping\templates\bookkeeping\asset_list.html:47
+#: .\bookkeeping\templates\bookkeeping\category_list.html:33
+#: .\bookkeeping\templates\bookkeeping\partner_list.html:55
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:62
+#: .\elibrary\templates\elibrary\book_detail.html:75
+#: .\events\templates\events\event_detail.html:17
+#: .\glosowania\templates\glosowania\szczegoly.html:170
+#: .\glosowania\templates\glosowania\szczegoly.html:213
+msgid "Delete"
+msgstr "Usuń"
+
+#: .\board\templates\board\attachment_confirm_delete.html:15
+#: .\board\templates\board\create_post.html:35
+#: .\board\templates\board\edit_post.html:35
+#: .\board\templates\board\post_confirm_delete.html:20
+#: .\board\templates\board\postcategory_confirm_delete.html:69
+#: .\board\templates\board\postcategory_form.html:29
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:84
+#: .\bookkeeping\templates\bookkeeping\asset_form.html:51
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:85
+#: .\bookkeeping\templates\bookkeeping\category_form.html:39
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:91
+#: .\bookkeeping\templates\bookkeeping\partner_form.html:64
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:45
+#: .\bookkeeping\templates\bookkeeping\transaction_form.html:61
+#: .\elibrary\templates\elibrary\add.html:36
+#: .\elibrary\templates\elibrary\book_confirm_delete.html:25
+#: .\elibrary\templates\elibrary\book_form.html:32
+#: .\events\templates\events\event_confirm_delete.html:35
+#: .\elibrary\templates\elibrary\book_form.html:32
+#: .\events\templates\events\event_confirm_delete.html:35
+#: .\glosowania\templates\glosowania\edit_argument.html:34
+#: .\home\templates\home\haslo.html:26
+#: .\obywatele\templates\obywatele\candidate_edit.html:12
+#: .\obywatele\templates\obywatele\candidate_edit.html:59
+#: .\obywatele\templates\obywatele\change_email.html:24
+#: .\obywatele\templates\obywatele\change_username.html:19
+#: .\obywatele\templates\obywatele\my_assets.html:99
+#: .\tasks\templates\tasks\task_close.html:21
+#: .\tasks\templates\tasks\task_detail.html:207
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: .\board\templates\board\board.html:13
+#: .\elibrary\templates\elibrary\book_list.html:13
+msgid "Create document"
+msgstr "Utwórz dokument"
+
+#: .\board\templates\board\board.html:17
 #: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:10
 #: .\bookkeeping\templates\bookkeeping\asset_form.html:11
 #: .\bookkeeping\templates\bookkeeping\asset_list.html:10
@@ -188,61 +293,80 @@ msgstr "Archiwum"
 msgid "Categories"
 msgstr "Kategorie"
 
-#: .\board\templates\board\board.html:21
-msgid "Create announcement"
-msgstr "Utwórz ogłoszenie"
+#: .\board\templates\board\board.html:20
+#: .\elibrary\templates\elibrary\book_list.html:20
+msgid "Archive"
+msgstr "Archiwum"
 
-#: .\board\templates\board\board.html:32
-msgid "Featured"
-msgstr "Wyróżnione"
+#: .\board\templates\board\board.html:26
+#: .\elibrary\templates\elibrary\book_list.html:29
+#: .\glosowania\templates\glosowania\_view_toggle.html:17
+#: .\home\templates\home\activity.html:41
+#: .\tasks\templates\tasks\task_list.html:15
+msgid "Sort"
+msgstr "Sortuj"
 
-#: .\board\templates\board\board.html:44 .\obywatele\models.py:52
-#: .\obywatele\templates\obywatele\my_profile.html:158
-#: .\obywatele\templates\obywatele\szczegoly.html:247 .\obywatele\views.py:743
-msgid "Other"
-msgstr "Inne"
+#: .\board\templates\board\board.html:31 .\board\templates\board\board.html:36
+#: .\board\templates\board\postcategory_confirm_delete.html:33
+#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:33
+#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:35
+#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:35
+#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:35
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:24
+#: .\elibrary\templates\elibrary\book_list.html:34
+#: .\elibrary\templates\elibrary\book_list.html:39
+#: .\events\templates\events\event_list.html:40
+#: .\events\templates\events\event_list.html:44
+#: .\home\templates\home\activity.html:44
+#: .\obywatele\templates\obywatele\_citizen_aktywnosc_partial.html:9
+#: .\obywatele\templates\obywatele\_citizen_czaty_partial.html:9
+#: .\obywatele\templates\obywatele\_citizen_zadania_partial.html:10
+#: .\obywatele\templates\obywatele\_citizen_zalozono_partial.html:9
+#: .\obywatele\templates\obywatele\citizen_zadania.html:31
+msgid "Date"
+msgstr "Data"
 
-#: .\board\templates\board\board.html:58
-#: .\elibrary\templates\elibrary\book_list.html:169
-msgid "No announcements"
-msgstr "Brak ogłoszeń"
+#: .\board\templates\board\board.html:44
+#: .\elibrary\templates\elibrary\book_list.html:47
+#: .\glosowania\templates\glosowania\_view_toggle.html:62
+#: .\home\templates\home\activity.html:52
+#: .\tasks\templates\tasks\task_list.html:81
+msgid "List"
+msgstr "Lista"
+
+#: .\board\templates\board\board.html:47
+#: .\elibrary\templates\elibrary\book_list.html:50
+#: .\glosowania\templates\glosowania\_view_toggle.html:65
+#: .\home\templates\home\activity.html:55
+#: .\tasks\templates\tasks\task_list.html:84
+msgid "Grid"
+msgstr "Siatka"
+
+#: .\board\templates\board\board.html:57 .\home\templates\home\activity.html:19
+#: .\home\views.py:402 .\tasks\templates\tasks\task_list.html:63
+#: .\tasks\templates\tasks\task_list.html:65
+msgid "All"
+msgstr "Wszystkie"
+
+#: .\board\templates\board\board.html:73
+msgid "Uncategorized"
+msgstr "Bez kategorii"
+
+#: .\board\templates\board\board.html:180
+msgid "No documents"
+msgstr "Brak dokumentów"
 
 #: .\board\templates\board\create_post.html:10
 msgid "Create post"
 msgstr "Utwórz ogłoszenie"
 
-#: .\board\templates\board\create_post.html:30
-#: .\board\templates\board\edit_post.html:30
-#: .\board\templates\board\post_confirm_delete.html:20
-#: .\board\templates\board\postcategory_confirm_delete.html:69
-#: .\board\templates\board\postcategory_form.html:29
-#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:84
-#: .\bookkeeping\templates\bookkeeping\asset_form.html:51
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:85
-#: .\bookkeeping\templates\bookkeeping\category_form.html:39
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:91
-#: .\bookkeeping\templates\bookkeeping\partner_form.html:64
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:45
-#: .\bookkeeping\templates\bookkeeping\transaction_form.html:61
-#: .\elibrary\templates\elibrary\add.html:36
-#: .\elibrary\templates\elibrary\book_confirm_delete.html:25
-#: .\elibrary\templates\elibrary\book_form.html:32
-#: .\events\templates\events\event_confirm_delete.html:35
-#: .\glosowania\templates\glosowania\edit_argument.html:34
-#: .\home\templates\home\haslo.html:26
-#: .\obywatele\templates\obywatele\candidate_edit.html:12
-#: .\obywatele\templates\obywatele\candidate_edit.html:59
-#: .\obywatele\templates\obywatele\change_email.html:24
-#: .\obywatele\templates\obywatele\change_username.html:19
-#: .\obywatele\templates\obywatele\my_assets.html:99
-#: .\tasks\templates\tasks\task_close.html:21
-#: .\tasks\templates\tasks\task_detail.html:207
-msgid "Cancel"
-msgstr "Anuluj"
-
 #: .\board\templates\board\edit_post.html:10
 msgid "Edit post"
 msgstr "Edytuj ogłoszenie"
+
+#: .\board\templates\board\edit_post.html:41
+msgid "Existing attachments"
+msgstr "Załączniki"
 
 #: .\board\templates\board\post_confirm_delete.html:10
 msgid "Delete post"
@@ -267,10 +391,11 @@ msgid "Delete"
 msgstr "Usuń"
 
 #: .\board\templates\board\post_detail.html:10
-#: .\board\templates\board\post_detail.html:33
+#: .\board\templates\board\post_detail.html:55
 #: .\board\templates\board\postcategory_confirm_delete.html:12
 #: .\board\templates\board\postcategory_form.html:14
 #: .\chat\templates\chat\add.html:16
+#: .\elibrary\templates\elibrary\book_detail.html:11
 #: .\elibrary\templates\elibrary\book_detail.html:11
 #: .\glosowania\templates\glosowania\dodaj.html:39
 #: .\glosowania\templates\glosowania\edit.html:23
@@ -279,14 +404,14 @@ msgstr "Usuń"
 msgid "Back"
 msgstr "Wróć"
 
-#: .\board\templates\board\post_detail.html:27
+#: .\board\templates\board\post_detail.html:49
 #: .\chat\templates\chat\chat.html:148
 #: .\events\templates\events\event_detail.html:85
 #: .\events\templates\events\event_list.html:82
 msgid "Private"
 msgstr "Prywatne"
 
-#: .\board\templates\board\post_detail.html:30
+#: .\board\templates\board\post_detail.html:52
 #: .\board\templates\board\postcategory_confirm_delete.html:44
 #: .\board\templates\board\postcategory_list.html:36
 #: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:57
@@ -297,6 +422,11 @@ msgstr "Prywatne"
 #: .\bookkeeping\templates\bookkeeping\partner_list.html:54
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:61
 #: .\elibrary\templates\elibrary\book_detail.html:72
+#: .\events\templates\events\event_detail.html:14
+#: .\events\templates\events\event_list.html:93
+#: .\glosowania\templates\glosowania\szczegoly.html:72
+#: .\glosowania\templates\glosowania\szczegoly.html:169
+#: .\glosowania\templates\glosowania\szczegoly.html:212
 #: .\events\templates\events\event_detail.html:14
 #: .\events\templates\events\event_list.html:93
 #: .\glosowania\templates\glosowania\szczegoly.html:72
@@ -315,27 +445,8 @@ msgid "Delete category"
 msgstr "Usuń kategorię"
 
 #: .\board\templates\board\postcategory_confirm_delete.html:28
-msgid "This category is assigned to the following announcements:"
-msgstr "Ta kategoria jest przypisana do następujących ogłoszeń:"
-
-#: .\board\templates\board\postcategory_confirm_delete.html:33
-#: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:33
-#: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:35
-#: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:35
-#: .\bookkeeping\templates\bookkeeping\transaction_confirm_delete.html:35
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:24
-#: .\elibrary\templates\elibrary\book_list.html:34
-#: .\elibrary\templates\elibrary\book_list.html:39
-#: .\events\templates\events\event_list.html:40
-#: .\events\templates\events\event_list.html:44
-#: .\home\templates\home\activity.html:44
-#: .\obywatele\templates\obywatele\_citizen_aktywnosc_partial.html:9
-#: .\obywatele\templates\obywatele\_citizen_czaty_partial.html:9
-#: .\obywatele\templates\obywatele\_citizen_zadania_partial.html:10
-#: .\obywatele\templates\obywatele\_citizen_zalozono_partial.html:9
-#: .\obywatele\templates\obywatele\citizen_zadania.html:31
-msgid "Date"
-msgstr "Data"
+msgid "This category is assigned to the following documents:"
+msgstr "Ta kategoria jest przypisana do następujących dokumentów:"
 
 #: .\board\templates\board\postcategory_confirm_delete.html:34
 #: .\board\templates\board\postcategory_list.html:26
@@ -350,8 +461,8 @@ msgid "Actions"
 msgstr "Działania"
 
 #: .\board\templates\board\postcategory_confirm_delete.html:51
-msgid "Before deleting a category, unpin it from all announcements."
-msgstr "Przed usunięciem kategorii odepnij ją od wszystkich ogłoszeń."
+msgid "Before deleting a category, unpin it from all documents."
+msgstr "Przed usunięciem kategorii odepnij ją od wszystkich dokumentów."
 
 #: .\board\templates\board\postcategory_confirm_delete.html:54
 msgid "Back to category"
@@ -378,8 +489,8 @@ msgid "New category"
 msgstr "Nowa kategoria"
 
 #: .\board\templates\board\postcategory_list.html:9
-msgid "Announcement categories"
-msgstr "Kategorie ogłoszeń"
+msgid "Document categories"
+msgstr "Kategorie dokumentów"
 
 #: .\board\templates\board\postcategory_list.html:16
 #: .\bookkeeping\templates\bookkeeping\category_list.html:14
@@ -390,9 +501,9 @@ msgstr "Dodaj kategorię"
 msgid "No categories"
 msgstr "Brak kategorii"
 
-#: .\board\views.py:52
-msgid "Cannot delete category because it is in use. Remove all posts that use it first."
-msgstr "Nie można usunąć kategorii, ponieważ jest w użyciu. Usuń najpierw wszystkie transakcje, które ją wykorzystują."
+#: .\board\views.py:54
+msgid "Cannot delete category because it is in use. Remove all documents that use it first."
+msgstr "Nie można usunąć kategorii, ponieważ jest w użyciu. Usuń najpierw wszystkie dokumenty, które ją wykorzystują."
 
 #: .\bookkeeping\forms.py:54 .\bookkeeping\models.py:46
 #: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:47
@@ -777,19 +888,23 @@ msgid "Cannot delete partner because it is in use. Remove all transactions that 
 msgstr "Nie można usunąć partnera, ponieważ jest w użyciu. Usuń najpierw wszystkie transakcje, które go wykorzystują."
 
 #: .\chat\management\commands\chat_messages.py:35
+#: .\chat\management\commands\chat_messages.py:35
 #, python-brace-format
 msgid "{HOST} New messages on chat"
 msgstr "{HOST} Nowe wiadomości na czacie"
 
+#: .\chat\management\commands\chat_messages.py:36
 #: .\chat\management\commands\chat_messages.py:36
 #, python-brace-format
 msgid "New messages on {HOST}/chat"
 msgstr "Nowe wiadomości na {HOST}/chat"
 
 #: .\chat\management\commands\chat_messages.py:37
+#: .\chat\management\commands\chat_messages.py:37
 msgid "You can disable those messages by unchecking bell icon next to chat room name."
 msgstr "Możesz wyłączyć te powiadomienia odznaczając ikonę dzwonka obok nazwy pokoju."
 
+#: .\chat\management\commands\chat_messages.py:38
 #: .\chat\management\commands\chat_messages.py:38
 #, python-brace-format
 msgid "Go to chat to do so {HOST}/chat"
@@ -865,7 +980,7 @@ msgid "None"
 msgstr "Brak"
 
 #: .\chat\templates\chat\chat.html:86 .\chat\templates\chat\chat.html:209
-#: .\home\templates\home\base.html:194 .\home\templates\home\base.html:229
+#: .\home\templates\home\base.html:203 .\home\templates\home\base.html:238
 #: .\home\templates\home\home.html:47 .\home\templates\home\search.html:63
 #: .\home\views.py:415 .\obywatele\templates\obywatele\szczegoly.html:130
 msgid "Tasks"
@@ -958,21 +1073,26 @@ msgid "Copy link to room %(room_name)s"
 msgstr "Skopiuj link do pokoju %(room_name)s"
 
 #: .\elibrary\forms.py:11 .\elibrary\models.py:16
+#: .\elibrary\forms.py:11 .\elibrary\models.py:16
 msgid "Abstract"
 msgstr "Abstrakt"
 
+#: .\elibrary\forms.py:12 .\elibrary\models.py:22
 #: .\elibrary\forms.py:12 .\elibrary\models.py:22
 msgid "Cover"
 msgstr "Okładka"
 
 #: .\elibrary\forms.py:14
+#: .\elibrary\forms.py:14
 msgid "File epub"
 msgstr "Plik epub"
 
 #: .\elibrary\forms.py:17
+#: .\elibrary\forms.py:17
 msgid "File mobi"
 msgstr "Plik mobi"
 
+#: .\elibrary\forms.py:20
 #: .\elibrary\forms.py:20
 msgid "File pdf"
 msgstr "Plik pdf"
@@ -1007,9 +1127,11 @@ msgid "Yes, Delete"
 msgstr "Tak, skasuj"
 
 #: .\elibrary\templates\elibrary\book_detail.html:30
+#: .\elibrary\templates\elibrary\book_detail.html:30
 msgid "Download:"
 msgstr "Ściągnij:"
 
+#: .\elibrary\templates\elibrary\book_detail.html:96
 #: .\elibrary\templates\elibrary\book_detail.html:96
 #: .\events\templates\events\event_list.html:113
 #: .\glosowania\templates\glosowania\szczegoly.html:46
@@ -1020,6 +1142,7 @@ msgstr "Ściągnij:"
 msgid "Previous"
 msgstr "Poprzedni"
 
+#: .\elibrary\templates\elibrary\book_detail.html:104
 #: .\elibrary\templates\elibrary\book_detail.html:104
 #: .\events\templates\events\event_list.html:29
 #: .\events\templates\events\event_list.html:125
@@ -1032,42 +1155,19 @@ msgid "Next"
 msgstr "Następny"
 
 #: .\elibrary\templates\elibrary\book_form.html:7
+#: .\elibrary\templates\elibrary\book_form.html:7
 msgid "Edit Book"
 msgstr "Edytuj eBook"
 
 #: .\elibrary\templates\elibrary\book_form.html:18
+#: .\elibrary\templates\elibrary\book_form.html:18
 msgid "File Uploads"
 msgstr "Wgraj pliki"
-
-#: .\elibrary\templates\elibrary\book_list.html:13
-msgid "Create document"
-msgstr "Utwórz dokument"
 
 #: .\elibrary\templates\elibrary\book_list.html:17
 #: .\elibrary\templates\elibrary\book_list.html:181
 msgid "Add eBook"
 msgstr "Dodaj eBook"
-
-#: .\elibrary\templates\elibrary\book_list.html:29
-#: .\glosowania\templates\glosowania\_view_toggle.html:17
-#: .\home\templates\home\activity.html:41
-#: .\tasks\templates\tasks\task_list.html:15
-msgid "Sort"
-msgstr "Sortuj"
-
-#: .\elibrary\templates\elibrary\book_list.html:47
-#: .\glosowania\templates\glosowania\_view_toggle.html:62
-#: .\home\templates\home\activity.html:52
-#: .\tasks\templates\tasks\task_list.html:81
-msgid "List"
-msgstr "Lista"
-
-#: .\elibrary\templates\elibrary\book_list.html:50
-#: .\glosowania\templates\glosowania\_view_toggle.html:65
-#: .\home\templates\home\activity.html:55
-#: .\tasks\templates\tasks\task_list.html:84
-msgid "Grid"
-msgstr "Siatka"
 
 #: .\elibrary\templates\elibrary\book_list.html:62
 msgid "Miscellaneous"
@@ -1077,8 +1177,17 @@ msgstr "Różne"
 msgid "Create"
 msgstr "Utwórz"
 
+#: .\elibrary\templates\elibrary\book_list.html:165
+#: .\home\templates\home\base.html:307 .\home\views.py:403
+msgid "Announcements"
+msgstr "Ogłoszenia"
+
+#: .\elibrary\templates\elibrary\book_list.html:169
+msgid "No announcements"
+msgstr "Brak ogłoszeń"
+
 #: .\elibrary\templates\elibrary\book_list.html:178
-#: .\home\templates\home\base.html:196 .\home\templates\home\base.html:241
+#: .\home\templates\home\base.html:205 .\home\templates\home\base.html:250
 #: .\home\templates\home\home.html:79 .\home\templates\home\search.html:81
 #: .\home\views.py:419 .\home\views.py:730
 msgid "Library"
@@ -1278,13 +1387,17 @@ msgstr "Wydarzenia"
 
 #: .\events\templates\events\event_confirm_delete.html:11
 #: .\events\templates\events\event_confirm_delete.html:38
+#: .\events\templates\events\event_confirm_delete.html:11
+#: .\events\templates\events\event_confirm_delete.html:38
 msgid "Delete Event"
 msgstr "Skasuj Wydarzenie"
 
 #: .\events\templates\events\event_confirm_delete.html:14
+#: .\events\templates\events\event_confirm_delete.html:14
 msgid "Are you sure you want to delete the following event?"
 msgstr "Czy na pewno chcesz skasować to Wydarzenie?"
 
+#: .\events\templates\events\event_confirm_delete.html:28
 #: .\events\templates\events\event_confirm_delete.html:28
 msgid "This action cannot be undone."
 msgstr "To działanie nie może być odwrócone."
@@ -1533,6 +1646,8 @@ msgstr "Wpisz krótki tytuł opisujący nowe prawo."
 #: .\glosowania\models.py:26
 #: .\glosowania\templates\glosowania\_proposal_card.html:117
 #: .\glosowania\templates\glosowania\szczegoly.html:116
+#: .\glosowania\templates\glosowania\_proposal_card.html:117
+#: .\glosowania\templates\glosowania\szczegoly.html:116
 msgid "Law text"
 msgstr "Treść przepisu"
 
@@ -1663,6 +1778,8 @@ msgstr "Propozycja"
 
 #: .\glosowania\templates\glosowania\_proposal_card.html:126
 #: .\glosowania\templates\glosowania\szczegoly.html:125
+#: .\glosowania\templates\glosowania\_proposal_card.html:126
+#: .\glosowania\templates\glosowania\szczegoly.html:125
 msgid "Consequences"
 msgstr "Konsekwencje"
 
@@ -1676,6 +1793,8 @@ msgstr "Koniec"
 
 #: .\glosowania\templates\glosowania\_view_toggle.html:10
 #: .\glosowania\templates\glosowania\proposition.html:9
+#: .\glosowania\templates\glosowania\szczegoly.html:187
+#: .\glosowania\templates\glosowania\szczegoly.html:230
 #: .\glosowania\templates\glosowania\szczegoly.html:187
 #: .\glosowania\templates\glosowania\szczegoly.html:230
 msgid "Add"
@@ -1820,6 +1939,7 @@ msgid "Would you like to implement this rule?"
 msgstr "Czy chcesz wprowadzić ten przepis?"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:82
+#: .\glosowania\templates\glosowania\szczegoly.html:82
 #: .\obywatele\templates\obywatele\poczekalnia.html:56
 #: .\obywatele\templates\obywatele\poczekalnia.html:57
 #: .\obywatele\templates\obywatele\szczegoly.html:67
@@ -1827,6 +1947,7 @@ msgstr "Czy chcesz wprowadzić ten przepis?"
 msgid "Yes"
 msgstr "Tak"
 
+#: .\glosowania\templates\glosowania\szczegoly.html:83
 #: .\glosowania\templates\glosowania\szczegoly.html:83
 #: .\obywatele\templates\obywatele\poczekalnia.html:56
 #: .\obywatele\templates\obywatele\poczekalnia.html:57
@@ -1841,9 +1962,11 @@ msgid "You have already voted in this referendum"
 msgstr "Już zagłosowałeś w tym referendum"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:92
+#: .\glosowania\templates\glosowania\szczegoly.html:92
 msgid "Results"
 msgstr "Wyniki"
 
+#: .\glosowania\templates\glosowania\szczegoly.html:97 .\tasks\models.py:130
 #: .\glosowania\templates\glosowania\szczegoly.html:97 .\tasks\models.py:130
 msgid "For"
 msgstr "Za"
@@ -1854,37 +1977,46 @@ msgid "Against"
 msgstr "Przeciw"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:137
+#: .\glosowania\templates\glosowania\szczegoly.html:137
 msgid "Abolishes regulations"
 msgstr "Znosi przepisy"
 
+#: .\glosowania\templates\glosowania\szczegoly.html:152
 #: .\glosowania\templates\glosowania\szczegoly.html:152
 msgid "Arguments FOR"
 msgstr "Argumenty ZA"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:176
+#: .\glosowania\templates\glosowania\szczegoly.html:176
 msgid "No arguments for."
 msgstr "Brak argumentów za."
 
+#: .\glosowania\templates\glosowania\szczegoly.html:180
 #: .\glosowania\templates\glosowania\szczegoly.html:180
 msgid "Add an argument for"
 msgstr "Dodaj argument za"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:186
+#: .\glosowania\templates\glosowania\szczegoly.html:186
 msgid "Your argument for..."
 msgstr "Twój argument za..."
 
+#: .\glosowania\templates\glosowania\szczegoly.html:195
 #: .\glosowania\templates\glosowania\szczegoly.html:195
 msgid "Arguments AGAINST"
 msgstr "Argumenty PRZECIW"
 
 #: .\glosowania\templates\glosowania\szczegoly.html:219
+#: .\glosowania\templates\glosowania\szczegoly.html:219
 msgid "No arguments against."
 msgstr "Brak argumentów przeciw."
 
 #: .\glosowania\templates\glosowania\szczegoly.html:223
+#: .\glosowania\templates\glosowania\szczegoly.html:223
 msgid "Add an argument against"
 msgstr "Dodaj argument przeciw"
 
+#: .\glosowania\templates\glosowania\szczegoly.html:229
 #: .\glosowania\templates\glosowania\szczegoly.html:229
 msgid "Your argument against..."
 msgstr "Twój argument przeciw..."
@@ -1902,10 +2034,7 @@ msgid "New law proposal"
 msgstr "Nowa propozycja przepisu"
 
 #: .\glosowania\views.py:49
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "{user} added new law proposal: \"{title}\"\n"
-#| "You can read it here: {url}"
+#, python-brace-format
 msgid ""
 "{user} added new law proposal: \"{title}\"\n"
 "You can read it here: {url}"
@@ -1923,10 +2052,7 @@ msgid "Proposal no. {} has been modified"
 msgstr "Propozycja nr. {} została zmodyfikowana"
 
 #: .\glosowania\views.py:84
-#, fuzzy, python-brace-format
-#| msgid ""
-#| "{user} modified proposal: \"{title}\"\n"
-#| "You can read new version here: {url}"
+#, python-brace-format
 msgid ""
 "{user} modified proposal: \"{title}\"\n"
 "You can read new version here: {url}"
@@ -2063,7 +2189,7 @@ msgid "No activity"
 msgstr "Brak aktywności"
 
 #: .\home\templates\home\base.html:70 .\home\templates\home\base.html:73
-#: .\home\templates\home\base.html:191 .\home\templates\home\home.html:100
+#: .\home\templates\home\base.html:200 .\home\templates\home\home.html:100
 msgid "Desktop"
 msgstr "Pulpit"
 
@@ -2079,16 +2205,16 @@ msgstr "Działania"
 msgid "Knowledge Base"
 msgstr "Baza wiedzy"
 
-#: .\home\templates\home\base.html:110 .\home\templates\home\base.html:113
+#: .\home\templates\home\base.html:119 .\home\templates\home\base.html:122
 #: .\obywatele\templates\obywatele\wspolnota.html:9
 msgid "Community"
 msgstr "Społeczności"
 
-#: .\home\templates\home\base.html:134 .\home\templates\home\base.html:137
+#: .\home\templates\home\base.html:143 .\home\templates\home\base.html:146
 msgid "Settings"
 msgstr "Ustawienia"
 
-#: .\home\templates\home\base.html:141 .\home\templates\home\base.html:143
+#: .\home\templates\home\base.html:150 .\home\templates\home\base.html:152
 msgid "Log out"
 msgstr "Wyloguj"
 
@@ -2097,11 +2223,11 @@ msgstr "Wyloguj"
 msgid "Citizen"
 msgstr "Ludzie"
 
-#: .\home\templates\home\base.html:167
+#: .\home\templates\home\base.html:176
 msgid "Collapse/expand menu"
 msgstr "Zwiń/rozwiń menu"
 
-#: .\home\templates\home\base.html:169
+#: .\home\templates\home\base.html:178
 msgid "Collapse"
 msgstr "Zwiń"
 
@@ -2120,7 +2246,7 @@ msgstr "Ogłoszenia"
 msgid "Calendar"
 msgstr "Kalendarz"
 
-#: .\home\templates\home\base.html:197 .\home\templates\home\base.html:245
+#: .\home\templates\home\base.html:206 .\home\templates\home\base.html:254
 #: .\home\templates\home\home.html:55 .\home\templates\home\search.html:87
 #: .\home\views.py:418 .\obywatele\models.py:80
 #: .\obywatele\templates\obywatele\menu.html:14
@@ -2128,28 +2254,33 @@ msgstr "Kalendarz"
 msgid "Citizens"
 msgstr "Ludzie"
 
-#: .\home\templates\home\base.html:198 .\home\templates\home\home.html:71
+#: .\home\templates\home\base.html:207 .\home\templates\home\home.html:71
 msgid "Bookkeeping"
 msgstr "Finanse"
 
-#: .\home\templates\home\base.html:215
+#: .\home\templates\home\base.html:224
 msgid "Search in categories"
 msgstr "Szukaj w Kategoriach"
 
-#: .\home\templates\home\base.html:219 .\home\templates\home\search.html:100
+#: .\home\templates\home\base.html:228 .\home\templates\home\search.html:100
 msgid "Everywhere"
 msgstr "Wszędzie"
 
-#: .\home\templates\home\base.html:258 .\home\templates\home\search.html:14
+#: .\home\templates\home\base.html:234 .\home\templates\home\home.html:31
+#: .\home\templates\home\search.html:57
+msgid "Board"
+msgstr "Ogłoszenia"
+
+#: .\home\templates\home\base.html:267 .\home\templates\home\search.html:14
 #: .\home\templates\home\search.html:37
 msgid "Search"
 msgstr "Szukaj"
 
-#: .\home\templates\home\base.html:260
+#: .\home\templates\home\base.html:269
 msgid "Search filters"
 msgstr "Filtry wyszukiwania"
 
-#: .\home\templates\home\base.html:273
+#: .\home\templates\home\base.html:282
 msgid "Toggle light / dark mode"
 msgstr "Przełącz tryb jasny/ciemny"
 
@@ -2159,40 +2290,38 @@ msgstr "Przełącz tryb jasny/ciemny"
 msgid "Activity"
 msgstr "Aktywność"
 
-#: .\home\templates\home\base.html:305 .\home\templates\home\home.html:13
+#: .\home\templates\home\base.html:314 .\home\templates\home\home.html:13
 #: .\home\templates\home\login.html:4 .\home\templates\home\login.html:13
 #: .\home\templates\home\login.html:34
-#: .\obywatele\management\commands\count_citizens.py:186
 #: .\obywatele\templates\obywatele\szczegoly.html:53
 msgid "Login"
 msgstr "Zaloguj"
 
-#: .\home\templates\home\base.html:306
+#: .\home\templates\home\base.html:315
 msgid "Register"
 msgstr "Zarejestruj"
 
-#: .\home\templates\home\base.html:314
+#: .\home\templates\home\base.html:323
 msgid "Enable notifications to stay updated with new messages and activities"
 msgstr "Włącz powiadomienia, aby być na bieżąco z nowymi wiadomościami i aktywnościami"
 
-#: .\home\templates\home\base.html:316
+#: .\home\templates\home\base.html:325
 msgid "Enable Notifications"
 msgstr "Włącz powiadomienia"
 
-#: .\home\templates\home\base.html:319
+#: .\home\templates\home\base.html:328
 msgid "Not now"
 msgstr "Nie teraz"
 
-#: .\home\templates\home\base.html:324
+#: .\home\templates\home\base.html:333
 msgid "Notifications are blocked. Please enable them in your browser settings"
 msgstr "Powiadomienia są zablokowane. Włącz je w ustawieniach przeglądarki"
 
-#: .\home\templates\home\base.html:326
+#: .\home\templates\home\base.html:335
 msgid "Dismiss"
 msgstr "Odrzuć"
 
 #: .\home\templates\home\haslo.html:3
-#: .\obywatele\management\commands\count_citizens.py:187
 msgid "Password"
 msgstr "Hasło"
 
@@ -2750,50 +2879,32 @@ msgstr "Nowa osoba poprosiła o dołączenie do grupy"
 msgid "User %(username)s just requested membership"
 msgstr "Użytkownik %(username)s właśnie poprosił/a o dołączenie do grupy"
 
-#: .\obywatele\management\commands\count_citizens.py:153
+#: .\obywatele\management\commands\count_citizens.py:154
 msgid "Candidate has been accepted as a citizen"
 msgstr "Kandydat został zaakceptowany"
 
-#: .\obywatele\management\commands\count_citizens.py:182
-msgid "You have been accepted in our community"
-msgstr "Zostałeś/aś zaakceptowany/a w naszej społeczności"
-
-#: .\obywatele\management\commands\count_citizens.py:184
-#: .\obywatele\management\commands\count_citizens.py:223
-msgid "Welcome"
-msgstr "Witaj"
-
-#: .\obywatele\management\commands\count_citizens.py:185
-#: .\obywatele\management\commands\count_citizens.py:224
-msgid "Your account on"
-msgstr "Twoje konto na"
-
-#: .\obywatele\management\commands\count_citizens.py:185
-msgid "is now active"
-msgstr "jest teraz aktywne"
-
-#: .\obywatele\management\commands\count_citizens.py:188
-msgid "You may login here"
-msgstr "Możesz się zalogować tutaj"
-
-#: .\obywatele\management\commands\count_citizens.py:189
-msgid "You may change password here"
-msgstr "Możesz zmienić hasło tutaj"
-
-#: .\obywatele\management\commands\count_citizens.py:221
+#: .\obywatele\management\commands\count_citizens.py:238
 msgid "Your account has been blocked"
 msgstr "Twoje konto zostało zablokowane"
 
-#: .\obywatele\management\commands\count_citizens.py:224
-#: .\obywatele\management\commands\count_citizens.py:233
+#: .\obywatele\management\commands\count_citizens.py:240
+msgid "Welcome"
+msgstr "Witaj"
+
+#: .\obywatele\management\commands\count_citizens.py:241
+msgid "Your account on"
+msgstr "Twoje konto na"
+
+#: .\obywatele\management\commands\count_citizens.py:241
+#: .\obywatele\management\commands\count_citizens.py:250
 msgid "has been blocked"
 msgstr "zostało zablokowane"
 
-#: .\obywatele\management\commands\count_citizens.py:233
+#: .\obywatele\management\commands\count_citizens.py:250
 msgid "Citizen has been banned"
 msgstr "Ta osoba została zbanowana"
 
-#: .\obywatele\management\commands\count_citizens.py:233
+#: .\obywatele\management\commands\count_citizens.py:250
 msgid "User"
 msgstr "Użytkownik"
 
@@ -2936,6 +3047,11 @@ msgstr "Prezent"
 #: .\obywatele\models.py:52
 msgid "Other things worth mentioning"
 msgstr "Inne rzeczy warte wzmianki"
+
+#: .\obywatele\models.py:52 .\obywatele\templates\obywatele\my_profile.html:158
+#: .\obywatele\templates\obywatele\szczegoly.html:247 .\obywatele\views.py:743
+msgid "Other"
+msgstr "Inne"
 
 #: .\obywatele\models.py:53
 msgid "In your own words please explain why do you want join our group"

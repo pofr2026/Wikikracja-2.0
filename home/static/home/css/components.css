@@ -1784,3 +1784,35 @@
   color: var(--text-muted);
   flex-shrink: 0;
 }
+/* ══════════════════════════════════════════════════
+   BOARD CATEGORY CHIPS
+   ══════════════════════════════════════════════════ */
+.toolbar-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+  align-items: center;
+}
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: .28rem .65rem;
+  border-radius: var(--radius-badge);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: .75rem;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.category-chip:hover {
+  background: var(--accent-muted);
+  color: var(--accent);
+  border-color: rgba(0, 209, 178, .35);
+}
+.category-chip.active {
+  background: var(--accent-muted);
+  color: var(--accent);
+  border-color: rgba(0, 209, 178, .35);
+}

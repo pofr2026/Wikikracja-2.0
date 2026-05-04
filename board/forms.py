@@ -21,7 +21,15 @@ class PostCategoryForm(forms.ModelForm):
 
 class PostForm(forms.ModelForm):
     text = forms.CharField(widget=TinyMCE(), label=_("Text"))
+    attachments = forms.FileField(required=False, label=_("Attachments"))
 
     class Meta:
         model = Post
-        fields = ('title', 'subtitle', 'category', 'text', 'is_public', 'is_archived', 'is_important')
+        fields = ('title', 'subtitle', 'category', 'text', 'is_public', 'is_archived', 'is_important', 'featured_image')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'post'
+        self.helper.form_enctype = 'multipart/form-data'
+        self.helper.add_input(Submit('submit', _('Save'), css_class='btn-primary'))

@@ -39,13 +39,13 @@ def notify_important_chat_on_important_post(sender, instance, created, **kwargs)
     post_url = f"{protocol}://{get_site_domain()}{post_path}"
 
     if created:
-        message = _("New important announcement by %(username)s: %(title)s - %(post_url)s") % {
+        message = _("New important document by %(username)s: %(title)s - %(post_url)s") % {
             'username': instance.author.username,
             'post_url': post_url,
             'title': instance.title,
         }
     else:
-        message = _("Updated important announcement by %(username)s: %(title)s - %(post_url)s") % {
+        message = _("Updated important document by %(username)s: %(title)s - %(post_url)s") % {
             'username': instance.author.username,
             'post_url': post_url,
             'title': instance.title,

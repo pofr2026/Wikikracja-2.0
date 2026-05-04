@@ -10,11 +10,16 @@
       <span class="section-heading">{% trans 'Create post' %}</span>
     </div>
     <div class="card-body">
-      <form method="POST" class="post-form">
+      <form method="POST" class="post-form" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.title|as_crispy_field }}
         {{ form.subtitle|as_crispy_field }}
         {{ form.category|as_crispy_field }}
+        {{ form.featured_image|as_crispy_field }}
+        <div class="mb-3">
+          <label for="{{ form.attachments.id_for_label }}" class="form-label">{{ form.attachments.label }}</label>
+          <input type="file" name="{{ form.attachments.name }}" class="form-control" id="{{ form.attachments.id_for_label }}" multiple>
+        </div>
         <div class="d-flex gap-3 mb-3">
           {{ form.is_public|as_crispy_field }}
           {{ form.is_archived|as_crispy_field }}

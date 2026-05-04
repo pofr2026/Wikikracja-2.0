@@ -206,20 +206,25 @@ document.addEventListener('DOMContentLoaded', function() {
 document.addEventListener('DOMContentLoaded', function() {
     const TASK_STORAGE_KEY = 'tasks_view';
     window.setTaskView = function(pk) {
-        self.setView(pk, TASK_STORAGE_KEY)
+        window.setView(pk, TASK_STORAGE_KEY)
     }
     const PROPOSALS_STORAGE_KEY = 'proposals_view';
     window.setProposalsView = function(pk) {
-        self.setView(pk, PROPOSALS_STORAGE_KEY)
+        window.setView(pk, PROPOSALS_STORAGE_KEY)
     }
     const ELIBRARY_STORAGE_KEY = 'elibrary_view';
     window.setElibraryView = function(pk) {
-        self.setView(pk, ELIBRARY_STORAGE_KEY)
+        window.setView(pk, ELIBRARY_STORAGE_KEY)
+    }
+    const BOARD_STORAGE_KEY = 'board_view';
+    window.setBoardView = function(pk) {
+        window.setView(pk, BOARD_STORAGE_KEY)
     }
 
     setTaskView(localStorage.getItem(TASK_STORAGE_KEY) || 'list');
     setProposalsView(localStorage.getItem(PROPOSALS_STORAGE_KEY) || 'list');
     setElibraryView(localStorage.getItem(ELIBRARY_STORAGE_KEY) || 'list');
+    setBoardView(localStorage.getItem(BOARD_STORAGE_KEY) || 'list');
 });
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -270,6 +275,28 @@ document.addEventListener('DOMContentLoaded', function() {
         cbs.forEach(function(cb) { setChip(cb, true); });
         syncBtn();
         if (qInput && qInput.value.trim()) form.submit();
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Board category filter
+    const categoryChips = document.querySelectorAll('.category-chip');
+    categoryChips.forEach(function(chip) {
+        chip.addEventListener('click', function() {
+            const category = this.dataset.category;
+            const url = new URL(window.location);
+            const currentCategory = url.searchParams.get('category');
+
+            if (currentCategory === category) {
+                // Toggle off - remove category parameter
+                url.searchParams.delete('category');
+            } else {
+                // Set new category
+                url.searchParams.set('category', category);
+            }
+
+            window.location.href = url.toString();
+        });
     });
 });
 

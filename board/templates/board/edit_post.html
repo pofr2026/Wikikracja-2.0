@@ -10,11 +10,16 @@
       <span class="section-heading">{% trans 'Edit post' %}</span>
     </div>
     <div class="card-body">
-      <form method="POST" class="post-form">
+      <form method="POST" class="post-form" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.title|as_crispy_field }}
         {{ form.subtitle|as_crispy_field }}
         {{ form.category|as_crispy_field }}
+        {{ form.featured_image|as_crispy_field }}
+        <div class="mb-3">
+          <label for="{{ form.attachments.id_for_label }}" class="form-label">{{ form.attachments.label }}</label>
+          <input type="file" name="{{ form.attachments.name }}" class="form-control" id="{{ form.attachments.id_for_label }}" multiple>
+        </div>
         <div class="d-flex gap-3 mb-3">
           {{ form.is_public|as_crispy_field }}
           {{ form.is_archived|as_crispy_field }}
@@ -30,6 +35,27 @@
           <a href="{% url 'board:view_post' form.instance.pk %}" class="btn btn-secondary">{% trans 'Cancel' %}</a>
         </div>
       </form>
+
+      {% if post.attachments.all %}
+      <div class="mt-4">
+        <h5>{% trans 'Existing attachments' %}</h5>
+        <ul class="list-group">
+          {% for attachment in post.attachments.all %}
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+            <a href="{{ attachment.file.url }}" download="{{ attachment.filename }}">
+              <i class="fas fa-paperclip me-2"></i>{{ attachment.filename }}
+            </a>
+            <form method="post" action="{% url 'board:delete_attachment' post.pk attachment.pk %}" style="display:inline;" onsubmit="return confirm('Delete this attachment?');">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-danger">
+                <i class="fas fa-trash"></i>
+              </button>
+            </form>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
     </div>
   </div>
 </div>

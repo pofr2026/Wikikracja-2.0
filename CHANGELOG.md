@@ -1,33 +1,181 @@
 # CHANGELOG
 
 
+## v1.2.0 (2026-05-01)
+
+### Bug Fixes
+
+- **chat**: Fix image upload button, size limit, and lightbox in embedded chat
+  ([`7f45ced`](https://github.com/soma115/Wikikracja/commit/7f45ceda1126593678d73a50e11315247979e56f))
+
+- Fix image upload button not opening file dialog: fmt-btn click handler was calling
+  e.preventDefault() unconditionally, blocking the label's default action — now only fires for
+  buttons with data-cmd - Fix upload field name in chat-core.js: was 'files', server expects
+  'images' - Fix upload size limit: remove accidental *2 multiplier in views.py, align JS client
+  (wsapi.js, chat-core.js) to match UPLOAD_IMAGE_MAX_SIZE_MB=5 - Unify lightbox: extract
+  openBigImage + createImageClickHandler into chat-core.js as shared exports; domapi.js delegates,
+  chat-embedded.js now uses the same lightbox as main chat
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Unify formatting toolbar — fix active state and focus-theft bug
+  ([`bc662a6`](https://github.com/soma115/Wikikracja/commit/bc662a60efe945256f622a054c3469578b98ed8c))
+
+- Anonymous button now uses same active style as B/I/U (removed custom .anonymous-toggle.active CSS
+  override) - Extracted initFormattingToolbar() to chat-core.js — single definition used by both
+  main chat and embedded chat - mousedown preventDefault prevents focus-theft, so text selection is
+  preserved when clicking toolbar buttons; fixes "deselect one resets all" - Fixed
+  updateToolbarState in embedded chat scoping to [data-cmd] only, so anonymous button active state
+  is no longer reset on selectionchange - Removed dead const-reassignment block in handlers.js
+  (would crash in strict/module mode when SITE_SETTINGS.messageMaxLength is set) - Fixed
+  content.classList.remove('open') accidentally inside comment
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Features
+
+- **chat**: Compress uploads to WebP and lazy-load attached images
+  ([`87c177a`](https://github.com/soma115/Wikikracja/commit/87c177a4d9f83a99598a856f84a1acc75292b823))
+
+- On upload: resize to max 1920px long side (LANCZOS), convert to WebP @85% quality — typically
+  3-10x smaller than original PNG/JPEG - Use image.size for size check instead of reading full bytes
+  to memory - Add loading="lazy" to attached-image elements so browser defers off-screen images
+  instead of loading entire chat history at once
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Refactoring
+
+- **chat**: Unify upload size limit into single UPLOAD_MAX_BYTES constant
+  ([`b343c12`](https://github.com/soma115/Wikikracja/commit/b343c1295d2d03ad9fc6022d1faed0f3a39ebe01))
+
+Move hardcoded 5MB limit from wsapi.js and chat-core.js into one exported constant in chat-core.js,
+  imported by wsapi.js — single source of truth.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+
 ## v1.1.0 (2026-04-29)
 
 ### Bug Fixes
 
-- All translations
-  ([`42c90ae`](https://github.com/soma115/Wikikracja/commit/42c90aebba404a86ad9a9267a8b30d8fd8e5251d))
+- Add reaction counts for messages in chat
+  ([`3486f63`](https://github.com/soma115/Wikikracja/commit/3486f63aebd084c80b7026d087b9beeea98a69cb))
 
-- Dont show (and force) unseen archived rooms, Default: collapsed
-  ([`6d492b1`](https://github.com/soma115/Wikikracja/commit/6d492b19e89568c8524b7258ce5a87fcabcbde6a))
+- Badly merged user chats view
+  ([`a1f8144`](https://github.com/soma115/Wikikracja/commit/a1f8144ba79d1af4c3a67da6724f6409e15ae34e))
 
-- Implement activity feed read marking functionality and update unread item handling
-  ([`aba76a3`](https://github.com/soma115/Wikikracja/commit/aba76a3c641d85dd822eac33cffff166f611ef4b))
+- Bug: chat activity does not list the real messages of the person selected
+  ([`c1022dc`](https://github.com/soma115/Wikikracja/commit/c1022dcae03721baa1487d1b9160a47b172c8b48))
+
+- Chat reactions does not work on first click on them
+  ([`e107843`](https://github.com/soma115/Wikikracja/commit/e107843fd5c137d86f2324e48462fbe891c8cb53))
+
+- Migrations and settings
+  ([`3b448e8`](https://github.com/soma115/Wikikracja/commit/3b448e8f8de6cf594dbbe3cffbbcf49e671f5ea3))
+
+- Semantic build, unneded json
+  ([`711a20b`](https://github.com/soma115/Wikikracja/commit/711a20b449116aa3250da0c2719a35081697ff7f))
 
 - Set created_at on in-memory task objects in test helpers
   ([`f41d8cf`](https://github.com/soma115/Wikikracja/commit/f41d8cf2fa8c32dbf2f95ce2bfe1cf594816b4e4))
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
+- **chat**: Fix compose bar overflow on narrow mobile screens
+  ([`20f3a54`](https://github.com/soma115/Wikikracja/commit/20f3a54506eee79ddaf23d82f84789d260937a85))
+
+- Reduce padding in embedded chat on mobile (ec-messages, ec-input-area, compose-bar) to gain ~30px
+  horizontal space - Add flex-wrap to compose-bar on mobile so send button wraps to a second line
+  instead of overflowing — applies to both main and embedded chat - Remove dead CSS: unused
+  .chat-controls-row and redundant .send-message display override
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Fix reply-to button not working — missing import of setReplyTarget
+  ([`ef3837f`](https://github.com/soma115/Wikikracja/commit/ef3837f24b236fa6f07d0c57124bb084cd304da2))
+
+Clicking the reply button caused a ReferenceError because setReplyTarget was used in handlers.js but
+  never imported from chat.js. As a result, currentReplyId was never set and messages were sent
+  without reply_to_id, so quoted/reply messages were silently broken.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Make quote-jump return button work in embedded chat
+  ([`dca7b16`](https://github.com/soma115/Wikikracja/commit/dca7b166b249a7676f26b0bbf369adb92fee6c49))
+
+Move showReturnBtn logic into createQuoteJumpHandler in chat-core.js so it is shared by both main
+  and embedded chat views. Remove ~60 lines of duplicate handler code from handlers.js.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Scroll listy pokojów, batch rendering, reconnect fix
+  ([`09c3726`](https://github.com/soma115/Wikikracja/commit/09c3726875ad139aa21d2df276c7875e81c47d02))
+
+- CSS: 100dvh, layout-wrapper/main-area height chain, room-list height:0 flex:1 1 0 - CSS:
+  room-list-controls flex-shrink:0 (zamiast sticky), mobile safe-area-inset - JS: batch rendering
+  wiadomości przy join (jeden insertAdjacentHTML zamiast N) - JS: reconnect guard — reset
+  CurrentRoomId przed rejoinem po reconnect WebSocket - JS: parseInt(room_id) i strict === w
+  onRoomTryJoin i onReceiveMessages - domapi.js: buildMessageHtml jako osobna metoda dla batch
+  renderingu
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Strip HTML tags from email notifications
+  ([`b747b1b`](https://github.com/soma115/Wikikracja/commit/b747b1b191e60c6e5f37f6098b2d35647064720a))
+
+<br> tags converted to newlines, other HTML tags removed before inserting message text into
+  plain-text email body.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **editor**: Improve TinyMCE layout and usability globally
+  ([`2750c7e`](https://github.com/soma115/Wikikracja/commit/2750c7e250d97b8f6f84e81aea93fc6140ec1b9a))
+
+- elibrary book_form: widen editor column (col-md-6 → col-md-8), narrow uploads sidebar (col-md-4) -
+  uploader.js: sliding toolbar mode, fixed height 500px, manual resize handle, remove autoresize
+  plugin - app.css: ensure .tox-tinymce fills container width on all screen sizes
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **richtext**: Zastosuj |richtext również w podglądach kart i potwierdzeniu usunięcia
+  ([`b1542c2`](https://github.com/soma115/Wikikracja/commit/b1542c2cc157ac5cf2b0c9bfa45b6231fb13bec3))
+
+W poprzednim commicie objąłem widok szczegółów (rozwinięty kafelek), ale przegapiłem kilka miejsc
+  gdzie pola opisu są renderowane raw:
+
+- tasks/_task_card.html:53 (Agora-style preview na liście /tasks/) — widoczny był surowy <b>...</b>
+  w tekście podglądu pod tytułem zadania. - glosowania/_proposal_card.html:60 (preview na liście
+  propozycji, /glosowania/proposition/) — analogiczny problem dla pola tresc. -
+  events/event_confirm_delete.html:18 (potwierdzenie usunięcia wydarzenia) — |truncatewords:30
+  zostawiało raw HTML. - home/search.html:141 (wyniki wyszukiwania, mieszane typy contentu) — raw {{
+  item.description }} jednolinijkowo z white-space:nowrap. Tu użyty |striptags zamiast |richtext, bo
+  description w wynikach pochodzi z różnych modeli (task/post/book/event/...) i niektóre mają
+  TinyMCE HTML — strip do plain tekstu daje spójny preview niezależnie od źródła.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
 ### Chores
 
-- Js and css cleanings
-  ([`f180822`](https://github.com/soma115/Wikikracja/commit/f180822a5a27884d00a4309b16374118dae0554b))
+- Merge remote ui branch, resolve locale conflicts
+  ([`67ab606`](https://github.com/soma115/Wikikracja/commit/67ab6067edee4f341e6a5f23ff67ef22199a71d1))
 
-- Updated requerements
-  ([`99aad8c`](https://github.com/soma115/Wikikracja/commit/99aad8cd7e2e540452809e14bd868b52fffab0e8))
+Accept remote line-number references in django.po (11 upstream commits updated obywatele/views.py
+  line numbers); accept deletion of en locale.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 ### Features
+
+- **chat**: Add Room.founder field with backfill migration; fix citizen activity tabs
+  ([`72c1dc1`](https://github.com/soma115/Wikikracja/commit/72c1dc1eac2406ccf0ccb5393d6c340d5916201a))
+
+- Add `founder` ForeignKey to Room model (null=True for legacy rooms) - Migration 0017 backfills
+  founder: referendum rooms via Decyzja.author, task rooms and manual rooms via first message sender
+  - Set founder on Room creation in glosowania and tasks signals - citizen_czaty: show messages sent
+  by the user instead of rooms they belong to - citizen_zalozono: include rooms founded by the user
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 - **chat**: Mobile room-list toggle, unified sort-btn styles, layout fixes
   ([`d349361`](https://github.com/soma115/Wikikracja/commit/d3493610ff00351e14e1e4ef5620b979f18d82a2))
@@ -46,6 +194,14 @@ Layout: - Extract room-list-controls outside scrollable #room-list into separate
 Cleanup: - Remove dead code: onBackToRoomList, setFoldedRoomTitle, chat-show-rooms-bar viewport
   handler - Remove unused CSS: col-scrollable, list-of-rooms, list-of-pms - Remove stale ZMIANA
   labels from comments
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Persist unsent message drafts in localStorage
+  ([`36d86c2`](https://github.com/soma115/Wikikracja/commit/36d86c21e86589c78ecfd37ef8e3a3ad3b6b6810))
+
+Drafts are saved per room on every keystroke and restored when re-entering the room. Cleared
+  automatically on successful send.
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
@@ -72,6 +228,68 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
+- **nav**: Add Chat link to navigation menu
+  ([`c06d19a`](https://github.com/soma115/Wikikracja/commit/c06d19ac3439d7be3830d494086e791a0f854ddb))
+
+- **richtext**: Unify rich-text editing/rendering across tasks, glosowania, events
+  ([`4d39d0d`](https://github.com/soma115/Wikikracja/commit/4d39d0df508758a9877fc0cf4b7202f92cc61e28))
+
+Wprowadza wspólny pipeline dla pól tekstowych z minimalnym formatowaniem (B/I/U + auto-linkifikacja
+  URL), współdzielony między czatem a formularzami zadań, głosowań i wydarzeń. Zastępuje ~7
+  wariantów filtrów (|linebreaks, |linebreaksbr, |urlize, |safe + ad-hoc bleach.clean) jednym
+  filtrem oraz jednym widgetem Django.
+
+NOWE PLIKI - zzz/richtext.py — centralny sanityzator (bleach.clean + bleach.linkify), jedyne źródło
+  prawdy: ALLOWED_TAGS = ['b','i','u','br','a'] + ALLOWED_ATTRS = {'a': ['href','rel','target']}.
+  Zewnętrzne linki automatycznie dostają target="_blank" rel="noopener" przez callback. -
+  home/templatetags/richtext.py — filtr {{ x|richtext }}: sanitize → \n na <br> → linkify →
+  mark_safe. - home/widgets.py — RichTextWidget(forms.Textarea): contenteditable + toolbar B/I/U +
+  hidden input + counter (opcjonalny). value_from_datadict() sanityzuje POST-a (defense in depth gdy
+  JS wyłączony). - home/static/common/js/richtext-core.js — pure functions: getInputHtml,
+  formatMessage, updateCounter, handleEnterKey, getVisibleTextLength. ALLOWED_TAGS/ATTR
+  zsynchronizowane z backendem. - home/static/common/js/richtext-input.js — auto-init dla
+  [data-richtext]: toolbar, skróty Ctrl+B/I/U, plain-text paste, sync hidden input przy submit.
+
+REFAKTOR CZATU (zero zmian zachowania) - chat/consumers.py: usunięta lokalna stała
+  ALLOWED_HTML_TAGS, dwa wywołania bleach.clean(...) zamienione na sanitize(..., linkify=False). -
+  chat/services.py: usunięte 3 martwe importy (bleach, settings, format_chat_message), dwa
+  re.sub(r'<[^>]+>', ...) zamienione na strip_tags(). - chat/static/chat/js/chat-core.js: pure
+  functions (getInputHtml, formatMessage, updateCounter, handleEnterKey, getVisibleTextLength)
+  przeniesione do /static/common/js/richtext-core.js. chat-core.js teraz je re-eksportuje, więc
+  chat.js / chat-embedded.js / handlers.js / domapi.js działają bez zmian.
+
+ZASTOSOWANIE W FORMULARZACH - tasks: TaskForm.description → RichTextWidget. Szablony task_form.html
+  (+ {{form.media}}), task_detail.html, _task_card.html, _task_cards.html używają |richtext zamiast
+  |linebreaks(br)|safe. - glosowania: DecyzjaForm.tresc/kara/uzasadnienie + ArgumentForm.content →
+  RichTextWidget z max_length. Szablony szczegoly.html (5 wystąpień), _proposal_card.html (3),
+  delete_argument.html (1) → |richtext. dodaj.html / edit.html / edit_argument.html ładują
+  {{form.media}}. Inline formularze argumentów FOR/AGAINST w szczegoly.html zostawione na plain
+  <textarea> (sanityzacja na POST przez ArgumentForm.value_from_datadict). - events:
+  EventForm.description → RichTextWidget. event_detail.html / event_list.html → |richtext.
+  event_form.html ładuje {{form.media}}.
+
+POLA Z TINYMCE — CELOWO NIETKNIĘTE (zaufana treść admina/długie teksty) - board.post.text — TinyMCE
+  + |safe (bez zmian). - elibrary.book.abstract — używa TinyMCE poprzez static/js/uploader.js
+  (tinymce.init({selector:'textarea'})) ładowane w book_form.html. KOREKTA: book_list.html i
+  book_detail.html teraz renderują {{...|safe}} zamiast escape'owanego tekstu (wcześniej tagi
+  <p>/<strong> wyświetlały się jako tekst). UpdateBookForm pozostaje na forms.Textarea — TinyMCE
+  zamienia ją client-side. - home.start.text, home.footer.text, activity.description — bez zmian
+  (treść redagowana w panelu admina, dozwolony pełen HTML).
+
+GLOBALNIE - home/templates/home/base.html: DOMPurify ładowany raz globalnie (używany i przez chat
+  input, i przez RichTextWidget). Usunięte duplikaty <script> z chat.html, _embedded_chat.html oraz
+  z RichTextWidget.Media.
+
+LOKALIZACJA - locale/pl/LC_MESSAGES/django.po: zaktualizowane numery linii po nowych blokach {%
+  block extra_css %} w szablonach formularzy + dodane polskie tłumaczenie nowego placeholdera w
+  opisie zadania.
+
+DOZWOLONE TAGI (backend ↔ frontend, jedno źródło prawdy) b, i, u, br, a (z atrybutami
+  href/rel/target) Reszta (np. <p>, <strong>, <script>) wycinana przez bleach.clean (backend) i
+  DOMPurify (frontend).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
 - **tasks**: Add category field with multi-select JS filter and tooltips
   ([`52c2348`](https://github.com/soma115/Wikikracja/commit/52c2348efebabc04e457b40cc555fe65d7cee09c))
 
@@ -83,6 +301,36 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
   tokens (--bg-card, --accent) - PL and EN translations for all category labels and descriptions
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Refactoring
+
+- Modularize chat functionality by extracting core features into chat-core.js
+  ([`5b8c2c5`](https://github.com/soma115/Wikikracja/commit/5b8c2c5a9b355f713b2d6d9c4cc79ffcc44f08b7))
+
+- **chat**: Apply compose-box layout to embedded chat view
+  ([`c28ea24`](https://github.com/soma115/Wikikracja/commit/c28ea24a4ed67deaeced8ec669171a6f3199a7a2))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Introduce ChatRepository and simplify consumer logic
+  ([`20b7ec1`](https://github.com/soma115/Wikikracja/commit/20b7ec1399449ccaa9f4267e0ca11cd8819c0da0))
+
+Refactor chat consumers to use a repository pattern via ChatRepository, removing direct model
+  imports and cleaning up unused code and comments for better maintainability and readability.
+
+- **chat**: Modularize event handlers by utilizing shared functions from chat-core.js
+  ([`b7e8eaf`](https://github.com/soma115/Wikikracja/commit/b7e8eaf617fb3774b728cefc5957bb467db16b73))
+
+- **chat**: Redesign compose bar into unified input box
+  ([`22c6ea8`](https://github.com/soma115/Wikikracja/commit/22c6ea84f4e17ddec24c8b891001ca24cc7c811b))
+
+Move send button and formatting toolbar into a single rounded compose-box container below the
+  textarea, matching new UI design.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **push-notifications**: Migrate VAPID public key handling to dynamic settings
+  ([`379a2a7`](https://github.com/soma115/Wikikracja/commit/379a2a74259061e474fce3ecb72b664320100167))
 
 
 ## v1.0.0 (2026-04-25)
@@ -121,6 +369,9 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
   minutes, update_site to minute 2
   ([`74720e0`](https://github.com/soma115/Wikikracja/commit/74720e069aca58268fe0d85cd7e091f97b7228de))
 
+- All translations
+  ([`42c90ae`](https://github.com/soma115/Wikikracja/commit/42c90aebba404a86ad9a9267a8b30d8fd8e5251d))
+
 - Chat js circular dependency resolved
   ([`6f04b8e`](https://github.com/soma115/Wikikracja/commit/6f04b8e38d96c6fc5076bb9b5a640b5097224328))
 
@@ -136,6 +387,9 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 - Deleted unused files
   ([`bee21a0`](https://github.com/soma115/Wikikracja/commit/bee21a059fad558ae0800d726d6dcec5e9684dae))
 
+- Dont show (and force) unseen archived rooms, Default: collapsed
+  ([`6d492b1`](https://github.com/soma115/Wikikracja/commit/6d492b19e89568c8524b7258ce5a87fcabcbde6a))
+
 - Escape regex pattern and remove duplicate email migrations
   ([`aaeef90`](https://github.com/soma115/Wikikracja/commit/aaeef901af50a842035b4b662a50ce9880adad2a))
 
@@ -147,6 +401,9 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 - Hide scheduler.lock
   ([`6b58ad6`](https://github.com/soma115/Wikikracja/commit/6b58ad66c74425c8262d71196efa0bdeb31ddb6c))
+
+- Implement activity feed read marking functionality and update unread item handling
+  ([`aba76a3`](https://github.com/soma115/Wikikracja/commit/aba76a3c641d85dd822eac33cffff166f611ef4b))
 
 - Improve user activation logging and prevent duplicate activations in count_citizens command
   ([`55829d2`](https://github.com/soma115/Wikikracja/commit/55829d21f464969ec670e86d016cd7bc68d7c456))
@@ -206,6 +463,14 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 - Wider Zasoby screen
   ([`13dc811`](https://github.com/soma115/Wikikracja/commit/13dc81147d1b3053e89968b93ce56c962e665066))
 
+### Chores
+
+- Js and css cleanings
+  ([`f180822`](https://github.com/soma115/Wikikracja/commit/f180822a5a27884d00a4309b16374118dae0554b))
+
+- Updated requerements
+  ([`99aad8c`](https://github.com/soma115/Wikikracja/commit/99aad8cd7e2e540452809e14bd868b52fffab0e8))
+
 ### Features
 
 - Add 'why' field to profile display and form handling.
@@ -261,6 +526,14 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
 - Update bootstrap to 5, jquery to 4, chat ui, base
   ([`16ce09a`](https://github.com/soma115/Wikikracja/commit/16ce09a82db87eefed538275b695b77fb8f92f95))
+
+- Warn: DB CHANGE! Implement voting system using JSONField in Message model and migrate existing
+  votes
+  ([`31ec94d`](https://github.com/soma115/Wikikracja/commit/31ec94d77daec26afaabb2c8fdcdaa553765fe63))
+
+- Warn: DB CHANGE! Implement voting system using JSONField in Message model and migrate existing
+  votes
+  ([`2a1b018`](https://github.com/soma115/Wikikracja/commit/2a1b018e69f4e479c0e019a485f256552f795cf9))
 
 - Yapf formatter, ruff linter and import sorter
   ([`ea9e90a`](https://github.com/soma115/Wikikracja/commit/ea9e90acfeda9b998d3f1ef859b80f65c18d5123))

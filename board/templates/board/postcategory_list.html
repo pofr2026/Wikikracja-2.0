@@ -6,11 +6,11 @@
 
   <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
     <span class="section-heading" style="font-size:.9rem;">
-      <i class="fas fa-tags me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Announcement categories" %}
+      <i class="fas fa-tags me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Document categories" %}
     </span>
     <div class="d-flex gap-2">
       <a href="{% url 'board:start' %}" class="btn btn-sm btn-outline-secondary">
-        <i class="fas fa-bullhorn me-1"></i>{% trans "Announcements" %}
+        <i class="fas fa-arrow-left me-1"></i>{% trans "Documents" %}
       </a>
       <a href="{% url 'board:category_create' %}" class="btn btn-sm btn-outline-success">
         <i class="fas fa-plus me-1"></i>{% trans "Add category" %}
