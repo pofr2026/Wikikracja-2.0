@@ -24,7 +24,6 @@
   }
 
   function updateVoteCounts(form, data) {
-    // card list view: .proposal-signatures inside .proposal-card
     var card = form.closest('.proposal-card');
     if (card) {
       var sigSpan = card.querySelector('.proposal-signatures');
@@ -33,20 +32,22 @@
         if (icon) icon = icon.cloneNode(true);
         sigSpan.textContent = '';
         if (icon) sigSpan.appendChild(icon);
-        sigSpan.appendChild(document.createTextNode(' ' + data.votes_up));
+        sigSpan.appendChild(document.createTextNode(' ' + data.votes_up));
       }
     }
-    // detail view: badge with data-votes-badge label
     var badge = document.querySelector('[data-votes-badge]');
     if (badge) {
       badge.textContent = badge.dataset.votesBadge + data.votes_score;
     }
   }
 
-  function handleVoteSubmit(e) {
-    var form = e.target;
-    var btn = form.querySelector('.task-vote-btn');
+  function handleVoteClick(e) {
+    var btn = e.target.closest('.task-vote-btn');
     if (!btn) return;
+    var form = btn.closest('form');
+    if (!form) return;
+
+    // Prevent form submission and stop click reaching card-body onclick / card-header toggleCard
     e.preventDefault();
     e.stopPropagation();
 
@@ -71,11 +72,15 @@
         if (downBtn) setVoteBtnState(downBtn, data.vote === -1);
         updateVoteCounts(form, data);
       })
-      .catch(function () { form.submit(); });
+      .catch(function () {
+        // silent fail — card stays open, user can retry
+      });
   }
 
+  // Capture phase: fires before card-body onclick and card-header toggleCard
+  document.addEventListener('click', handleVoteClick, true);
+
   document.addEventListener('DOMContentLoaded', function () {
-    document.addEventListener('submit', handleVoteSubmit);
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
       new bootstrap.Tooltip(el, { trigger: 'hover' });
     });
