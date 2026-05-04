@@ -376,20 +376,6 @@ msgstr "Usuń ogłoszenie"
 msgid "Are you sure you want to delete this post?"
 msgstr "Czy na pewno chcesz usunąć to ogłoszenie?"
 
-#: .\board\templates\board\post_confirm_delete.html:19
-#: .\board\templates\board\post_detail.html:31
-#: .\board\templates\board\postcategory_list.html:37
-#: .\bookkeeping\templates\bookkeeping\asset_list.html:47
-#: .\bookkeeping\templates\bookkeeping\category_list.html:33
-#: .\bookkeeping\templates\bookkeeping\partner_list.html:55
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:62
-#: .\elibrary\templates\elibrary\book_detail.html:75
-#: .\events\templates\events\event_detail.html:17
-#: .\glosowania\templates\glosowania\szczegoly.html:170
-#: .\glosowania\templates\glosowania\szczegoly.html:213
-msgid "Delete"
-msgstr "Usuń"
-
 #: .\board\templates\board\post_detail.html:10
 #: .\board\templates\board\post_detail.html:55
 #: .\board\templates\board\postcategory_confirm_delete.html:12
@@ -1176,11 +1162,6 @@ msgstr "Różne"
 #: .\elibrary\templates\elibrary\book_list.html:67
 msgid "Create"
 msgstr "Utwórz"
-
-#: .\elibrary\templates\elibrary\book_list.html:165
-#: .\home\templates\home\base.html:307 .\home\views.py:403
-msgid "Announcements"
-msgstr "Ogłoszenia"
 
 #: .\elibrary\templates\elibrary\book_list.html:169
 msgid "No announcements"
@@ -2148,11 +2129,6 @@ msgstr "Zespół %(site_name)s"
 msgid "Keep me signed in"
 msgstr "Nie wylogowuj mnie"
 
-#: .\home\models.py:11 .\home\models.py:41
-#: .\home\templatetags\feed_filters.py:31 .\home\views.py:637
-msgid "Post"
-msgstr "Ogłoszenie"
-
 #: .\home\models.py:12 .\home\models.py:42
 #: .\home\templatetags\feed_filters.py:32 .\home\views.py:650
 #: .\obywatele\views.py:1250
@@ -2173,12 +2149,6 @@ msgstr "Wiadomość"
 #: .\home\models.py:17 .\home\models.py:47
 msgid "Citizen Activity"
 msgstr "Aktywność obywatela"
-
-#: .\home\templates\home\activity.html:19 .\home\views.py:413
-#: .\tasks\templates\tasks\task_list.html:63
-#: .\tasks\templates\tasks\task_list.html:65
-msgid "All"
-msgstr "Wszystkie"
 
 #: .\home\templates\home\activity.html:35
 msgid "Mark as read"
@@ -2265,11 +2235,6 @@ msgstr "Szukaj w Kategoriach"
 #: .\home\templates\home\base.html:228 .\home\templates\home\search.html:100
 msgid "Everywhere"
 msgstr "Wszędzie"
-
-#: .\home\templates\home\base.html:234 .\home\templates\home\home.html:31
-#: .\home\templates\home\search.html:57
-msgid "Board"
-msgstr "Ogłoszenia"
 
 #: .\home\templates\home\base.html:267 .\home\templates\home\search.html:14
 #: .\home\templates\home\search.html:37
