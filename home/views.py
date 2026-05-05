@@ -950,4 +950,5 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         'ss': ss,
         'categories_with_posts': categories_with_posts,
         'selected_onboarding_post_ids': selected_ids,
+        'message_max_length': settings.MESSAGE_MAX_LENGTH,
     })

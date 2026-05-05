@@ -1472,6 +1472,35 @@ a:hover {
   color: #aaa;
   border-color: rgba(255, 255, 255, .15);
 }
+/* ── EXPANDABLE CONTENT ── */
+/* Full text always in DOM — max-height clips; .expandable-hint is a real DOM sibling overlaying last line */
+.expandable {
+  cursor: pointer;
+  position: relative;
+}
+.expandable-body {
+  max-height: 13.5em; /* ~9 lines */
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+}
+.expandable-hint {
+  display: none;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--expandable-bg, var(--bg-card));
+  color: var(--accent);
+  font-size: .85em;
+  line-height: 1.5;
+  text-align: right;
+  user-select: none;
+  pointer-events: none;
+}
+.expandable:not(.is-open):not(.no-overflow) > .expandable-hint { display: block; }
+.expandable.is-open > .expandable-body { max-height: 9999px; }
+.expandable.no-overflow { cursor: default; }
+
 /* TinyMCE — global responsive styles */
 .tox-tinymce {
   width: 100% !important;

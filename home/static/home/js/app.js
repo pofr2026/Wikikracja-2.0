@@ -376,3 +376,10 @@ window.initActivityFeedMarkRead = function(containerSelector, linkSelector) {
         });
     });
 };
+
+// Toggle .expandable blocks — clicking body toggles open/close (links and no-overflow excluded).
+document.addEventListener('click', function(e) {
+    if (e.target.closest('a')) return;
+    const el = e.target.closest('.expandable-body')?.closest('.expandable');
+    if (el && !el.classList.contains('no-overflow')) el.classList.toggle('is-open');
+});

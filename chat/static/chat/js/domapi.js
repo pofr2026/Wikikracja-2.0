@@ -45,9 +45,10 @@ export default class DomApi {
     }
 
     buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
+        const formatted = this.formatMessage(message);
         return Message({
             room_id, message_id, username,
-            message: this.formatMessage(message),
+            message: this.wrapExpandable(formatted),
             upvotes, downvotes, vote, own, edited, attachments,
             original_ts, latest_ts: formatTime(latest_ts),
             type: this.getRoomType(room_id),
@@ -61,9 +62,11 @@ export default class DomApi {
     addMessage(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
         const html = this.buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to, reactions, your_reactions, read_by);
 
-        this.getMessagesDiv()?.insertAdjacentHTML('beforeend', html);
+        const messagesDiv = this.getMessagesDiv();
+        messagesDiv?.insertAdjacentHTML('beforeend', html);
         this.getVoteDiv(message_id, vote)?.classList.add('active');
-        const msgText = this.getMessageDiv(message_id)?.querySelector('.msg-text');
+        const msgDiv = this.getMessageDiv(message_id);
+        const msgText = msgDiv?.querySelector('.msg-text');
         if (msgText) msgText.dataset.raw = message;
     }
 
@@ -125,7 +128,10 @@ export default class DomApi {
             const msgText = $(".msg-text", msgDiv);
             if (msgText) {
                 msgText.dataset.raw = text;
-                msgText.innerHTML = this.formatMessage(text);
+                msgText.innerHTML = this.wrapExpandable(this.formatMessage(text));
+                // Re-evaluate overflow after content change
+                msgText.querySelectorAll('.expandable').forEach(exp => exp.classList.remove('no-overflow'));
+                requestAnimationFrame(() => this.markOverflow(msgText));
                 return msgText;
             }
         }
@@ -172,6 +178,24 @@ export default class DomApi {
 
     formatMessage(raw_message) {
         return coreFormatMessage(raw_message);
+    }
+
+    // Wraps message in expandable shell — CSS max-height clips it; markOverflow() disables chrome when content fits.
+    wrapExpandable(formattedHtml) {
+        return `<div class="expandable">` +
+            `<div class="expandable-body">${formattedHtml}</div>` +
+            `<div class="expandable-hint">… pokaż więcej</div>` +
+            `</div>`;
+    }
+
+    // After inserting into DOM, mark expandables that don't actually overflow as no-overflow.
+    markOverflow(container) {
+        container?.querySelectorAll('.expandable:not(.is-open)').forEach(exp => {
+            const body = exp.querySelector('.expandable-body');
+            if (body && body.scrollHeight <= body.clientHeight) {
+                exp.classList.add('no-overflow');
+            }
+        });
     }
 
     getPreviewDiv() {

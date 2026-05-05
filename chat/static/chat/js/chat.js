@@ -470,6 +470,7 @@ export async function onReceiveMessages(messages) {
             message.your_reactions ?? [],
             message.read_by ?? []
         );
+        requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(message.message_id)));
         if (message.own) {
             const sendBtn = document.querySelector('.send-message');
             if (sendBtn) {
@@ -510,6 +511,7 @@ export async function onReceiveMessages(messages) {
                 DOM_API.getVoteDiv(message.message_id, message.your_vote)?.classList.add('active');
             }
         }
+        requestAnimationFrame(() => DOM_API.markOverflow(msgdiv));
     }
 
     let shouldStickToBottom = !ScrollToMessageId;
@@ -558,6 +560,7 @@ export async function onReplaceMessages(messages, room_id) {
         }
     }
 
+    requestAnimationFrame(() => DOM_API.markOverflow(msgdiv));
     msgdiv.scrollTop = 0;
 }
 
