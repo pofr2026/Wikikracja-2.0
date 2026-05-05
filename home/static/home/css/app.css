@@ -1473,7 +1473,7 @@ a:hover {
   border-color: rgba(255, 255, 255, .15);
 }
 /* ── EXPANDABLE CONTENT ── */
-/* Full text always in DOM — max-height clips; .expandable-hint is a real DOM sibling overlaying last line */
+/* Full text always in DOM — max-height clips body; .expandable-hint sits bottom-right inline on last visible line */
 .expandable {
   cursor: pointer;
   position: relative;
@@ -1487,15 +1487,18 @@ a:hover {
   display: none;
   position: absolute;
   bottom: 0;
-  left: 0;
   right: 0;
-  background: var(--expandable-bg, var(--bg-card));
+  padding-left: 2.5em;
+  background:
+    linear-gradient(to right, transparent 0%, var(--expandable-bg, var(--bg-card)) 70%),
+    linear-gradient(to right, transparent 0%, var(--bg-card) 50%);
   color: var(--accent);
-  font-size: .85em;
+  font-weight: 600;
   line-height: 1.5;
-  text-align: right;
+  white-space: nowrap;
   user-select: none;
   pointer-events: none;
+  z-index: 1;
 }
 .expandable:not(.is-open):not(.no-overflow) > .expandable-hint { display: block; }
 .expandable.is-open > .expandable-body { max-height: 9999px; }
