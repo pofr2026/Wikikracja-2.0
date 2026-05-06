@@ -1,88 +1,68 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy
-from django.utils.translation import gettext_lazy as _
-from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from .forms import PostCategoryForm, PostForm
+from categories.views import CategoryAPIBase, CategoryDeleteAPI, CategoryEditAPI, CategoryReorderAPI
+from elibrary.views import invalidate_elibrary_cache
+
+from .forms import PostForm
 from .models import Post, PostAttachment, PostCategory
 
-# #########################  PostCategory ###########################
 
-
-class PostCategoryListView(LoginRequiredMixin, ListView):
+class PostCategoryAPI(CategoryAPIBase):
     model = PostCategory
-    template_name = 'board/postcategory_list.html'
+    related_count_field = "posts"
+    order_field = "priority"
+
+    def after_write(self):
+        invalidate_elibrary_cache()
 
 
-class PostCategoryCreateView(LoginRequiredMixin, CreateView):
+class PostCategoryEditAPI(CategoryEditAPI):
     model = PostCategory
-    form_class = PostCategoryForm
-    template_name = 'board/postcategory_form.html'
-    success_url = reverse_lazy('board:category_list')
+
+    def after_write(self):
+        invalidate_elibrary_cache()
 
 
-class PostCategoryUpdateView(LoginRequiredMixin, UpdateView):
+class PostCategoryDeleteAPI(CategoryDeleteAPI):
     model = PostCategory
-    form_class = PostCategoryForm
-    template_name = 'board/postcategory_form.html'
-    success_url = reverse_lazy('board:category_list')
+    related_count_field = "posts"
+    block_if_in_use = True
+
+    def after_write(self):
+        invalidate_elibrary_cache()
 
 
-class PostCategoryDeleteView(LoginRequiredMixin, DeleteView):
+class PostCategoryReorderAPI(CategoryReorderAPI):
     model = PostCategory
-    template_name = 'board/postcategory_confirm_delete.html'
-    success_url = reverse_lazy('board:category_list')
+    order_field = "priority"
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        related_posts = Post.objects.filter(category=self.object)
-        context['related_posts'] = related_posts
-        context['has_dependencies'] = related_posts.exists()
-        if 'delete_error' in self.request.session:
-            context['error'] = self.request.session.pop('delete_error')
-        return context
-
-    def delete(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if Post.objects.filter(category=self.object).exists():
-            request.session['delete_error'] = _("Cannot delete category because it is in use. Remove all documents that use it first.")
-            return redirect('board:category_delete', pk=self.object.pk)
-        try:
-            return super().delete(request, *args, **kwargs)
-        except Exception as e:
-            request.session['delete_error'] = str(e)
-            return redirect('board:category_delete', pk=self.object.pk)
+    def after_write(self):
+        invalidate_elibrary_cache()
 
 
 def board(request: HttpRequest) -> HttpResponse:
     sort = request.GET.get('sort', 'date')
     order = request.GET.get('order', 'desc')
-    category_id = request.GET.get('category')
     reverse_order = (order == 'desc')
+
+    raw_pks = request.GET.getlist('category')
+    active_categories = []
+    for pk in raw_pks:
+        try:
+            active_categories.append(int(pk))
+        except (ValueError, TypeError):
+            pass
 
     if request.user.is_authenticated:
         posts_all = Post.objects.filter(is_archived=False).select_related('category', 'author')
     else:
         posts_all = Post.objects.filter(is_public=True, is_archived=False).select_related('category', 'author')
 
-    # Filter by category if specified
-    if category_id and category_id != 'all':
-        try:
-            category_id = int(category_id)
-            posts_all = posts_all.filter(category_id=category_id)
-            active_category = category_id
-        except (ValueError, TypeError):
-            active_category = None
-    else:
-        active_category = None
-
-    # Group by category
     categories = list(PostCategory.objects.all())
     posts_by_cat = {}
     uncategorized = []
@@ -96,19 +76,11 @@ def board(request: HttpRequest) -> HttpResponse:
     for cat in categories:
         cat_posts = posts_by_cat.get(cat.pk, [])
         if cat_posts:
-            # Sort posts within category
             sorted_posts = sorted(cat_posts, key=lambda p: p.updated, reverse=reverse_order)
-            category_groups.append({
-                'category': cat,
-                'posts': sorted_posts
-            })
+            category_groups.append({'category': cat, 'posts': sorted_posts})
     if uncategorized:
-        # Sort uncategorized posts
         sorted_uncategorized = sorted(uncategorized, key=lambda p: p.updated, reverse=reverse_order)
-        category_groups.append({
-            'category': None,
-            'posts': sorted_uncategorized
-        })
+        category_groups.append({'category': None, 'posts': sorted_uncategorized})
 
     return render(
         request,
@@ -118,7 +90,7 @@ def board(request: HttpRequest) -> HttpResponse:
             'categories': categories,
             'current_sort': sort,
             'current_order': order,
-            'active_category': active_category,
+            'active_categories': active_categories,
         },
     )
 
@@ -139,7 +111,6 @@ def create_post(request: HttpRequest):
             post.author = request.user
             post.save()
 
-            # Handle attachments
             attachments = request.FILES.getlist('attachments')
             for attachment in attachments:
                 PostAttachment.objects.create(
@@ -167,7 +138,6 @@ def edit_post(request: HttpRequest, pk: int):
             post.author = request.user
             post.save()
 
-            # Handle attachments
             attachments = request.FILES.getlist('attachments')
             for attachment in attachments:
                 PostAttachment.objects.create(

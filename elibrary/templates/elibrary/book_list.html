@@ -19,9 +19,7 @@
   <a href="{% url 'board:archive' %}" class="btn btn-sm btn-outline-secondary">
     <i class="fas fa-box-archive me-1"></i>{% trans "Archive" %}
   </a>
-  <a href="{% url 'board:category_list' %}" class="btn btn-sm btn-outline-secondary">
-    <i class="fas fa-tags me-1"></i>{% trans "Categories" %}
-  </a>
+
 
   <span class="toolbar-divider"></span>
 
@@ -39,6 +37,36 @@
         {% trans 'Date' %}
       </a>
     {% endif %}
+
+    <span class="toolbar-sort-sep"></span>
+
+    {# ── CATEGORY DROPDOWN ── #}
+    {% if categories %}
+    <div class="cat-filter" id="catFilter">
+      <button type="button" class="sort-btn cat-filter__trigger" id="catFilterBtn"
+              aria-expanded="false" aria-controls="catFilterPanel">
+        <span id="catFilterLabel">{% trans 'Category' %}</span>
+        <i class="fas fa-chevron-down cat-filter__chevron"></i>
+      </button>
+      <div class="cat-filter__panel" id="catFilterPanel" hidden>
+        <div class="cat-filter__item cat-filter__all" id="catAllRow" data-key="" data-label="{% trans 'All' %}">
+          <i class="fas fa-check cat-filter__check"></i>
+          <span>{% trans 'All' %}</span>
+        </div>
+        {% for cat in categories %}
+        <div class="cat-filter__item" data-key="{{ cat.pk }}" data-label="{{ cat.name }}"
+             title="{{ cat.description }}">
+          <i class="fas fa-check cat-filter__check"></i>
+          <span>{{ cat.name }}</span>
+        </div>
+        {% endfor %}
+        <div class="cat-filter__manage-sep"></div>
+        <button type="button" class="cat-filter__manage-btn" id="catManageBtn">
+          <i class="fas fa-gear"></i> {% trans 'Manage categories' %}
+        </button>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
   <span class="toolbar-divider"></span>
@@ -55,18 +83,16 @@
 
 {# ── KAFLE KATEGORII OGŁOSZEŃ ── #}
 {% for group in category_groups %}
-<div class="card mb-4" style="position:relative;">
+<div class="card mb-4 elibrary-category-group" data-category-pk="{% if group.category %}{{ group.category.pk }}{% endif %}">
   <div class="card-header d-flex align-items-center justify-content-between gap-2">
-    <span class="section-heading" style="font-size:.9rem;">
-      <i class="fas fa-bullhorn me-2" style="color:var(--accent);opacity:.8;"></i>
+    <span class="section-heading">
+      <i class="fas fa-bullhorn me-2 cat-group-icon"></i>
       {% if group.category %}{{ group.category.name }}{% else %}{% trans "Miscellaneous" %}{% endif %}
     </span>
     {% if user.is_authenticated %}
-    <div class="d-flex gap-2" style="position:relative;z-index:2;">
-      <a href="{% url 'board:create_post' %}" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem;">
-        <i class="fas fa-plus me-1"></i>{% trans "Create" %}
-      </a>
-    </div>
+    <a href="{% url 'board:create_post' %}" class="btn btn-sm btn-outline-secondary">
+      <i class="fas fa-plus me-1"></i>{% trans "Create" %}
+    </a>
     {% endif %}
   </div>
 
@@ -74,36 +100,24 @@
     {# lista #}
     <div class="elibrary-posts-list">
       {% for post in group.posts %}
-      <a href="{% url 'board:view_post' post.pk %}"
-         class="elibrary-post-row d-flex align-items-start gap-3"
-         style="text-decoration:none;color:inherit;padding:.6rem .75rem;border-radius:.4rem;transition:background .15s;">
-        <div style="flex:1;min-width:0;">
-          <div class="fw-semibold" style="font-size:.875rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">
-            {{ post.title }}
-          </div>
+      <a href="{% url 'board:view_post' post.pk %}" class="elibrary-post-row post-row-link">
+        <div class="flex-fill min-w-0">
+          <div class="fw-semibold text-title-clamp">{{ post.title }}</div>
           {% if post.subtitle %}
-          <div style="font-size:.78rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">
-            {{ post.subtitle }}
-          </div>
+          <div class="text-subtitle-clamp">{{ post.subtitle }}</div>
           {% endif %}
         </div>
         <div class="d-flex align-items-center gap-2 flex-shrink-0">
           {% if post.author %}
             {% if post.author.uzytkownik.avatar %}
-              <img src="{{ post.author.uzytkownik.avatar.url }}"
-                   alt="{{ post.author.username }}"
-                   class="rounded-circle"
-                   style="width:18px;height:18px;object-fit:cover;">
+              <img src="{{ post.author.uzytkownik.avatar.url }}" alt="{{ post.author.username }}" class="rounded-circle avatar-xs">
             {% else %}
-              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                   style="width:18px;height:18px;font-size:.5rem;background:{{ post.author.username|citizen_color }};">
+              <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white avatar-xs-fallback" style="background:{{ post.author.username|citizen_color }};">
                 {{ post.author.username|slice:":2"|upper }}
               </div>
             {% endif %}
           {% endif %}
-          <span style="font-size:.72rem;color:var(--text-muted);white-space:nowrap;">
-            {{ post.updated|date:"d.m.Y" }}
-          </span>
+          <span class="text-meta">{{ post.updated|date:"d.m.Y" }}</span>
         </div>
       </a>
       {% endfor %}
@@ -114,40 +128,24 @@
       <div class="row g-2">
         {% for post in group.posts %}
         <div class="col-12 col-sm-6 col-lg-3">
-          <a href="{% url 'board:view_post' post.pk %}"
-             class="card h-100 d-flex flex-column"
-             style="text-decoration:none;color:inherit;border:1px solid var(--border);transition:border-color .15s,background .15s;">
-            <div class="card-body p-3 d-flex flex-column gap-2">
-              <div style="min-width:0;">
-                <div class="fw-semibold" style="font-size:.875rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                  {{ post.title }}
-                </div>
-                {% if post.subtitle %}
-                <div style="font-size:.78rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                  {{ post.subtitle }}
-                </div>
-                {% endif %}
-              </div>
+          <a href="{% url 'board:view_post' post.pk %}" class="post-card-link">
+            <div class="card-body p-3 d-flex flex-column gap-2 flex-fill">
+              <div class="fw-semibold text-title-clamp-2">{{ post.title }}</div>
+              {% if post.subtitle %}
+              <div class="text-subtitle-clamp-2">{{ post.subtitle }}</div>
+              {% endif %}
               <div class="d-flex align-items-center gap-2 mt-auto">
                 {% if post.author %}
                   {% if post.author.uzytkownik.avatar %}
-                    <img src="{{ post.author.uzytkownik.avatar.url }}"
-                         alt="{{ post.author.username }}"
-                         class="rounded-circle flex-shrink-0"
-                         style="width:20px;height:20px;object-fit:cover;">
+                    <img src="{{ post.author.uzytkownik.avatar.url }}" alt="{{ post.author.username }}" class="rounded-circle avatar-sm">
                   {% else %}
-                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0"
-                         style="width:20px;height:20px;font-size:.55rem;background:{{ post.author.username|citizen_color }};">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white avatar-sm-fallback" style="background:{{ post.author.username|citizen_color }};">
                       {{ post.author.username|slice:":2"|upper }}
                     </div>
                   {% endif %}
-                  <span style="font-size:.72rem;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-                    {{ post.author.username }}
-                  </span>
+                  <span class="text-meta text-truncate">{{ post.author.username }}</span>
                 {% endif %}
-                <span class="ms-auto flex-shrink-0" style="font-size:.72rem;color:var(--text-muted);">
-                  {{ post.updated|date:"d.m.Y" }}
-                </span>
+                <span class="ms-auto text-meta flex-shrink-0">{{ post.updated|date:"d.m.Y" }}</span>
               </div>
             </div>
           </a>
@@ -155,18 +153,17 @@
         {% endfor %}
       </div>
     </div>
-
   </div>
 </div>
 {% empty %}
 <div class="card mb-4">
   <div class="card-header">
-    <span class="section-heading" style="font-size:.9rem;">
-      <i class="fas fa-bullhorn me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Announcements" %}
+    <span class="section-heading">
+      <i class="fas fa-bullhorn me-2 cat-group-icon"></i>{% trans "Announcements" %}
     </span>
   </div>
   <div class="card-body py-2 px-3">
-    <span style="font-size:.82rem;color:var(--text-muted);">{% trans "No announcements" %}</span>
+    <span class="text-meta">{% trans "No announcements" %}</span>
   </div>
 </div>
 {% endfor %}
@@ -174,10 +171,10 @@
 {# ── KAFEL BIBLIOTEKA ── #}
 <div class="card mb-4">
   <div class="card-header d-flex align-items-center justify-content-between gap-2">
-    <span class="section-heading" style="font-size:.9rem;">
-      <i class="fas fa-book me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Library" %}
+    <span class="section-heading">
+      <i class="fas fa-book me-2 cat-group-icon"></i>{% trans "Library" %}
     </span>
-    <a href="{% url 'elibrary:add' %}" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem;">
+    <a href="{% url 'elibrary:add' %}" class="btn btn-sm btn-outline-secondary">
       <i class="fas fa-plus me-1"></i>{% trans "Add eBook" %}
     </a>
   </div>
@@ -188,23 +185,13 @@
     {# lista #}
     <div class="elibrary-books-list">
       {% for book in books %}
-      <a href="{{ book.get_absolute_url }}"
-         class="elibrary-post-row d-flex align-items-center gap-3"
-         style="text-decoration:none;color:inherit;padding:.6rem .75rem;border-radius:.4rem;transition:background .15s;">
-        <img src="{{ MEDIA_URL }}{{ book.cover }}"
-             alt="{{ book.title }}"
-             style="width:36px;height:54px;object-fit:cover;border-radius:.25rem;flex-shrink:0;">
-        <div style="flex:1;min-width:0;">
-          <div class="fw-semibold" style="font-size:.875rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;">
-            {{ book.title }}
-          </div>
-          <div style="font-size:.78rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-            {{ book.author }}
-          </div>
+      <a href="{{ book.get_absolute_url }}" class="elibrary-post-row post-row-link align-items-center">
+        <img src="{{ MEDIA_URL }}{{ book.cover }}" alt="{{ book.title }}" class="book-cover-xs flex-shrink-0">
+        <div class="flex-fill min-w-0">
+          <div class="fw-semibold text-title-clamp">{{ book.title }}</div>
+          <div class="text-meta text-truncate">{{ book.author }}</div>
           {% if book.abstract %}
-          <div style="font-size:.75rem;color:var(--text-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:.2rem;">
-            {{ book.abstract|safe }}
-          </div>
+          <div class="book-abstract-clamp">{{ book.abstract|safe }}</div>
           {% endif %}
         </div>
       </a>
@@ -215,22 +202,15 @@
     <div class="elibrary-books-grid">
       <div class="row g-2">
         {% for book in books %}
-        <div class="col-4 col-sm-3 col-md-2 col-lg-1" style="min-width:90px;max-width:120px;">
-          <a href="{{ book.get_absolute_url }}" class="card h-100" style="text-decoration:none;color:inherit;">
-            <img src="{{ MEDIA_URL }}{{ book.cover }}"
-                 alt="{{ book.title }}"
-                 class="card-img-top"
-                 style="aspect-ratio:2/3;object-fit:cover;">
+        <div class="col-4 col-sm-3 col-md-2 col-lg-1 book-grid-col">
+          <a href="{{ book.get_absolute_url }}" class="post-card-link">
+            <img src="{{ MEDIA_URL }}{{ book.cover }}" alt="{{ book.title }}" class="card-img-top book-cover-grid">
             <div class="card-body p-1">
               {% if book.title %}
-              <div class="fw-semibold" style="font-size:.68rem;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">
-                {{ book.title }}
-              </div>
+              <div class="fw-semibold book-title-grid">{{ book.title }}</div>
               {% endif %}
               {% if book.author %}
-              <div style="font-size:.63rem;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-                {{ book.author }}
-              </div>
+              <div class="book-author-grid text-truncate">{{ book.author }}</div>
               {% endif %}
             </div>
           </a>
@@ -241,12 +221,115 @@
 
   </div>
   {% else %}
-  <div class="card-body text-center py-5" style="color:var(--text-muted);">
-    <i class="fas fa-book-open fa-2x d-block mb-2" style="opacity:.3;"></i>
-    <span style="font-size:.875rem;">{% trans "Library is empty" %}</span>
+  <div class="card-body text-center py-5 text-muted">
+    <i class="fas fa-book-open fa-2x d-block mb-2 opacity-25"></i>
+    <span class="text-title-clamp">{% trans "Library is empty" %}</span>
   </div>
   {% endif %}
 </div>
 
 </div>{# /section #}
+
+{# ── MODAL ── #}
+{% include 'categories/_category_modal.html' %}
+
 {% endblock %}
+
+{% block extra_js %}
+<script>
+{% if categories %}
+(function () {
+  var btn     = document.getElementById('catFilterBtn');
+  var panel   = document.getElementById('catFilterPanel');
+  var labelEl = document.getElementById('catFilterLabel');
+  var allRow  = document.getElementById('catAllRow');
+  var catRows = Array.from(panel.querySelectorAll('.cat-filter__item:not(.cat-filter__all)'));
+  var groups  = Array.from(document.querySelectorAll('.elibrary-category-group'));
+  var LABEL_ALL = '{% trans "Category" %}';
+
+  function selected() {
+    return catRows.filter(function (r) { return r.classList.contains('selected'); })
+                  .map(function (r) { return String(r.dataset.key); });
+  }
+
+  function apply() {
+    var sel = selected();
+    var all = sel.length === 0;
+    allRow.classList.toggle('selected', all);
+
+    groups.forEach(function (group) {
+      var groupPk = String(group.dataset.categoryPk || '');
+      var show = all || sel.indexOf(groupPk) !== -1;
+      group.style.display = show ? '' : 'none';
+    });
+
+    if (all) {
+      labelEl.textContent = LABEL_ALL;
+      btn.classList.remove('active');
+    } else {
+      labelEl.textContent = LABEL_ALL + ' (' + sel.length + ')';
+      btn.classList.add('active');
+    }
+  }
+
+  panel.addEventListener('click', function (e) { e.stopPropagation(); });
+
+  allRow.addEventListener('click', function () {
+    catRows.forEach(function (r) { r.classList.remove('selected'); });
+    apply();
+  });
+
+  catRows.forEach(function (row) {
+    row.addEventListener('click', function () {
+      row.classList.toggle('selected');
+      apply();
+    });
+  });
+
+  btn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var opening = panel.hidden;
+    panel.hidden = !opening;
+    btn.setAttribute('aria-expanded', String(opening));
+  });
+
+  document.addEventListener('click', function (e) {
+    if (!document.getElementById('catFilter').contains(e.target)) {
+      panel.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  apply();
+
+  var manageBtn = document.getElementById('catManageBtn');
+  if (manageBtn) {
+    manageBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      panel.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+      new bootstrap.Modal(document.getElementById('manageCategoriesModal')).show();
+    });
+  }
+}());
+
+initCategoryManager('manageCategoriesModal', {
+  list:    '{% url "board:api_categories" %}',
+  edit:    '{% url "board:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/edit/',
+  del:     '{% url "board:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/delete/',
+  reorder: '{% url "board:api_category_reorder" %}',
+}, {
+  edit:         '{% trans "Edit" %}',
+  cancel:       '{% trans "Cancel" %}',
+  save:         '{% trans "Save" %}',
+  delete:       '{% trans "Delete" %}',
+  items_suffix: '{% trans "documents" %}',
+  protected:    '{% trans "Protected — cannot be deleted" %}',
+  confirm_del:  '{% trans "This category has {n} document(s). Deleting it will leave those documents without a category. Continue?" %}',
+  name_req:     '{% trans "Category name is required." %}',
+  load_error:   '{% trans "Failed to load categories." %}',
+  error:        '{% trans "An error occurred." %}',
+});
+{% endif %}
+</script>
+{% endblock extra_js %}

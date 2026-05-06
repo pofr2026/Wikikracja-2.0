@@ -229,6 +229,7 @@ INSTALLED_APPS = [
     'chat',
     'home',
     'pytz',
+    'categories',
     'board',
     'events',
     'tasks',

@@ -303,214 +303,23 @@
   }
 })();
 
-(function () {
-  'use strict';
+initCategoryManager('manageCategoriesModal', {
+  list:    '{% url "tasks:api_categories" %}',
+  edit:    '{% url "tasks:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/edit/',
+  del:     '{% url "tasks:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/delete/',
+  reorder: '{% url "tasks:api_category_reorder" %}',
+}, {
+  edit:         '{% trans "Edit" %}',
+  cancel:       '{% trans "Cancel" %}',
+  save:         '{% trans "Save" %}',
+  delete:       '{% trans "Delete" %}',
+  items_suffix: '{% trans "tasks" %}',
+  protected:    '{% trans "Protected — cannot be deleted" %}',
+  confirm_del:  '{% trans "This category has {n} task(s). Deleting it will leave those tasks without a category. Continue?" %}',
+  name_req:     '{% trans "Category name is required." %}',
+  load_error:   '{% trans "Failed to load categories." %}',
+  error:        '{% trans "An error occurred." %}',
+});
 
-  var URLS = {
-    list:   '{% url "tasks:api_categories" %}',
-    edit:   '{% url "tasks:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/edit/',
-    del:    '{% url "tasks:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/delete/',
-  };
-  var CSRF = document.cookie.match(/csrftoken=([^;]+)/);
-  CSRF = CSRF ? CSRF[1] : '';
-
-  var list    = document.getElementById('catMgrList');
-  var errEl   = document.getElementById('catMgrError');
-  var addBtn  = document.getElementById('catMgrAddBtn');
-  var newName = document.getElementById('catMgrNewName');
-  var newDesc = document.getElementById('catMgrNewDesc');
-
-  var MSG = {
-    edit:         '{% trans "Edit" %}',
-    cancel:       '{% trans "Cancel" %}',
-    save:         '{% trans "Save" %}',
-    delete:       '{% trans "Delete" %}',
-    tasks_suffix: '{% trans "tasks" %}',
-    protected:    '{% trans "Protected — cannot be deleted" %}',
-    confirm_del:  '{% trans "This category has {n} task(s). Deleting it will leave those tasks without a category. Continue?" %}',
-    name_req:     '{% trans "Category name is required." %}',
-  };
-
-  function apiFetch(url, method, body) {
-    var opts = { method: method, headers: { 'X-CSRFToken': CSRF } };
-    if (body) {
-      opts.headers['Content-Type'] = 'application/x-www-form-urlencoded';
-      opts.body = new URLSearchParams(body).toString();
-    }
-    return fetch(url, opts).then(function (r) {
-      return r.json().then(function (d) { return { ok: r.ok, data: d }; });
-    });
-  }
-
-  function showError(msg) {
-    errEl.textContent = msg;
-    errEl.style.display = msg ? '' : 'none';
-  }
-
-  function buildUrl(tpl, pk) {
-    return tpl.replace('{pk}', pk);
-  }
-
-  function renderRow(cat) {
-    var li = document.createElement('li');
-    li.className = 'cat-mgr-row';
-    li.dataset.id = cat.id;
-
-    var info = document.createElement('div');
-    info.className = 'cat-mgr-info';
-    var nameEl = document.createElement('div');
-    nameEl.className = 'cat-mgr-name';
-    nameEl.textContent = cat.name;
-    var descEl = document.createElement('div');
-    descEl.className = 'cat-mgr-desc';
-    descEl.textContent = cat.description || '';
-    info.appendChild(nameEl);
-    info.appendChild(descEl);
-
-    var badge = document.createElement('span');
-    badge.className = 'cat-mgr-badge';
-    badge.textContent = (cat.task_count || 0) + ' ' + MSG.tasks_suffix;
-
-    var actions = document.createElement('div');
-    actions.className = 'cat-mgr-actions';
-
-    if (!cat.is_protected) {
-      var editBtn = document.createElement('button');
-      editBtn.type = 'button';
-      editBtn.className = 'cat-mgr-btn';
-      editBtn.title = MSG.edit;
-      editBtn.innerHTML = '<i class="fas fa-pencil"></i>';
-      editBtn.addEventListener('click', function () { startEdit(li, cat); });
-
-      var delBtn = document.createElement('button');
-      delBtn.type = 'button';
-      delBtn.className = 'cat-mgr-btn cat-mgr-btn--delete';
-      delBtn.title = MSG.delete;
-      delBtn.innerHTML = '<i class="fas fa-trash"></i>';
-      delBtn.addEventListener('click', function () { deleteCategory(cat, li); });
-
-      actions.appendChild(editBtn);
-      actions.appendChild(delBtn);
-    } else {
-      var prot = document.createElement('span');
-      prot.className = 'cat-mgr-protected';
-      prot.title = MSG.protected;
-      prot.innerHTML = '<i class="fas fa-lock"></i>';
-      actions.appendChild(prot);
-    }
-
-    li.appendChild(info);
-    li.appendChild(badge);
-    li.appendChild(actions);
-    return li;
-  }
-
-  function startEdit(li, cat) {
-    li.classList.add('cat-mgr-row--editing');
-    li.innerHTML = '';
-
-    var fields = document.createElement('div');
-    fields.className = 'cat-mgr-edit-fields';
-
-    var ni = document.createElement('input');
-    ni.type = 'text';
-    ni.className = 'cat-mgr-input';
-    ni.value = cat.name;
-    ni.maxLength = 100;
-
-    var di = document.createElement('input');
-    di.type = 'text';
-    di.className = 'cat-mgr-input';
-    di.value = cat.description || '';
-
-    var btns = document.createElement('div');
-    btns.className = 'cat-mgr-edit-btns';
-
-    var saveB = document.createElement('button');
-    saveB.type = 'button';
-    saveB.className = 'cat-mgr-btn cat-mgr-btn--save';
-    saveB.title = MSG.save;
-    saveB.innerHTML = '<i class="fas fa-check"></i>';
-    saveB.addEventListener('click', function () {
-      var name = ni.value.trim();
-      if (!name) { showError(MSG.name_req); return; }
-      apiFetch(buildUrl(URLS.edit, cat.id), 'POST', { name: name, description: di.value.trim() })
-        .then(function (res) {
-          if (!res.ok) { showError(res.data.error || 'Error'); return; }
-          showError('');
-          cat.name = res.data.name;
-          cat.description = res.data.description;
-          var newLi = renderRow(cat);
-          li.replaceWith(newLi);
-        });
-    });
-
-    var cancelB = document.createElement('button');
-    cancelB.type = 'button';
-    cancelB.className = 'cat-mgr-btn';
-    cancelB.title = MSG.cancel;
-    cancelB.innerHTML = '<i class="fas fa-xmark"></i>';
-    cancelB.addEventListener('click', function () {
-      li.classList.remove('cat-mgr-row--editing');
-      var newLi = renderRow(cat);
-      li.replaceWith(newLi);
-    });
-
-    btns.appendChild(saveB);
-    btns.appendChild(cancelB);
-    fields.appendChild(ni);
-    fields.appendChild(di);
-    fields.appendChild(btns);
-    li.appendChild(fields);
-    ni.focus();
-  }
-
-  function deleteCategory(cat, li) {
-    var msg = MSG.confirm_del.replace('{n}', cat.task_count || 0);
-    if (!confirm(msg)) return;
-    apiFetch(buildUrl(URLS.del, cat.id), 'POST', {})
-      .then(function (res) {
-        if (!res.ok) { showError(res.data.error || 'Error'); return; }
-        showError('');
-        li.remove();
-      });
-  }
-
-  function loadCategories() {
-    apiFetch(URLS.list, 'GET')
-      .then(function (res) {
-        if (!res.ok) { showError('Failed to load.'); return; }
-        list.innerHTML = '';
-        res.data.categories.forEach(function (cat) {
-          list.appendChild(renderRow(cat));
-        });
-      });
-  }
-
-  if (addBtn) {
-    addBtn.addEventListener('click', function () {
-      var name = newName.value.trim();
-      if (!name) { showError(MSG.name_req); return; }
-      apiFetch(URLS.list, 'POST', { name: name, description: newDesc.value.trim() })
-        .then(function (res) {
-          if (!res.ok) { showError(res.data.error || 'Error'); return; }
-          showError('');
-          newName.value = '';
-          newDesc.value = '';
-          res.data.task_count = 0;
-          list.appendChild(renderRow(res.data));
-        });
-    });
-  }
-
-  var modalEl = document.getElementById('manageCategoriesModal');
-  if (modalEl) {
-    modalEl.addEventListener('show.bs.modal', loadCategories);
-    modalEl.addEventListener('hidden.bs.modal', function () {
-      showError('');
-      window.location.reload();
-    });
-  }
-}());
 </script>
 {% endblock extra_js %}

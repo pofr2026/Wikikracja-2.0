@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
+from categories.views import CategoryAPIBase, CategoryDeleteAPI, CategoryEditAPI, CategoryReorderAPI
 from chat.models import Room
 
 from .forms import TaskForm, TaskStatusForm
@@ -462,11 +463,18 @@ def delete_task(request: HttpRequest, pk: int) -> HttpResponse:
     return redirect("tasks:list")
 
 
-@login_required
-def api_categories(request: HttpRequest) -> JsonResponse:
-    if request.method == "POST":
+class TaskCategoryAPI(CategoryAPIBase):
+    model = Category
+    related_count_field = "tasks"
+    order_field = "order"
+
+    def serialize(self, cat):
+        data = super().serialize(cat)
+        data["slug"] = cat.slug
+        return data
+
+    def post(self, request):
         name = request.POST.get("name", "").strip()
-        description = request.POST.get("description", "").strip()
         if not name:
             return JsonResponse({"error": "Name is required."}, status=400)
         base_slug = slugify(name)
@@ -477,38 +485,41 @@ def api_categories(request: HttpRequest) -> JsonResponse:
         while Category.objects.filter(slug=slug).exists():
             slug = f"{base_slug}-{counter}"
             counter += 1
+        description = request.POST.get("description", "").strip()
         cat = Category.objects.create(name=name, slug=slug, description=description)
+        self.after_write()
+        data = self.serialize(cat)
+        data["item_count"] = 0
+        return JsonResponse(data)
+
+    def after_write(self):
         invalidate_task_list_cache()
-        return JsonResponse({"id": cat.id, "slug": cat.slug, "name": cat.name, "description": cat.description, "order": cat.order, "is_protected": cat.is_protected})
-
-    cats = list(Category.objects.annotate(task_count=Count("tasks")).values(
-        "id", "slug", "name", "description", "order", "is_protected", "task_count"
-    ))
-    return JsonResponse({"categories": cats})
 
 
-@require_POST
-@login_required
-def api_category_edit(request: HttpRequest, pk: int) -> JsonResponse:
-    cat = get_object_or_404(Category, pk=pk)
-    name = request.POST.get("name", "").strip()
-    description = request.POST.get("description", "").strip()
-    if not name:
-        return JsonResponse({"error": "Name is required."}, status=400)
-    cat.name = name
-    cat.description = description
-    cat.save(update_fields=["name", "description", "updated_at"])
-    invalidate_task_list_cache()
-    return JsonResponse({"id": cat.id, "slug": cat.slug, "name": cat.name, "description": cat.description})
+class TaskCategoryEditAPI(CategoryEditAPI):
+    model = Category
+
+    def serialize(self, cat):
+        data = super().serialize(cat)
+        data["slug"] = cat.slug
+        return data
+
+    def after_write(self):
+        invalidate_task_list_cache()
 
 
-@require_POST
-@login_required
-def api_category_delete(request: HttpRequest, pk: int) -> JsonResponse:
-    cat = get_object_or_404(Category, pk=pk)
-    if cat.is_protected:
-        return JsonResponse({"error": "This category is protected and cannot be deleted."}, status=403)
-    task_count = cat.tasks.count()
-    cat.delete()
-    invalidate_task_list_cache()
-    return JsonResponse({"ok": True, "affected_tasks": task_count})
+class TaskCategoryDeleteAPI(CategoryDeleteAPI):
+    model = Category
+    related_count_field = "tasks"
+    block_if_in_use = False
+
+    def after_write(self):
+        invalidate_task_list_cache()
+
+
+class TaskCategoryReorderAPI(CategoryReorderAPI):
+    model = Category
+    order_field = "order"
+
+    def after_write(self):
+        invalidate_task_list_cache()

@@ -6,23 +6,19 @@ from django.urls import reverse
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from categories.models import AbstractCategory
+
 User = settings.AUTH_USER_MODEL
 
 
-class Category(models.Model):
+class Category(AbstractCategory):
     slug = models.SlugField(max_length=64, unique=True)
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, default="")
     order = models.PositiveIntegerField(default=0)
-    is_protected = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    class Meta:
+    class Meta(AbstractCategory.Meta):
         ordering = ("order", "name")
-
-    def __str__(self):
-        return self.name
 
     def save(self, *args, **kwargs):
         if not self.slug:

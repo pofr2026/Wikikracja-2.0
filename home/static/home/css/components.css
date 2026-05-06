@@ -1971,3 +1971,18 @@
   display: flex;
   gap: .35rem;
 }
+.cat-mgr-handle {
+  cursor: grab;
+  color: var(--text-muted);
+  padding: 0 .5rem 0 0;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+.cat-mgr-row.sortable-ghost {
+  opacity: .4;
+  background: var(--bg-elevated, var(--bg-card));
+}
+.cat-mgr-row.sortable-chosen {
+  cursor: grabbing;
+}
