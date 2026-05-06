@@ -36,7 +36,7 @@
                 data-bs-toggle="popover" data-bs-placement="right" data-bs-html="true"
                 data-bs-trigger="focus hover"
                 data-bs-title="{% trans 'Categories' %}"
-                data-bs-content="{% spaceless %}{% for cat_key, cat_label, cat_desc in category_choices_with_desc %}<p class='mb-1'><strong>{{ cat_label }}</strong><br><span class='text-muted small'>{{ cat_desc }}</span></p>{% endfor %}{% endspaceless %}">
+                data-bs-content="{% spaceless %}{% for cat in category_list %}<p class='mb-1'><strong>{{ cat.name }}</strong>{% if cat.description %}<br><span class='text-muted small'>{{ cat.description }}</span>{% endif %}</p>{% endfor %}{% endspaceless %}">
           <i class="fas fa-circle-info"></i>
         </button>
       </label>

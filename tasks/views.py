@@ -9,6 +9,7 @@ from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
@@ -16,7 +17,7 @@ from django.views.generic import CreateView, DetailView, TemplateView, UpdateVie
 from chat.models import Room
 
 from .forms import TaskForm, TaskStatusForm
-from .models import Task, TaskEvaluation, TaskVote
+from .models import Category, Task, TaskEvaluation, TaskVote
 
 TASK_LIST_CACHE_TTL = 3600  # 1h — signals handle invalidation on data changes
 TASK_LIST_GLOBAL_VERSION_KEY = "task_list_global_version"
@@ -58,15 +59,15 @@ def _task_sort_context(request):
     tab = request.GET.get('tab', 'mine')
     if tab not in ('mine', 'awaiting', 'active', 'finished'):
         tab = 'mine'
-    valid_categories = {c[0] for c in Task.Category.choices}
-    categories = [c for c in request.GET.getlist('category') if c in valid_categories]
+    valid_slugs = set(Category.objects.values_list('slug', flat=True))
+    categories = [c for c in request.GET.getlist('category') if c in valid_slugs]
     return sort, order, tab, categories
 
 
 def _filter_by_category(tasks, categories):
     if not categories:
         return tasks
-    return [t for t in tasks if t.category in categories]
+    return [t for t in tasks if t.category and t.category.slug in categories]
 
 
 def _apply_task_sort(tasks, sort, order):
@@ -210,10 +211,7 @@ class TaskListView(LoginRequiredMixin, TemplateView):
             "current_sort": sort,
             "current_order": order,
             "current_categories": categories,
-            "category_choices_with_desc": [
-                (k, v, Task.CATEGORY_DESCRIPTIONS.get(k, ""))
-                for k, v in Task.Category.choices
-            ],
+            "category_list": list(Category.objects.values("id", "slug", "name", "description", "order", "is_protected")),
         })
         return context
 
@@ -225,10 +223,7 @@ class TaskHelpView(LoginRequiredMixin, TemplateView):
 class CategoryContextMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["category_choices_with_desc"] = [
-            (k, v, Task.CATEGORY_DESCRIPTIONS.get(k, ""))
-            for k, v in Task.Category.choices
-        ]
+        context["category_list"] = list(Category.objects.values("id", "slug", "name", "description"))
         return context
 
 
@@ -465,3 +460,55 @@ def delete_task(request: HttpRequest, pk: int) -> HttpResponse:
 
     task.delete()
     return redirect("tasks:list")
+
+
+@login_required
+def api_categories(request: HttpRequest) -> JsonResponse:
+    if request.method == "POST":
+        name = request.POST.get("name", "").strip()
+        description = request.POST.get("description", "").strip()
+        if not name:
+            return JsonResponse({"error": "Name is required."}, status=400)
+        base_slug = slugify(name)
+        if not base_slug:
+            return JsonResponse({"error": "Invalid name."}, status=400)
+        slug = base_slug
+        counter = 1
+        while Category.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        cat = Category.objects.create(name=name, slug=slug, description=description)
+        invalidate_task_list_cache()
+        return JsonResponse({"id": cat.id, "slug": cat.slug, "name": cat.name, "description": cat.description, "order": cat.order, "is_protected": cat.is_protected})
+
+    cats = list(Category.objects.annotate(task_count=Count("tasks")).values(
+        "id", "slug", "name", "description", "order", "is_protected", "task_count"
+    ))
+    return JsonResponse({"categories": cats})
+
+
+@require_POST
+@login_required
+def api_category_edit(request: HttpRequest, pk: int) -> JsonResponse:
+    cat = get_object_or_404(Category, pk=pk)
+    name = request.POST.get("name", "").strip()
+    description = request.POST.get("description", "").strip()
+    if not name:
+        return JsonResponse({"error": "Name is required."}, status=400)
+    cat.name = name
+    cat.description = description
+    cat.save(update_fields=["name", "description", "updated_at"])
+    invalidate_task_list_cache()
+    return JsonResponse({"id": cat.id, "slug": cat.slug, "name": cat.name, "description": cat.description})
+
+
+@require_POST
+@login_required
+def api_category_delete(request: HttpRequest, pk: int) -> JsonResponse:
+    cat = get_object_or_404(Category, pk=pk)
+    if cat.is_protected:
+        return JsonResponse({"error": "This category is protected and cannot be deleted."}, status=403)
+    task_count = cat.tasks.count()
+    cat.delete()
+    invalidate_task_list_cache()
+    return JsonResponse({"ok": True, "affected_tasks": task_count})

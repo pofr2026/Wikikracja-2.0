@@ -17,4 +17,7 @@ urlpatterns = [
     path("<int:pk>/take/", views.take_task, name="take"),
     path("<int:pk>/vote/", views.vote_task, name="vote"),
     path("<int:pk>/evaluate/", views.evaluate_task, name="evaluate"),
+    path("api/categories/", views.api_categories, name="api_categories"),
+    path("api/categories/<int:pk>/edit/", views.api_category_edit, name="api_category_edit"),
+    path("api/categories/<int:pk>/delete/", views.api_category_delete, name="api_category_delete"),
 ]
