@@ -34,10 +34,21 @@ def open_dm(request: HttpRequest, pk: int):
     target = get_object_or_404(User, pk=pk, is_active=True)
     if target == request.user:
         return redirect('chat:chat')
+
     room = Room.find_with_users(request.user, target)
-    if room:
-        return redirect(f"{reverse('chat:chat')}#room_id={room.id}")
-    return redirect('chat:chat')
+    if room is None:
+        title = '-'.join(sorted([request.user.username, target.username]))
+        try:
+            room = Room.objects.create(title=title, public=False)
+        except IntegrityError:
+            room = Room.objects.get(title__iexact=title)
+        room.allowed.set((request.user, target))
+
+    if room.archived:
+        room.archived = False
+        room.save(update_fields=['archived'])
+
+    return redirect(f"{reverse('chat:chat')}#room_id={room.id}")
 
 
 @login_required
