@@ -29,6 +29,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('chat', '0016_alter_message_reactions'),
+        ('glosowania', '0013_auto_20260408_1446'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
