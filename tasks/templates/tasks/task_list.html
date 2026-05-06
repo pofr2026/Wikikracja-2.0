@@ -188,6 +188,13 @@
 {% endblock tasks %}
 
 {% block extra_js %}
+<script>
+  window.TASK_HELPERS_I18N = {
+    empty: "{% trans 'No one helps yet' %}",
+    more:  "{% trans 'and {n} more — see all' %}",
+    error: "{% trans 'Could not load helpers' %}",
+  };
+</script>
 <script src="{% static 'tasks/js/tasks.js' %}"></script>
 <script>
 (function () {

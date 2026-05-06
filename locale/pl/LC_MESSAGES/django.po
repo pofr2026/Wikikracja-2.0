@@ -4312,3 +4312,75 @@ msgstr "Angielski"
 #: .\zzz\settings.py:107
 msgid "Polish"
 msgstr "Polski"
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "Author unknown"
+msgstr "Autor nieznany"
+
+#: .\tasks\templates\tasks\_task_card.html
+#: .\tasks\templates\tasks\task_detail.html
+msgid "Coordinator"
+msgstr "Koordynator"
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "Coordinator:"
+msgstr "Koordynator:"
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "No coordinator yet"
+msgstr "Brak koordynatora"
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "no coordinator"
+msgstr "brak koordynatora"
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "People helping"
+msgstr "Osoby pomagające"
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "People helping. Click to see the list."
+msgstr "Osoby pomagające. Kliknij, aby zobaczyć listę."
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "Open task details"
+msgstr "Otwórz szczegóły zadania"
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "Loading…"
+msgstr "Ładowanie…"
+
+#: .\tasks\templates\tasks\_task_card.html
+msgid "Step down from coordinating this task"
+msgstr "Zrezygnuj z koordynacji tego zadania"
+
+#: .\tasks\templates\tasks\_task_card.html
+#: .\tasks\templates\tasks\task_detail.html
+msgid "Resign as coordinator"
+msgstr "Zrezygnuj z koordynacji"
+
+#: .\tasks\templates\tasks\_task_card.html
+#: .\tasks\templates\tasks\task_detail.html
+msgid "Take responsibility for coordinating this task"
+msgstr "Przejmij koordynację tego zadania"
+
+#: .\tasks\templates\tasks\_task_card.html
+#: .\tasks\templates\tasks\task_detail.html
+msgid "Become coordinator"
+msgstr "Zostań koordynatorem"
+
+#: .\tasks\templates\tasks\task_detail.html
+msgid "Step down and release this task back to the waiting pool"
+msgstr "Zrezygnuj z koordynacji — zadanie wróci do puli oczekujących"
+
+#: .\tasks\static\tasks\js\tasks.js
+msgid "and {n} more — see all"
+msgstr "…i jeszcze {n} — zobacz wszystkich"
+
+#: .\tasks\static\tasks\js\tasks.js
+msgid "No one helps yet"
+msgstr "Nikt jeszcze nie pomaga"
+
+#: .\tasks\static\tasks\js\tasks.js
+msgid "Could not load helpers"
+msgstr "Nie udało się załadować listy"

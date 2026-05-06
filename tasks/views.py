@@ -8,7 +8,7 @@ from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.text import slugify
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
@@ -246,6 +246,40 @@ class TaskCreateView(CategoryContextMixin, LoginRequiredMixin, CreateView):
             },
         )
         return response
+
+
+HELPERS_POPOVER_LIMIT = 10
+
+
+@login_required
+def task_helpers_json(request: HttpRequest, pk: int) -> JsonResponse:
+    task = get_object_or_404(Task, pk=pk)
+    qs = (TaskVote.objects
+          .filter(task=task, value=TaskVote.Value.UP)
+          .select_related("user", "user__uzytkownik")
+          .order_by("updated_at", "id"))
+    total = qs.count()
+    helpers = []
+    for vote in qs[:HELPERS_POPOVER_LIMIT]:
+        user = vote.user
+        avatar_url = ""
+        uzy = getattr(user, "uzytkownik", None)
+        if uzy and getattr(uzy, "avatar", None):
+            try:
+                avatar_url = uzy.avatar.url
+            except ValueError:
+                avatar_url = ""
+        helpers.append({
+            "username": user.username,
+            "avatar_url": avatar_url,
+            "profile_url": reverse("obywatele:obywatele_szczegoly", args=[user.pk]),
+        })
+    return JsonResponse({
+        "helpers": helpers,
+        "total": total,
+        "extra": max(0, total - HELPERS_POPOVER_LIMIT),
+        "task_url": reverse("tasks:detail", args=[task.pk]),
+    })
 
 
 @require_POST

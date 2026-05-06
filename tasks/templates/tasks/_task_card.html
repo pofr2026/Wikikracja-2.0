@@ -58,7 +58,9 @@
       {% if task.created_by %}
       <a href="{% url 'obywatele:obywatele_szczegoly' pk=task.created_by.pk %}"
          class="proposal-author-link" onclick="event.stopPropagation()"
-         title="{{ task.created_by.username }}">
+         data-bs-toggle="tooltip"
+         title="{% trans 'Author' %}: {{ task.created_by.username }}">
+        <i class="fas fa-user-pen proposal-role-icon" aria-hidden="true"></i>
         <span class="proposal-author-avatar">
           {% if task.created_by.uzytkownik.avatar %}
             <img src="{{ task.created_by.uzytkownik.avatar.url }}" alt="">
@@ -69,19 +71,67 @@
         <span class="proposal-author-name">{{ task.created_by.username }}</span>
       </a>
       {% else %}
-      <span class="proposal-author-name">—</span>
+      <span class="proposal-author-link proposal-author-link--empty"
+            data-bs-toggle="tooltip" title="{% trans 'Author unknown' %}">
+        <i class="fas fa-user-pen proposal-role-icon" aria-hidden="true"></i>
+        <span class="proposal-author-name">—</span>
+      </span>
+      {% endif %}
+
+      <i class="fas fa-arrow-right proposal-meta-arrow" aria-hidden="true"></i>
+
+      {% if task.assigned_to %}
+      <a href="{% url 'obywatele:obywatele_szczegoly' pk=task.assigned_to.pk %}"
+         class="proposal-coordinator-link" onclick="event.stopPropagation()"
+         data-bs-toggle="tooltip"
+         title="{% trans 'Coordinator' %}: {{ task.assigned_to.username }}">
+        <i class="fas fa-user-gear proposal-role-icon" aria-hidden="true"></i>
+        <span class="proposal-coordinator-avatar">
+          {% if task.assigned_to.uzytkownik.avatar %}
+            <img src="{{ task.assigned_to.uzytkownik.avatar.url }}" alt="">
+          {% else %}
+            {{ task.assigned_to.username|slice:":2"|upper }}
+          {% endif %}
+        </span>
+        <span class="proposal-coordinator-name">{{ task.assigned_to.username }}</span>
+      </a>
+      {% else %}
+      <span class="proposal-coordinator-empty"
+            data-bs-toggle="tooltip" title="{% trans 'No coordinator yet' %}">
+        <i class="fas fa-user-gear proposal-role-icon" aria-hidden="true"></i>
+        <span>{% trans 'no coordinator' %}</span>
+      </span>
       {% endif %}
 
       <span class="proposal-meta-sep">·</span>
-      <span class="proposal-date">{{ task.created_at|date:"d.m.Y" }}</span>
-
-      <span class="proposal-meta-sep">·</span>
-      <span class="proposal-signatures" title="{% trans 'Number of people who are available' %}">
-        <i class="fas fa-hand-holding-heart fa-fw"></i> {{ task.votes_up|default:0 }}
+      <span class="proposal-date"
+            data-bs-toggle="tooltip"
+            title="{% trans 'Created' %}: {{ task.created_at|date:'d.m.Y H:i' }}">
+        <i class="fas fa-clock-rotate-left proposal-role-icon" aria-hidden="true"></i>
+        {{ task.created_at|date:"d.m.Y" }}
       </span>
 
+      <span class="proposal-meta-sep">·</span>
+      <button type="button"
+              class="proposal-signatures proposal-helpers-btn"
+              onclick="event.stopPropagation()"
+              data-task-helpers="{{ task.pk }}"
+              data-helpers-url="{% url 'tasks:helpers_json' pk=task.pk %}"
+              data-bs-toggle="popover"
+              data-bs-trigger="manual"
+              data-bs-placement="bottom"
+              data-bs-html="true"
+              data-bs-title="{% trans 'People helping' %}"
+              data-bs-content="<div class='helpers-popover-loading'>{% trans 'Loading…' %}</div>"
+              aria-label="{% trans 'People helping. Click to see the list.' %}">
+        <i class="fas fa-hand-holding-heart fa-fw"></i>
+        <span class="proposal-signatures-count">{{ task.votes_up|default:0 }}</span>
+      </button>
+
       <a href="{% url 'tasks:detail' pk=task.pk %}"
-         class="proposal-details-inline" onclick="event.stopPropagation()">
+         class="proposal-details-inline" onclick="event.stopPropagation()"
+         data-bs-toggle="tooltip"
+         title="{% trans 'Open task details' %}">
         {% trans 'Details' %} <i class="fas fa-arrow-right fa-fw"></i>
       </a>
     </div>
@@ -110,13 +160,13 @@
     </div>
     {% endif %}
 
-    {# Wykonawca #}
+    {# Koordynator #}
     <div class="task-assignee-row">
-      <span class="task-assignee-label">{% trans 'Assigned to:' %}</span>
+      <span class="task-assignee-label">{% trans 'Coordinator:' %}</span>
       {% if task.assigned_to %}
         <a href="{% url 'obywatele:obywatele_szczegoly' pk=task.assigned_to.pk %}"
-           onclick="event.stopPropagation()"
-           style="display:inline-flex;align-items:center;gap:.35rem;text-decoration:none;">
+           class="task-assignee-link"
+           onclick="event.stopPropagation()">
           <span class="task-assignee-avatar">
             {% if task.assigned_to.uzytkownik.avatar %}
               <img src="{{ task.assigned_to.uzytkownik.avatar.url }}" alt="">
@@ -127,7 +177,7 @@
           <span class="task-assignee-name">{{ task.assigned_to.username }}</span>
         </a>
       {% else %}
-        <span style="font-style:italic;">{% trans 'n/a' %}</span>
+        <span class="task-assignee-empty">{% trans 'n/a' %}</span>
       {% endif %}
     </div>
 
@@ -184,16 +234,20 @@
         <form method="post" action="{% url 'tasks:resign' task.pk %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit" class="task-resign-btn" onclick="event.stopPropagation()">
-            <i class="fas fa-xmark"></i> {% trans 'Resign' %}
+          <button type="submit" class="task-resign-btn" onclick="event.stopPropagation()"
+                  data-bs-toggle="tooltip"
+                  title="{% trans 'Step down from coordinating this task' %}">
+            <i class="fas fa-xmark"></i> {% trans 'Resign as coordinator' %}
           </button>
         </form>
       {% elif not task.assigned_to %}
         <form method="post" action="{% url 'tasks:take' task.pk %}">
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit" class="task-take-btn" onclick="event.stopPropagation()">
-            <i class="fas fa-hand"></i> {% trans 'Take task' %}
+          <button type="submit" class="task-take-btn" onclick="event.stopPropagation()"
+                  data-bs-toggle="tooltip"
+                  title="{% trans 'Take responsibility for coordinating this task' %}">
+            <i class="fas fa-hand"></i> {% trans 'Become coordinator' %}
           </button>
         </form>
       {% endif %}

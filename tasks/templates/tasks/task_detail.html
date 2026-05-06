@@ -40,7 +40,7 @@
         {% endif %}
       </div>
       <p class="text-muted small mb-1">{% trans "Author" %}: {{ task.created_by|default:_("Unknown") }}</p>
-      <p class="text-muted small mb-1">{% trans "Owner" %}: {{ task.assigned_to|default:_("None") }}</p>
+      <p class="text-muted small mb-1">{% trans "Coordinator" %}: {{ task.assigned_to|default:_("None") }}</p>
       <p class="text-muted small mb-1">{% trans "Status" %}: {{ task.get_status_display }}</p>
       <p class="text-muted small mb-1">{% trans "Created" %}: {{ task.created_at|date:"Y-m-d H:i" }}</p>
 
@@ -109,8 +109,8 @@
           <button type="submit"
                   class="task-take-btn"
                   data-bs-toggle="tooltip"
-                  title="{% trans "Take responsibility for this task" %}">
-            <i class="fas fa-hand-paper"></i> {% trans "Take task" %}
+                  title="{% trans "Take responsibility for coordinating this task" %}">
+            <i class="fas fa-hand-paper"></i> {% trans "Become coordinator" %}
           </button>
         </form>
       {% endif %}
@@ -134,8 +134,8 @@
           <button type="submit"
                   class="task-resign-btn"
                   data-bs-toggle="tooltip"
-                  title="{% trans "Release this task back to the waiting pool" %}">
-            <i class="fas fa-sign-out-alt"></i> {% trans "Resign" %}
+                  title="{% trans "Step down and release this task back to the waiting pool" %}">
+            <i class="fas fa-sign-out-alt"></i> {% trans "Resign as coordinator" %}
           </button>
         </form>
       {% endif %}
