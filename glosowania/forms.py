@@ -11,7 +11,7 @@ class DecyzjaForm(forms.ModelForm):
         fields = ('title', 'tresc', 'uzasadnienie', 'kara', 'znosi')
         widgets = {
             'title': forms.TextInput(),
-            'tresc': RichTextWidget(max_length=1000),
+            'tresc': RichTextWidget(max_length=2000),
             'uzasadnienie': RichTextWidget(max_length=2000),
             'kara': RichTextWidget(max_length=500),
         }
