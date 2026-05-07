@@ -140,9 +140,15 @@ def home(request: HttpRequest):
             'user_voted': user_voted,
         }
 
-    # Karta 4 — Kalendarz: 3 najbliższe aktywne eventy
+    # Karta 4 — Kalendarz: 3 najbliższe wystąpienia (eventy jednorazowe i cykliczne, każde wystąpienie osobno)
     today_dt = timezone.now()
-    upcoming_events = list(Event.objects.filter(start_date__gte=today_dt, is_active=True).order_by('start_date')[:3])
+    _events_horizon_end = today_dt + td(days=90)
+    _occurrences = []
+    for _ev in Event.objects.filter(is_active=True):
+        for _date in _ev.get_occurrences(today_dt, _events_horizon_end):
+            _occurrences.append({'event': _ev, 'date': _date})
+    _occurrences.sort(key=lambda o: o['date'])
+    upcoming_events = _occurrences[:5]
 
     # Karta 5 — Finanse: przychody/wydatki za bieżący rok
     current_year = today_dt.year
