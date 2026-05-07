@@ -4,7 +4,7 @@
 {% load filters %}
 
 <!DOCTYPE html>
-<html lang="{{ request.LANGUAGE_CODE }}" data-theme="dark">
+<html lang="{{ request.LANGUAGE_CODE }}" data-theme="dark" data-prefs-scope="{% block prefs_scope %}{% endblock %}">
 <head>
 	<title>{{ request.site.name }}</title>
 	<meta charset="utf-8">
@@ -20,6 +20,8 @@
 
 	<!-- Anti-FOUC: restore theme before CSS loads -->
 	<script>(function(){var t=localStorage.getItem('app-theme')||'dark';document.documentElement.setAttribute('data-theme',t);})();</script>
+	<!-- Anti-FOUC: restore page filters from localStorage when URL has none (PagePrefs) -->
+	<script>(function(){var s=document.documentElement.dataset.prefsScope;if(!s||window.location.search)return;try{var d=JSON.parse(localStorage.getItem('wikikracja:prefs:'+s)||'{}');if(d.filters)window.location.replace(window.location.pathname+d.filters);}catch(e){}})();</script>
 	<!-- https://fontawesome.com/ -->
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
 

@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load feed_filters %}
 
+{% block prefs_scope %}activity{% endblock %}
+
 {% block content %}
 <div class="section">
 
@@ -49,10 +51,10 @@
     <span class="toolbar-divider"></span>
 
     <div class="toolbar-view">
-      <button class="view-toggle-btn" id="btn-list" onclick="setActivityView('list')" title="{% trans 'List' %}">
+      <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}">
         <i class="fas fa-list"></i>
       </button>
-      <button class="view-toggle-btn" id="btn-grid" onclick="setActivityView('grid')" title="{% trans 'Grid' %}">
+      <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}">
         <i class="fas fa-grip"></i>
       </button>
     </div>
@@ -61,7 +63,7 @@
 
   {# ── List ── #}
   <div class="card">
-    <div class="activity-list" id="activity-list">
+    <div class="activity-list" id="activity-list" data-view-container>
       {% for item in feed_items %}
       <a href="{{ item.url }}" class="feed-row {% if not item.is_read %}unread-item{% endif %}" data-content-type="{{ item.content_type }}" data-object-id="{{ item.object_id }}" style="{% if not item.is_read %}background:rgba(96,165,250,.08);border-left:3px solid #60a5fa;{% endif %}">
 
@@ -107,29 +109,6 @@
 </div>
 
 <script>
-(function () {
-  var KEY = 'activity_view';
-  window.setActivityView = function (mode) {
-    var list = document.getElementById('activity-list');
-    var btnList = document.getElementById('btn-list');
-    var btnGrid = document.getElementById('btn-grid');
-    if (!list) return;
-    if (mode === 'grid') {
-      list.classList.add('view-grid');
-      btnGrid.classList.add('active');
-      btnList.classList.remove('active');
-    } else {
-      list.classList.remove('view-grid');
-      btnList.classList.add('active');
-      btnGrid.classList.remove('active');
-    }
-    localStorage.setItem(KEY, mode);
-  };
-  document.addEventListener('DOMContentLoaded', function () {
-    setActivityView(localStorage.getItem(KEY) || 'list');
-  });
-})();
-
 document.getElementById('btn-mark-all')?.addEventListener('click', function() {
   fetch("{% url 'mark_all_read' %}", {
     method: 'POST',

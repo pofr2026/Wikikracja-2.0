@@ -3,9 +3,11 @@
 {% load i18n %}
 {% load feed_filters %}
 
+{% block prefs_scope %}elibrary{% endblock %}
+
 {% block content %}
 
-<div class="section" id="proposals-list">
+<div class="section" data-view-container>
 
 {# ── TOOLBAR ── #}
 <div class="proposals-toolbar mb-3">
@@ -72,10 +74,10 @@
   <span class="toolbar-divider"></span>
 
   <div class="toolbar-view">
-    <button class="view-toggle-btn" id="btn-list" onclick="setElibraryView('list')" title="{% trans 'List' %}">
+    <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}">
       <i class="fas fa-list"></i>
     </button>
-    <button class="view-toggle-btn" id="btn-grid" onclick="setElibraryView('grid')" title="{% trans 'Grid' %}">
+    <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}">
       <i class="fas fa-grip"></i>
     </button>
   </div>
@@ -247,6 +249,14 @@
   var groups  = Array.from(document.querySelectorAll('.elibrary-category-group'));
   var LABEL_ALL = '{% trans "Category" %}';
 
+  // restore from URL (PagePrefs zapisuje URL, więc po reload zaznaczenia wracają)
+  var initial = new URLSearchParams(window.location.search).getAll('category');
+  initial.forEach(function (val) {
+    catRows.forEach(function (row) {
+      if (String(row.dataset.key) === String(val)) row.classList.add('selected');
+    });
+  });
+
   function selected() {
     return catRows.filter(function (r) { return r.classList.contains('selected'); })
                   .map(function (r) { return String(r.dataset.key); });
@@ -270,6 +280,12 @@
       labelEl.textContent = LABEL_ALL + ' (' + sel.length + ')';
       btn.classList.add('active');
     }
+
+    // URL sync — PagePrefs łapie zmianę przez patch'ed pushState i zapisuje
+    var p = new URLSearchParams(window.location.search);
+    p.delete('category');
+    sel.forEach(function (v) { p.append('category', v); });
+    history.pushState(null, '', window.location.pathname + (p.toString() ? '?' + p.toString() : ''));
   }
 
   panel.addEventListener('click', function (e) { e.stopPropagation(); });

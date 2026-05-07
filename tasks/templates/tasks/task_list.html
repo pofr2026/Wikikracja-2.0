@@ -2,6 +2,8 @@
 {% load i18n %}
 {% load static %}
 
+{% block prefs_scope %}tasks{% endblock %}
+
 {% block tasks %}
 
 {# ── TOOLBAR ── #}
@@ -83,17 +85,17 @@
   <span class="toolbar-divider"></span>
 
   <div class="toolbar-view">
-    <button class="view-toggle-btn" id="btn-list" onclick="setTaskView('list')" title="{% trans 'List' %}">
+    <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}">
       <i class="fas fa-list"></i>
     </button>
-    <button class="view-toggle-btn" id="btn-grid" onclick="setTaskView('grid')" title="{% trans 'Grid' %}">
+    <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}">
       <i class="fas fa-grip"></i>
     </button>
   </div>
 </div>
 
 {# ── CONTENT ── #}
-<div class="proposals-list" id="proposals-list">
+<div class="proposals-list" data-view-container>
 
   {# ══ MOJE ══ #}
   {% if current_tab == 'mine' %}

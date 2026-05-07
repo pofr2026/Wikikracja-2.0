@@ -3,9 +3,11 @@
 {% load i18n %}
 {% load feed_filters %}
 
+{% block prefs_scope %}board{% endblock %}
+
 {% block content %}
 
-<div class="section" id="proposals-list">
+<div class="section" data-view-container>
 
 {# ── TOOLBAR ── #}
 <div class="proposals-toolbar mb-3">
@@ -65,10 +67,10 @@
   <span class="toolbar-divider"></span>
 
   <div class="toolbar-view">
-    <button class="view-toggle-btn" id="btn-list" onclick="setBoardView('list')" title="{% trans 'List' %}">
+    <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}">
       <i class="fas fa-list"></i>
     </button>
-    <button class="view-toggle-btn" id="btn-grid" onclick="setBoardView('grid')" title="{% trans 'Grid' %}">
+    <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}">
       <i class="fas fa-grip"></i>
     </button>
   </div>
