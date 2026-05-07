@@ -5,33 +5,38 @@
 {% block extra_css %}{{ form.media }}{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
-    <div class="col-md-8">
-        <div class="card">
-            <div class="card-header">
-                <h3>
-                    {% if form.instance.pk %}
-                        {% trans "Edit Event" %}: {{ form.instance.title }}
-                    {% else %}
-                        {% trans "Create New Event" %}
-                    {% endif %}
-                </h3>
-            </div>
-            <div class="card-body">
-                {% crispy form %}
-            </div>
-        </div>
+<div class="detail-layout">
 
-        <div class="mt-3">
-            <a href="{% url 'events:list' %}" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> {% trans "Back to Calendar" %}
-            </a>
-            {% if form.instance.pk %}
-                <a href="{% url 'events:detail' form.instance.pk %}" class="btn btn-outline-primary">
-                    <i class="fas fa-eye"></i> {% trans "View Event" %}
-                </a>
-            {% endif %}
-        </div>
+  <div class="detail-header">
+    <div class="detail-header-top">
+      <h1 class="detail-title">
+        {% if form.instance.pk %}
+          <i class="fas fa-pen fa-fw" style="color:var(--accent);"></i>
+          {% trans "Edit Event" %}: {{ form.instance.title }}
+        {% else %}
+          <i class="fas fa-plus fa-fw" style="color:var(--accent);"></i>
+          {% trans "Create New Event" %}
+        {% endif %}
+      </h1>
     </div>
+  </div>
+
+  <div class="proposal-card">
+    <div class="proposal-card-body" style="display:block;cursor:default;">
+      {% crispy form %}
+    </div>
+  </div>
+
+  <div class="proposals-toolbar" style="margin-top:1rem;">
+    <a href="{% url 'events:list' %}" class="view-toggle-btn" style="width:auto;padding:0 .85rem;gap:.4rem;" title="{% trans 'Back to Calendar' %}">
+      <i class="fas fa-arrow-left"></i> {% trans "Back to Calendar" %}
+    </a>
+    {% if form.instance.pk %}
+      <a href="{% url 'events:detail' form.instance.pk %}" class="view-toggle-btn" style="width:auto;padding:0 .85rem;gap:.4rem;" title="{% trans 'View Event' %}">
+        <i class="fas fa-eye"></i> {% trans "View Event" %}
+      </a>
+    {% endif %}
+  </div>
+
 </div>
 {% endblock %}

@@ -1,147 +1,339 @@
 {% extends "home/base.html" %}
 {% load i18n %}
-{% load django_bootstrap5 %}
-{% load richtext %}
+
+{% block prefs_scope %}events{% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            {% if user.is_authenticated %}
-                <a href="{% url 'events:create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> {% trans "Add Event" %}
-                </a>
-            {% endif %}
+
+{# ── TOOLBAR ── #}
+<div class="proposals-toolbar">
+  {% if user.is_authenticated %}
+    <a href="{% url 'events:create' %}" class="toolbar-add-btn">
+      <i class="fas fa-plus"></i> {% trans 'Add Event' %}
+    </a>
+    <span class="toolbar-divider"></span>
+  {% endif %}
+
+  {# Trigger drawera — etykieta odzwierciedla aktualnie załadowany miesiąc w drawerze #}
+  <button type="button" class="cal-trigger-btn" id="cal-trigger" aria-expanded="false"
+          title="{% trans 'Toggle month view' %}">
+    <span id="cal-trigger-label">{{ current_month_first_day|date:"F Y" }}</span>
+    <i class="fas fa-chevron-down agenda-month-chevron"></i>
+  </button>
+
+  <div class="toolbar-view ms-auto">
+    <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}">
+      <i class="fas fa-list"></i>
+    </button>
+    <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}">
+      <i class="fas fa-grip"></i>
+    </button>
+  </div>
+</div>
+
+{# Pojedynczy drawer dla mini-kalendarza — pre-render bieżącego miesiąca, bez AJAX na starcie #}
+<div id="events-drawer" class="agenda-month-drawer" data-month-prerendered>
+  {% include 'obywatele/_calendar_partial.html' with cal_weeks=current_month_weeks cal_year=current_month_year cal_month=current_month_num cal_first_day=current_month_first_day prev_month=current_month_prev next_month=current_month_next %}
+</div>
+
+{% if occurrences %}
+
+  {# ── AGENDA ── #}
+  <div class="events-agenda" data-view-only="list">
+    {% regroup occurrences by date|date:"Y-m" as months %}
+    {% for month_group in months %}
+      {% with month_iso=month_group.grouper today_ym=now|date:"Y-m" today_ymd=now|date:"Y-m-d" %}
+        <div class="agenda-month-header"
+             data-month-label="{{ month_iso }}"
+             {% if month_iso < today_ym %}style="display:none;"{% endif %}>
+          {{ month_group.list.0.date|date:"F Y" }}
         </div>
 
-        {% if events %}
-            <div class="row">
-                {% for event in events %}
-                    <div class="col-md-6 col-lg-6 mb-4">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">{{ event.title }}</h5>
-
-                                {% if event.frequency != 'once' %}
-                                    {% with next_occurrence=event.get_next_occurrence %}
-                                        {% if next_occurrence %}
-                                            <div class="alert alert-success mb-3 py-2">
-                                                <strong><i class="fas fa-calendar-check"></i> {% trans "Next" %}:</strong> {{ next_occurrence|date:"D, Y-m-d H:i" }}
-                                            </div>
-                                        {% else %}
-                                            <div class="alert alert-secondary mb-3 py-2" style="background-color: #222222ea; opacity: 0.7;">
-                                                <strong><i class="fas fa-calendar-check"></i> {% trans "No upcoming occurrences" %}:</strong> {{ event.start_date|date:"D, Y-m-d H:i" }}
-                                            </div>
-                                        {% endif %}
-                                    {% endwith %}
-                                {% else %}
-                                    {% if event.start_date > now %}
-                                        <div class="alert alert-success mb-3 py-2">
-                                            <strong><i class="fas fa-calendar-check"></i> {% trans "Date" %}:</strong> {{ event.start_date|date:"D, Y-m-d H:i" }}
-                                        </div>
-                                    {% else %}
-                                        <div class="alert alert-secondary mb-3 py-2" style="background-color: #222222ea; opacity: 0.7;">
-                                            <strong><i class="fas fa-calendar-check"></i> {% trans "Date" %}:</strong> {{ event.start_date|date:"D, Y-m-d H:i" }}
-                                        </div>
-                                    {% endif %}
-                                {% endif %}
-
-                                {% if event.link %}
-                                    <div class="alert alert-primary mb-3 py-2">
-                                        <strong><i class="fas fa-link"></i> {% trans "Link to the meeting" %}:</strong><br>
-                                        <a href="{{ event.link }}" target="_blank" rel="noopener" class="alert-link">{{ event.link }}</a>
-                                        <i class="fas fa-external-link-alt fa-sm"></i>
-                                    </div>
-                                {% endif %}
-
-                                <p class="card-text">{{ event.description|richtext|truncatewords_html:20 }}</p>
-
-                                {% if event.place %}
-                                    <div class="mb-2">
-                                        <small class="text-muted">
-                                            <i class="fas fa-map-marker-alt"></i> {{ event.place }}
-                                        </small>
-                                    </div>
-                                {% endif %}
-
-                                <div class="mb-2">
-                                    <span class="badge text-bg-{% if event.frequency == 'once' %}secondary{% else %}info{% endif %}">
-                                        {{ event.get_frequency_display }}
-                                    </span>
-                                    {% if event.is_upcoming %}
-                                        <span class="badge text-bg-success">{% trans "Upcoming" %}</span>
-                                    {% elif event.frequency == 'once' and event.start_date <= now %}
-                                        <span class="badge text-bg-secondary" style="opacity: 0.7;">{% trans "Past" %}</span>
-                                    {% endif %}
-                                    {% if event.is_public %}
-                                        <span class="badge text-bg-primary" title="{% trans 'Visible to everyone' %}">
-                                            <i class="fas fa-globe"></i> {% trans "Public" %}
-                                        </span>
-                                    {% else %}
-                                        <span class="badge text-bg-warning" title="{% trans 'Visible only to logged-in users' %}">
-                                            <i class="fas fa-lock"></i> {% trans "Private" %}
-                                        </span>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="card-footer d-flex gap-0">
-                                <a href="{% url 'events:detail' event.pk %}" class="btn btn-sm btn-outline-warning">
-                                    {% trans "Details" %}
-                                </a>
-                                {% if user.is_authenticated %}
-                                    <a href="{% url 'events:edit' event.pk %}" class="btn btn-sm btn-outline-info">
-                                        {% trans "Edit" %}
-                                    </a>
-                                {% endif %}
-                                <a href="{{ event.google_calendar_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-success" title="{% trans 'Add to Google Calendar' %}">
-                                    <i class="far fa-calendar-plus"></i> {% trans "Add to Calendar" %}
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                {% endfor %}
+        {% regroup month_group.list by date|date:"Y-m-d" as days %}
+        {% for day_group in days %}
+          <section class="agenda-day{% if day_group.list.0.is_past %} agenda-day--past{% endif %}{% if day_group.grouper == today_ymd %} agenda-day--today{% endif %}"
+                   id="day-{{ day_group.grouper }}"
+                   {% if day_group.grouper < today_ymd %}style="display:none;"{% endif %}>
+            <div class="agenda-day-label">
+              <div class="agenda-day-name">{{ day_group.list.0.date|date:"D" }}</div>
+              <div class="agenda-day-num">{{ day_group.list.0.date|date:"j" }}</div>
             </div>
-
-            {% if is_paginated %}
-                <nav aria-label="Page navigation">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page=1">&laquo; {% trans "First" %}</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">{% trans "Previous" %}</a>
-                            </li>
-                        {% endif %}
-
-                        <li class="page-item active">
-                            <span class="page-link">
-                                {% trans "Page" %} {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
-                            </span>
-                        </li>
-
-                        {% if page_obj.has_next %}
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.next_page_number }}">{% trans "Next" %}</a>
-                            </li>
-                            <li class="page-item">
-                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">{% trans "Last" %} &raquo;</a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            {% endif %}
-        {% else %}
-            <div class="alert alert-info text-center">
-                <h4>{% trans "No events yet" %}</h4>
-                <p>{% trans "There are no events to display." %}</p>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'events:create' %}" class="btn btn-primary">
-                        {% trans "Create the first event" %}
-                    </a>
-                {% endif %}
+            <div class="agenda-day-events">
+              {% for occ in day_group.list %}
+                <a href="{% url 'events:detail' occ.event.pk %}"
+                   class="agenda-event-chip{% if occ.is_past %} agenda-event-chip--past{% endif %}{% if not occ.event.is_public %} agenda-event-chip--private{% endif %}"
+                   title="{{ occ.event.title }}{% if occ.event.place %} · {{ occ.event.place }}{% endif %}">
+                  <i class="fas fa-{% if occ.event.frequency == 'once' %}calendar-day{% else %}repeat{% endif %} fa-fw agenda-event-icon"></i>
+                  <span class="agenda-event-time">{{ occ.date|date:"H:i" }}</span>
+                  <span class="agenda-event-title">{{ occ.event.title }}</span>
+                  {% if occ.event.place %}
+                    <span class="agenda-event-place">
+                      <i class="fas fa-map-marker-alt fa-fw"></i> {{ occ.event.place }}
+                    </span>
+                  {% endif %}
+                  {% if not occ.event.is_public %}
+                    <i class="fas fa-lock fa-fw agenda-event-private"
+                       title="{% trans 'Visible only to logged-in users' %}"></i>
+                  {% endif %}
+                </a>
+              {% endfor %}
             </div>
-        {% endif %}
-    </div>
-</div>
+          </section>
+        {% endfor %}
+      {% endwith %}
+    {% endfor %}
+  </div>
+
+  {# ── GRID (alternative view) ── #}
+  <div class="proposals-list" data-view-container data-view-only="grid" style="display:none;">
+    {% for occ in occurrences %}
+      <div data-date="{{ occ.date|date:'Y-m-d' }}">
+        {% include 'events/_event_card.html' %}
+      </div>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="events-empty">
+    <i class="fas fa-calendar-xmark fa-2x"></i>
+    <div class="events-empty-title">{% trans "No events in the selected horizon" %}</div>
+    {% if user.is_authenticated %}
+      <a href="{% url 'events:create' %}" class="toolbar-add-btn">
+        <i class="fas fa-plus"></i> {% trans 'Add the first event' %}
+      </a>
+    {% endif %}
+  </div>
+{% endif %}
+
+{# ── JS: view switching, drawer, day-click filter+highlight+hash, lazy chunk loading ── #}
+<script>
+(function(){
+  var listOnlyEls = document.querySelectorAll('[data-view-only="list"]');
+  var gridEl     = document.querySelector('[data-view-only="grid"]');
+  var triggerBtn = document.getElementById('cal-trigger');
+  var triggerLbl = document.getElementById('cal-trigger-label');
+  var drawer     = document.getElementById('events-drawer');
+  var calUrl          = '{% url "events:calendar" %}';
+  var agendaChunkUrl  = '{% url "events:agenda_chunk" %}';
+  var activeFromDate  = null;
+  var lastDayClick    = { day: null, time: 0 };
+  var loadedMonths    = new Set();
+  var pendingFetch    = null;
+
+  function showView(mode) {
+    if (mode !== 'list' && mode !== 'grid') mode = 'list';
+    listOnlyEls.forEach(function(el){ el.style.display = (mode === 'list') ? '' : 'none'; });
+    if (gridEl) gridEl.style.display = (mode === 'grid') ? '' : 'none';
+  }
+
+  function highlightSelectedDay(iso) {
+    document.querySelectorAll('.cal-day-link.cal-day-link--selected').forEach(function(el){
+      el.classList.remove('cal-day-link--selected');
+    });
+    document.querySelectorAll('[data-day="' + iso + '"]').forEach(function(el){
+      el.classList.add('cal-day-link--selected');
+    });
+  }
+
+  // Hide everything before `iso` (YYYY-MM-DD), reveal everything from `iso` onwards.
+  function setFromDate(iso) {
+    document.querySelectorAll('.agenda-day').forEach(function(d){
+      d.style.display = d.id.replace('day-','') < iso ? 'none' : '';
+    });
+    document.querySelectorAll('[data-month-label]').forEach(function(h){
+      var month = h.dataset.monthLabel;
+      var anyVisible = false;
+      document.querySelectorAll('.agenda-day[id^="day-' + month + '"]').forEach(function(d){
+        if (d.style.display !== 'none') anyVisible = true;
+      });
+      h.style.display = anyVisible ? '' : 'none';
+    });
+  }
+
+  function setGridFromDate(iso) {
+    document.querySelectorAll('[data-view-only="grid"] [data-date]').forEach(function(el){
+      el.style.display = el.dataset.date < iso ? 'none' : '';
+    });
+  }
+
+  function insertChunkIntoAgenda(wrapper) {
+    var agenda = document.querySelector('.events-agenda');
+    if (!agenda) return;
+    var firstHeader = wrapper.querySelector('[data-month-label]');
+    if (!firstHeader) return;
+    var firstNewMonth = firstHeader.dataset.monthLabel;
+
+    var insertBefore = null;
+    agenda.querySelectorAll('[data-month-label]').forEach(function(h) {
+      if (!insertBefore && h.dataset.monthLabel > firstNewMonth) insertBefore = h;
+    });
+
+    Array.from(wrapper.childNodes).forEach(function(node) {
+      if (node.nodeType === 1 && node.dataset && 'chunkGrid' in node.dataset) return;
+      if (insertBefore) agenda.insertBefore(node.cloneNode(true), insertBefore);
+      else agenda.appendChild(node.cloneNode(true));
+    });
+
+    wrapper.querySelectorAll('[data-month-label]').forEach(function(h) {
+      loadedMonths.add(h.dataset.monthLabel);
+    });
+  }
+
+  function insertChunkIntoGrid(wrapper) {
+    if (!gridEl) return;
+    var gridChunk = wrapper.querySelector('[data-chunk-grid]');
+    if (!gridChunk) return;
+
+    var items = [];
+    gridEl.querySelectorAll(':scope > [data-date]').forEach(function(el) {
+      items.push({ date: el.dataset.date, el: el });
+    });
+    gridChunk.querySelectorAll('[data-date]').forEach(function(el) {
+      items.push({ date: el.dataset.date, el: el.cloneNode(true) });
+    });
+    items.sort(function(a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+
+    gridEl.innerHTML = '';
+    items.forEach(function(item) { gridEl.appendChild(item.el); });
+  }
+
+  function loadChunk(month) {
+    if (pendingFetch) { try { pendingFetch.abort(); } catch(e) {} }
+    var ctrl = window.AbortController ? new AbortController() : null;
+    pendingFetch = ctrl;
+    var opts = { headers: { 'X-Requested-With': 'XMLHttpRequest' } };
+    if (ctrl) opts.signal = ctrl.signal;
+
+    return fetch(agendaChunkUrl + '?month=' + month, opts)
+      .then(function(r) { return r.text(); })
+      .then(function(html) {
+        pendingFetch = null;
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        insertChunkIntoAgenda(wrapper);
+        insertChunkIntoGrid(wrapper);
+      })
+      .catch(function(e) {
+        if (e.name !== 'AbortError') console.error('agenda chunk load failed', e);
+      });
+  }
+
+  function jumpToDay(iso) {
+    activeFromDate = iso;
+    highlightSelectedDay(iso);
+
+    if (document.getElementById('day-' + iso)) {
+      setFromDate(iso);
+      setGridFromDate(iso);
+      history.replaceState(null, '', '#day-' + iso);
+    } else {
+      loadChunk(iso.slice(0, 7)).then(function() {
+        setFromDate(iso);
+        setGridFromDate(iso);
+        history.replaceState(null, '', '#day-' + iso);
+      });
+    }
+  }
+
+  function bindCalLinks(rootEl) {
+    rootEl.querySelectorAll('.cal-nav').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.preventDefault();
+        loadMonth(btn.dataset.month);
+      });
+    });
+    rootEl.querySelectorAll('[data-day]').forEach(function(a){
+      a.addEventListener('click', function(e){
+        e.preventDefault();
+        var now = Date.now();
+        var isDoubleClick = a.dataset.day === lastDayClick.day && (now - lastDayClick.time) < 400;
+        lastDayClick = { day: a.dataset.day, time: now };
+        jumpToDay(a.dataset.day);
+        if (isDoubleClick && triggerBtn && triggerBtn.getAttribute('aria-expanded') === 'true') toggleDrawer();
+      });
+    });
+  }
+
+  function updateTriggerLabel() {
+    if (!drawer || !triggerLbl) return;
+    var titleEl = drawer.querySelector('.cal-month-title');
+    if (titleEl) {
+      triggerLbl.textContent = titleEl.textContent.replace(/\s+/g, ' ').trim();
+    }
+  }
+
+  function loadMonth(month) {
+    if (!drawer) return;
+    drawer.classList.add('agenda-month-drawer--loading');
+    fetch(calUrl + (month ? '?month=' + month : ''), {headers:{'X-Requested-With':'XMLHttpRequest'}})
+      .then(function(r){ return r.text(); })
+      .then(function(html){
+        drawer.innerHTML = html;
+        drawer.classList.remove('agenda-month-drawer--loading');
+        bindCalLinks(drawer);
+        updateTriggerLabel();
+      });
+  }
+
+  function toggleDrawer() {
+    if (!drawer || !triggerBtn) return;
+    var isOpen = triggerBtn.getAttribute('aria-expanded') === 'true';
+    triggerBtn.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+    drawer.classList.toggle('agenda-month-drawer--open', !isOpen);
+  }
+
+  function scrollToFirstVisible() {
+    var visible = document.querySelector('.agenda-day:not([style*="display: none"])');
+    if (visible) visible.scrollIntoView({block:'start', behavior:'auto'});
+  }
+
+  document.addEventListener('DOMContentLoaded', function(){
+    var prefs = (window.PagePrefs && PagePrefs.read()) || {};
+    var view = prefs.view;
+    if (view !== 'list' && view !== 'grid') {
+      view = 'list';
+      if (window.PagePrefs) PagePrefs.write({view: 'list'});
+    }
+    showView(view);
+
+    document.querySelectorAll('[data-view]').forEach(function(b){
+      b.addEventListener('click', function(){
+        showView(b.dataset.view);
+        if (b.dataset.view === 'grid' && activeFromDate) setGridFromDate(activeFromDate);
+      });
+    });
+
+    document.querySelectorAll('.events-agenda [data-month-label]').forEach(function(h) {
+      loadedMonths.add(h.dataset.monthLabel);
+    });
+
+    if (triggerBtn) triggerBtn.addEventListener('click', toggleDrawer);
+    if (drawer) bindCalLinks(drawer);
+
+    var hash = window.location.hash;
+    if (hash.indexOf('#day-') === 0) {
+      var iso = hash.slice(5);
+      if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) {
+        activeFromDate = iso;
+        setFromDate(iso);
+        setGridFromDate(iso);
+        highlightSelectedDay(iso);
+      }
+    }
+    if (!activeFromDate) {
+      var t = new Date();
+      activeFromDate = t.getFullYear() + '-' + String(t.getMonth()+1).padStart(2,'0') + '-' + String(t.getDate()).padStart(2,'0');
+      setGridFromDate(activeFromDate);
+    }
+
+    document.addEventListener('click', function(e){
+      if (!drawer || triggerBtn.getAttribute('aria-expanded') !== 'true') return;
+      if (!drawer.contains(e.target) && !triggerBtn.contains(e.target)) toggleDrawer();
+    });
+
+    scrollToFirstVisible();
+  });
+})();
+</script>
+
 {% endblock %}

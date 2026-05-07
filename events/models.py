@@ -170,6 +170,100 @@ class Event(models.Model):
             return False
         return self.get_next_occurrence() is not None
 
+    def get_occurrences(self, range_start, range_end):
+        """Return all occurrences of this event between range_start and range_end (inclusive).
+
+        range_start and range_end are timezone-aware datetimes. Used to expand
+        recurring events into individual dated entries for list/calendar views.
+        """
+        if range_end < range_start:
+            return []
+
+        if self.frequency == 'once':
+            if range_start <= self.start_date <= range_end:
+                return [self.start_date]
+            return []
+
+        if self.start_date > range_end:
+            return []
+
+        occurrences = []
+
+        if self.frequency == 'daily':
+            current = self.start_date
+            if current < range_start:
+                days_diff = (range_start - current).days
+                current = current + timedelta(days=days_diff)
+            safety = 0
+            while current <= range_end and safety < 5000:
+                if current >= range_start:
+                    occurrences.append(current)
+                current += timedelta(days=1)
+                safety += 1
+
+        elif self.frequency == 'weekly':
+            current = self.start_date
+            if current < range_start:
+                weeks_diff = (range_start - current).days // 7
+                current = current + timedelta(weeks=weeks_diff)
+            safety = 0
+            while current <= range_end and safety < 1000:
+                if current >= range_start:
+                    occurrences.append(current)
+                current += timedelta(weeks=1)
+                safety += 1
+
+        elif self.frequency == 'monthly':
+            current = self.start_date
+            safety = 0
+            while current <= range_end and safety < 1200:
+                if current >= range_start:
+                    occurrences.append(current)
+                if current.month == 12:
+                    current = current.replace(year=current.year + 1, month=1)
+                else:
+                    current = current.replace(month=current.month + 1)
+                if timezone.is_naive(current):
+                    current = timezone.make_aware(current)
+                safety += 1
+
+        elif self.frequency == 'monthly_ordinal':
+            if self.monthly_ordinal is None or self.monthly_weekday is None:
+                return []
+            iter_from = self.start_date if self.start_date > range_start else range_start
+            year = iter_from.year
+            month = iter_from.month
+            safety = 0
+            while safety < 1200:
+                occ = self._get_nth_weekday_of_month(year, month, self.monthly_weekday, self.monthly_ordinal)
+                if occ is None:
+                    pass
+                elif occ > range_end:
+                    break
+                elif occ >= range_start and occ >= self.start_date:
+                    occurrences.append(occ)
+                if month == 12:
+                    month = 1
+                    year += 1
+                else:
+                    month += 1
+                if year > range_end.year + 1:
+                    break
+                safety += 1
+
+        elif self.frequency == 'yearly':
+            current = self.start_date
+            safety = 0
+            while current <= range_end and safety < 100:
+                if current >= range_start:
+                    occurrences.append(current)
+                current = current.replace(year=current.year + 1)
+                if timezone.is_naive(current):
+                    current = timezone.make_aware(current)
+                safety += 1
+
+        return occurrences
+
     @property
     def google_calendar_url(self):
         """
