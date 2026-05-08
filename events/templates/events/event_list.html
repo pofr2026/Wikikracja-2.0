@@ -222,7 +222,7 @@
     activeFromDate = iso;
     highlightSelectedDay(iso);
 
-    if (document.getElementById('day-' + iso)) {
+    if (document.getElementById('day-' + iso) || loadedMonths.has(iso.slice(0, 7))) {
       setFromDate(iso);
       setGridFromDate(iso);
       history.replaceState(null, '', '#day-' + iso);
@@ -282,11 +282,6 @@
     drawer.classList.toggle('agenda-month-drawer--open', !isOpen);
   }
 
-  function scrollToFirstVisible() {
-    var visible = document.querySelector('.agenda-day:not([style*="display: none"])');
-    if (visible) visible.scrollIntoView({block:'start', behavior:'auto'});
-  }
-
   document.addEventListener('DOMContentLoaded', function(){
     var prefs = (window.PagePrefs && PagePrefs.read()) || {};
     var view = prefs.view;
@@ -330,8 +325,6 @@
       if (!drawer || triggerBtn.getAttribute('aria-expanded') !== 'true') return;
       if (!drawer.contains(e.target) && !triggerBtn.contains(e.target)) toggleDrawer();
     });
-
-    scrollToFirstVisible();
   });
 })();
 </script>

@@ -24,11 +24,13 @@ def build_calendar_grid(year, month, events):
                 events_by_day.setdefault(sd.day, []).append(event)
         elif freq == 'daily':
             for d in range(1, days_in_month + 1):
-                events_by_day.setdefault(d, []).append(event)
+                if date(year, month, d) >= sd.date():
+                    events_by_day.setdefault(d, []).append(event)
         elif freq == 'weekly':
             target_weekday = sd.weekday()
             for d in range(1, days_in_month + 1):
-                if date(year, month, d).weekday() == target_weekday:
+                occ = date(year, month, d)
+                if occ.weekday() == target_weekday and occ >= sd.date():
                     events_by_day.setdefault(d, []).append(event)
         elif freq == 'monthly':
             if sd.day <= days_in_month:
