@@ -64,6 +64,7 @@ COPY --from=builder /app/categories /app/categories
 COPY --from=builder /app/zzz /app/zzz
 COPY --from=builder /app/templates /app/templates
 COPY --from=builder /app/locale /app/locale
+COPY --from=builder /app/pyproject.toml /app/
 
 EXPOSE 8000
 
