@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.3.1 (2026-05-09)
+
+### Bug Fixes
+
+- **settings**: Read version from pyproject.toml instead of installed package metadata
+  ([`475afca`](https://github.com/soma115/Wikikracja/commit/475afcae3e925f7c1c82b26ea502128b3e1ae10e))
+
+
 ## v1.3.0 (2026-05-09)
 
 ### Bug Fixes
