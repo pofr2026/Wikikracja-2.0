@@ -71,4 +71,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD python -c "import django; django.setup(); from django.http import HttpResponse; print('OK')" || exit 1
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py update_site && python manage.py runserver 0.0.0.0:8000"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py update_site && daphne -b 0.0.0.0 -p 8000 zzz.routing:application"]

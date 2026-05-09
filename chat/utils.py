@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import inspect
 import logging
@@ -222,10 +223,13 @@ def send_message_to_room(room_title, message_text, sender=None, anonymous=True):
         )
 
         # Send the message to the room group
-        async_to_sync(channel_layer.group_send)(f"room-{room.id}", {
-            "type": "chat.message",
-            **message_data
-        })
+        try:
+            async_to_sync(channel_layer.group_send)(f"room-{room.id}", {
+                "type": "chat.message",
+                **message_data
+            })
+        except Exception as e:
+            log.warning(f"Could not push chat.message to channel layer for room {room.id}: {e}")
 
         # Send browser notification to each online user who should receive it
         # Batch fetch muted user IDs to avoid N+1 queries
@@ -240,24 +244,30 @@ def send_message_to_room(room_title, message_text, sender=None, anonymous=True):
             if user.id in ChatConsumer.online_registry._reg:
                 consumer = ChatConsumer.online_registry.get_consumer(user)
 
-                # Send notification in the same format as regular chat notifications
-                async_to_sync(consumer.send_json)({
-                    "notification": {
-                        'title': "Anonymous User" if anonymous else (sender.username if sender else "System"),
-                        'body': message_text[:100],
-                        'link': None,
-                        'room_id': room.id
-                    }
-                })
+                try:
+                    # Send notification in the same format as regular chat notifications
+                    async_to_sync(consumer.send_json)({
+                        "notification": {
+                            'title': "Anonymous User" if anonymous else (sender.username if sender else "System"),
+                            'body': message_text[:100],
+                            'link': None,
+                            'room_id': room.id
+                        }
+                    })
 
-                # Also trigger the onRoomUnsee function to highlight the chat link
-                async_to_sync(consumer.send_json)({
-                    "unsee_room": room.id
-                })
+                    # Also trigger the onRoomUnsee function to highlight the chat link
+                    async_to_sync(consumer.send_json)({
+                        "unsee_room": room.id
+                    })
+                except Exception as e:
+                    log.warning(f"Could not push WebSocket notification to user {user.id}: {e}")
 
         return message
     except Room.DoesNotExist:
         log.error(f"Room '{room_title}' not found")
+        return None
+    except asyncio.CancelledError:
+        log.warning(f"send_message_to_room cancelled for room '{room_title}' (async context interrupted)")
         return None
     except Exception as e:
         log.error(f"Error sending message to room '{room_title}': {str(e)}")
