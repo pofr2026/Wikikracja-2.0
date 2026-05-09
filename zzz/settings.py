@@ -1,12 +1,16 @@
-import importlib.metadata
 import json
 import logging
 import mimetypes
+import tomllib
+from pathlib import Path
 from os import getenv, path
 
 try:
-    APP_VERSION = importlib.metadata.version("wikikracja")
-except importlib.metadata.PackageNotFoundError:
+    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        pyproject = tomllib.load(f)
+        APP_VERSION = pyproject["project"]["version"]
+except (FileNotFoundError, KeyError, Exception):
     APP_VERSION = "0.95.0-dev"
 
 from dotenv import load_dotenv
