@@ -228,7 +228,6 @@ INSTALLED_APPS = [
     'corsheaders',  # https://stackoverflow.com/questions/22355540/access-control-allow-origin-in-django-app
     'obywatele',
     'glosowania',
-    'elibrary',
     'bookkeeping',
     'chat',
     'home',

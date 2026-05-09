@@ -16,8 +16,7 @@ A comprehensive community platform with the following modules:
 - 🗳️ **Voting** - Democratic referendum system with Zero Knowledge Proof for anonymous voting
 - 👥 **Citizens** - User management and authentication with django-allauth
 - 💬 **Chat** - Real-time communication using Django Channels and WebSockets
-- 📚 **eLibrary** - Document management and sharing
-- 📋 **Board** - Announcements and news board
+-  **Board** - Announcements and news board
 - 💰 **Bookkeeping** - Financial transparency and tracking
 - 📅 **Events** - Event management and scheduling
 - ✅ **Tasks** - Collaborative task management with voting-based prioritization

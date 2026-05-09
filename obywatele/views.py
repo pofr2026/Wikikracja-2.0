@@ -29,7 +29,6 @@ from django_tables2.views import SingleTableMixin
 
 from bookkeeping.models import Transaction
 from chat.models import Message, Room
-from elibrary.models import Book
 from events.models import Event
 from glosowania.models import Argument, Decyzja, KtoJuzGlosowal, ZebranePodpisy
 from obywatele.filters import UzytkownikFilter
@@ -1161,16 +1160,6 @@ def citizen_zalozono(request: HttpRequest, pk: int):
             'label': _('Voting proposal'),
             'url': reverse('glosowania:details', kwargs={
                 'pk': d.pk
-            }),
-        })
-
-    for b in Book.objects.filter(uploader=target_user).order_by('-uploaded'):
-        items.append({
-            'title': b.title or '—',
-            'ts': b.uploaded,
-            'label': _('Dokument (biblioteka)'),
-            'url': reverse('elibrary:book-detail', kwargs={
-                'pk': b.pk
             }),
         })
 

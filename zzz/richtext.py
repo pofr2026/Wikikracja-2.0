@@ -3,7 +3,7 @@ Shared rich-text sanitization for user-generated content.
 
 Single source of truth for which HTML tags users may submit and how URLs
 are auto-linkified. Used by chat (consumers, services) and by the
-`|richtext` template filter for tasks/glosowania/elibrary/events.
+`|richtext` template filter for tasks/glosowania/events.
 """
 
 import re

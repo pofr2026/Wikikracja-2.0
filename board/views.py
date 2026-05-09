@@ -6,7 +6,6 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
 from categories.views import CategoryAPIBase, CategoryDeleteAPI, CategoryEditAPI, CategoryReorderAPI
-from elibrary.views import invalidate_elibrary_cache
 
 from .forms import PostForm
 from .models import Post, PostAttachment, PostCategory
@@ -18,14 +17,14 @@ class PostCategoryAPI(CategoryAPIBase):
     order_field = "priority"
 
     def after_write(self):
-        invalidate_elibrary_cache()
+        pass
 
 
 class PostCategoryEditAPI(CategoryEditAPI):
     model = PostCategory
 
     def after_write(self):
-        invalidate_elibrary_cache()
+        pass
 
 
 class PostCategoryDeleteAPI(CategoryDeleteAPI):
@@ -34,7 +33,7 @@ class PostCategoryDeleteAPI(CategoryDeleteAPI):
     block_if_in_use = True
 
     def after_write(self):
-        invalidate_elibrary_cache()
+        pass
 
 
 class PostCategoryReorderAPI(CategoryReorderAPI):
@@ -42,7 +41,7 @@ class PostCategoryReorderAPI(CategoryReorderAPI):
     order_field = "priority"
 
     def after_write(self):
-        invalidate_elibrary_cache()
+        pass
 
 
 def board(request: HttpRequest) -> HttpResponse:

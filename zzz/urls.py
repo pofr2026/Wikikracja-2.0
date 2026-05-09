@@ -24,7 +24,6 @@ urlpatterns: List[URLPattern | URLResolver] = [
     path('captcha/', include('captcha.urls')),
     path('glosowania/', include('glosowania.urls', namespace='glosowania')),
     path('obywatele/', include('obywatele.urls', namespace='obywatele')),
-    path('elibrary/', include('elibrary.urls', namespace='elibrary')),
     path('chat/', include('chat.urls', namespace='chat')),
     path('bookkeeping/', include('bookkeeping.urls', namespace='bookkeeping')),
     path('board/', include('board.urls', namespace='board')),

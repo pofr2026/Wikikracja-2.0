@@ -895,33 +895,23 @@ hr {
 [data-theme="official"] .sidebar-version-link:hover {
   color: rgba(232, 234, 240, .8) !important;
 }
+
+/* ── board view helpers ── */
 /* ── domyślny widok: lista ── */
-.elibrary-posts-grid {
+.board-posts-grid {
   display: none;
 }
-.elibrary-posts-list {
-  display: block;
-}
-.elibrary-books-grid {
-  display: none;
-}
-.elibrary-books-list {
+.board-posts-list {
   display: block;
 }
 /* ── widok siatki ── */
-.view-grid .elibrary-posts-grid {
+.view-grid .board-posts-grid {
   display: block;
 }
-.view-grid .elibrary-posts-list {
+.view-grid .board-posts-list {
   display: none;
 }
-.view-grid .elibrary-books-grid {
-  display: block;
-}
-.view-grid .elibrary-books-list {
-  display: none;
-}
-.elibrary-post-row:hover {
+.board-post-row:hover {
   background: var(--accent-muted);
 }
 

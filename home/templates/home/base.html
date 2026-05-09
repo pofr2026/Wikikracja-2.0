@@ -105,15 +105,6 @@
         </li>
 
         <li class="nav-item">
-          <a href="{% url 'elibrary:book_list' %}"
-             title="{% trans 'Knowledge Base' %}"
-             class="{% if request.resolver_match.namespace == 'elibrary' %}active{% endif %}">
-            <i class="fas fa-fw fa-book nav-icon"></i>
-            <span class="nav-text">{% trans "Knowledge Base" %}</span>
-          </a>
-        </li>
-        
-        <li class="nav-item">
           <a href="{% url 'board:start' %}"
               title="{% trans 'Documents' %}"
               class="{% if request.resolver_match.namespace == 'board' %}active{% endif %}">
@@ -210,7 +201,6 @@
           {% elif request.resolver_match.namespace == 'board' %}{% trans "Documents" %}
           {% elif request.resolver_match.namespace == 'tasks' %}{% trans "Tasks" %}
           {% elif request.resolver_match.namespace == 'events' %}{% trans "Calendar" %}
-          {% elif request.resolver_match.namespace == 'elibrary' %}{% trans "Library" %}
           {% elif request.resolver_match.namespace == 'obywatele' %}{% trans "Citizens" %}
           {% elif request.resolver_match.namespace == 'bookkeeping' %}{% trans "Bookkeeping" %}
           {% elif request.resolver_match.namespace == 'chat' %}{% trans "Chat" %}

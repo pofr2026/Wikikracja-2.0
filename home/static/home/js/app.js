@@ -223,7 +223,6 @@ document.addEventListener('DOMContentLoaded', function() {
         var migrations = {
             'tasks':      [{ k: 'tasks_view',     p: 'view' }, { k: 'tasks_tab', p: 'tab' }],
             'glosowania': [{ k: 'proposals_view', p: 'view' }],
-            'elibrary':   [{ k: 'elibrary_view',  p: 'view' }],
             'board':      [{ k: 'board_view',     p: 'view' }],
             'activity':   [{ k: 'activity_view',  p: 'view' }]
         };
@@ -252,7 +251,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 2. Zapisz aktualny URL (gdy ma params — pokrywa reload, klik linka sortowania)
         if (window.location.search) saveCurrentFilters();
 
-        // 3. Patch history.pushState — łapie zmiany URL przez JS (kategoria filter w tasks/board/elibrary)
+        // 3. Patch history.pushState — łapie zmiany URL przez JS (kategoria filter w tasks/board)
         var origPush = history.pushState;
         history.pushState = function() {
             var ret = origPush.apply(this, arguments);

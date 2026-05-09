@@ -96,7 +96,7 @@ def main():
         run([sys.executable, "-m", "pip", "install", "-r", "requirements.txt"])
 
     manage = [sys.executable, "manage.py"]
-    apps = ["obywatele", "glosowania", "elibrary", "chat", "home", "bookkeeping", "board", "events", "tasks"]
+    apps = ["obywatele", "glosowania", "chat", "home", "bookkeeping", "board", "events", "tasks"]
     if args.full:
         for app in apps:
             run(manage + ["makemigrations", app])

@@ -3,7 +3,6 @@ from django.dispatch import receiver
 
 from board.models import Post
 from chat.models import Message
-from elibrary.models import Book
 from events.models import Event
 from glosowania.models import Argument, Decyzja, KtoJuzGlosowal
 from obywatele.models import CitizenActivity
@@ -40,7 +39,7 @@ def onboarding_step_voted(sender, instance, created, **kwargs):
 
 
 # Feed cache invalidation — clear global feed cache when any feed-related model changes
-_FEED_SIGNAL_SENDERS = (Post, Task, Book, Event, Decyzja, CitizenActivity, Message)
+_FEED_SIGNAL_SENDERS = (Post, Task, Event, Decyzja, CitizenActivity, Message)
 
 for _sender in _FEED_SIGNAL_SENDERS:
 
@@ -49,13 +48,3 @@ for _sender in _FEED_SIGNAL_SENDERS:
     def _invalidate_feed_cache(sender, **kwargs):
         from .views import invalidate_feed_cache
         invalidate_feed_cache()
-
-
-# Elibrary cache invalidation
-@receiver(post_save, sender=Post)
-@receiver(post_delete, sender=Post)
-@receiver(post_save, sender=Book)
-@receiver(post_delete, sender=Book)
-def _invalidate_elibrary_cache(sender, **kwargs):
-    from elibrary.views import invalidate_elibrary_cache
-    invalidate_elibrary_cache()

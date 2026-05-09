@@ -95,9 +95,9 @@
 
   <div class="card-body p-2">
     {# lista #}
-    <div class="elibrary-posts-list">
+    <div class="board-posts-list">
       {% for post in group.posts %}
-      <a href="{% url 'board:view_post' post.pk %}" class="elibrary-post-row post-row-link">
+      <a href="{% url 'board:view_post' post.pk %}" class="board-post-row post-row-link">
         {% if post.featured_image %}
         <img src="{{ post.featured_image.url }}" alt="{{ post.title }}" class="post-featured-thumb flex-shrink-0">
         {% endif %}
@@ -124,7 +124,7 @@
     </div>
 
     {# siatka #}
-    <div class="elibrary-posts-grid">
+    <div class="board-posts-grid">
       <div class="row g-2">
         {% for post in group.posts %}
         <div class="col-12 col-sm-6 col-lg-3">

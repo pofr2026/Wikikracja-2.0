@@ -23,7 +23,6 @@ from board.models import Post, PostCategory
 from bookkeeping.models import Transaction
 from chat.models import Message, Room
 from chat.services import CHAT_UNREAD_CACHE_KEY, get_unread_count_for_user
-from elibrary.models import Book
 from events.models import Event
 from glosowania.models import Argument as DecyzjaArgument
 from glosowania.models import Decyzja, KtoJuzGlosowal
@@ -39,7 +38,6 @@ log = logging.getLogger(__name__)
 _CONTENT_TYPE_MAP = {
     'post': ReadStatus.ContentType.POST,
     'task': ReadStatus.ContentType.TASK,
-    'book': ReadStatus.ContentType.BOOK,
     'event': ReadStatus.ContentType.EVENT,
     'message': ReadStatus.ContentType.MESSAGE,
     'room_messages': ReadStatus.ContentType.MESSAGE,
@@ -250,19 +248,6 @@ def _generate_feed_raw():
             'timestamp': task.updated_at,
             'url': f"/tasks/{task.pk}/",
             'object_id': task.pk,
-        })
-
-    books = Book.objects.filter(uploaded__gte=timezone.now() - td(days=30)).select_related('uploader').order_by('-uploaded')
-    for book in books:
-        clean_abstract = strip_tags(book.abstract) if book.abstract else ''
-        feed_items.append({
-            'content_type': 'book',
-            'title': book.title or _('Untitled Book'),
-            'description': clean_abstract[:125] + '...' if clean_abstract and len(clean_abstract) > 125 else clean_abstract,
-            'author': book.uploader,
-            'timestamp': book.uploaded,
-            'url': f"/elibrary/{book.pk}/detail/",
-            'object_id': book.pk,
         })
 
     events = Event.objects.filter(is_active=True).select_related()
@@ -725,19 +710,6 @@ def global_search(request: HttpRequest):
                     'title': obj.title,
                     'description': (strip_tags(obj.description) or '')[:120],
                     'url': f'/events/{obj.pk}/',
-                })
-
-        # ── Library ──────────────────────────────────────────────────
-        if 'book' in active_cats:
-            books = Book.objects.filter(Q(title__icontains=query) | Q(author__icontains=query) | Q(abstract__icontains=query)).distinct()[:10]
-            for obj in books:
-                results.append({
-                    'cat': 'book',
-                    'type': _('Library'),
-                    'type_color': 'info',
-                    'title': obj.title or str(_('Untitled')),
-                    'description': (strip_tags(obj.abstract) or '')[:120],
-                    'url': f'/elibrary/{obj.pk}/detail/',
                 })
 
         # ── Citizens ─────────────────────────────────────────────────
