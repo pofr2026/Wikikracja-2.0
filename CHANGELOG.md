@@ -1,6 +1,263 @@
 # CHANGELOG
 
 
+## v1.3.0 (2026-05-09)
+
+### Bug Fixes
+
+- Build/merge duplicate translations
+  ([`cead3ed`](https://github.com/soma115/Wikikracja/commit/cead3ed05f4b0db1f722966b1adcde3e54082275))
+
+- **chat**: Declare glosowania dependency in 0017_room_founder migration
+  ([`33af2af`](https://github.com/soma115/Wikikracja/commit/33af2af2d688b6c4d96ced85cf6b43b37f0fb95e))
+
+What was broken --------------- The data migration chat/0017_room_founder.py calls Decyzja =
+  apps.get_model('glosowania', 'Decyzja') to backfill the `founder` field for referendum chat rooms
+  — but its `dependencies` list only mentioned chat/0016 and the User model. It never declared the
+  glosowania app.
+
+Why that's a bug ---------------- Django decides migration ordering ONLY from the explicit
+  `dependencies` list — it does not infer dependencies from code inside RunPython functions. Without
+  the declaration, Django was free to plan chat/0017 before any glosowania migration had run. On a
+  fresh database (tests, CI, fresh clone) the Decyzja model didn't exist yet at that point, so
+  apps.get_model('glosowania', 'Decyzja') raised: LookupError: No installed app with label
+  'glosowania'.
+
+This never surfaced on existing databases because chat/0017 was already recorded in
+  django_migrations there — Django skips it on subsequent runs and the buggy code path simply never
+  executes again.
+
+Fix --- Add ('glosowania', '0013_auto_20260408_1446') to the dependencies. That's the migration that
+  introduces Decyzja.chat_room, which is the exact field the data migration queries. Now Django
+  guarantees the glosowania schema exists before chat/0017 runs.
+
+Safety ------ Zero risk for already-migrated databases: Django respects dependencies only when
+  planning what to run next, not when re-checking what is already applied. Production and dev DBs
+  continue as-is; only fresh test/CI builds change behavior — they now succeed instead of crashing.
+
+- **chat**: Eliminate duplicate sends and unblock broadcast on push notifications
+  ([`165f4c4`](https://github.com/soma115/Wikikracja/commit/165f4c4fd0b2898c058c5ba4af3be629046ebf8c))
+
+- asyncio.create_task() for push notifications in consumers.py so they no longer block the
+  group_send broadcast (was causing 1-3s delay) - Disable send button immediately on submit,
+  re-enable when own message returns via broadcast; 5s timeout as safety net (chat.js) - Same lock
+  pattern in embedded chat (chat-embedded.js)
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat**: Expandable hint — inline bottom-right, horizontal gradient
+  ([`78f1bfe`](https://github.com/soma115/Wikikracja/commit/78f1bfe6ab7399bfacc032822ab22c3110afc081))
+
+Replace full-width vertical overlay with bottom-right inline hint that sits on the last visible line
+  (Facebook-style). Layered horizontal gradients ensure solid background even when --expandable-bg
+  is semi-transparent (own messages use rgba accent-muted).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Open_dm creates DM room on demand
+  ([`406ab96`](https://github.com/soma115/Wikikracja/commit/406ab962037f3b6f50ebb8d85d98cea20933d9a6))
+
+Clicking the chat icon for a citizen on /obywatele/ used to silently redirect to the chat list when
+  no 1:1 room existed yet — relying solely on the user_accepted signal to materialize all pairs.
+  open_dm now creates the missing room on the fly, reactivates archived ones, and always redirects
+  with #room_id so the chat page opens the conversation.
+
+- **events**: Calendar dots respect start_date; prevent chunk overlap in grid
+  ([`9caf588`](https://github.com/soma115/Wikikracja/commit/9caf588d9e19455b37d67d1f700d470baf1944f6))
+
+- build_calendar_grid: daily/weekly events now respect start_date — calendar no longer shows dots on
+  days before the event begins - jumpToDay: check loadedMonths before fetching a chunk to avoid
+  re-loading months already in the initial 90-day window (prevented doubled cards in grid view) -
+  Remove scrollToFirstVisible — display:none hides past content so no scroll is needed; native
+  anchor scroll caused off-by-one in viewport
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **home**: Show 5 upcoming events instead of 3 on dashboard
+  ([`0c859c9`](https://github.com/soma115/Wikikracja/commit/0c859c97106dd2e744122457dd7fe42a04f63b4e))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **tasks**: Capture-phase click listener prevents card collapse on vote
+  ([`0d147fd`](https://github.com/soma115/Wikikracja/commit/0d147fdaf60a66dbbf834e412327d142f06d144f))
+
+Replace submit-event delegation with capture-phase click listener
+  (document.addEventListener('click', handler, true)) so the handler fires before card-body onclick
+  (navigate to detail) and card-header onclick (toggleCard) can execute. Also remove form.submit()
+  fallback in catch to avoid page reloads on AJAX errors.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Chores
+
+- **i18n**: Sync django.po z upstream (POT-Creation-Date + numery linii)
+  ([`fd16753`](https://github.com/soma115/Wikikracja/commit/fd167530c253d8d887a98bd02cd19c0f255ce8aa))
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+### Features
+
+- **categories**: Shared category system for board, tasks & elibrary
+  ([`2fe94cd`](https://github.com/soma115/Wikikracja/commit/2fe94cd2404caf19828615c0ef289b2a09ca624c))
+
+- New `categories` app: AbstractCategory base model + generic API views (CategoryAPIBase,
+  CategoryEditAPI, CategoryDeleteAPI, CategoryReorderAPI) - board: PostCategory inherits
+  AbstractCategory, category filter dropdown, manage modal with drag-and-drop reorder, cache
+  invalidation for elibrary - tasks: Category refactored onto shared base, reorder API added -
+  elibrary: category filter + manage modal reusing board categories - SortableJS (local, v1.15.6)
+  for DnD reorder; shared JS modules (category-manager.js, sortable-list.js) loaded globally from
+  base.html - Global design: inline styles extracted to CSS utility classes (.post-row-link,
+  .post-card-link, .cat-group-icon, .text-*-clamp, .avatar-*, .book-*, .text-meta, .text-author);
+  board/elibrary templates unified to card/card-header/card-body structure - Removed stale
+  postcategory_list/form/confirm_delete templates - Polish translations updated for all new UI
+  strings
+
+Co-Authored-By: Claude Haiku 4.5 <noreply@anthropic.com>
+
+- **chat**: Expandable long messages, raise message limit to 1000, project docs
+  ([`ec28ec0`](https://github.com/soma115/Wikikracja/commit/ec28ec0f24552f284693dd49aea935443f4f17ab))
+
+- Long chat messages are clipped at ~9 lines with "… pokaż więcej" hint; click anywhere to toggle
+  expand/collapse. markOverflow() detects when content actually overflows so short messages don't
+  show the hint. Note: hint overlay still has stacking issue — needs refinement (see TODO). - Raise
+  MESSAGE_MAX_LENGTH default from 500 to 1000 and surface it on /site-settings/. - Expose redis port
+  in docker-compose for local Django access. - Add CLAUDE.md with project working rules and design
+  system guide.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Live unread counter — Redis cache + WebSocket push + routing do pierwszej
+  nieprzeczytanej
+  ([`de7be32`](https://github.com/soma115/Wikikracja/commit/de7be32f3942e3840f50c14c8ca69c719d17340b))
+
+## Co zostało zmienione
+
+### Backend - **chat/services.py**: Redis cache dla licznika nieprzeczytanych pokoi per-user (klucz
+  `chat_unread:{user_id}`, TTL 5 min). Invalidacja przy `see_room` / `unsee_room`. Nowa metoda
+  `ChatRepository.get_unread_count()`. - **chat/consumers.py**: Każdy user dołącza do grupy
+  `user_{id}` przy WS connect. Po `room-seen` / `room-unseen` serwer pushuje zaktualizowany licznik
+  przez `{type: "chat.unread_count", count: N}` do tej grupy. Nowe metody: `push_unread_count()` i
+  handler `chat_unread_count(event)`. Przy WS connect serwer od razu wysyła bieżący licznik do
+  klienta. - **home/views.py**: `chat_unread_count` czytany z cache Redis, obliczany z DB tylko przy
+  cache miss. - **chat/views.py**: Nowy endpoint `GET /chat/api/unread-count/` → `{"count": N}` (z
+  cache, bez uderzania w DB przy każdym żądaniu). - **chat/urls.py**: Rejestracja nowego URL
+  `api/unread-count/`.
+
+### Frontend - **home/templates/home/home.html**: Badge czatu ma `id="chat-unread-badge"`. Link
+  prowadzi do `/chat/?unread=1` gdy są nieprzeczytane pokoje. Dodany JS: (a) `visibilitychange` —
+  odświeża licznik gdy użytkownik wraca do zakładki (fix bfcache / back-navigation), (b) lekkie
+  połączenie WS `/chat/stream/` — gdy serwer pushnie `unread_count`, badge aktualizuje się
+  natychmiast bez przeładowania strony. - **chat/static/chat/js/chat.js**: Przy starcie czatu z
+  `?unread=1` aktywowany jest filtr "Nieprzeczytane" i otwierany pierwszy nieprzeczytany pokój. URL
+  param czyszczony przez `history.replaceState`.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat/mobile**: Sticky toolbar, brak autofocusu, lista pokoi przy ?unread=1
+  ([`1b3d610`](https://github.com/soma115/Wikikracja/commit/1b3d610b130d195a4f4c69a0b8be99d4f0616483))
+
+- CSS: .room-list-controls sticky top:0 na mobile — toolbar z przyciskami (+ Pokój, Nieprzeczytane,
+  itp.) zostaje przyklejony u góry panelu listy pokoi nawet gdy użytkownik scrolluje w dół przez
+  długą listę - JS: messageInput.focus() przy wejściu do pokoju tylko na desktop (>= 768px) — na
+  mobile klawiatura nie otwiera się automatycznie, dopiero po kliknięciu w pole wpisywania - JS:
+  ?unread=1 z pulpitu — na desktop otwiera pierwszy nieprzeczytany pokój, na mobile zostaje na
+  liście pokoi z aktywnym filtrem "Nieprzeczytane" żeby użytkownik sam wybrał pokój
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **events**: Agenda/grid views with mini-calendar drawer and lazy chunk loading
+  ([`f68314c`](https://github.com/soma115/Wikikracja/commit/f68314c1ab1e46e4614f3e96ccd08d722f2c9f95))
+
+- New agenda list view: month/day grouping, event chips, past days hidden by default - Grid view:
+  expandable cards (pk+date IDs to avoid collisions across chunks) - Single toolbar drawer trigger
+  for mini-calendar; closes on outside click or day double-click - Day click filters both agenda and
+  grid from selected date; stays in current view - Lazy 3-month chunk loading when clicking a
+  far-future day not yet in DOM - New views: events_agenda_chunk (AJAX partial), events_calendar
+  reused for drawer - build_calendar_grid extracted to events/calendar.py, shared with obywatele -
+  Polish month names via Django i18n date filter (cal_first_day|date:"F Y") - Grid defaults to
+  hiding past cards on initial load (consistent with agenda)
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **glosowania**: Increase law text max length from 1000 to 2000 chars
+  ([`003a900`](https://github.com/soma115/Wikikracja/commit/003a90028197173e1926f54904f486ab2d6ac219))
+
+- **home**: Make New Citizens card fully clickable
+  ([`863d895`](https://github.com/soma115/Wikikracja/commit/863d895db1b251f247eb84f11c5222377d521366))
+
+Whole card links to citizen list via Bootstrap stretched-link. Individual citizen avatars and
+  waiting-badge link keep their own targets via position:relative (above the stretched-link in
+  stacking context).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **tasks**: Ajax voting, global design buttons, tooltips
+  ([`d487a52`](https://github.com/soma115/Wikikracja/commit/d487a5285390035a670fecd7b271194f8fd822e8))
+
+- vote_task view returns JSON for AJAX requests (X-Requested-With header) tracking new_vote value
+  and votes_up count - new tasks/static/tasks/js/tasks.js: single shared handleVoteSubmit function
+  used by both list and detail views — no code duplication; updates button state (active-vote, icon,
+  text) and vote counters in-place without page reload or closing expanded card - task_detail.html +
+  _task_card.html: replaced generic Bootstrap btn-* classes with project design-system classes
+  (task-vote-btn, action-btn, task-take-btn, task-resign-btn) that use CSS variables and adapt to
+  all themes; added data-text/icon/tooltip-active/inactive attributes - Bootstrap tooltips on all
+  action buttons with context-sensitive text - i18n: 8 new Polish translations for button states and
+  tooltips
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **tasks**: Coordinator role + helpers popover on task cards
+  ([`a523258`](https://github.com/soma115/Wikikracja/commit/a523258ac5ba6b725cbc3a32786c2957bec8d4f9))
+
+- meta strip: Autor → Koordynator · Data · ❤ N · Detale with role icons (fa-user-pen, fa-user-gear,
+  fa-clock-rotate-left) - per-element tooltips (author, coordinator, date, helpers count, details) -
+  lazy-loaded helpers popover (hover on desktop, click on touch devices) via new
+  tasks/<pk>/helpers.json endpoint, up to 10 avatars + "and N more" - DOMPurify sanitization for
+  popover html; cache invalidated on vote change - rename UI: "Take task"/"Resign" →
+  "Zostań/Zrezygnuj z koordynacji", "Owner"/"Assigned to" → "Koordynator" across card and detail
+  views - refactor inline styles in body to .task-assignee-link/.task-assignee-empty - new pl
+  translations for all introduced strings
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **tasks**: Dynamic categories — DB model, CRUD API, manage modal
+  ([`186e3be`](https://github.com/soma115/Wikikracja/commit/186e3be58c0006003814c5dfb5dd481990f93f06))
+
+Replaces hardcoded Task.Category TextChoices with a proper Category model (slug, name, description,
+  order, is_protected). Users can now add, edit and delete categories from the task list UI via a
+  modal opened from the category filter panel.
+
+- Migration 0008: creates tasks_category table, seeds 7 existing categories, migrates Task.category
+  varchar→FK (SET_NULL on delete) - API endpoints: GET/POST /api/categories/, POST
+  /api/categories/<pk>/edit|delete/ - Modal: inline edit, add new, delete with affected-task count
+  warning - Category filter reads slugs from DB instead of TextChoices - CSS via design tokens (no
+  hardcoded colours); theme-aware
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **ui**: Persistent filters and view settings via PagePrefs
+  ([`4ac97b0`](https://github.com/soma115/Wikikracja/commit/4ac97b04cd3381ec04151209bee4c508c9488c8a))
+
+Replaces 5 separate localStorage wrappers (setTaskView, setProposalsView, setElibraryView,
+  setBoardView, setActivityView) with a single global PagePrefs module. Filters (URL params),
+  grid/list toggle and Bootstrap tab selection are now stored per-scope in one JSON key
+  (wikikracja:prefs:{scope}) and restored on return visit without flashing.
+
+- Anti-FOUC head-script restores URL filters before body renders - Patches history.pushState to
+  capture JS-driven URL changes (category filter) - HTML uses data-view / data-view-container
+  conventions — zero onclick bindings - Elibrary category filter gains URL sync (was DOM-only, now
+  shareable) - One-shot migration of legacy localStorage keys on first load
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Testing
+
+- **tasks**: Add test_settings.py to run tests without Redis
+  ([`395cea4`](https://github.com/soma115/Wikikracja/commit/395cea4cd820bc2444314bf3b21e011d24af00c2))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+
 ## v1.2.0 (2026-05-01)
 
 ### Bug Fixes
