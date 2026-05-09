@@ -7,6 +7,8 @@ from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
 from django.urls import path
 
+django_asgi_app = get_asgi_application()
+
 from chat.consumers import ChatConsumer
 
 # from channels.http import AsgiHandler
@@ -20,13 +22,13 @@ application = ProtocolTypeRouter({
     # Channels will do this for you automatically. It's included here as
     # an example.
     # "http": AsgiHandler,
-    "http": get_asgi_application(),
+    "http": django_asgi_app,
 
     # Route all WebSocket requests to our custom chat handler.
     # We actually don't need the URLRouter here, but we've put it in for
     # illustration. Also note the inclusion of the AuthMiddlewareStack to
     # add users and sessions
-    # see http://channels.readthedutes.io/en/latest/topics/authentication.html
+    # see http://channels.readthedocs.io/en/latest/topics/authentication.html
     "websocket": AuthMiddlewareStack(
         URLRouter([
             # URLRouter just takes standard Django path() or url() entries.
