@@ -1,3 +1,7 @@
+import os
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "zzz.settings")
+
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
@@ -22,7 +26,7 @@ application = ProtocolTypeRouter({
     # We actually don't need the URLRouter here, but we've put it in for
     # illustration. Also note the inclusion of the AuthMiddlewareStack to
     # add users and sessions
-    # see http://channels.readthedocs.io/en/latest/topics/authentication.html
+    # see http://channels.readthedutes.io/en/latest/topics/authentication.html
     "websocket": AuthMiddlewareStack(
         URLRouter([
             # URLRouter just takes standard Django path() or url() entries.
