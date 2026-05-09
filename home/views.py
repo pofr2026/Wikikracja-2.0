@@ -888,7 +888,7 @@ def onboarding_posts_for_category(request):
         return JsonResponse({
             'posts': []
         })
-    posts = list(Post.objects.filter(category_id=cat_id, is_archived=False).order_by('title').values('id', 'title'))
+    posts = list(Post.objects.filter(category_id=cat_id).order_by('title').values('id', 'title'))
     selected = list(SiteSettings.get().onboarding_posts.values_list('id', flat=True))
     return JsonResponse({
         'posts': posts,
@@ -909,7 +909,7 @@ def site_admin(request: HttpRequest) -> HttpResponse:
     selected_ids = set(ss.onboarding_posts.values_list('id', flat=True))
     categories_with_posts = []
     for cat in PostCategory.objects.order_by('name'):
-        posts = list(Post.objects.filter(category=cat, is_archived=False).order_by('title'))
+        posts = list(Post.objects.filter(category=cat).order_by('title'))
         if posts:
             selected_count = sum(1 for p in posts if p.id in selected_ids)
             categories_with_posts.append({
@@ -924,7 +924,7 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         'signatures_span': settings.CZAS_NA_ZEBRANIE_PODPISOW,
         'discussion_span': settings.DYSKUSJA,
         'referendum_span': settings.CZAS_TRWANIA_REFERENDUM,
-        'documents': Post.objects.filter(is_archived=False).order_by('title'),
+        'documents': Post.objects.all().order_by('title'),
         'ss': ss,
         'categories_with_posts': categories_with_posts,
         'selected_onboarding_post_ids': selected_ids,

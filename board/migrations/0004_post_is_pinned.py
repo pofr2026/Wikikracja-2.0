@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('board', '0003_post_is_archived'),
+        ('board', '0002_post_subtitle'),
     ]
 
     operations = [

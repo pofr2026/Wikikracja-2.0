@@ -16,10 +16,6 @@
     <i class="fas fa-plus"></i> {% trans 'Create document' %}
   </a>
 
-  <a href="{% url 'board:archive' %}" class="btn btn-sm btn-outline-secondary">
-    <i class="fas fa-box-archive me-1"></i>{% trans "Archive" %}
-  </a>
-
   <span class="toolbar-divider"></span>
   {% endif %}
 
@@ -40,6 +36,7 @@
     <span class="toolbar-sort-sep"></span>
 
     {# ── CATEGORY DROPDOWN ── #}
+    {% if request.user.is_authenticated %}
     <div class="cat-filter" id="catFilter">
       <button type="button" class="sort-btn cat-filter__trigger" id="catFilterBtn"
               aria-expanded="false" aria-controls="catFilterPanel">
@@ -64,6 +61,7 @@
         </button>
       </div>
     </div>
+    {% endif %}
   </div>
 
   <span class="toolbar-divider"></span>
@@ -184,90 +182,95 @@
   var panel   = document.getElementById('catFilterPanel');
   var labelEl = document.getElementById('catFilterLabel');
   var allRow  = document.getElementById('catAllRow');
-  var catRows = Array.from(panel.querySelectorAll('.cat-filter__item:not(.cat-filter__all)'));
-  var groups  = Array.from(document.querySelectorAll('.board-category-group'));
-  var LABEL_ALL = '{% trans "Category" %}';
+  
+  // Only run category filter logic if elements exist (authenticated users)
+  if (btn && panel && labelEl && allRow) {
+    var catRows = Array.from(panel.querySelectorAll('.cat-filter__item:not(.cat-filter__all)'));
+    var groups  = Array.from(document.querySelectorAll('.board-category-group'));
+    var LABEL_ALL = '{% trans "Category" %}';
 
-  // restore from URL
-  var params = new URLSearchParams(window.location.search);
-  var initial = params.getAll('category');
-  initial.forEach(function (val) {
-    catRows.forEach(function (row) {
-      if (String(row.dataset.key) === String(val)) row.classList.add('selected');
-    });
-  });
-
-  function selected() {
-    return catRows.filter(function (r) { return r.classList.contains('selected'); })
-                  .map(function (r) { return String(r.dataset.key); });
-  }
-
-  function apply() {
-    var sel = selected();
-    var all = sel.length === 0;
-    allRow.classList.toggle('selected', all);
-
-    groups.forEach(function (group) {
-      var groupPk = String(group.dataset.categoryPk || '');
-      var show = all || sel.indexOf(groupPk) !== -1;
-      group.style.display = show ? '' : 'none';
+    // restore from URL
+    var params = new URLSearchParams(window.location.search);
+    var initial = params.getAll('category');
+    initial.forEach(function (val) {
+      catRows.forEach(function (row) {
+        if (String(row.dataset.key) === String(val)) row.classList.add('selected');
+      });
     });
 
-    if (all) {
-      labelEl.textContent = LABEL_ALL;
-      btn.classList.remove('active');
-    } else {
-      labelEl.textContent = LABEL_ALL + ' (' + sel.length + ')';
-      btn.classList.add('active');
+    function selected() {
+      return catRows.filter(function (r) { return r.classList.contains('selected'); })
+                    .map(function (r) { return String(r.dataset.key); });
     }
 
-    var p = new URLSearchParams(window.location.search);
-    p.delete('category');
-    sel.forEach(function (v) { p.append('category', v); });
-    history.pushState(null, '', window.location.pathname + (p.toString() ? '?' + p.toString() : ''));
-  }
+    function apply() {
+      var sel = selected();
+      var all = sel.length === 0;
+      allRow.classList.toggle('selected', all);
 
-  panel.addEventListener('click', function (e) { e.stopPropagation(); });
+      groups.forEach(function (group) {
+        var groupPk = String(group.dataset.categoryPk || '');
+        var show = all || sel.indexOf(groupPk) !== -1;
+        group.style.display = show ? '' : 'none';
+      });
 
-  allRow.addEventListener('click', function () {
-    catRows.forEach(function (r) { r.classList.remove('selected'); });
-    apply();
-  });
+      if (all) {
+        labelEl.textContent = LABEL_ALL;
+        btn.classList.remove('active');
+      } else {
+        labelEl.textContent = LABEL_ALL + ' (' + sel.length + ')';
+        btn.classList.add('active');
+      }
 
-  catRows.forEach(function (row) {
-    row.addEventListener('click', function () {
-      row.classList.toggle('selected');
+      var p = new URLSearchParams(window.location.search);
+      p.delete('category');
+      sel.forEach(function (v) { p.append('category', v); });
+      history.pushState(null, '', window.location.pathname + (p.toString() ? '?' + p.toString() : ''));
+    }
+
+    panel.addEventListener('click', function (e) { e.stopPropagation(); });
+
+    allRow.addEventListener('click', function () {
+      catRows.forEach(function (r) { r.classList.remove('selected'); });
       apply();
     });
-  });
 
-  btn.addEventListener('click', function (e) {
-    e.stopPropagation();
-    var opening = panel.hidden;
-    panel.hidden = !opening;
-    btn.setAttribute('aria-expanded', String(opening));
-  });
-
-  document.addEventListener('click', function (e) {
-    if (!document.getElementById('catFilter').contains(e.target)) {
-      panel.hidden = true;
-      btn.setAttribute('aria-expanded', 'false');
-    }
-  });
-
-  apply();
-
-  var manageBtn = document.getElementById('catManageBtn');
-  if (manageBtn) {
-    manageBtn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      panel.hidden = true;
-      btn.setAttribute('aria-expanded', 'false');
-      new bootstrap.Modal(document.getElementById('manageCategoriesModal')).show();
+    catRows.forEach(function (row) {
+      row.addEventListener('click', function () {
+        row.classList.toggle('selected');
+        apply();
+      });
     });
+
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var opening = panel.hidden;
+      panel.hidden = !opening;
+      btn.setAttribute('aria-expanded', String(opening));
+    });
+
+    document.addEventListener('click', function (e) {
+      if (!document.getElementById('catFilter').contains(e.target)) {
+        panel.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    apply();
+
+    var manageBtn = document.getElementById('catManageBtn');
+    if (manageBtn) {
+      manageBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        panel.hidden = true;
+        btn.setAttribute('aria-expanded', 'false');
+        new bootstrap.Modal(document.getElementById('manageCategoriesModal')).show();
+      });
+    }
   }
 }());
 
+{% if request.user.is_authenticated %}
 initCategoryManager('manageCategoriesModal', {
   list:    '{% url "board:api_categories" %}',
   edit:    '{% url "board:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/edit/',
@@ -285,5 +288,6 @@ initCategoryManager('manageCategoriesModal', {
   load_error:   '{% trans "Failed to load categories." %}',
   error:        '{% trans "An error occurred." %}',
 });
+{% endif %}
 </script>
 {% endblock extra_js %}

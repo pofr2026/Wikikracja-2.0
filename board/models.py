@@ -26,7 +26,6 @@ class Post(models.Model):
     updated = models.DateTimeField(auto_now=True, verbose_name=_("Updated"))
     category = models.ForeignKey(PostCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name="posts", verbose_name=_("Category"))
     is_public = models.BooleanField(default=False, verbose_name=_("Public"))
-    is_archived = models.BooleanField(default=False, verbose_name=_("Archived"))
     is_important = models.BooleanField(default=False, verbose_name=_("Important"))
     featured_image = models.ImageField(upload_to='board/featured/', null=True, blank=True, verbose_name=_("Featured Image"))
     system_key = models.CharField(max_length=50, unique=True, null=True, blank=True, verbose_name=_("System Key"))

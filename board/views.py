@@ -58,9 +58,9 @@ def board(request: HttpRequest) -> HttpResponse:
             pass
 
     if request.user.is_authenticated:
-        posts_all = Post.objects.filter(is_archived=False).select_related('category', 'author')
+        posts_all = Post.objects.all().select_related('category', 'author')
     else:
-        posts_all = Post.objects.filter(is_public=True, is_archived=False).select_related('category', 'author')
+        posts_all = Post.objects.filter(is_public=True).select_related('category', 'author')
 
     categories = list(PostCategory.objects.all())
     posts_by_cat = {}
@@ -92,13 +92,6 @@ def board(request: HttpRequest) -> HttpResponse:
             'active_categories': active_categories,
         },
     )
-
-
-def archive(request: HttpRequest) -> HttpResponse:
-    posts_archived: QuerySet[Post] = Post.objects.filter(is_archived=True).order_by('-updated')
-    return render(request, 'board/archive.html', {
-        'posts': posts_archived
-    })
 
 
 @login_required
