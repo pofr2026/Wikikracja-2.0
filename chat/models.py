@@ -1,8 +1,7 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Prefetch
-
-User = get_user_model()
 
 
 class Room(models.Model):
@@ -10,7 +9,7 @@ class Room(models.Model):
     A room for people to chat in.
     """
     # Allowed users
-    allowed = models.ManyToManyField(User, related_name="rooms")
+    allowed = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="rooms")
 
     # For 1to1 chats
     public = models.BooleanField(default=True)
@@ -22,13 +21,13 @@ class Room(models.Model):
     title = models.CharField(max_length=255, unique=True)
 
     # List of users who saw all messages in this chat
-    seen_by = models.ManyToManyField(User, related_name="seen_rooms")
+    seen_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name="seen_rooms")
 
     # List of users who disabled notifications
-    muted_by = models.ManyToManyField(User, related_name='muted_rooms')
+    muted_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='muted_rooms')
 
     # List of users who explicitly track this room (overrides auto-mute in participated-only mode)
-    tracked_by = models.ManyToManyField(User, related_name='tracked_rooms', blank=True)
+    tracked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='tracked_rooms', blank=True)
 
     # Last activity timestamp
     last_activity = models.DateTimeField(auto_now=True)
@@ -37,7 +36,7 @@ class Room(models.Model):
     protected = models.BooleanField(default=False)
 
     # User who created this room (null for rooms created before this field was added)
-    founder = models.ForeignKey(User, null=True, blank=True, on_delete=models.SET_NULL, related_name='founded_rooms')
+    founder = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='founded_rooms')
 
     def __str__(self):
         return self.title
@@ -88,7 +87,7 @@ class Room(models.Model):
             # look through users, who must be present in the room
             all_in = True
             for user in users:
-                assert isinstance(user, User)
+                assert isinstance(user, get_user_model())
                 if user not in room_members:
                     all_in = False
                     break
@@ -158,7 +157,7 @@ class Room(models.Model):
             room = cls.objects.get(id=room_id)
             return room.allowed.exclude(id=user_id)
         except cls.DoesNotExist:
-            return User.objects.none()
+            return get_user_model().objects.none()
 
     @classmethod
     def get_membership_preferences_bulk(cls, room_id, user_ids):
@@ -181,7 +180,7 @@ class Room(models.Model):
         #     return {user_id: {'seen': False, 'muted': False} for user_id in user_ids}
 
         # Get all users with their relationships in 2 queries
-        users = User.objects.filter(id__in=user_ids).prefetch_related(Prefetch('seen_rooms', queryset=cls.objects.filter(id=room_id), to_attr='prefetched_seen_rooms'), Prefetch('muted_rooms', queryset=cls.objects.filter(id=room_id), to_attr='prefetched_muted_rooms'))
+        users = get_user_model().objects.filter(id__in=user_ids).prefetch_related(Prefetch('seen_rooms', queryset=cls.objects.filter(id=room_id), to_attr='prefetched_seen_rooms'), Prefetch('muted_rooms', queryset=cls.objects.filter(id=room_id), to_attr='prefetched_muted_rooms'))
 
         result = {}
         for user in users:
@@ -203,7 +202,7 @@ class Room(models.Model):
 
 class Message(models.Model):
     # 'sender' must be 'null=True' for anonymouse messages in email (search for 'if m.anonymous:').
-    sender = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
     time = models.DateTimeField(auto_now=True)
     text = models.TextField()
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name="messages")
@@ -259,7 +258,7 @@ class MessageAttachment(models.Model):
 # ZMIANA 4C — "przeczytane przez": śledzenie kto przeczytał daną wiadomość
 class MessageReadBy(models.Model):
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name='read_by')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='read_messages')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='read_messages')
 
     class Meta:
         unique_together = ('message', 'user')

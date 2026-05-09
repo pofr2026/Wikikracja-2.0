@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-09 12:30+0200\n"
+"POT-Creation-Date: 2026-05-09 13:34+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -25,9 +25,9 @@ msgstr "Treść"
 msgid "Attachments"
 msgstr "Załączniki"
 
-#: .\board\forms.py:23 .\board\templates\board\board.html:279
-#: .\board\templates\board\create_post.html:34
-#: .\board\templates\board\edit_post.html:34 .\bookkeeping\forms.py:21
+#: .\board\forms.py:23 .\board\templates\board\board.html:282
+#: .\board\templates\board\create_post.html:33
+#: .\board\templates\board\edit_post.html:33 .\bookkeeping\forms.py:21
 #: .\bookkeeping\forms.py:34 .\bookkeeping\forms.py:47
 #: .\bookkeeping\forms.py:92 .\chat\templates\chat\add.html:15
 #: .\glosowania\templates\glosowania\dodaj.html:38
@@ -95,8 +95,8 @@ msgstr "Utworzone"
 msgid "Updated"
 msgstr "Zaktualizowane"
 
-#: .\board\models.py:27 .\board\templates\board\board.html:46
-#: .\board\templates\board\board.html:189 .\bookkeeping\forms.py:66
+#: .\board\models.py:27 .\board\templates\board\board.html:43
+#: .\board\templates\board\board.html:190 .\bookkeeping\forms.py:66
 #: .\bookkeeping\models.py:55
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:37
 #: .\bookkeeping\templates\bookkeeping\report_list.html:43
@@ -114,49 +114,45 @@ msgstr "Kategoria"
 msgid "Public"
 msgstr "Publiczne"
 
-#: .\board\models.py:29
-msgid "Archived"
-msgstr "Zarchiwizowane"
-
-#: .\board\models.py:30 .\tasks\templates\tasks\_task_card.html:25
+#: .\board\models.py:29 .\tasks\templates\tasks\_task_card.html:25
 #: .\tasks\views.py:87
 msgid "Important"
 msgstr "Ważne"
 
-#: .\board\models.py:31
+#: .\board\models.py:30
 msgid "Featured Image"
 msgstr "Obrazek wyróżniający"
 
-#: .\board\models.py:32
+#: .\board\models.py:31
 msgid "System Key"
 msgstr "Kluczowy w sytemie"
 
-#: .\board\models.py:39
+#: .\board\models.py:38
 msgid "System posts cannot be deleted."
 msgstr "Dokumenty systemowe nie mogą być usunięte"
 
-#: .\board\models.py:48 .\home\models.py:11 .\home\models.py:41
+#: .\board\models.py:47 .\home\models.py:11 .\home\models.py:41
 #: .\home\templatetags\feed_filters.py:31 .\home\views.py:628
 msgid "Post"
 msgstr "Ogłoszenie"
 
-#: .\board\models.py:49
+#: .\board\models.py:48
 msgid "File"
 msgstr "Plik"
 
-#: .\board\models.py:50
+#: .\board\models.py:49
 msgid "Filename"
 msgstr "Nazwa pliku"
 
-#: .\board\models.py:51
+#: .\board\models.py:50
 msgid "Uploaded At"
 msgstr "Wgrany"
 
-#: .\board\models.py:54
+#: .\board\models.py:53
 msgid "Post Attachment"
 msgstr "Załącznik"
 
-#: .\board\models.py:55
+#: .\board\models.py:54
 msgid "Post Attachments"
 msgstr "Załączniki"
 
@@ -170,20 +166,6 @@ msgstr "Nowy ważny dokument od %(username)s: %(title)s - %(post_url)s"
 msgid "Updated important document by %(username)s: %(title)s - %(post_url)s"
 msgstr "Zaktualizowane ważny dokument od %(username)s: %(title)s - %(post_url)s"
 
-#: .\board\templates\board\archive.html:13
-msgid "Document archive"
-msgstr "Archiwum dokumentów"
-
-#: .\board\templates\board\archive.html:16
-#: .\board\templates\board\board.html:164 .\home\templates\home\base.html:110
-#: .\home\templates\home\base.html:113 .\home\templates\home\base.html:202
-msgid "Documents"
-msgstr "Dokumenty"
-
-#: .\board\templates\board\archive.html:30
-msgid "Archive is empty"
-msgstr "Archiwum jest puste"
-
 #: .\board\templates\board\attachment_confirm_delete.html:8
 msgid "Delete attachment"
 msgstr "Usuń załącznik"
@@ -193,7 +175,7 @@ msgid "Are you sure you want to delete the attachment"
 msgstr "Czy na pewno chcesz usunąć ten załącznik?"
 
 #: .\board\templates\board\attachment_confirm_delete.html:14
-#: .\board\templates\board\board.html:280
+#: .\board\templates\board\board.html:283
 #: .\board\templates\board\post_confirm_delete.html:19
 #: .\board\templates\board\post_detail.html:53
 #: .\bookkeeping\templates\bookkeeping\asset_list.html:47
@@ -208,9 +190,9 @@ msgid "Delete"
 msgstr "Usuń"
 
 #: .\board\templates\board\attachment_confirm_delete.html:15
-#: .\board\templates\board\board.html:278
-#: .\board\templates\board\create_post.html:35
-#: .\board\templates\board\edit_post.html:35
+#: .\board\templates\board\board.html:281
+#: .\board\templates\board\create_post.html:34
+#: .\board\templates\board\edit_post.html:34
 #: .\board\templates\board\post_confirm_delete.html:20
 #: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:84
 #: .\bookkeeping\templates\bookkeeping\asset_form.html:51
@@ -238,18 +220,14 @@ msgstr "Anuluj"
 msgid "Create document"
 msgstr "Utwórz dokument"
 
-#: .\board\templates\board\board.html:20
-msgid "Archive"
-msgstr "Archiwum"
-
-#: .\board\templates\board\board.html:27
+#: .\board\templates\board\board.html:23
 #: .\glosowania\templates\glosowania\_view_toggle.html:17
 #: .\home\templates\home\activity.html:43
 #: .\tasks\templates\tasks\task_list.html:18
 msgid "Sort"
 msgstr "Sortuj"
 
-#: .\board\templates\board\board.html:31 .\board\templates\board\board.html:36
+#: .\board\templates\board\board.html:27 .\board\templates\board\board.html:32
 #: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:33
 #: .\bookkeeping\templates\bookkeeping\category_confirm_delete.html:35
 #: .\bookkeeping\templates\bookkeeping\partner_confirm_delete.html:35
@@ -264,21 +242,21 @@ msgstr "Sortuj"
 msgid "Date"
 msgstr "Data"
 
-#: .\board\templates\board\board.html:50 .\board\templates\board\board.html:52
+#: .\board\templates\board\board.html:47 .\board\templates\board\board.html:49
 #: .\home\templates\home\activity.html:21 .\home\views.py:404
 #: .\tasks\templates\tasks\task_list.html:66
 #: .\tasks\templates\tasks\task_list.html:68
 msgid "All"
 msgstr "Wszystkie"
 
-#: .\board\templates\board\board.html:63
+#: .\board\templates\board\board.html:60
 #: .\categories\templates\categories\_category_modal.html:7
 #: .\tasks\templates\tasks\task_list.html:79
 #: .\tasks\templates\tasks\task_list.html:169
 msgid "Manage categories"
 msgstr "Zarządzaj kategoriami"
 
-#: .\board\templates\board\board.html:72
+#: .\board\templates\board\board.html:70
 #: .\events\templates\events\event_list.html:25
 #: .\glosowania\templates\glosowania\_view_toggle.html:62
 #: .\home\templates\home\activity.html:54
@@ -286,7 +264,7 @@ msgstr "Zarządzaj kategoriami"
 msgid "List"
 msgstr "Lista"
 
-#: .\board\templates\board\board.html:75
+#: .\board\templates\board\board.html:73
 #: .\events\templates\events\event_list.html:28
 #: .\glosowania\templates\glosowania\_view_toggle.html:65
 #: .\home\templates\home\activity.html:57
@@ -294,19 +272,24 @@ msgstr "Lista"
 msgid "Grid"
 msgstr "Siatka"
 
-#: .\board\templates\board\board.html:87
+#: .\board\templates\board\board.html:85
 msgid "Uncategorized"
 msgstr "Bez kategorii"
 
-#: .\board\templates\board\board.html:91
+#: .\board\templates\board\board.html:89
 msgid "Create"
 msgstr "Utwórz"
 
-#: .\board\templates\board\board.html:168
+#: .\board\templates\board\board.html:162 .\home\templates\home\base.html:110
+#: .\home\templates\home\base.html:113 .\home\templates\home\base.html:202
+msgid "Documents"
+msgstr "Dokumenty"
+
+#: .\board\templates\board\board.html:166
 msgid "No documents"
 msgstr "Brak dokumentów"
 
-#: .\board\templates\board\board.html:277
+#: .\board\templates\board\board.html:280
 #: .\board\templates\board\post_detail.html:52
 #: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:57
 #: .\bookkeeping\templates\bookkeeping\asset_list.html:46
@@ -327,31 +310,31 @@ msgstr "Brak dokumentów"
 msgid "Edit"
 msgstr "Edytuj"
 
-#: .\board\templates\board\board.html:281
+#: .\board\templates\board\board.html:284
 msgid "documents"
 msgstr "dokumenty"
 
-#: .\board\templates\board\board.html:282
+#: .\board\templates\board\board.html:285
 #: .\tasks\templates\tasks\task_list.html:326
 msgid "Protected — cannot be deleted"
 msgstr "Chroniona — nie można usunąć"
 
-#: .\board\templates\board\board.html:283
+#: .\board\templates\board\board.html:286
 #, python-brace-format
 msgid "This category has {n} document(s). Deleting it will leave those documents without a category. Continue?"
 msgstr "Ta kategoria ma {n} dokument(ów). Usunięcie jej pozostawi te dokumenty bez kategorii. Kontynuować?"
 
-#: .\board\templates\board\board.html:284
+#: .\board\templates\board\board.html:287
 #: .\tasks\templates\tasks\task_list.html:328
 msgid "Category name is required."
 msgstr "Nazwa kategorii jest wymagana."
 
-#: .\board\templates\board\board.html:285
+#: .\board\templates\board\board.html:288
 #: .\tasks\templates\tasks\task_list.html:329
 msgid "Failed to load categories."
 msgstr "Nie udało się wczytać kategorii."
 
-#: .\board\templates\board\board.html:286
+#: .\board\templates\board\board.html:289
 #: .\tasks\templates\tasks\task_list.html:330
 msgid "An error occurred."
 msgstr "Wystąpił błąd."
@@ -364,7 +347,7 @@ msgstr "Utwórz ogłoszenie"
 msgid "Edit post"
 msgstr "Edytuj ogłoszenie"
 
-#: .\board\templates\board\edit_post.html:41
+#: .\board\templates\board\edit_post.html:40
 msgid "Existing attachments"
 msgstr "Załączniki"
 
