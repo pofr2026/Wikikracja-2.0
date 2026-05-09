@@ -13,7 +13,7 @@
 
   <script>
     const TRANSLATIONS = {{ translations|default:"{}"|safe }};
-    const SITE_SETTINGS = { messageMaxLength: {{ MESSAGE_MAX_LENGTH }} };
+    window.SITE_SETTINGS = { messageMaxLength: {{ MESSAGE_MAX_LENGTH }} };
   </script>
 
   <!-- ============================================================= -->

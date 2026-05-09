@@ -219,6 +219,29 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // ?unread=1 from home page badge: activate unread filter
+        const urlParams = new URLSearchParams(location.search);
+        if (urlParams.get('unread') === '1') {
+            history.replaceState(null, '', location.pathname + location.hash);
+            if (!isUnreadFilterActive) {
+                isUnreadFilterActive = true;
+                unreadFilterBtn?.classList.add('active');
+                localStorage.setItem('chat-unread-filter', 'active');
+                applyUnreadFilter();
+            }
+            // On desktop: open the first unread room immediately
+            // On mobile: stay on the room list so the user can pick a room
+            if (window.innerWidth >= 768) {
+                const firstUnread = $('.room-link.room-not-seen[data-room-id]');
+                if (firstUnread) {
+                    onRoomTryJoin(parseInt(firstUnread.dataset.roomId));
+                    return;
+                }
+            } else {
+                return; // stay on room list view with filter active
+            }
+        }
+
         let room_id = 0;
         if (window.location.hash) {
             const obj = parseParms(window.location.hash.slice(1));
@@ -260,6 +283,7 @@ export async function onSocketMessage(data) {
     else if (data.update_reactions) onReceiveReactions(data.update_reactions);
     else if (data.messages_read) onReceiveReadBy(data.messages_read);
     else if (data.type === 'room-tracked') onRoomTracked(data.room_id, data.tracked);
+    // unread_count is consumed by the home page WS listener — ignore here
     else console.log("Cannot handle message!");
 }
 
@@ -390,10 +414,9 @@ export async function onRoomTryJoin(room_id) {
         expandCategoryForRoom(roomLink);
     }
 
-    // Focus the message input field after joining a room
-    const messageInput = DOM_API.getMessageInput();
-    if (messageInput) {
-        messageInput.focus();
+    // Focus only on desktop — on mobile the keyboard would open immediately
+    if (window.innerWidth >= 768) {
+        DOM_API.getMessageInput()?.focus();
     }
     restoreDraft(room_id);
 }
@@ -447,6 +470,14 @@ export async function onReceiveMessages(messages) {
             message.your_reactions ?? [],
             message.read_by ?? []
         );
+        requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(message.message_id)));
+        if (message.own) {
+            const sendBtn = document.querySelector('.send-message');
+            if (sendBtn) {
+                sendBtn.disabled = false;
+                clearTimeout(window._sendLockTimeout);
+            }
+        }
         if (message.new && document.hidden && !message.own) {
             makeNotification({ title: message.username, body: message.message });
         }
@@ -480,6 +511,7 @@ export async function onReceiveMessages(messages) {
                 DOM_API.getVoteDiv(message.message_id, message.your_vote)?.classList.add('active');
             }
         }
+        requestAnimationFrame(() => DOM_API.markOverflow(msgdiv));
     }
 
     let shouldStickToBottom = !ScrollToMessageId;
@@ -528,6 +560,7 @@ export async function onReplaceMessages(messages, room_id) {
         }
     }
 
+    requestAnimationFrame(() => DOM_API.markOverflow(msgdiv));
     msgdiv.scrollTop = 0;
 }
 
@@ -765,6 +798,11 @@ export async function onSubmitMessage(message, editing_message_id) {
         if (messageText.length === 0 && (!files || files.length === 0)) return;
         if (files?.length) {
             attachments.images = (await WS_API.uploadFiles(files)).filenames;
+        }
+        const sendBtn = document.querySelector('.send-message');
+        if (sendBtn) {
+            sendBtn.disabled = true;
+            window._sendLockTimeout = setTimeout(() => { sendBtn.disabled = false; }, 5000);
         }
         WS_API.sendMessage(CurrentRoomId, message, DOM_API.getAnonymousValue(), attachments, currentReplyId);
         clearDraft(CurrentRoomId);

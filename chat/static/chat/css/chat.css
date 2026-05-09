@@ -134,9 +134,11 @@ body:has(.chat-rooms) .main-area {
     border: 1px solid var(--border);
     border-radius: .5rem;
     position: relative;
+    --expandable-bg: var(--bg-card);
 }
 .message.own .message-content {
     background: var(--accent-muted);
+    --expandable-bg: var(--accent-muted);
     border-color: rgba(0, 209, 178, .2);
 }
 .message .message-content .message-header {
@@ -1141,6 +1143,12 @@ body:has(.chat-rooms) .main-area {
         max-width: 100% !important;
         flex: 0 0 100% !important;
         display: flex !important;
+    }
+    /* Mobile: toolbar stays pinned at top even if list content overflows */
+    .room-list-controls {
+        position: sticky;
+        top: 0;
+        z-index: 20;
     }
     /* Mobile: static toggle btn hidden by default; shown when room-list-showing */
     #room-list-toggle-static-btn {

@@ -77,12 +77,8 @@ def add(request: HttpRequest):
 
             image = Image.open(obj.cover)
             image = image.resize((200, 300), Image.LANCZOS)
-            # upload_file_name = obj.cover.file.name
-            # print(upload_file_name)
             image.save('media/elibrary/' + str(obj.id) + '.png')
             obj.cover.name = 'elibrary/' + str(obj.id) + '.png'
-            # form.save_m2m()  # taggit
-            # os.remove(upload_file_name)  # delete original file
             obj.save()
             return redirect('elibrary:book_list')
     else:
@@ -120,6 +116,7 @@ class BookList(LoginRequiredMixin, ListView):
                 'posts': sorted_posts
             })
         context['category_groups'] = category_groups
+        context['categories'] = [g['category'] for g in category_groups if g['category'] is not None]
 
         # Sort books in Python
         context['books'] = sorted(data['books'], key=lambda b: b.id, reverse=reverse_order)
@@ -161,13 +158,10 @@ class BookDetailView(LoginRequiredMixin, DetailView):
 
         return context
 
-    # success_url = reverse_lazy('elibrary:elibrary')
     queryset = Book.objects.all()
 
     def get_object(self):
-        obj = super().get_object()
-        # Record the last accessed date
-        return obj
+        return super().get_object()
 
 
 class BookUpdateView(LoginRequiredMixin, UpdateView):

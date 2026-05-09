@@ -7,6 +7,8 @@ node_modules/
 !/*/static/
 media/board/attachments/*
 media/board/featured/*
+media/avatars/
+memory/
 
 *.DS_Store
 *.cache

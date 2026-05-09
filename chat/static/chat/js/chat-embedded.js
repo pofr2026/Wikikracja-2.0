@@ -125,6 +125,7 @@ async function initEmbeddedChat(container) {
             const msgDiv = messagesEl.querySelector(`.message[data-message-id="${msg.message_id}"]`);
             msgDiv?.querySelector(`.msg-vote[data-event-name="${msg.your_vote}"]`)?.classList.add('active');
         }
+        if (msg.own) unlockSendBtn();
         messagesEl.scrollTop = messagesEl.scrollHeight;
     }
 
@@ -137,12 +138,26 @@ async function initEmbeddedChat(container) {
         if (timeEl) timeEl.textContent = formatTime(latest_timestamp);
     }
 
+    let ecSendLockTimeout = null;
+
+    function lockSendBtn() {
+        sendBtn.disabled = true;
+        ecSendLockTimeout = setTimeout(() => { sendBtn.disabled = false; }, 5000);
+    }
+
+    function unlockSendBtn() {
+        sendBtn.disabled = false;
+        clearTimeout(ecSendLockTimeout);
+    }
+
     function sendMessage() {
         const html = getInputHtml(inputEl);
         const text = (inputEl.textContent || '').trim();
         if (!text && selectedFiles.length === 0) return;
         if (!joined) return;
         if (text.length > EC_MAX) return;
+
+        lockSendBtn();
 
         // Upload files if any selected
         if (selectedFiles.length > 0) {
@@ -164,6 +179,7 @@ async function initEmbeddedChat(container) {
                 updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
             }).catch((err) => {
                 console.error('Upload error:', err);
+                unlockSendBtn();
             });
         } else {
             ws.sendJson({

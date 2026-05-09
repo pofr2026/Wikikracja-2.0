@@ -95,27 +95,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // ============================================================
-    // Tab persistence for task list - from task_list.html
-    // ============================================================
-    // Tab persistence: Check localStorage for last active tab
-    const lastTab = localStorage.getItem('tasks_tab');
-    if (lastTab) {
-        const tabTrigger = document.querySelector(`[data-bs-target="#${lastTab}"]`);
-        if (tabTrigger) {
-            const tab = new bootstrap.Tab(tabTrigger);
-            tab.show();
-        }
-    }
-
-    // Save tab selection on tab change
-    document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function(event) {
-            const targetId = event.target.getAttribute('data-bs-target').substring(1);
-            localStorage.setItem('tasks_tab', targetId);
-        });
-    });
-
-    // ============================================================
     // Year selector for bookkeeping report - from report_list.html
     // ============================================================
     const yearSelect = document.getElementById('yearSelect');
@@ -169,7 +148,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 document.addEventListener('DOMContentLoaded', function() {
     /* ── toggle pojedynczego kafelka ── */
-    window.toggleCard = function(pk, storage_key) {
+    window.toggleCard = function(pk) {
         const card = document.getElementById('card-' + pk);
         const body = document.getElementById('body-' + pk);
         if (!card || !body) return;
@@ -182,50 +161,141 @@ document.addEventListener('DOMContentLoaded', function() {
             body.style.display = 'flex';
         }
     };
+});
 
-    /* ── przełącznik widoku ── */
-    window.setView = function(mode, storage_key) {
-        const list = document.getElementById('proposals-list');
-        const btnList = document.getElementById('btn-list');
-        const btnGrid = document.getElementById('btn-grid');
-        if (!list) return;
+// ============================================================
+// PagePrefs — globalny system zapamiętywania ustawień strony
+// ------------------------------------------------------------
+// Per-scope JSON w localStorage: { view, filters, tab }
+//   - scope ustawia szablon przez `data-prefs-scope` na <html>
+//   - filtry (URL params) restore'owane są w head-script (anti-FOUC)
+//   - widok lista/grid: data-view="list|grid" + [data-view-container]
+//   - tab persistence: Bootstrap tabs auto-wired
+// ============================================================
+(function() {
+    'use strict';
 
-        if (mode === 'grid') {
-            list.classList.add('view-grid');
-            btnGrid.classList.add('active');
-            btnList.classList.remove('active');
-        } else {
-            list.classList.remove('view-grid');
-            btnList.classList.add('active');
-            btnGrid.classList.remove('active');
+    var KEY_PREFIX = 'wikikracja:prefs:';
+
+    function scope() {
+        return document.documentElement.dataset.prefsScope || '';
+    }
+
+    function read() {
+        var s = scope();
+        if (!s) return {};
+        try { return JSON.parse(localStorage.getItem(KEY_PREFIX + s) || '{}'); }
+        catch (e) { return {}; }
+    }
+
+    function write(patch) {
+        var s = scope();
+        if (!s) return;
+        var data = Object.assign(read(), patch);
+        localStorage.setItem(KEY_PREFIX + s, JSON.stringify(data));
+    }
+
+    function clear() {
+        var s = scope();
+        if (s) localStorage.removeItem(KEY_PREFIX + s);
+    }
+
+    function applyView(mode) {
+        var container = document.querySelector('[data-view-container]');
+        if (!container) return;
+        container.classList.toggle('view-grid', mode === 'grid');
+        document.querySelectorAll('[data-view]').forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.view === mode);
+        });
+    }
+
+    function setView(mode) {
+        applyView(mode);
+        write({ view: mode });
+    }
+
+    function saveCurrentFilters() {
+        if (scope()) write({ filters: window.location.search });
+    }
+
+    // One-shot migracja starych kluczy → nowy format JSON per scope
+    function migrateLegacyKeys() {
+        var migrations = {
+            'tasks':      [{ k: 'tasks_view',     p: 'view' }, { k: 'tasks_tab', p: 'tab' }],
+            'glosowania': [{ k: 'proposals_view', p: 'view' }],
+            'elibrary':   [{ k: 'elibrary_view',  p: 'view' }],
+            'board':      [{ k: 'board_view',     p: 'view' }],
+            'activity':   [{ k: 'activity_view',  p: 'view' }]
+        };
+        Object.keys(migrations).forEach(function(scopeName) {
+            var newKey = KEY_PREFIX + scopeName;
+            if (localStorage.getItem(newKey) !== null) return; // już zmigrowano
+            var data = {};
+            var found = false;
+            migrations[scopeName].forEach(function(m) {
+                var v = localStorage.getItem(m.k);
+                if (v !== null) { data[m.p] = v; found = true; }
+            });
+            if (found) {
+                localStorage.setItem(newKey, JSON.stringify(data));
+                migrations[scopeName].forEach(function(m) { localStorage.removeItem(m.k); });
+            }
+        });
+    }
+
+    function init() {
+        if (!scope()) return;
+
+        // 1. Widok lista/grid (filtry URL już zrestore'owane przez head-script)
+        applyView(read().view || 'list');
+
+        // 2. Zapisz aktualny URL (gdy ma params — pokrywa reload, klik linka sortowania)
+        if (window.location.search) saveCurrentFilters();
+
+        // 3. Patch history.pushState — łapie zmiany URL przez JS (kategoria filter w tasks/board/elibrary)
+        var origPush = history.pushState;
+        history.pushState = function() {
+            var ret = origPush.apply(this, arguments);
+            saveCurrentFilters();
+            return ret;
+        };
+        window.addEventListener('popstate', saveCurrentFilters);
+
+        // 4. Auto-wire view toggle buttons
+        document.querySelectorAll('[data-view]').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                setView(btn.dataset.view);
+            });
+        });
+
+        // 5. Tab persistence (Bootstrap tabs) w tym samym JSON
+        var savedTab = read().tab;
+        if (savedTab && typeof bootstrap !== 'undefined') {
+            var trigger = document.querySelector('[data-bs-target="#' + savedTab + '"]');
+            if (trigger) new bootstrap.Tab(trigger).show();
         }
-        localStorage.setItem(storage_key, mode);
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(function(tab) {
+            tab.addEventListener('shown.bs.tab', function(e) {
+                var targetId = e.target.getAttribute('data-bs-target').substring(1);
+                write({ tab: targetId });
+            });
+        });
+    }
+
+    migrateLegacyKeys();
+
+    window.PagePrefs = {
+        init: init,
+        setView: setView,
+        read: read,
+        write: write,
+        clear: clear,
+        saveCurrentFilters: saveCurrentFilters
     };
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    const TASK_STORAGE_KEY = 'tasks_view';
-    window.setTaskView = function(pk) {
-        window.setView(pk, TASK_STORAGE_KEY)
-    }
-    const PROPOSALS_STORAGE_KEY = 'proposals_view';
-    window.setProposalsView = function(pk) {
-        window.setView(pk, PROPOSALS_STORAGE_KEY)
-    }
-    const ELIBRARY_STORAGE_KEY = 'elibrary_view';
-    window.setElibraryView = function(pk) {
-        window.setView(pk, ELIBRARY_STORAGE_KEY)
-    }
-    const BOARD_STORAGE_KEY = 'board_view';
-    window.setBoardView = function(pk) {
-        window.setView(pk, BOARD_STORAGE_KEY)
-    }
-
-    setTaskView(localStorage.getItem(TASK_STORAGE_KEY) || 'list');
-    setProposalsView(localStorage.getItem(PROPOSALS_STORAGE_KEY) || 'list');
-    setElibraryView(localStorage.getItem(ELIBRARY_STORAGE_KEY) || 'list');
-    setBoardView(localStorage.getItem(BOARD_STORAGE_KEY) || 'list');
-});
+    document.addEventListener('DOMContentLoaded', init);
+})();
 
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('topbar-search-form');
@@ -376,3 +446,10 @@ window.initActivityFeedMarkRead = function(containerSelector, linkSelector) {
         });
     });
 };
+
+// Toggle .expandable blocks — clicking body toggles open/close (links and no-overflow excluded).
+document.addEventListener('click', function(e) {
+    if (e.target.closest('a')) return;
+    const el = e.target.closest('.expandable-body')?.closest('.expandable');
+    if (el && !el.classList.contains('no-overflow')) el.classList.toggle('is-open');
+});

@@ -12,8 +12,8 @@ urlpatterns = [
     path('delete/<int:pk>/', views.delete_post, name='delete_post'),
     path('edit/<int:pk>/attachment/<int:attachment_id>/delete/', views.delete_attachment, name='delete_attachment'),
     path('archive/', views.archive, name='archive'),
-    path('category/', views.PostCategoryListView.as_view(), name='category_list'),
-    path('category/create/', views.PostCategoryCreateView.as_view(), name='category_create'),
-    path('category/<int:pk>/update/', views.PostCategoryUpdateView.as_view(), name='category_update'),
-    path('category/<int:pk>/delete/', views.PostCategoryDeleteView.as_view(), name='category_delete'),
+    path('api/categories/', views.PostCategoryAPI.as_view(), name='api_categories'),
+    path('api/categories/<int:pk>/edit/', views.PostCategoryEditAPI.as_view(), name='api_category_edit'),
+    path('api/categories/<int:pk>/delete/', views.PostCategoryDeleteAPI.as_view(), name='api_category_delete'),
+    path('api/categories/reorder/', views.PostCategoryReorderAPI.as_view(), name='api_category_reorder'),
 ]

@@ -4,7 +4,7 @@ from django.test import Client, TestCase
 from django.urls import reverse
 
 # Local folder imports
-from tasks.models import Task, TaskEvaluation, TaskVote
+from tasks.models import Category, Task, TaskEvaluation, TaskVote
 from tasks.tests.utils import make_task, make_user
 from tasks.views import _task_list_cache_key
 
@@ -335,4 +335,74 @@ class TaskCacheInvalidationTest(TestCase):
         self.client.login(username=self.user.username, password=self.user._plain_password)
         self.client.post(reverse("tasks:vote", kwargs={"pk": self.task.pk}), {"value": 1})
         self.assertIsNone(cache.get(cache_key))
+
+
+class CategoryAPITest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("catuser")
+        self.cat = Category.objects.create(slug="test-cat", name="Test", description="Desc", order=10)
+
+    def test_list_requires_login(self):
+        response = self.client.get(reverse("tasks:api_categories"))
+        self.assertEqual(response.status_code, 302)
+
+    def test_list_returns_categories(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:api_categories"))
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        slugs = [c["slug"] for c in data["categories"]]
+        self.assertIn("test-cat", slugs)
+
+    def test_create_category(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(reverse("tasks:api_categories"), {"name": "Nowa", "description": "Opis"})
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(Category.objects.filter(name="Nowa").exists())
+
+    def test_create_category_empty_name_returns_400(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(reverse("tasks:api_categories"), {"name": "", "description": ""})
+        self.assertEqual(response.status_code, 400)
+
+    def test_edit_category(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(
+            reverse("tasks:api_category_edit", kwargs={"pk": self.cat.pk}),
+            {"name": "Zmieniona", "description": "Nowy opis"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.cat.refresh_from_db()
+        self.assertEqual(self.cat.name, "Zmieniona")
+
+    def test_edit_category_empty_name_returns_400(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(
+            reverse("tasks:api_category_edit", kwargs={"pk": self.cat.pk}),
+            {"name": "", "description": ""},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_delete_category(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(reverse("tasks:api_category_delete", kwargs={"pk": self.cat.pk}))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(Category.objects.filter(pk=self.cat.pk).exists())
+
+    def test_delete_protected_category_returns_403(self):
+        protected = Category.objects.create(slug="locked", name="Locked", is_protected=True)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(reverse("tasks:api_category_delete", kwargs={"pk": protected.pk}))
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(Category.objects.filter(pk=protected.pk).exists())
+
+    def test_delete_sets_task_category_to_null(self):
+        task = make_task(created_by=self.user)
+        task.category = self.cat
+        task.save()
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        self.client.post(reverse("tasks:api_category_delete", kwargs={"pk": self.cat.pk}))
+        task.refresh_from_db()
+        self.assertIsNone(task.category)
 

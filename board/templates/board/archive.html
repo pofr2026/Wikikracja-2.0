@@ -9,8 +9,8 @@
 <div class="section">
 
   <div class="d-flex align-items-center justify-content-between gap-2 mb-3 flex-wrap">
-    <span class="section-heading" style="font-size:.9rem;">
-      <i class="fas fa-box-archive me-2" style="color:var(--accent);opacity:.8;"></i>{% trans "Document archive" %}
+    <span class="section-heading">
+      <i class="fas fa-box-archive me-2 cat-group-icon"></i>{% trans "Document archive" %}
     </span>
     <a href="{% url 'board:start' %}" class="btn btn-sm btn-outline-secondary">
       <i class="fas fa-arrow-left me-1"></i>{% trans "Documents" %}
@@ -25,9 +25,9 @@
   </div>
   {% else %}
   <div class="card">
-    <div class="card-body text-center py-5" style="color:var(--text-muted);">
-      <i class="fas fa-box-archive fa-2x d-block mb-2" style="opacity:.3;"></i>
-      <span style="font-size:.875rem;">{% trans "Archive is empty" %}</span>
+    <div class="card-body text-center py-5 text-muted">
+      <i class="fas fa-box-archive fa-2x d-block mb-2 opacity-25"></i>
+      <span class="text-title-clamp">{% trans "Archive is empty" %}</span>
     </div>
   </div>
   {% endif %}

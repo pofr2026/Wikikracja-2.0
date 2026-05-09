@@ -140,7 +140,7 @@ DELETE_PUBLIC_CHAT_ROOM = env_int("DELETE_PUBLIC_CHAT_ROOM", 360)
 UPLOAD_IMAGE_MAX_SIZE_MB = env_int("UPLOAD_IMAGE_MAX_SIZE_MB", 5)
 
 # ZMIANA 5: maksymalna długość wiadomości czatu (konfigurowalna)
-MESSAGE_MAX_LENGTH = env_int("MESSAGE_MAX_LENGTH", 500)
+MESSAGE_MAX_LENGTH = env_int("MESSAGE_MAX_LENGTH", 1000)
 DATA_UPLOAD_MAX_MEMORY_SIZE = env_int("DATA_UPLOAD_MAX_MEMORY_SIZE", 10485760)
 
 ACCEPTANCE = env_int("ACCEPTANCE", 3)
@@ -229,6 +229,7 @@ INSTALLED_APPS = [
     'chat',
     'home',
     'pytz',
+    'categories',
     'board',
     'events',
     'tasks',

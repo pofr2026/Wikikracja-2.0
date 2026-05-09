@@ -22,6 +22,7 @@ from django.views.decorators.http import require_POST
 from board.models import Post, PostCategory
 from bookkeeping.models import Transaction
 from chat.models import Message, Room
+from chat.services import CHAT_UNREAD_CACHE_KEY, get_unread_count_for_user
 from elibrary.models import Book
 from events.models import Event
 from glosowania.models import Argument as DecyzjaArgument
@@ -34,6 +35,17 @@ from .forms import RememberLoginForm
 from .models import OnboardingProgress, ReadStatus
 
 log = logging.getLogger(__name__)
+
+_CONTENT_TYPE_MAP = {
+    'post': ReadStatus.ContentType.POST,
+    'task': ReadStatus.ContentType.TASK,
+    'book': ReadStatus.ContentType.BOOK,
+    'event': ReadStatus.ContentType.EVENT,
+    'message': ReadStatus.ContentType.MESSAGE,
+    'room_messages': ReadStatus.ContentType.MESSAGE,
+    'decision': ReadStatus.ContentType.DECISION,
+    'citizen': ReadStatus.ContentType.CITIZEN,
+}
 
 FEED_CACHE_KEY = "feed_raw_v1"
 FEED_CACHE_TTL = 3600
@@ -128,9 +140,15 @@ def home(request: HttpRequest):
             'user_voted': user_voted,
         }
 
-    # Karta 4 — Kalendarz: 3 najbliższe aktywne eventy
+    # Karta 4 — Kalendarz: 3 najbliższe wystąpienia (eventy jednorazowe i cykliczne, każde wystąpienie osobno)
     today_dt = timezone.now()
-    upcoming_events = list(Event.objects.filter(start_date__gte=today_dt, is_active=True).order_by('start_date')[:3])
+    _events_horizon_end = today_dt + td(days=90)
+    _occurrences = []
+    for _ev in Event.objects.filter(is_active=True):
+        for _date in _ev.get_occurrences(today_dt, _events_horizon_end):
+            _occurrences.append({'event': _ev, 'date': _date})
+    _occurrences.sort(key=lambda o: o['date'])
+    upcoming_events = _occurrences[:5]
 
     # Karta 5 — Finanse: przychody/wydatki za bieżący rok
     current_year = today_dt.year
@@ -148,8 +166,7 @@ def home(request: HttpRequest):
     # Unread count without events (for home page display)
     unread_items_no_events = [item for item in feed_items if not item['is_read'] and item['content_type'] != 'event']
 
-    # Licznik nieprzeczytanych pokoi czatu
-    chat_unread_count = Room.objects.filter(allowed=request.user).exclude(seen_by=request.user).count()
+    chat_unread_count = get_unread_count_for_user(request.user)
 
     # Licznik aktywnych zadań użytkownika
     my_tasks_count = Task.objects.filter(
@@ -462,26 +479,13 @@ def mark_as_read(request):
 
     try:
         object_id = int(object_id)
-        # Map content types to ReadStatus content types
-        content_type_map = {
-            'post': ReadStatus.ContentType.POST,
-            'task': ReadStatus.ContentType.TASK,
-            'book': ReadStatus.ContentType.BOOK,
-            'event': ReadStatus.ContentType.EVENT,
-            'message': ReadStatus.ContentType.MESSAGE,
-            'room_messages': ReadStatus.ContentType.MESSAGE,  # Map room messages to message type for read tracking
-            'decision': ReadStatus.ContentType.DECISION,
-            'citizen': ReadStatus.ContentType.CITIZEN,
-        }
-
-        read_status_content_type = content_type_map.get(content_type)
+        read_status_content_type = _CONTENT_TYPE_MAP.get(content_type)
         if not read_status_content_type:
             return JsonResponse({
                 'success': False,
                 'error': 'Invalid content type'
             })
 
-        # Create or update read status
         read_status, created = ReadStatus.objects.get_or_create(user=request.user, content_type=read_status_content_type, object_id=object_id)
 
         # For room messages, also update room.seen_by for chat consistency
@@ -489,6 +493,7 @@ def mark_as_read(request):
             try:
                 room = Room.objects.get(id=object_id)
                 room.seen_by.add(request.user)
+                cache.delete(CHAT_UNREAD_CACHE_KEY.format(user_id=request.user.id))
             except Room.DoesNotExist:
                 pass  # Room might not exist, ignore
 
@@ -512,26 +517,13 @@ def mark_all_read(request):
 
         # Get all current feed items and mark them as read
         feed_items = generate_feed_items(user)
-        # read_status_map = build_read_status_map(user)
-
         # Create read statuses for all unread items
         created_count = 0
         room_ids_to_mark = []  # Collect room IDs for batch update
 
         for item in feed_items:
             if not item['is_read']:
-                content_type_map = {
-                    'post': ReadStatus.ContentType.POST,
-                    'task': ReadStatus.ContentType.TASK,
-                    'book': ReadStatus.ContentType.BOOK,
-                    'event': ReadStatus.ContentType.EVENT,
-                    'message': ReadStatus.ContentType.MESSAGE,
-                    'room_messages': ReadStatus.ContentType.MESSAGE,
-                    'decision': ReadStatus.ContentType.DECISION,
-                    'citizen': ReadStatus.ContentType.CITIZEN,
-                }
-
-                read_status_content_type = content_type_map.get(item['content_type'])
+                read_status_content_type = _CONTENT_TYPE_MAP.get(item['content_type'])
                 if read_status_content_type:
                     read_status, created = ReadStatus.objects.get_or_create(user=user, content_type=read_status_content_type, object_id=item['object_id'])
                     if created:
@@ -547,6 +539,7 @@ def mark_all_read(request):
                 rooms = Room.objects.filter(id__in=room_ids_to_mark)
                 for room in rooms:
                     room.seen_by.add(user)
+                cache.delete(CHAT_UNREAD_CACHE_KEY.format(user_id=user.id))
             except Exception as e:
                 log.warning(f"Could not update room.seen_by: {e}")
 
@@ -597,19 +590,7 @@ def mark_unread(request):
 
     try:
         object_id = int(object_id)
-        # Map content types to ReadStatus content types
-        content_type_map = {
-            'post': ReadStatus.ContentType.POST,
-            'task': ReadStatus.ContentType.TASK,
-            'book': ReadStatus.ContentType.BOOK,
-            'event': ReadStatus.ContentType.EVENT,
-            'message': ReadStatus.ContentType.MESSAGE,
-            'room_messages': ReadStatus.ContentType.MESSAGE,  # Map room messages to message type for read tracking
-            'decision': ReadStatus.ContentType.DECISION,
-            'citizen': ReadStatus.ContentType.CITIZEN,
-        }
-
-        read_status_content_type = content_type_map.get(content_type)
+        read_status_content_type = _CONTENT_TYPE_MAP.get(content_type)
         if not read_status_content_type:
             return JsonResponse({
                 'success': False,
@@ -624,6 +605,7 @@ def mark_unread(request):
             try:
                 room = Room.objects.get(id=object_id)
                 room.seen_by.remove(request.user)
+                cache.delete(CHAT_UNREAD_CACHE_KEY.format(user_id=request.user.id))
             except Room.DoesNotExist:
                 pass  # Room might not exist, ignore
 
@@ -974,4 +956,5 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         'ss': ss,
         'categories_with_posts': categories_with_posts,
         'selected_onboarding_post_ids': selected_ids,
+        'message_max_length': settings.MESSAGE_MAX_LENGTH,
     })

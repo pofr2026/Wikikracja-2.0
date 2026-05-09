@@ -3,10 +3,17 @@ from django.utils.translation import gettext_lazy as _
 
 from home.widgets import RichTextWidget
 
-from .models import Task
+from .models import Category, Task
 
 
 class TaskForm(forms.ModelForm):
+    category = forms.ModelChoiceField(
+        queryset=Category.objects.all(),
+        required=False,
+        empty_label=_("— no category —"),
+        widget=forms.Select(attrs={"class": "form-select"}),
+    )
+
     class Meta:
         model = Task
         fields = ["title", "description", "category"]
@@ -17,9 +24,6 @@ class TaskForm(forms.ModelForm):
             "description": RichTextWidget(
                 placeholder=_("Describe the task. Ctrl+B / Ctrl+I / Ctrl+U for formatting."),
             ),
-            "category": forms.Select(attrs={
-                "class": "form-select"
-            }),
         }
 
 

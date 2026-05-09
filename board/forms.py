@@ -4,19 +4,7 @@ from django import forms
 from django.utils.translation import gettext_lazy as _
 from tinymce.widgets import TinyMCE
 
-from .models import Post, PostCategory
-
-
-class PostCategoryForm(forms.ModelForm):
-    class Meta:
-        model = PostCategory
-        fields = ('name', 'priority')
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_method = 'post'
-        self.helper.add_input(Submit('submit', _('Save'), css_class='btn-primary'))
+from .models import Post
 
 
 class PostForm(forms.ModelForm):

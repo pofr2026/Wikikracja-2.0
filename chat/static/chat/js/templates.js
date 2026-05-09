@@ -129,7 +129,7 @@ const message_template = `
           <% } %>
         <% } %>
       </div>
-      <span class='msg-text'><%-message%></span>
+      <div class='msg-text'><%-message%></div>
     </div>
 
     <div class='message-header'>

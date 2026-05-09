@@ -6,17 +6,19 @@ from django.core.cache import cache
 from django.db import models, transaction
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import CreateView, DetailView, TemplateView, UpdateView
 
+from categories.views import CategoryAPIBase, CategoryDeleteAPI, CategoryEditAPI, CategoryReorderAPI
 from chat.models import Room
 
 from .forms import TaskForm, TaskStatusForm
-from .models import Task, TaskEvaluation, TaskVote
+from .models import Category, Task, TaskEvaluation, TaskVote
 
 TASK_LIST_CACHE_TTL = 3600  # 1h — signals handle invalidation on data changes
 TASK_LIST_GLOBAL_VERSION_KEY = "task_list_global_version"
@@ -58,15 +60,15 @@ def _task_sort_context(request):
     tab = request.GET.get('tab', 'mine')
     if tab not in ('mine', 'awaiting', 'active', 'finished'):
         tab = 'mine'
-    valid_categories = {c[0] for c in Task.Category.choices}
-    categories = [c for c in request.GET.getlist('category') if c in valid_categories]
+    valid_slugs = set(Category.objects.values_list('slug', flat=True))
+    categories = [c for c in request.GET.getlist('category') if c in valid_slugs]
     return sort, order, tab, categories
 
 
 def _filter_by_category(tasks, categories):
     if not categories:
         return tasks
-    return [t for t in tasks if t.category in categories]
+    return [t for t in tasks if t.category and t.category.slug in categories]
 
 
 def _apply_task_sort(tasks, sort, order):
@@ -210,10 +212,7 @@ class TaskListView(LoginRequiredMixin, TemplateView):
             "current_sort": sort,
             "current_order": order,
             "current_categories": categories,
-            "category_choices_with_desc": [
-                (k, v, Task.CATEGORY_DESCRIPTIONS.get(k, ""))
-                for k, v in Task.Category.choices
-            ],
+            "category_list": list(Category.objects.values("id", "slug", "name", "description", "order", "is_protected")),
         })
         return context
 
@@ -225,10 +224,7 @@ class TaskHelpView(LoginRequiredMixin, TemplateView):
 class CategoryContextMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["category_choices_with_desc"] = [
-            (k, v, Task.CATEGORY_DESCRIPTIONS.get(k, ""))
-            for k, v in Task.Category.choices
-        ]
+        context["category_list"] = list(Category.objects.values("id", "slug", "name", "description"))
         return context
 
 
@@ -250,6 +246,40 @@ class TaskCreateView(CategoryContextMixin, LoginRequiredMixin, CreateView):
             },
         )
         return response
+
+
+HELPERS_POPOVER_LIMIT = 10
+
+
+@login_required
+def task_helpers_json(request: HttpRequest, pk: int) -> JsonResponse:
+    task = get_object_or_404(Task, pk=pk)
+    qs = (TaskVote.objects
+          .filter(task=task, value=TaskVote.Value.UP)
+          .select_related("user", "user__uzytkownik")
+          .order_by("updated_at", "id"))
+    total = qs.count()
+    helpers = []
+    for vote in qs[:HELPERS_POPOVER_LIMIT]:
+        user = vote.user
+        avatar_url = ""
+        uzy = getattr(user, "uzytkownik", None)
+        if uzy and getattr(uzy, "avatar", None):
+            try:
+                avatar_url = uzy.avatar.url
+            except ValueError:
+                avatar_url = ""
+        helpers.append({
+            "username": user.username,
+            "avatar_url": avatar_url,
+            "profile_url": reverse("obywatele:obywatele_szczegoly", args=[user.pk]),
+        })
+    return JsonResponse({
+        "helpers": helpers,
+        "total": total,
+        "extra": max(0, total - HELPERS_POPOVER_LIMIT),
+        "task_url": reverse("tasks:detail", args=[task.pk]),
+    })
 
 
 @require_POST
@@ -366,10 +396,17 @@ class TaskCloseView(LoginRequiredMixin, UpdateView):
 @login_required
 def vote_task(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task.objects.with_metrics(), pk=pk)
-    value = int(request.POST.get("value", 0))
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    try:
+        value = int(request.POST.get("value", 0))
+    except (ValueError, TypeError):
+        value = 0
     if value not in (TaskVote.Value.DOWN, TaskVote.Value.UP):
+        if is_ajax:
+            return JsonResponse({"error": "invalid value"}, status=400)
         return redirect(request.POST.get("next") or "tasks:list")
 
+    new_vote = None
     with transaction.atomic():
         vote = TaskVote.objects.filter(task=task, user=request.user).first()
         if vote and vote.value == value:
@@ -381,14 +418,27 @@ def vote_task(request: HttpRequest, pk: int) -> HttpResponse:
             else:
                 vote.value = value
                 vote.save(update_fields=["value", "updated_at"])
+            new_vote = value
 
         # Refresh score and set rejected if sum of votes <= -2
         task.refresh_from_db(fields=["status", "updated_at"])
-        metrics = Task.objects.filter(pk=task.pk).annotate(votes_score=Coalesce(Sum("votes__value"), 0)).values("votes_score", "status").first()
+        metrics = (
+            Task.objects.filter(pk=task.pk)
+            .annotate(
+                votes_score=Coalesce(Sum("votes__value"), 0),
+                votes_up=Count("votes", filter=Q(votes__value=1)),
+            )
+            .values("votes_score", "votes_up", "status")
+            .first()
+        )
         votes_score = metrics["votes_score"] if metrics else 0
+        votes_up = metrics["votes_up"] if metrics else 0
         if votes_score <= -2 and task.status != Task.Status.REJECTED:
             Task.objects.filter(pk=task.pk).update(status=Task.Status.REJECTED, updated_at=models.F("updated_at"))
             task.status = Task.Status.REJECTED
+
+    if is_ajax:
+        return JsonResponse({"vote": new_vote, "votes_score": votes_score, "votes_up": votes_up})
     return redirect(request.POST.get("next") or "tasks:list")
 
 
@@ -445,3 +495,65 @@ def delete_task(request: HttpRequest, pk: int) -> HttpResponse:
 
     task.delete()
     return redirect("tasks:list")
+
+
+class TaskCategoryAPI(CategoryAPIBase):
+    model = Category
+    related_count_field = "tasks"
+    order_field = "order"
+
+    def serialize(self, cat):
+        data = super().serialize(cat)
+        data["slug"] = cat.slug
+        return data
+
+    def post(self, request):
+        name = request.POST.get("name", "").strip()
+        if not name:
+            return JsonResponse({"error": "Name is required."}, status=400)
+        base_slug = slugify(name)
+        if not base_slug:
+            return JsonResponse({"error": "Invalid name."}, status=400)
+        slug = base_slug
+        counter = 1
+        while Category.objects.filter(slug=slug).exists():
+            slug = f"{base_slug}-{counter}"
+            counter += 1
+        description = request.POST.get("description", "").strip()
+        cat = Category.objects.create(name=name, slug=slug, description=description)
+        self.after_write()
+        data = self.serialize(cat)
+        data["item_count"] = 0
+        return JsonResponse(data)
+
+    def after_write(self):
+        invalidate_task_list_cache()
+
+
+class TaskCategoryEditAPI(CategoryEditAPI):
+    model = Category
+
+    def serialize(self, cat):
+        data = super().serialize(cat)
+        data["slug"] = cat.slug
+        return data
+
+    def after_write(self):
+        invalidate_task_list_cache()
+
+
+class TaskCategoryDeleteAPI(CategoryDeleteAPI):
+    model = Category
+    related_count_field = "tasks"
+    block_if_in_use = False
+
+    def after_write(self):
+        invalidate_task_list_cache()
+
+
+class TaskCategoryReorderAPI(CategoryReorderAPI):
+    model = Category
+    order_field = "order"
+
+    def after_write(self):
+        invalidate_task_list_cache()

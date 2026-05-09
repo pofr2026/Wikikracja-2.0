@@ -97,6 +97,49 @@ class ChatViewsTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("filenames", response.json())
 
+    def test_open_dm_creates_room_when_missing(self):
+        self.client.force_login(self.user)
+        other = make_user("other")
+        self.assertIsNone(Room.find_with_users(self.user, other))
+
+        response = self.client.get(reverse("chat:open_dm", kwargs={"pk": other.pk}))
+
+        room = Room.find_with_users(self.user, other)
+        self.assertIsNotNone(room)
+        self.assertFalse(room.public)
+        self.assertEqual(set(room.allowed.all()), {self.user, other})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn(f"#room_id={room.id}", response["Location"])
+
+    def test_open_dm_uses_existing_room(self):
+        self.client.force_login(self.user)
+        other = make_user("other")
+        existing = Room.objects.create(title="chatuser-other", public=False)
+        existing.allowed.set([self.user, other])
+
+        response = self.client.get(reverse("chat:open_dm", kwargs={"pk": other.pk}))
+
+        self.assertEqual(Room.objects.filter(public=False, allowed=self.user).filter(allowed=other).count(), 1)
+        self.assertIn(f"#room_id={existing.id}", response["Location"])
+
+    def test_open_dm_reactivates_archived_room(self):
+        self.client.force_login(self.user)
+        other = make_user("other")
+        archived = Room.objects.create(title="chatuser-other", public=False, archived=True)
+        archived.allowed.set([self.user, other])
+
+        response = self.client.get(reverse("chat:open_dm", kwargs={"pk": other.pk}))
+
+        archived.refresh_from_db()
+        self.assertFalse(archived.archived)
+        self.assertIn(f"#room_id={archived.id}", response["Location"])
+
+    def test_open_dm_self_redirects_to_chat_root(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("chat:open_dm", kwargs={"pk": self.user.pk}))
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn("#room_id=", response["Location"])
+
 
 class ChatRoomAccessTest(TestCase):
     def setUp(self):

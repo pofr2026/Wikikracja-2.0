@@ -1,5 +1,8 @@
 {% extends 'tasks/menu.html' %}
 {% load i18n %}
+{% load static %}
+
+{% block prefs_scope %}tasks{% endblock %}
 
 {% block tasks %}
 
@@ -64,13 +67,17 @@
           <i class="fas fa-check cat-filter__check"></i>
           <span>{% trans 'All' %}</span>
         </div>
-        {% for cat_key, cat_label, cat_desc in category_choices_with_desc %}
-        <div class="cat-filter__item" data-key="{{ cat_key }}" data-label="{{ cat_label }}"
-             title="{{ cat_desc }}">
+        {% for cat in category_list %}
+        <div class="cat-filter__item" data-key="{{ cat.slug }}" data-label="{{ cat.name }}"
+             title="{{ cat.description }}">
           <i class="fas fa-check cat-filter__check"></i>
-          <span>{{ cat_label }}</span>
+          <span>{{ cat.name }}</span>
         </div>
         {% endfor %}
+        <div class="cat-filter__manage-sep"></div>
+        <button type="button" class="cat-filter__manage-btn" id="catManageBtn">
+          <i class="fas fa-gear"></i> {% trans 'Manage categories' %}
+        </button>
       </div>
     </div>
   </div>
@@ -78,17 +85,17 @@
   <span class="toolbar-divider"></span>
 
   <div class="toolbar-view">
-    <button class="view-toggle-btn" id="btn-list" onclick="setTaskView('list')" title="{% trans 'List' %}">
+    <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}">
       <i class="fas fa-list"></i>
     </button>
-    <button class="view-toggle-btn" id="btn-grid" onclick="setTaskView('grid')" title="{% trans 'Grid' %}">
+    <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}">
       <i class="fas fa-grip"></i>
     </button>
   </div>
 </div>
 
 {# ── CONTENT ── #}
-<div class="proposals-list" id="proposals-list">
+<div class="proposals-list" data-view-container>
 
   {# ══ MOJE ══ #}
   {% if current_tab == 'mine' %}
@@ -153,9 +160,44 @@
 
 </div>
 
+{# ── MANAGE CATEGORIES MODAL ── #}
+<div class="modal fade" id="manageCategoriesModal" tabindex="-1" aria-labelledby="manageCategoriesModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="manageCategoriesModalLabel">
+          <i class="fas fa-gear me-2"></i>{% trans 'Manage categories' %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <ul class="cat-mgr-list" id="catMgrList">
+          {# filled by JS #}
+        </ul>
+        <div class="cat-mgr-error" id="catMgrError" style="display:none;"></div>
+        <div class="cat-mgr-add-row" id="catMgrAddRow">
+          <input type="text" class="cat-mgr-input" id="catMgrNewName" placeholder="{% trans 'Category name' %}" maxlength="100">
+          <input type="text" class="cat-mgr-input" id="catMgrNewDesc" placeholder="{% trans 'Description (optional)' %}">
+          <button type="button" class="btn btn-sm btn-primary" id="catMgrAddBtn">
+            <i class="fas fa-plus me-1"></i>{% trans 'Add category' %}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock tasks %}
 
 {% block extra_js %}
+<script>
+  window.TASK_HELPERS_I18N = {
+    empty: "{% trans 'No one helps yet' %}",
+    more:  "{% trans 'and {n} more — see all' %}",
+    error: "{% trans 'Could not load helpers' %}",
+  };
+</script>
+<script src="{% static 'tasks/js/tasks.js' %}"></script>
 <script>
 (function () {
   var btn      = document.getElementById('catFilterBtn');
@@ -256,6 +298,37 @@
 
   // ── init ─────────────────────────────────────────────────────
   apply();
+
+  // ── manage button opens modal ────────────────────────────────
+  var manageBtn = document.getElementById('catManageBtn');
+  if (manageBtn) {
+    manageBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      panel.hidden = true;
+      btn.setAttribute('aria-expanded', 'false');
+      var modal = new bootstrap.Modal(document.getElementById('manageCategoriesModal'));
+      modal.show();
+    });
+  }
 })();
+
+initCategoryManager('manageCategoriesModal', {
+  list:    '{% url "tasks:api_categories" %}',
+  edit:    '{% url "tasks:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/edit/',
+  del:     '{% url "tasks:api_categories" %}'.replace(/\/+$/, '') + '/{pk}/delete/',
+  reorder: '{% url "tasks:api_category_reorder" %}',
+}, {
+  edit:         '{% trans "Edit" %}',
+  cancel:       '{% trans "Cancel" %}',
+  save:         '{% trans "Save" %}',
+  delete:       '{% trans "Delete" %}',
+  items_suffix: '{% trans "tasks" %}',
+  protected:    '{% trans "Protected — cannot be deleted" %}',
+  confirm_del:  '{% trans "This category has {n} task(s). Deleting it will leave those tasks without a category. Continue?" %}',
+  name_req:     '{% trans "Category name is required." %}',
+  load_error:   '{% trans "Failed to load categories." %}',
+  error:        '{% trans "An error occurred." %}',
+});
+
 </script>
 {% endblock extra_js %}

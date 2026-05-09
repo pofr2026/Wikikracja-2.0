@@ -3,9 +3,27 @@ from django.db import models
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
 from django.urls import reverse
+from django.utils.text import slugify
 from django.utils.translation import gettext_lazy as _
 
+from categories.models import AbstractCategory
+
 User = settings.AUTH_USER_MODEL
+
+
+class Category(AbstractCategory):
+    slug = models.SlugField(max_length=64, unique=True)
+    order = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta(AbstractCategory.Meta):
+        ordering = ("order", "name")
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
 
 
 class TaskQuerySet(models.QuerySet):
@@ -34,25 +52,6 @@ class Task(models.Model):
         CANCELLED = "cancelled", _("Cancelled")
         REJECTED = "rejected", _("Rejected")
 
-    class Category(models.TextChoices):
-        IT = "it", _("Wikikracja i IT")
-        INTERNAL = "internal", _("Sprawy Wewnętrzne LO")
-        EDUCATION = "education", _("Edukacja i Wiedza")
-        PROMO = "promo", _("Promocja i Zasięgi")
-        RESOURCES = "resources", _("Zasoby i Biznes")
-        INTERVENTION = "intervention", _("Interwencja Obywatelska")
-        OTHER = "other", _("Inne")
-
-    CATEGORY_DESCRIPTIONS = {
-        "it": _("Rozwój Wikikracji, poprawki kodu, hosting, administracja techniczna."),
-        "internal": _("My, nasi ludzie i zasady — onboarding, rekrutacja, powitania, spotkania."),
-        "education": _("Baza wiedzy, informacje dot. DB, linki, listy, manuale."),
-        "promo": _("Social media, PR, newslettery, grafika, akcje ulotkowe."),
-        "resources": _("Projekty zarobkowe, składki, zarządzanie majątkiem, spółdzielnie."),
-        "intervention": _("Lobbying, petycje, wdrażanie DB w gminach, kontakt z politykami."),
-        "other": _("Zadania bez przypisanej kategorii."),
-    }
-
     title = models.CharField(max_length=200)
     description = models.TextField()
     status = models.CharField(
@@ -60,10 +59,12 @@ class Task(models.Model):
         choices=Status.choices,
         default=Status.ACTIVE,
     )
-    category = models.CharField(
-        max_length=16,
-        choices=Category.choices,
-        default=Category.OTHER,
+    category = models.ForeignKey(
+        Category,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="tasks",
     )
     created_by = models.ForeignKey(
         User,

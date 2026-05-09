@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import os
@@ -51,6 +52,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             # register user as online
             ChatConsumer.online_registry.make_online(self.scope['user'], self)
 
+            # join personal group for user-targeted pushes (e.g. unread count)
+            await self.channel_layer.group_add(
+                f"user_{self.scope['user'].id}",
+                self.channel_name,
+            )
+
+            # send current unread count immediately on connect
+            count = await self.repo.get_unread_count()
+            await self.send_json({"unread_count": count})
+
             proxy = HandledMessage()
             await self.send_online_update(proxy, True)
             await proxy.send_all(self)
@@ -73,6 +84,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 await proxy.send_all(self)
             except ClientError:
                 pass
+
+        # leave personal group
+        await self.channel_layer.group_discard(
+            f"user_{self.scope['user'].id}",
+            self.channel_name,
+        )
 
         # remove user from online list
         ChatConsumer.online_registry.make_offline(self)
@@ -380,7 +397,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             consumer = ChatConsumer.online_registry.get_consumer(member)
 
             if not consumer and not prefs['muted']:
-                await self.send_push_notification_async(proxy, member, msg, room_id)
+                asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room_id))
                 continue
 
             if consumer and consumer.rooms.present(room):
@@ -420,6 +437,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return
         if not await self.repo.room_is_seen(room):
             await self.repo.see_room(room)
+            await self.push_unread_count()
 
     @handlers.register("room-unseen")
     async def handle_unseen_room(self, proxy: HandledMessage, room_id):
@@ -428,6 +446,19 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         except ClientError:
             return
         await self.repo.unsee_room(room)
+        await self.push_unread_count()
+
+    async def push_unread_count(self):
+        """Push updated unread room count to all connections of this user."""
+        count = await self.repo.get_unread_count()
+        await self.channel_layer.group_send(
+            f"user_{self.scope['user'].id}",
+            {"type": "chat.unread_count", "count": count},
+        )
+
+    async def chat_unread_count(self, event):
+        """Channel layer handler — relays unread count to the WebSocket client."""
+        await self.send_json({"unread_count": event["count"]})
 
     @handlers.register("message-add-vote")
     async def handle_add_vote(self, proxy: HandledMessage, vote: str, message_id: int):

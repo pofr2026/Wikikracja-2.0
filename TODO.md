@@ -36,6 +36,7 @@
 ## Błędy
 
 - Nie działa na Safari. ReferenceError: can't find variable TRANSLATION. Automate cross browser testing.
+- Expandable messages: napis "… pokaż więcej" nakłada się na ostatnią linię tekstu (biały tekst widoczny pod hintem). Trzeba dopracować pozycjonowanie/stacking — element DOM `.expandable-hint` jest absolutnie pozycjonowany ale tekst body przebija przez tło.
 
 ## Funkcjonalności
 
@@ -250,6 +251,12 @@ Do oddania / na sprzedaż / do wypożyczenia:
   - dodanie opcji "wyświetl na pulpicie użytkowników" wtedy pojawia się na pulpicie. 
   - data ważności (po tej dacie ogłoszenie się archiwizuje) 
 **BUGS**
+**Przydatne komendy**
+docker compose up --build -d - r
+docker compose restart
+
+Get-ChildItem -Path . -Recurse -Filter __pycache__ -Directory | Remove-Item -Recurse -Force 
+
 
 ------------------------------------------------------------
 

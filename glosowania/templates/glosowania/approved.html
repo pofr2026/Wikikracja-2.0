@@ -2,10 +2,12 @@
 {% load static %}
 {% load i18n %}
 
+{% block prefs_scope %}glosowania{% endblock %}
+
 {% block glosowania %}
 {% include 'glosowania/_view_toggle.html' %}
 
-<div class="proposals-list" id="proposals-list">
+<div class="proposals-list" data-view-container>
   {% if votings %}
     {% for i in votings %}
       {% include 'glosowania/_proposal_card.html' with show_dates=False %}
