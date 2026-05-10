@@ -5,7 +5,8 @@
 <div class="room-link {{ room|seen_by:user }}{% if auto_muted %} room-auto-muted{% endif %}"
   data-room-type="{% if room.public %}public{% else %}private{% endif %}"
   data-room-id="{{ room.id }}"
-  data-room-archived="{{ room.archived }}">
+  data-room-archived="{{ room.archived }}"
+  data-last-activity="{{ room.last_activity|date:'U' }}">
   {% if room.archived %}
     <i class="fas fa-lock nav-status nav-status--locked" aria-hidden="true"></i>
   {% elif room|is_seen_by:user == "false" %}

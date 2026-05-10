@@ -193,7 +193,10 @@
         <button class="btn btn-sm d-md-none me-2 p-1" id="sidebar-toggle">
           <i class="fas fa-bars"></i>
         </button>
-        <a href="{% url 'home' %}">{{ request.site.name }}</a>
+        <a href="{% url 'home' %}" class="topbar-logo">
+          <i class="fas fa-fw fa-building-columns"></i>
+          <span class="logo-label ms-1">{{ request.site.name }}</span>
+        </a>
         <span class="sep">›</span>
         <span class="current">
           {% if request.resolver_match.url_name == 'home' %}{% trans "Desktop" %}

@@ -1302,6 +1302,9 @@ html, body {
 .topbar .topbar-breadcrumb a:hover {
   color: var(--text-primary);
 }
+.topbar .topbar-logo {
+  display: none;
+}
 .topbar .topbar-breadcrumb .sep {
   opacity: .4;
 }
@@ -1510,6 +1513,23 @@ a:hover {
   }
   .topbar .btn-cta span {
     display: none;
+  }
+  .topbar .topbar-breadcrumb .sep,
+  .topbar .topbar-breadcrumb .current {
+    display: none;
+  }
+  .topbar .topbar-logo .logo-label {
+    display: none;
+  }
+  .topbar .topbar-logo {
+    display: inline-flex;
+    align-items: center;
+    color: var(--text-primary);
+    font-size: 1rem;
+    text-decoration: none;
+  }
+  .topbar .topbar-logo:hover {
+    color: var(--accent);
   }
 }
 /* ===== SIDEBAR COLLAPSE ===== */

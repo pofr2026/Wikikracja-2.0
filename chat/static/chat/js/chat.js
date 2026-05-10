@@ -229,12 +229,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 localStorage.setItem('chat-unread-filter', 'active');
                 applyUnreadFilter();
             }
-            // On desktop: open the first unread room immediately
-            // On mobile: stay on the room list so the user can pick a room
+            // On desktop: open most-recent unread room; on mobile: stay on room list
             if (window.innerWidth >= 768) {
-                const firstUnread = $('.room-link.room-not-seen[data-room-id]');
-                if (firstUnread) {
-                    onRoomTryJoin(parseInt(firstUnread.dataset.roomId));
+                const unreadRooms = $$('.room-link.room-not-seen[data-room-id]');
+                const mostRecent = [...unreadRooms].reduce((best, el) => {
+                    return !best || parseInt(el.dataset.lastActivity) > parseInt(best.dataset.lastActivity) ? el : best;
+                }, null);
+                if (mostRecent) {
+                    onRoomTryJoin(parseInt(mostRecent.dataset.roomId));
                     return;
                 }
             } else {
