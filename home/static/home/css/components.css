@@ -2665,3 +2665,9 @@ button.proposal-helpers-btn:focus-visible {
   font-weight: 600;
   color: var(--text-primary);
 }
+@media (max-width: 768px) {
+  .cat-filter__panel {
+    max-width: calc(100vw - 1.5rem);
+    min-width: 0;
+  }
+}
