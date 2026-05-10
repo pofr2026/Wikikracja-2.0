@@ -11,12 +11,12 @@
       </thead>
       <tbody>
         {% for row in rows %}
-          <tr data-href="{% url 'chat:chat' %}#room_id={{ row.room.id }}">
+          <tr data-href="{% url 'chat:chat' %}#room_id={{ row.room.id }}&message_id={{ row.msg.id }}">
             <td class="td-link text-nowrap">
-              <a href="{% url 'chat:chat' %}#room_id={{ row.room.id }}">{{ row.room_name }}</a>
+              <a href="{% url 'chat:chat' %}#room_id={{ row.room.id }}&message_id={{ row.msg.id }}">{{ row.room_name }}</a>
             </td>
             <td class="td-link" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
-              <a href="{% url 'chat:chat' %}#room_id={{ row.room.id }}">{{ row.msg.text|plain_text|truncatechars:80 }}</a>
+              <a href="{% url 'chat:chat' %}#room_id={{ row.room.id }}&message_id={{ row.msg.id }}">{{ row.msg.text|plain_text|truncatechars:80 }}</a>
             </td>
             <td class="text-muted text-nowrap">
               {{ row.msg.time|date:"d.m.Y H:i" }}
