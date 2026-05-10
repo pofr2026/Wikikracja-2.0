@@ -2363,6 +2363,10 @@ msgstr "Brak nadchodzących wydarzeń"
 msgid "Add an event"
 msgstr "Dodaj wydarzenie"
 
+#: .\obywatele\templates\obywatele\wspolnota.html
+msgid "Add event"
+msgstr "Dodaj wydarzenie"
+
 #: .\home\templates\home\home.html:373
 msgid "Voting proposals"
 msgstr "Propozycje głosowań"

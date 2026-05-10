@@ -14,6 +14,7 @@
 /* Dark theme (default) */
 :root,
 [data-theme="dark"] {
+  color-scheme: dark;
   --bg-base: #161b2e;
   --bg-sidebar: #1c2035;
   --bg-card: #1e2340;
@@ -44,6 +45,7 @@
 }
 /* Civic theme — niebieskawa, formalna, instytucjonalna */
 [data-theme="civic"] {
+  color-scheme: dark;
   --bg-base: #111827;
   --bg-sidebar: #1a2332;
   --bg-card: #1e2d42;
@@ -74,6 +76,7 @@
 }
 /* Official theme — granatowy sidebar, pomarańczowy akcent */
 [data-theme="official"] {
+  color-scheme: light;
   --bg-base: #F9FAFB;
   --bg-sidebar: #0E1726;
   --bg-card: #ffffff;
@@ -104,6 +107,7 @@
 }
 /* Light theme */
 [data-theme="light"] {
+  color-scheme: light;
   --bg-base: #f0f2f5;
   --bg-sidebar: #ffffff;
   --bg-card: #ffffff;
