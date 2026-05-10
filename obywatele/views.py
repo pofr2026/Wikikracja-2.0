@@ -1008,7 +1008,7 @@ def set_user_language(request: HttpRequest):
 @login_required
 def citizen_czaty(request: HttpRequest, pk: int):
     target_user = get_object_or_404(User, pk=pk)
-    messages = (Message.objects.filter(sender=target_user).select_related('room').order_by('-time'))
+    messages = (Message.objects.filter(sender=target_user, room__public=True).select_related('room').order_by('-time'))
     rows = [{
         'room': msg.room,
         'room_name': msg.room.displayed_name(request.user),
@@ -1163,7 +1163,7 @@ def citizen_zalozono(request: HttpRequest, pk: int):
             }),
         })
 
-    for room in Room.objects.filter(founder=target_user).order_by('-last_activity'):
+    for room in Room.objects.filter(founder=target_user, public=True).order_by('-last_activity'):
         items.append({
             'title': room.displayed_name(target_user),
             'ts': room.last_activity,
