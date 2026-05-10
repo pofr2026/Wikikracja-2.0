@@ -1007,6 +1007,114 @@ msgstr "Skopiuj link"
 msgid "Copy link to room %(room_name)s"
 msgstr "Skopiuj link do pokoju %(room_name)s"
 
+#: chat/views.py
+msgid "Yesterday"
+msgstr "Wczoraj"
+
+#: chat/views.py
+msgid "Tomorrow"
+msgstr "Jutro"
+
+#: chat/views.py
+msgid "edit"
+msgstr "edytuj"
+
+#: chat/views.py
+msgid "edited"
+msgstr "edytowane"
+
+#: chat/views.py
+msgid "Changes History"
+msgstr "Historia zmian"
+
+#: chat/views.py
+msgid "Loading..."
+msgstr "Ładowanie..."
+
+#: chat/views.py
+msgid "Copy message link"
+msgstr "Skopiuj link do wiadomości"
+
+#: chat/views.py
+msgid "Link copied"
+msgstr "Link skopiowany"
+
+#: chat/views.py
+msgid "Could not copy link"
+msgstr "Nie udało się skopiować linku"
+
+#: chat/views.py
+msgid "Reply to the appropriate message..."
+msgstr "Odpowiedz na właściwą wiadomość..."
+
+#: chat/views.py
+msgid "Upvote"
+msgstr "Głos za"
+
+#: chat/views.py
+msgid "Downvote"
+msgstr "Głos przeciw"
+
+#: chat/views.py
+msgid "Jan"
+msgstr "sty"
+
+#: chat/views.py
+msgid "Feb"
+msgstr "lut"
+
+#: chat/views.py
+msgid "Mar"
+msgstr "mar"
+
+#: chat/views.py
+msgid "Apr"
+msgstr "kwi"
+
+#: chat/views.py
+msgid "May"
+msgstr "maj"
+
+#: chat/views.py
+msgid "Jun"
+msgstr "cze"
+
+#: chat/views.py
+msgid "Jul"
+msgstr "lip"
+
+#: chat/views.py
+msgid "Aug"
+msgstr "sie"
+
+#: chat/views.py
+msgid "Sep"
+msgstr "wrz"
+
+#: chat/views.py
+msgid "Oct"
+msgstr "paź"
+
+#: chat/views.py
+msgid "Nov"
+msgstr "lis"
+
+#: chat/views.py
+msgid "Dec"
+msgstr "gru"
+
+#: chat/views.py
+msgid "Sorting and filter"
+msgstr "Sortowanie i filtr"
+
+#: chat/views.py
+msgid "Likes"
+msgstr "Polubienia"
+
+#: chat/views.py
+msgid "Popular"
+msgstr "Popularne"
+
 #: .\events\forms.py:32 .\events\models.py:47
 msgid "Week of month"
 msgstr "Tydzień miesiąca"
