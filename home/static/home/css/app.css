@@ -253,9 +253,21 @@ td a {
 td a:hover {
   color: var(--accent);
 }
+.table-hover-rows {
+  font-size: .875rem;
+}
 .table-hover-rows tbody tr {
   cursor: default;
   transition: background var(--transition-fast);
+}
+.citizen-tab-empty {
+  font-size: .875rem;
+}
+.td-truncate {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .table-hover-rows tbody tr:hover {
   background: var(--accent-muted) !important;

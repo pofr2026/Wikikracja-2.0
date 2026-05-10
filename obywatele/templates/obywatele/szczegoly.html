@@ -259,3 +259,12 @@
 </div>
 
 {% endblock citizens %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('click', function(e) {
+  const tr = e.target.closest('.table-hover-rows tbody tr[data-href]');
+  if (tr && !e.target.closest('a')) window.location = tr.dataset.href;
+});
+</script>
+{% endblock %}
