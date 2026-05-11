@@ -4208,3 +4208,39 @@ msgstr "Angielski"
 #: .\zzz\settings.py:111
 msgid "Polish"
 msgstr "Polski"
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "Online"
+msgstr "Online"
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "Active 7 days"
+msgstr "Aktywni 7 dni"
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "Active 30 days"
+msgstr "Aktywni 30 dni"
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "Inactive 30+ days"
+msgstr "Nieaktywni 30+ dni"
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "Search user..."
+msgstr "Szukaj użytkownika..."
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "List view"
+msgstr "Widok listy"
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "Grid view"
+msgstr "Widok siatki"
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "Active recently"
+msgstr "Aktywny niedawno"
+
+#: .\obywatele\templates\obywatele\start.html
+msgid "Dormant"
+msgstr "Uśpiony"
