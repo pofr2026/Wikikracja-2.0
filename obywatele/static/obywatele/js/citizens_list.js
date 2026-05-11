@@ -1,35 +1,25 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const STORAGE_KEY = 'obywatele-view';
     const listView = document.getElementById('citizens-list-view');
     const gridView = document.getElementById('citizens-grid-view');
-    const btnList = document.getElementById('btn-view-list');
-    const btnGrid = document.getElementById('btn-view-grid');
-    const countEl = document.getElementById('citizens-count');
+    const countEl  = document.getElementById('citizens-count');
     const searchInput = document.getElementById('citizens-search');
 
-    // ── View toggle (grid / list) ──
-    function setView(mode) {
-        const isGrid = mode === 'grid';
-        listView.classList.toggle('d-none', isGrid);
-        gridView.classList.toggle('d-none', !isGrid);
-        btnList.classList.toggle('active', !isGrid);
-        btnGrid.classList.toggle('active', isGrid);
-        localStorage.setItem(STORAGE_KEY, mode);
-    }
+    // ── Sync filter dropdown → PagePrefs (prevents head-script from restoring old filter) ──
+    document.querySelectorAll('.citizens-toolbar .dropdown-item').forEach(link => {
+        link.addEventListener('click', function () {
+            if (!window.PagePrefs) return;
+            const url = new URL(this.href, window.location.origin);
+            const params = url.searchParams.toString();
+            window.PagePrefs.write({ filters: params ? '?' + params : '' });
+        });
+    });
 
-    const saved = localStorage.getItem(STORAGE_KEY);
-    setView(saved || (window.innerWidth < 768 ? 'grid' : 'list'));
-
-    btnList.addEventListener('click', () => setView('list'));
-    btnGrid.addEventListener('click', () => setView('grid'));
-
-    // ── Live search ──
     let searchTimer;
     searchInput.addEventListener('input', function () {
         clearTimeout(searchTimer);
         searchTimer = setTimeout(() => {
             const q = this.value.trim().toLowerCase();
-            const rows = listView.querySelectorAll('.user-row');
+            const rows  = listView.querySelectorAll('.user-row');
             const cards = gridView.querySelectorAll('.citizen-card');
             let visible = 0;
 
@@ -47,7 +37,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 150);
     });
 
-    // ── Row click → detail ──
     listView.querySelectorAll('.user-row').forEach(row => {
         row.addEventListener('click', function (e) {
             if (!e.target.closest('button, a')) {
@@ -56,14 +45,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Card click → detail ──
     gridView.querySelectorAll('.citizen-card').forEach(card => {
         card.addEventListener('click', function () {
             window.location.href = `/obywatele/poczekalnia/${this.dataset.userId}/`;
         });
     });
 
-    // ── Copy email ──
     document.querySelectorAll('.copy-btn').forEach(button => {
         button.addEventListener('click', function (e) {
             e.stopPropagation();

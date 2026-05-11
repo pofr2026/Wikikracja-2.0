@@ -357,10 +357,7 @@ def obywatele(request: HttpRequest):
     if aktywnosc in _aktywnosc_filters:
         uid = uid.filter(_aktywnosc_filters[aktywnosc])
 
-    # Get required reputation threshold
     req_rep = required_reputation()
-
-    # Add near-threshold data to users (only need to check if reputation <= threshold + 1)
     users_with_reputation = []
     for user in uid:
         if hasattr(user, 'uzytkownik'):
@@ -411,9 +408,7 @@ def obywatele(request: HttpRequest):
         }
 
     _aktywnosc_ctx = aktywnosc if aktywnosc in _aktywnosc_filters else ''
-    # Appended to sort-header links to preserve the active activity filter
     sort_url_suffix = f'&aktywnosc={_aktywnosc_ctx}' if _aktywnosc_ctx else ''
-    # Appended to filter-dropdown links to preserve a non-default sort
     sort_param = f'sort={requested_sort}' if requested_sort != default_sort else ''
 
     return render(

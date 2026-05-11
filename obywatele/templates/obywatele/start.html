@@ -1,6 +1,7 @@
 {% extends 'obywatele/menu.html' %}
 {% load static %}
 {% load i18n %}
+{% block prefs_scope %}obywatele{% endblock %}
 
 {% block citizens %}
 <div class="card">
@@ -48,17 +49,17 @@
       </ul>
     </div>
 
-    <div class="citizens-view-toggle">
-      <button type="button" class="citizens-view-btn" id="btn-view-list" title="{% trans 'List view' %}">
+    <div class="toolbar-view">
+      <button class="view-toggle-btn" data-view="list" title="{% trans 'List view' %}">
         <i class="fas fa-list"></i>
       </button>
-      <button type="button" class="citizens-view-btn" id="btn-view-grid" title="{% trans 'Grid view' %}">
-        <i class="fas fa-th"></i>
+      <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid view' %}">
+        <i class="fas fa-grip"></i>
       </button>
     </div>
   </div>
 
-  <div class="card-body p-0">
+  <div class="card-body p-0" data-view-container>
 
     {# ── List view ── #}
     <div id="citizens-list-view">
@@ -172,18 +173,34 @@
     </div>
 
     {# ── Grid view ── #}
-    <div id="citizens-grid-view" class="citizens-grid d-none">
+    <div id="citizens-grid-view" class="citizens-grid">
       {% for i in uid %}
       <div class="citizen-card"
            data-user-id="{{ i.pk }}"
            data-search="{{ i.username }} {{ i.first_name }} {{ i.last_name }}">
         <div class="citizen-card-top">
-          <div class="citizen-card-avatar">{{ i.username|slice:":1"|upper }}</div>
+          <div class="citizen-card-avatar">
+            {% if i.uzytkownik.avatar %}
+              <img src="{{ i.uzytkownik.avatar.url }}" alt="{{ i.username }}" class="rounded-circle citizen-card-avatar-img">
+            {% else %}
+              {{ i.username|slice:":1"|upper }}
+            {% endif %}
+          </div>
           <span class="status-dot status-dot--{{ i.activity_status }}"
                 title="{% if i.activity_status == 'online' %}{% trans 'Online' %}{% elif i.activity_status == 'active' %}{% trans 'Active recently' %}{% elif i.activity_status == 'dormant' %}{% trans 'Dormant' %}{% else %}{% trans 'Inactive' %}{% endif %}"></span>
         </div>
         <div class="citizen-card-name">{{ i.username }}</div>
-        {% if i.uzytkownik.city %}<div class="citizen-card-city">{{ i.uzytkownik.city }}</div>{% endif %}
+        {% if i.first_name or i.last_name %}
+        <div class="citizen-card-fullname">{{ i.first_name }} {{ i.last_name }}</div>
+        {% endif %}
+        {% if i.uzytkownik.city %}
+        <div class="citizen-card-city"><i class="fas fa-map-marker-alt"></i> {{ i.uzytkownik.city }}</div>
+        {% endif %}
+        {% if i.pk != request.user.pk %}
+        <a href="{% url 'chat:open_dm' pk=i.pk %}" class="proposal-chat-link mt-1" title="{% trans 'Direct message' %}" onclick="event.stopPropagation()">
+          <i class="fas fa-comment-dots"></i> DM
+        </a>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
