@@ -295,6 +295,7 @@ def details(request: HttpRequest, pk: int):
         'positive_arguments': positive_arguments,
         'negative_arguments': negative_arguments,
         'argument_form': argument_form,
+        'MESSAGE_MAX_LENGTH': s.MESSAGE_MAX_LENGTH,
     })
 
 

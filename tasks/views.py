@@ -1,5 +1,6 @@
 import math
 
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
@@ -352,6 +353,7 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
             # Check if chat room has unseen messages
             task.chat_room_pulse_class = task.get_chat_room_pulse_class(self.request.user)
         context["task"] = task
+        context["MESSAGE_MAX_LENGTH"] = settings.MESSAGE_MAX_LENGTH
         return context
 
 
