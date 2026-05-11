@@ -130,7 +130,7 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // ============================================================
-// Theme toggle — handler is in base.html; applyTheme exposed globally for other scripts
+// Theme toggle — applyTheme exposed globally for other scripts
 // ============================================================
 document.addEventListener('DOMContentLoaded', function() {
     window.applyTheme = function applyTheme(theme) {
