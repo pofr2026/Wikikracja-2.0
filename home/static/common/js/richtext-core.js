@@ -106,3 +106,31 @@ export function getVisibleTextLength(inputEl) {
     if (!inputEl) return 0;
     return inputEl.isContentEditable ? (inputEl.textContent || '').length : (inputEl.value || '').length;
 }
+
+let _pasteHandlerReady = false;
+
+/**
+ * Global clipboard image paste handler for all .message-input-rich elements.
+ * Detects image in clipboard → injects into nearest .file-input within the same
+ * .compose-box → triggers existing file preview/upload pipeline via change event.
+ * Safe to call from multiple modules — registers only once.
+ */
+export function initGlobalPasteImageHandler() {
+    if (_pasteHandlerReady) return;
+    _pasteHandlerReady = true;
+    document.addEventListener('paste', (e) => {
+        if (!e.target.classList.contains('message-input-rich')) return;
+        const imageItem = Array.from(e.clipboardData?.items ?? []).find(it => it.type.startsWith('image/'));
+        if (!imageItem) return;
+        e.preventDefault();
+        const blob = imageItem.getAsFile();
+        if (!blob) return;
+        const fileInput = e.target.closest('.compose-box')?.querySelector('.file-input');
+        if (!fileInput) return;
+        const ext = blob.type.split('/')[1]?.split('+')[0] || 'png';
+        const dt = new DataTransfer();
+        dt.items.add(new File([blob], `paste-${Date.now()}.${ext}`, { type: blob.type }));
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+}

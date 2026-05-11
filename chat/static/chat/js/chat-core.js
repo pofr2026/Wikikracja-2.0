@@ -11,6 +11,7 @@ export {
     formatMessage,
     handleEnterKey,
     getVisibleTextLength,
+    initGlobalPasteImageHandler,
 } from '../../common/js/richtext-core.js';
 
 export const UPLOAD_MAX_BYTES = 5_000_000;

@@ -13,6 +13,7 @@ import {
     createReplyHandler,
     createVoteHandler,
     initFormattingToolbar,
+    initGlobalPasteImageHandler,
 } from './chat-core.js';
 import {
     copyMessageLink,
@@ -36,6 +37,7 @@ import { $, $$ } from './utility.js';
 const DOM_API = new DomApi();
 
 document.addEventListener('DOMContentLoaded', function() {
+    initGlobalPasteImageHandler();
     const MSG_MAX = window.SITE_SETTINGS?.messageMaxLength ?? 500;
 
     function updateCounter(text) {
