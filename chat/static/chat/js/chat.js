@@ -200,6 +200,94 @@ document.addEventListener('DOMContentLoaded', () => {
     // Make function globally available for other modules
     window.updateUnreadFilter = updateUnreadFilter;
 
+    // Sort rooms by last activity — cycles: off → newest → oldest → newest…
+    const sortActivityBtn = $('#sort-activity-btn');
+    const sortResetBtn = $('#sort-reset-btn');
+    let isSortActive = false;
+    let sortMode = null; // 'newest' | 'oldest'
+    let roomOriginalPositions = null;
+    let flatContainer = null;
+
+    const savedSort = localStorage.getItem('chat-sort-mode');
+    if (savedSort === 'newest' || savedSort === 'oldest') {
+        applySortView(savedSort);
+    }
+
+    sortActivityBtn?.addEventListener('click', () => {
+        if (!isSortActive) {
+            applySortView('newest');
+        } else {
+            applySortView(sortMode === 'newest' ? 'oldest' : 'newest');
+        }
+    });
+
+    sortResetBtn?.addEventListener('click', resetSortView);
+
+    function applySortView(mode) {
+        const roomListEl = $('#room-list');
+        const categoryRow = roomListEl?.querySelector('.row');
+        if (!categoryRow) return;
+
+        if (!isSortActive) {
+            const rooms = [...$$('.room-link[data-room-id]')].filter(room => {
+                const archive = room.closest('.archive-section');
+                return !archive || archive.classList.contains('visible');
+            });
+
+            roomOriginalPositions = new Map(rooms.map(room => [room, {
+                parent: room.parentElement,
+                nextSibling: room.nextSibling,
+            }]));
+
+            flatContainer = document.createElement('div');
+            flatContainer.id = 'room-list-flat';
+            rooms.forEach(room => flatContainer.appendChild(room));
+
+            categoryRow.style.display = 'none';
+            roomListEl.appendChild(flatContainer);
+            isSortActive = true;
+        }
+
+        const roomsInFlat = [...flatContainer.querySelectorAll('.room-link[data-room-id]')];
+        roomsInFlat.sort((a, b) => {
+            const diff = parseInt(b.dataset.lastActivity || '0') - parseInt(a.dataset.lastActivity || '0');
+            return mode === 'oldest' ? -diff : diff;
+        });
+        roomsInFlat.forEach(room => flatContainer.appendChild(room));
+
+        sortMode = mode;
+        sortActivityBtn?.classList.add('active');
+        const dirIcon = sortActivityBtn?.querySelector('.sort-dir-icon');
+        if (dirIcon) dirIcon.className = `sort-dir-icon fas fa-arrow-${mode === 'oldest' ? 'up' : 'down'}`;
+        localStorage.setItem('chat-sort-mode', mode);
+    }
+
+    function resetSortView() {
+        if (!isSortActive || !roomOriginalPositions) return;
+
+        roomOriginalPositions.forEach((pos, room) => {
+            if (pos.nextSibling?.parentElement === pos.parent) {
+                pos.parent.insertBefore(room, pos.nextSibling);
+            } else {
+                pos.parent.appendChild(room);
+            }
+        });
+
+        flatContainer?.remove();
+        flatContainer = null;
+        roomOriginalPositions = null;
+        sortMode = null;
+
+        const categoryRow = $('#room-list')?.querySelector('.row');
+        if (categoryRow) categoryRow.style.display = '';
+
+        isSortActive = false;
+        sortActivityBtn?.classList.remove('active');
+        const dirIcon = sortActivityBtn?.querySelector('.sort-dir-icon');
+        if (dirIcon) dirIcon.className = 'sort-dir-icon fas fa-arrow-down';
+        localStorage.removeItem('chat-sort-mode');
+    }
+
     WS_API.wsOnConnect = async () => {
         for (const user of (await WS_API.getOnlineUsers()).online_data) {
             DOM_API.updateOnline(user.room_id, user.online);

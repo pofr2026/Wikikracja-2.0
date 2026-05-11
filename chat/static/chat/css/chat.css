@@ -761,6 +761,18 @@ body:has(.chat-rooms) .main-area {
     overflow-x: hidden;
     width: 100%;
 }
+#room-list-flat {
+    padding: .25rem 0;
+}
+#sort-activity-btn .sort-dir-icon {
+    display: none;
+    font-size: .65em;
+    margin-left: 1px;
+    vertical-align: middle;
+}
+#sort-activity-btn.active .sort-dir-icon {
+    display: inline;
+}
 /* ============================================================ */
 /* TREE NAVIGATION SIDEBAR                         */
 /* ============================================================ */
