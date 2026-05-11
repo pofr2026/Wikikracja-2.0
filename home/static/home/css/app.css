@@ -144,6 +144,7 @@
 }
 :root {
   --app-max-width: 1200px;
+  --table-stripe-bg: color-mix(in srgb, var(--bg-card) 93%, #3b82f6 7%);
 }
 /* Bootstrap variable overrides — higher specificity than darkly.css :root */
 html[data-theme] {
@@ -1540,14 +1541,15 @@ a.card:hover {
   font-weight: 500;
   padding: 2px 7px 2px 5px;
   border-radius: 2rem;
-  border: 1px solid rgba(0, 209, 178, .3);
-  background: rgba(0, 209, 178, .07);
+  border: 1px solid var(--accent-glow);
+  background: var(--accent-muted);
   transition: background .15s, border-color .15s, box-shadow .15s;
 }
 .proposal-chat-link:hover {
-  background: rgba(0, 209, 178, .18);
+  background: var(--accent-muted);
   border-color: var(--accent);
-  box-shadow: 0 0 8px rgba(0, 209, 178, .3);
+  box-shadow: 0 0 8px var(--accent-glow);
+  opacity: 1;
 }
 /* linki — globalne */
 a {
@@ -1765,11 +1767,6 @@ a:hover {
   background-color: var(--status-warning-bg) !important;
   border-left: 3px solid var(--status-warning-color) !important;
 }
-.username-container {
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-}
 /* ── Citizens toolbar ── */
 .citizens-toolbar {
   display: flex;
@@ -1809,10 +1806,64 @@ a:hover {
   color: var(--accent);
   background: var(--accent-muted);
 }
+/* ── Citizens — list view mini-avatar ── */
+.username-container {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  white-space: nowrap;
+}
+.citizen-list-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+}
+.citizen-list-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-weight: 700;
+  font-size: .75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.citizen-list-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.citizen-list-status-dot {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 9px;
+  height: 9px;
+  border: 2px solid var(--bg-card);
+  margin: 0;
+}
+.citizen-list-nick {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+/* ── Citizens list — zebra stripes ── */
+#citizens-list-view tbody tr > td {
+  background-color: var(--bg-card) !important;
+}
+#citizens-list-view tbody tr:nth-child(even) > td {
+  background-color: var(--table-stripe-bg) !important;
+}
+#citizens-list-view .table {
+  --bs-table-hover-bg: var(--accent-muted);
+  --bs-table-hover-color: var(--text-primary);
+}
 /* ── Citizens grid ── */
 .citizens-grid {
   display: none;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: .75rem;
   padding: 1rem;
 }
@@ -1822,31 +1873,32 @@ a:hover {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: .75rem;
-  padding: .85rem .75rem .7rem;
+  padding: 1rem .85rem .85rem;
   cursor: pointer;
-  transition: border-color .15s, box-shadow .15s;
+  transition: border-color .15s, box-shadow .15s, background .15s;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .35rem;
+  gap: .4rem;
   text-align: center;
 }
 .citizen-card:hover {
   border-color: var(--accent);
   box-shadow: 0 2px 12px var(--accent-glow);
+  background: var(--accent-muted);
 }
 .citizen-card-top {
   position: relative;
   display: inline-flex;
 }
 .citizen-card-avatar {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--accent-muted);
   color: var(--accent);
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1866,18 +1918,18 @@ a:hover {
   object-fit: cover;
 }
 .citizen-card-name {
-  font-size: .8rem;
+  font-size: .85rem;
   font-weight: 600;
   color: var(--text-primary);
   word-break: break-all;
 }
 .citizen-card-fullname {
-  font-size: .72rem;
+  font-size: .75rem;
   color: var(--text-muted);
   word-break: break-word;
 }
 .citizen-card-city {
-  font-size: .72rem;
+  font-size: .75rem;
   color: var(--text-muted);
 }
 /* ── Status dot — activity indicator ── */

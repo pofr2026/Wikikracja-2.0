@@ -140,11 +140,20 @@
                 data-search="{{ i.username }} {{ i.first_name }} {{ i.last_name }}">
               <td>
                 <div class="username-container">
-                  <span class="status-dot status-dot--{{ i.activity_status }}"
-                        title="{% if i.activity_status == 'online' %}{% trans 'Online' %}{% elif i.activity_status == 'active' %}{% trans 'Active recently' %}{% elif i.activity_status == 'dormant' %}{% trans 'Dormant' %}{% else %}{% trans 'Inactive' %}{% endif %}"></span>
-                  {{ i.username }}
+                  <div class="citizen-list-avatar-wrap flex-shrink-0">
+                    <div class="citizen-list-avatar">
+                      {% if i.uzytkownik.avatar %}
+                        <img src="{{ i.uzytkownik.avatar.url }}" alt="{{ i.username }}" class="rounded-circle">
+                      {% else %}
+                        {{ i.username|slice:":1"|upper }}
+                      {% endif %}
+                    </div>
+                    <span class="status-dot status-dot--{{ i.activity_status }} citizen-list-status-dot"
+                          title="{% if i.activity_status == 'online' %}{% trans 'Online' %}{% elif i.activity_status == 'active' %}{% trans 'Active recently' %}{% elif i.activity_status == 'dormant' %}{% trans 'Dormant' %}{% else %}{% trans 'Inactive' %}{% endif %}"></span>
+                  </div>
+                  <span class="citizen-list-nick">{{ i.username }}</span>
                   {% if i.pk != request.user.pk %}
-                  <a href="{% url 'chat:open_dm' pk=i.pk %}" class="proposal-chat-link ms-1" style="font-size:.78rem;">
+                  <a href="{% url 'chat:open_dm' pk=i.pk %}" class="proposal-chat-link ms-1" onclick="event.stopPropagation()">
                     <i class="fas fa-comment-dots"></i>
                   </a>
                   {% endif %}

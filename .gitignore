@@ -24,6 +24,7 @@ memory/
 .vscode/*
 !.vscode/extensions.json
 .idea/
+*.code-workspace
 .env
 .python-version
 .pytest_cache/
