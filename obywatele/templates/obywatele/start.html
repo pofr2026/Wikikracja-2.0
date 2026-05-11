@@ -4,147 +4,193 @@
 
 {% block citizens %}
 <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <span class="section-heading">
-                {% trans 'Citizens' %} ({{ uid|length }})
-            </span>
-        </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover table-sm align-middle mb-0">
-                    <thead>
-                        <tr>
-                            <th scope="col">
-                                <a href="?sort={{ sort_meta.username.next_param }}">
-                                    {% trans 'Nick' %}
-                                    {% if sort_meta.username.is_current %}
-                                        <span aria-hidden="true">
-                                            {% if sort_meta.username.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-                            <th scope="col">
-                                <a href="?sort={{ sort_meta.email.next_param }}">
-                                    {% trans 'Email' %}
-                                    {% if sort_meta.email.is_current %}
-                                        <span aria-hidden="true">
-                                            {% if sort_meta.email.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-                            <th scope="col">
-                                <a href="?sort={{ sort_meta.phone.next_param }}">
-                                    {% trans 'Contact' %}
-                                    {% if sort_meta.phone.is_current %}
-                                        <span aria-hidden="true">
-                                            {% if sort_meta.phone.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-                            <th scope="col">
-                                <a href="?sort={{ sort_meta.city.next_param }}">
-                                    {% trans 'City' %}
-                                    {% if sort_meta.city.is_current %}
-                                        <span aria-hidden="true">
-                                            {% if sort_meta.city.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-                            <th scope="col">
-                                <a href="?sort={{ sort_meta.first_name.next_param }}">
-                                    {% trans 'First name' %}
-                                    {% if sort_meta.first_name.is_current %}
-                                        <span aria-hidden="true">
-                                            {% if sort_meta.first_name.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-                            <th scope="col">
-                                <a href="?sort={{ sort_meta.last_name.next_param }}">
-                                    {% trans 'Last name' %}
-                                    {% if sort_meta.last_name.is_current %}
-                                        <span aria-hidden="true">
-                                            {% if sort_meta.last_name.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-                            <th scope="col">
-                                <a href="?sort={{ sort_meta.joined.next_param }}">
-                                    {% trans 'Joined at' %}
-                                    {% if sort_meta.joined.is_current %}
-                                        <span aria-hidden="true">
-                                            {% if sort_meta.joined.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-                            <th scope="col">
-                                <a href="?sort={{ sort_meta.last_login.next_param }}">
-                                    {% trans 'Last login' %}
-                                    {% if sort_meta.last_login.is_current %}
-                                        <span aria-hidden="true">
-                                            {% if sort_meta.last_login.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}
-                                        </span>
-                                    {% endif %}
-                                </a>
-                            </th>
-                        	</tr>
-                    	</thead>
-                    	<tbody>
-                        	{% for i in uid %}
-                        		<tr class="user-row{% if i.near_threshold %} near-threshold{% endif %}" data-user-id="{{ i.pk }}">
-                        			<td>
-                        				<div class="username-container">
-                        					{{ i.username }}
-                        					{% if i.pk != request.user.pk %}
-                        					<a href="{% url 'chat:open_dm' pk=i.pk %}" class="proposal-chat-link ms-1" style="font-size:.78rem;">
-                        						<i class="fas fa-comment-dots"></i>
-                        					</a>
-                        					{% endif %}
-                        					{% if i.near_threshold %}
-                        					<span class="badge text-bg-warning ms-1" title="{% trans 'This person has low reputation points' %}">!</span>
-                        					{% endif %}
-                        				</div>
-                        			</td>
-                        			<td class="email-cell">
-                        				<a href="mailto:{{ i.email }}"><i class="fas fa-envelope me-1"></i>{{ i.email }}</a>
-                        				<button class="btn btn-outline-light btn-sm copy-btn table-action" data-email="{{ i.email }}" title="{% trans 'Copy email' %}">
-                        					<i class="fas fa-copy"></i>
-                        				</button>
-                        			</td>
-                        			<td>{{ i.uzytkownik.phone|default:"—" }}</td>
-                        			<td>{{ i.uzytkownik.city|default:"—" }}</td>
-                        			<td>{{ i.first_name|default:"—" }}</td>
-                                    <td>{{ i.last_name|default:"—" }}</td>
-                                    <td>{{ i.uzytkownik.data_przyjecia|date:"Y-m-d"|default:"—" }}</td>
-                                    <td>{{ i.last_login|date:"Y-m-d"|default:_("Never") }}</td>
-                        		</tr>
-                        	{% endfor %}
-                    	</tbody>
-                </table>
-            </div>
-        </div>
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="section-heading">{% trans 'Citizens' %} (<span id="citizens-count">{{ uid|length }}</span>)</span>
+  </div>
+
+  {# ── Toolbar ── #}
+  <div class="citizens-toolbar">
+    <input type="search" id="citizens-search" class="citizens-search-input"
+           placeholder="{% trans 'Search user...' %}" autocomplete="off">
+
+    <div class="dropdown">
+      <button class="citizens-filter-btn{% if aktywnosc %} active{% endif %} dropdown-toggle"
+              type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        {% if aktywnosc == 'online' %}{% trans "Online" %}
+        {% elif aktywnosc == '7d' %}{% trans "Active 7 days" %}
+        {% elif aktywnosc == '30d' %}{% trans "Active 30 days" %}
+        {% elif aktywnosc == 'nieaktywni' %}{% trans "Inactive 30+ days" %}
+        {% else %}{% trans "All" %}
+        {% endif %}
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li>
+          <a class="dropdown-item{% if not aktywnosc %} active{% endif %}"
+             href="?{% if sort_param %}{{ sort_param }}{% endif %}">{% trans "All" %}</a>
+        </li>
+        <li>
+          <a class="dropdown-item{% if aktywnosc == 'online' %} active{% endif %}"
+             href="?aktywnosc=online{% if sort_param %}&{{ sort_param }}{% endif %}">{% trans "Online" %}</a>
+        </li>
+        <li>
+          <a class="dropdown-item{% if aktywnosc == '7d' %} active{% endif %}"
+             href="?aktywnosc=7d{% if sort_param %}&{{ sort_param }}{% endif %}">{% trans "Active 7 days" %}</a>
+        </li>
+        <li>
+          <a class="dropdown-item{% if aktywnosc == '30d' %} active{% endif %}"
+             href="?aktywnosc=30d{% if sort_param %}&{{ sort_param }}{% endif %}">{% trans "Active 30 days" %}</a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+          <a class="dropdown-item{% if aktywnosc == 'nieaktywni' %} active{% endif %}"
+             href="?aktywnosc=nieaktywni{% if sort_param %}&{{ sort_param }}{% endif %}">{% trans "Inactive 30+ days" %}</a>
+        </li>
+      </ul>
     </div>
 
+    <div class="citizens-view-toggle">
+      <button type="button" class="citizens-view-btn" id="btn-view-list" title="{% trans 'List view' %}">
+        <i class="fas fa-list"></i>
+      </button>
+      <button type="button" class="citizens-view-btn" id="btn-view-grid" title="{% trans 'Grid view' %}">
+        <i class="fas fa-th"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+
+    {# ── List view ── #}
+    <div id="citizens-list-view">
+      <div class="table-responsive">
+        <table class="table table-hover table-sm align-middle mb-0">
+          <thead>
+            <tr>
+              <th scope="col">
+                <a href="?sort={{ sort_meta.username.next_param }}{{ sort_url_suffix }}">
+                  {% trans 'Nick' %}
+                  {% if sort_meta.username.is_current %}
+                    <span aria-hidden="true">{% if sort_meta.username.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}</span>
+                  {% endif %}
+                </a>
+              </th>
+              <th scope="col">
+                <a href="?sort={{ sort_meta.email.next_param }}{{ sort_url_suffix }}">
+                  {% trans 'Email' %}
+                  {% if sort_meta.email.is_current %}
+                    <span aria-hidden="true">{% if sort_meta.email.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}</span>
+                  {% endif %}
+                </a>
+              </th>
+              <th scope="col">
+                <a href="?sort={{ sort_meta.phone.next_param }}{{ sort_url_suffix }}">
+                  {% trans 'Contact' %}
+                  {% if sort_meta.phone.is_current %}
+                    <span aria-hidden="true">{% if sort_meta.phone.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}</span>
+                  {% endif %}
+                </a>
+              </th>
+              <th scope="col">
+                <a href="?sort={{ sort_meta.city.next_param }}{{ sort_url_suffix }}">
+                  {% trans 'City' %}
+                  {% if sort_meta.city.is_current %}
+                    <span aria-hidden="true">{% if sort_meta.city.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}</span>
+                  {% endif %}
+                </a>
+              </th>
+              <th scope="col">
+                <a href="?sort={{ sort_meta.first_name.next_param }}{{ sort_url_suffix }}">
+                  {% trans 'First name' %}
+                  {% if sort_meta.first_name.is_current %}
+                    <span aria-hidden="true">{% if sort_meta.first_name.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}</span>
+                  {% endif %}
+                </a>
+              </th>
+              <th scope="col">
+                <a href="?sort={{ sort_meta.last_name.next_param }}{{ sort_url_suffix }}">
+                  {% trans 'Last name' %}
+                  {% if sort_meta.last_name.is_current %}
+                    <span aria-hidden="true">{% if sort_meta.last_name.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}</span>
+                  {% endif %}
+                </a>
+              </th>
+              <th scope="col">
+                <a href="?sort={{ sort_meta.joined.next_param }}{{ sort_url_suffix }}">
+                  {% trans 'Joined at' %}
+                  {% if sort_meta.joined.is_current %}
+                    <span aria-hidden="true">{% if sort_meta.joined.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}</span>
+                  {% endif %}
+                </a>
+              </th>
+              <th scope="col">
+                <a href="?sort={{ sort_meta.last_login.next_param }}{{ sort_url_suffix }}">
+                  {% trans 'Last login' %}
+                  {% if sort_meta.last_login.is_current %}
+                    <span aria-hidden="true">{% if sort_meta.last_login.direction == 'asc' %}&uarr;{% else %}&darr;{% endif %}</span>
+                  {% endif %}
+                </a>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for i in uid %}
+            <tr class="user-row{% if i.near_threshold %} near-threshold{% endif %}"
+                data-user-id="{{ i.pk }}"
+                data-search="{{ i.username }} {{ i.first_name }} {{ i.last_name }}">
+              <td>
+                <div class="username-container">
+                  <span class="status-dot status-dot--{{ i.activity_status }}"
+                        title="{% if i.activity_status == 'online' %}{% trans 'Online' %}{% elif i.activity_status == 'active' %}{% trans 'Active recently' %}{% elif i.activity_status == 'dormant' %}{% trans 'Dormant' %}{% else %}{% trans 'Inactive' %}{% endif %}"></span>
+                  {{ i.username }}
+                  {% if i.pk != request.user.pk %}
+                  <a href="{% url 'chat:open_dm' pk=i.pk %}" class="proposal-chat-link ms-1" style="font-size:.78rem;">
+                    <i class="fas fa-comment-dots"></i>
+                  </a>
+                  {% endif %}
+                  {% if i.near_threshold %}
+                  <span class="badge text-bg-warning ms-1" title="{% trans 'This person has low reputation points' %}">!</span>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="email-cell">
+                <a href="mailto:{{ i.email }}"><i class="fas fa-envelope me-1"></i>{{ i.email }}</a>
+                <button class="btn btn-outline-light btn-sm copy-btn table-action" data-email="{{ i.email }}" title="{% trans 'Copy email' %}">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </td>
+              <td>{{ i.uzytkownik.phone|default:"—" }}</td>
+              <td>{{ i.uzytkownik.city|default:"—" }}</td>
+              <td>{{ i.first_name|default:"—" }}</td>
+              <td>{{ i.last_name|default:"—" }}</td>
+              <td>{{ i.uzytkownik.data_przyjecia|date:"Y-m-d"|default:"—" }}</td>
+              <td>{{ i.last_login|date:"Y-m-d"|default:_("Never") }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# ── Grid view ── #}
+    <div id="citizens-grid-view" class="citizens-grid d-none">
+      {% for i in uid %}
+      <div class="citizen-card"
+           data-user-id="{{ i.pk }}"
+           data-search="{{ i.username }} {{ i.first_name }} {{ i.last_name }}">
+        <div class="citizen-card-top">
+          <div class="citizen-card-avatar">{{ i.username|slice:":1"|upper }}</div>
+          <span class="status-dot status-dot--{{ i.activity_status }}"
+                title="{% if i.activity_status == 'online' %}{% trans 'Online' %}{% elif i.activity_status == 'active' %}{% trans 'Active recently' %}{% elif i.activity_status == 'dormant' %}{% trans 'Dormant' %}{% else %}{% trans 'Inactive' %}{% endif %}"></span>
+        </div>
+        <div class="citizen-card-name">{{ i.username }}</div>
+        {% if i.uzytkownik.city %}<div class="citizen-card-city">{{ i.uzytkownik.city }}</div>{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+  </div>
+</div>
+
 <script src="{% static 'obywatele/js/citizens_list.js' %}"></script>
-
-<style>
-.near-threshold {
-    background-color: rgba(243,156,18,.08) !important;
-    border-left: 3px solid #f39c12 !important;
-}
-
-.username-container {
-    display: flex;
-    align-items: center;
-    white-space: nowrap;
-}
-</style>
 
 {% endblock citizens %}

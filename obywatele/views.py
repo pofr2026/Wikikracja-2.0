@@ -283,6 +283,18 @@ def obywatele(request: HttpRequest):
         'joined': 'joined_is_blank',
     }
     default_sort = '-joined'
+
+    five_min_ago = timezone.now() - timedelta(minutes=5)
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    aktywnosc = request.GET.get('aktywnosc', '')
+    _aktywnosc_filters = {
+        'online': Q(last_login__gte=five_min_ago),
+        '7d': Q(last_login__gte=seven_days_ago),
+        '30d': Q(last_login__gte=thirty_days_ago),
+        'nieaktywni': Q(last_login__lt=thirty_days_ago) | Q(last_login__isnull=True),
+    }
+
     requested_sort = request.GET.get('sort', default_sort)
     requested_field = requested_sort.lstrip('-')
 
@@ -342,6 +354,8 @@ def obywatele(request: HttpRequest):
             output_field=IntegerField(),
         ),
     ).order_by(*order_by_fields))
+    if aktywnosc in _aktywnosc_filters:
+        uid = uid.filter(_aktywnosc_filters[aktywnosc])
 
     # Get required reputation threshold
     req_rep = required_reputation()
@@ -354,6 +368,18 @@ def obywatele(request: HttpRequest):
             user.near_threshold = reputation <= (req_rep + 1)
         else:
             user.near_threshold = False
+
+        if user.last_login is None:
+            user.activity_status = 'inactive'
+        elif user.last_login >= five_min_ago:
+            user.activity_status = 'online'
+        elif user.last_login >= seven_days_ago:
+            user.activity_status = 'active'
+        elif user.last_login >= thirty_days_ago:
+            user.activity_status = 'dormant'
+        else:
+            user.activity_status = 'inactive'
+
         users_with_reputation.append(user)
 
     default_directions = {
@@ -384,6 +410,12 @@ def obywatele(request: HttpRequest):
             'next_param': next_param,
         }
 
+    _aktywnosc_ctx = aktywnosc if aktywnosc in _aktywnosc_filters else ''
+    # Appended to sort-header links to preserve the active activity filter
+    sort_url_suffix = f'&aktywnosc={_aktywnosc_ctx}' if _aktywnosc_ctx else ''
+    # Appended to filter-dropdown links to preserve a non-default sort
+    sort_param = f'sort={requested_sort}' if requested_sort != default_sort else ''
+
     return render(
         request,
         'obywatele/start.html',
@@ -391,6 +423,9 @@ def obywatele(request: HttpRequest):
             'uid': users_with_reputation,  # Don't change to 'user' - it will break menu
             'sort_meta': sort_meta,
             'current_sort': requested_sort,
+            'aktywnosc': _aktywnosc_ctx,
+            'sort_url_suffix': sort_url_suffix,
+            'sort_param': sort_param,
         }
     )
 
