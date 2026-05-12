@@ -4271,90 +4271,68 @@ msgid "Polish"
 msgstr "Polski"
 
 
-#: .\
-msgid "Jan"
-msgstr "Sty"
+#~ msgid "Jan"
+#~ msgstr "Sty"
 
-#: .\
-msgid "Feb"
-msgstr "Lut"
+#~ msgid "Feb"
+#~ msgstr "Lut"
 
-#: .\
-msgid "Mar"
-msgstr "Mar"
+#~ msgid "Mar"
+#~ msgstr "Mar"
 
-#: .\
-msgid "Apr"
-msgstr "Kwi"
+#~ msgid "Apr"
+#~ msgstr "Kwi"
 
-#: .\
-msgid "May"
-msgstr "Maj"
+#~ msgid "May"
+#~ msgstr "Maj"
 
-#: .\
-msgid "Jun"
-msgstr "Cze"
+#~ msgid "Jun"
+#~ msgstr "Cze"
 
-#: .\
-msgid "Jul"
-msgstr "Lip"
+#~ msgid "Jul"
+#~ msgstr "Lip"
 
-#: .\
-msgid "Aug"
-msgstr "Sie"
+#~ msgid "Aug"
+#~ msgstr "Sie"
 
-#: .\
-msgid "Sep"
-msgstr "Wrz"
+#~ msgid "Sep"
+#~ msgstr "Wrz"
 
-#: .\
-msgid "Oct"
-msgstr "Paź"
+#~ msgid "Oct"
+#~ msgstr "Paź"
 
-#: .\
-msgid "Nov"
-msgstr "Lis"
+#~ msgid "Nov"
+#~ msgstr "Lis"
 
-#: .\
-msgid "Dec"
-msgstr "Gru"
+#~ msgid "Dec"
+#~ msgstr "Gru"
 
-#: .\
-msgid "Tomorrow"
-msgstr "Jutro"
+#~ msgid "Tomorrow"
+#~ msgstr "Jutro"
 
-#: .\
-msgid "Copy message link"
-msgstr "Kopiuj link wiadomości"
+#~ msgid "Copy message link"
+#~ msgstr "Kopiuj link wiadomości"
 
-#: .\
-msgid "Link copied"
-msgstr "Link skopiowany"
+#~ msgid "Link copied"
+#~ msgstr "Link skopiowany"
 
-#: .\
-msgid "Could not copy link"
-msgstr "Nie można skopiować"
+#~ msgid "Could not copy link"
+#~ msgstr "Nie można skopiować"
 
-#: .\
-msgid "Reply to the appropriate message..."
-msgstr "Odpowiedz na odpowiednią wiadomość..."
+#~ msgid "Reply to the appropriate message..."
+#~ msgstr "Odpowiedz na odpowiednią wiadomość..."
 
-#: .\
-msgid "Upvote"
-msgstr "Głosuj na tak"
+#~ msgid "Upvote"
+#~ msgstr "Głosuj na tak"
 
-#: .\
-msgid "Downvote"
-msgstr "Głosuj na nie"
+#~ msgid "Downvote"
+#~ msgstr "Głosuj na nie"
 
-#: .\
-msgid "Sorting and filter"
-msgstr "Sortowanie i filtr"
+#~ msgid "Sorting and filter"
+#~ msgstr "Sortowanie i filtr"
 
-#: .\
-msgid "Likes"
-msgstr "Lajki"
+#~ msgid "Likes"
+#~ msgstr "Lajki"
 
-#: .\
-msgid "Popular"
-msgstr "Popularne"
+#~ msgid "Popular"
+#~ msgstr "Popularne"
