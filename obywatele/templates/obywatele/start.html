@@ -137,6 +137,7 @@
             {% for i in uid %}
             <tr class="user-row{% if i.near_threshold %} near-threshold{% endif %}"
                 data-user-id="{{ i.pk }}"
+                data-href="{% url 'obywatele:obywatele_szczegoly' pk=i.pk %}"
                 data-search="{{ i.username }} {{ i.first_name }} {{ i.last_name }}">
               <td>
                 <div class="username-container">
@@ -186,6 +187,7 @@
       {% for i in uid %}
       <div class="citizen-card"
            data-user-id="{{ i.pk }}"
+           data-href="{% url 'obywatele:obywatele_szczegoly' pk=i.pk %}"
            data-search="{{ i.username }} {{ i.first_name }} {{ i.last_name }}">
         <div class="citizen-card-top">
           <div class="citizen-card-avatar">

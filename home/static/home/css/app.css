@@ -1932,6 +1932,12 @@ a:hover {
   font-size: .75rem;
   color: var(--text-muted);
 }
+.candidate-vote-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: .85rem;
+}
 /* ── Status dot — activity indicator ── */
 .status-dot {
   display: inline-block;

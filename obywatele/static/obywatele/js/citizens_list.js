@@ -43,14 +43,16 @@ document.addEventListener('DOMContentLoaded', function () {
     rowContainer.querySelectorAll('.user-row').forEach(row => {
         row.addEventListener('click', function (e) {
             if (!e.target.closest('button, a')) {
-                window.location.href = `/obywatele/poczekalnia/${this.dataset.userId}/`;
+                window.location.href = this.dataset.href;
             }
         });
     });
 
     if (gridView) gridView.querySelectorAll('.citizen-card').forEach(card => {
-        card.addEventListener('click', function () {
-            window.location.href = `/obywatele/poczekalnia/${this.dataset.userId}/`;
+        card.addEventListener('click', function (e) {
+            if (!e.target.closest('button, a')) {
+                window.location.href = this.dataset.href;
+            }
         });
     });
 
