@@ -14,30 +14,33 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    let searchTimer;
-    searchInput.addEventListener('input', function () {
-        clearTimeout(searchTimer);
-        searchTimer = setTimeout(() => {
-            const q = this.value.trim().toLowerCase();
-            const rows  = listView.querySelectorAll('.user-row');
-            const cards = gridView.querySelectorAll('.citizen-card');
-            let visible = 0;
+    if (searchInput) {
+        let searchTimer;
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                const q = this.value.trim().toLowerCase();
+                const rows  = listView ? listView.querySelectorAll('.user-row') : [];
+                const cards = gridView ? gridView.querySelectorAll('.citizen-card') : [];
+                let visible = 0;
 
-            rows.forEach(row => {
-                const match = !q || row.dataset.search.toLowerCase().includes(q);
-                row.classList.toggle('d-none', !match);
-                if (match) visible++;
-            });
-            cards.forEach(card => {
-                const match = !q || card.dataset.search.toLowerCase().includes(q);
-                card.classList.toggle('d-none', !match);
-            });
+                rows.forEach(row => {
+                    const match = !q || row.dataset.search.toLowerCase().includes(q);
+                    row.classList.toggle('d-none', !match);
+                    if (match) visible++;
+                });
+                cards.forEach(card => {
+                    const match = !q || card.dataset.search.toLowerCase().includes(q);
+                    card.classList.toggle('d-none', !match);
+                });
 
-            if (countEl) countEl.textContent = q ? visible : rows.length;
-        }, 150);
-    });
+                if (countEl) countEl.textContent = q ? visible : rows.length;
+            }, 150);
+        });
+    }
 
-    listView.querySelectorAll('.user-row').forEach(row => {
+    const rowContainer = listView || document;
+    rowContainer.querySelectorAll('.user-row').forEach(row => {
         row.addEventListener('click', function (e) {
             if (!e.target.closest('button, a')) {
                 window.location.href = `/obywatele/poczekalnia/${this.dataset.userId}/`;
@@ -45,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    gridView.querySelectorAll('.citizen-card').forEach(card => {
+    if (gridView) gridView.querySelectorAll('.citizen-card').forEach(card => {
         card.addEventListener('click', function () {
             window.location.href = `/obywatele/poczekalnia/${this.dataset.userId}/`;
         });
