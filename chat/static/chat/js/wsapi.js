@@ -29,7 +29,7 @@ export default class WsApi {
         // Set up this instance's message handler for non-TRACE messages
         ws.setSocketMessageHandler(function(data) {
             if (data.error) {
-                alert(data.error);
+                window.showToast ? window.showToast(data.error) : console.error('WS error:', data.error);
                 return;
             }
             if (this.socketMessageHandler) {
@@ -41,7 +41,6 @@ export default class WsApi {
 
         // Register open/close callbacks
         ws.setOnConnect(() => {
-            // console.log("Connected to chat socket");
             if (this.wsOnConnect) {
                 this.wsOnConnect();
             }

@@ -79,6 +79,7 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => toast.remove(), 300);
         }, 2500);
     }
+    window.showToast = showToast;
 
     const { updateToolbarState } = initFormattingToolbar(document, () => $('#message-input'));
 
