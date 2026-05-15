@@ -328,10 +328,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if not room.public and is_anonymous:
             raise ClientError("ANONYMOUS_IN_PRIVATE")
 
-        user = await self.repo.get_user_by_name(sender.username)
-        room = await self.repo.get_room(room_id)
-
-        msg = Message(sender=user, text=message_clean, room=room, anonymous=is_anonymous)
+        msg = Message(sender=sender, text=message_clean, room=room, anonymous=is_anonymous)
 
         if reply_to_id:
             msg.reply_to_id = int(reply_to_id)
@@ -339,11 +336,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         message_id = await self.repo.save_message(msg)
         msg.id = message_id
 
-        participated_only = await database_sync_to_async(lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False))()
+        participated_only = await database_sync_to_async(lambda: getattr(sender.uzytkownik, 'email_notifications_chat_participated', False))()
         if participated_only:
-            already_tracked = await database_sync_to_async(lambda: room.tracked_by.filter(id=user.id).exists())()
+            already_tracked = await database_sync_to_async(lambda: room.tracked_by.filter(id=sender.id).exists())()
             if not already_tracked:
-                await database_sync_to_async(room.tracked_by.add)(user)
+                await database_sync_to_async(room.tracked_by.add)(sender)
                 await self.send(text_data=json.dumps({
                     'type': 'room-tracked',
                     'room_id': room.id,
