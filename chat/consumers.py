@@ -8,6 +8,7 @@ from datetime import datetime
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
+from django.core.cache import cache
 
 from zzz.richtext import sanitize
 from zzz.utils import get_site_domain
@@ -15,7 +16,7 @@ from zzz.utils import get_site_domain
 from .exceptions import ClientError
 from .group_messages import format_chat_message
 from .models import Message, Room
-from .services import ChatRepository
+from .services import CHAT_UNREAD_CACHE_KEY, ChatRepository
 from .utils import HandledMessage, Handlers, OnlineUserRegistry, RoomRegistry, helper_method
 
 log = logging.getLogger(__name__)
@@ -390,6 +391,9 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             offline_ids = [mid for mid in other_member_ids if mid not in online_ids]
             if offline_ids:
                 await database_sync_to_async(lambda: Room.seen_by.through.objects.filter(room_id=room.id, user_id__in=offline_ids).delete())()
+                await database_sync_to_async(cache.delete_many)(
+                    [CHAT_UNREAD_CACHE_KEY.format(user_id=uid) for uid in offline_ids]
+                )
 
             membership_prefs = await database_sync_to_async(lambda: Room.get_membership_preferences_bulk(room.id, other_member_ids))()
 
