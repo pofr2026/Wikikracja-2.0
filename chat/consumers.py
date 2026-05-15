@@ -336,24 +336,15 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         message_id = await self.repo.save_message(msg)
         msg.id = message_id
 
-        participated_only = await database_sync_to_async(lambda: getattr(sender.uzytkownik, 'email_notifications_chat_participated', False))()
-        if participated_only:
-            already_tracked = await database_sync_to_async(lambda: room.tracked_by.filter(id=sender.id).exists())()
-            if not already_tracked:
-                await database_sync_to_async(room.tracked_by.add)(sender)
-                await self.send(text_data=json.dumps({
-                    'type': 'room-tracked',
-                    'room_id': room.id,
-                    'tracked': True,
-                }))
-
         await self.repo.save_attachments(message_id, attachments)
 
         reply_to_data = None
         if reply_to_id:
             reply_to_data = await self.repo.get_reply_to_data(int(reply_to_id))
 
-        proxy.group_send(room.group_name, format_chat_message(
+        # Broadcast directly (not via proxy) so subscribers receive the message before this handler returns.
+        # Per-recipient bookkeeping (tracked_by, unread state, push notifications) runs in a background task.
+        await self.channel_layer.group_send(room.group_name, format_chat_message(
             room_id=room_id,
             user_id=sender.id,
             anonymous=is_anonymous,
@@ -367,45 +358,75 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             latest_date=msg.time,
             attachments=attachments,
             reply_to=reply_to_data,
-            reactions={
-                'bulb': 0,
-                'question': 0
-            },
+            reactions={'bulb': 0, 'question': 0},
         ))
 
-        room_members = await database_sync_to_async(lambda x: list(x.allowed.all()))(room)
-        other_members = [m for m in room_members if m.id != sender.id]
-        if not other_members:
-            return
+        asyncio.create_task(self._post_send_processing(sender, room, msg, message_id))
 
-        other_member_ids = [m.id for m in other_members]
-        online_ids = ChatConsumer.online_registry.get_online()
-        offline_ids = [mid for mid in other_member_ids if mid not in online_ids]
-        if offline_ids:
-            await database_sync_to_async(lambda: Room.seen_by.through.objects.filter(room_id=room_id, user_id__in=offline_ids).delete())()
+    async def _post_send_processing(self, sender, room, msg, message_id):
+        try:
+            participated_only = await database_sync_to_async(lambda: getattr(sender.uzytkownik, 'email_notifications_chat_participated', False))()
+            if participated_only:
+                already_tracked = await database_sync_to_async(lambda: room.tracked_by.filter(id=sender.id).exists())()
+                if not already_tracked:
+                    await database_sync_to_async(room.tracked_by.add)(sender)
+                    try:
+                        await self.send(text_data=json.dumps({
+                            'type': 'room-tracked',
+                            'room_id': room.id,
+                            'tracked': True,
+                        }))
+                    except Exception:
+                        pass  # sender may have disconnected
 
-        membership_prefs = await database_sync_to_async(lambda: Room.get_membership_preferences_bulk(room_id, other_member_ids))()
+            room_members = await database_sync_to_async(lambda: list(room.allowed.all()))()
+            other_members = [m for m in room_members if m.id != sender.id]
+            if not other_members:
+                return
 
-        for member in other_members:
-            prefs = membership_prefs.get(member.id, {
-                'seen': False,
-                'muted': True
-            })
-            consumer = ChatConsumer.online_registry.get_consumer(member)
+            other_member_ids = [m.id for m in other_members]
+            online_ids = ChatConsumer.online_registry.get_online()
+            offline_ids = [mid for mid in other_member_ids if mid not in online_ids]
+            if offline_ids:
+                await database_sync_to_async(lambda: Room.seen_by.through.objects.filter(room_id=room.id, user_id__in=offline_ids).delete())()
 
-            if not consumer and not prefs['muted']:
-                asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room_id))
-                continue
+            membership_prefs = await database_sync_to_async(lambda: Room.get_membership_preferences_bulk(room.id, other_member_ids))()
 
-            if consumer and consumer.rooms.present(room):
-                continue
+            proxy = HandledMessage()
+            for member in other_members:
+                prefs = membership_prefs.get(member.id, {'seen': False, 'muted': True})
+                consumer = ChatConsumer.online_registry.get_consumer(member)
 
-            if prefs['seen']:
-                await consumer.unsee_room(room)
-                await consumer.send_unsee_room(proxy=proxy, room=room)
+                if not consumer and not prefs['muted']:
+                    asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room.id))
+                    continue
 
-            if not prefs['muted']:
-                await consumer.send_notification(proxy, message_id)
+                if consumer and consumer.rooms.present(room):
+                    continue
+
+                if prefs['seen']:
+                    await consumer.unsee_room(room)
+                    await consumer.send_unsee_room(proxy=proxy, room=room)
+
+                if not prefs['muted']:
+                    await consumer.send_notification(proxy, message_id)
+
+            await self._dispatch_proxy(proxy)
+        except Exception as e:
+            log.error(f"Error in post-send processing for message {message_id}: {e}", exc_info=True)
+
+    async def _dispatch_proxy(self, proxy: HandledMessage):
+        """Flush a proxy outside of receive_json — used by background tasks that build messages via helpers."""
+        for group, message, to_consumer, _ in proxy.get_messages():
+            try:
+                if group is not None:
+                    await self.channel_layer.group_send(group, message)
+                elif to_consumer is not None:
+                    await to_consumer.send_json(message)
+                else:
+                    await self.send_json(message)
+            except Exception as e:
+                log.warning(f"Failed to dispatch proxy message: {e}")
 
     @handlers.register("get-online-users")
     async def send_online_users(self, proxy: HandledMessage):
