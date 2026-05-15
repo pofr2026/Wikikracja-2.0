@@ -442,7 +442,6 @@ class ChatRepository:
 
     @database_sync_to_async
     def get_recent_messages_batch(self, room_id, user_id, limit=100, sort_by='date', order='desc', popular_only=False):
-        """Optimized batch fetch of messages, users, and votes."""
         qs = Message.objects.filter(room=room_id) \
             .select_related('sender', 'reply_to__sender') \
             .prefetch_related(
@@ -450,53 +449,56 @@ class ChatRepository:
                 'messagehistory'
             )
 
-        all_messages = list(qs)
-        for msg in all_messages:
-            reactions_dict = _reactions(msg)
-            msg.upvotes = len(reactions_dict.get('upvotes', []))
-            msg.downvotes = len(reactions_dict.get('downvotes', []))
-
-        if popular_only:
-            all_messages = [msg for msg in all_messages if msg.upvotes >= 1]
-
-        if sort_by == 'likes':
-            reverse = (order == 'desc')
-            all_messages.sort(key=lambda m: (m.upvotes, m.time), reverse=reverse)
+        if sort_by == 'date' and not popular_only:
+            # Fast path: DB handles ORDER BY + LIMIT using the (room, time) index
+            db_order = 'time' if order == 'asc' else '-time'
+            messages = list(qs.order_by(db_order)[:limit])
+            if order == 'desc':
+                messages = list(reversed(messages))
+            for msg in messages:
+                r = _reactions(msg)
+                msg.upvotes = len(r.get('upvotes', []))
+                msg.downvotes = len(r.get('downvotes', []))
         else:
+            # Python path: full scan needed to filter/sort by reactions (stored in JSONField)
+            all_messages = list(qs)
+            for msg in all_messages:
+                r = _reactions(msg)
+                msg.upvotes = len(r.get('upvotes', []))
+                msg.downvotes = len(r.get('downvotes', []))
+
+            if popular_only:
+                all_messages = [msg for msg in all_messages if msg.upvotes >= 1]
+
             reverse = (order == 'desc')
-            all_messages.sort(key=lambda m: m.time, reverse=reverse)
+            if sort_by == 'likes':
+                all_messages.sort(key=lambda m: (m.upvotes, m.time), reverse=reverse)
+            else:
+                all_messages.sort(key=lambda m: m.time, reverse=reverse)
 
-        messages = all_messages[:limit]
-
-        if sort_by == 'date' and order == 'desc':
-            messages = list(reversed(messages))
+            messages = all_messages[:limit]
+            if sort_by == 'date' and order == 'desc':
+                messages = list(reversed(messages))
 
         if not messages:
             return {'messages': [], 'users': {}, 'user_votes': {}}
 
         sender_ids = {msg.sender_id for msg in messages if msg.sender_id}
-        users = {}
-        if sender_ids:
-            users = {u.id: u for u in User.objects.filter(id__in=sender_ids)}
+        users = {u.id: u for u in User.objects.filter(id__in=sender_ids)} if sender_ids else {}
 
         user_votes = {}
         for msg in messages:
-            reactions_dict = _reactions(msg)
-            vote_up = reactions_dict.get('upvotes', [])
-            vote_down = reactions_dict.get('downvotes', [])
-            if user_id in vote_up:
+            r = _reactions(msg)
+            if user_id in r.get('upvotes', []):
                 user_votes[msg.id] = 'upvote'
-            elif user_id in vote_down:
+            elif user_id in r.get('downvotes', []):
                 user_votes[msg.id] = 'downvote'
 
         result = []
         for msg in messages:
-            edited = hasattr(msg, 'messagehistory')
             attachments = {}
             for attachment in msg.attachments.all():
-                attachments_of_type = attachments.get(attachment.type, [])
-                attachments_of_type.append(attachment.filename)
-                attachments[attachment.type] = attachments_of_type
+                attachments.setdefault(attachment.type, []).append(attachment.filename)
 
             reply_to_data = None
             if msg.reply_to_id and msg.reply_to:
@@ -509,10 +511,7 @@ class ChatRepository:
                     'author_color': _username_to_color(ru),
                 }
 
-            reactions_dict = _reactions(msg)
-            bulb_count = len(reactions_dict.get('bulb', []))
-            question_count = len(reactions_dict.get('question', []))
-
+            r = _reactions(msg)
             result.append({
                 'id': msg.id,
                 'sender_id': msg.sender_id,
@@ -522,18 +521,14 @@ class ChatRepository:
                 'anonymous': msg.anonymous,
                 'upvotes': msg.upvotes,
                 'downvotes': msg.downvotes,
-                'edited': edited,
+                'edited': hasattr(msg, 'messagehistory'),
                 'attachments': attachments,
                 'reply_to': reply_to_data,
-                'bulb_count': bulb_count,
-                'question_count': question_count,
+                'bulb_count': len(r.get('bulb', [])),
+                'question_count': len(r.get('question', [])),
             })
 
-        return {
-            'messages': result,
-            'users': users,
-            'user_votes': user_votes,
-        }
+        return {'messages': result, 'users': users, 'user_votes': user_votes}
 
     # -- Push notification methods --
     @database_sync_to_async
