@@ -99,7 +99,7 @@ def chat(request: HttpRequest):
     # 1. Prefetch allowed users for private rooms (needed for displayed_name)
     # 2. Annotate with message count (for seen_by filter)
     # 3. Annotate with is_seen status (for seen_by filter)
-    allowed_rooms = Room.objects.filter(allowed=request.user.id).prefetch_related(Prefetch('allowed', queryset=User.objects.only('id', 'username')), 'muted_by', 'tracked_by').annotate(messages_count=Count('messages'), is_seen=Exists(Room.seen_by.through.objects.filter(room_id=OuterRef('pk'), user_id=request.user.id))).order_by("title")
+    allowed_rooms = Room.objects.filter(allowed=request.user.id).select_related('last_message_sender').prefetch_related(Prefetch('allowed', queryset=User.objects.only('id', 'username')), 'muted_by', 'tracked_by').annotate(messages_count=Count('messages'), is_seen=Exists(Room.seen_by.through.objects.filter(room_id=OuterRef('pk'), user_id=request.user.id))).order_by("title")
 
     public_active = allowed_rooms.filter(public=True, archived=False)
     public_archived = allowed_rooms.filter(public=True, archived=True)
@@ -116,25 +116,25 @@ def chat(request: HttpRequest):
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=False,
-    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
+    ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     tasks_tree_archived = Task.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=True,
-    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
+    ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     votes_tree_active = Decyzja.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=False,
-    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
+    ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     votes_tree_archived = Decyzja.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=True,
-    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
+    ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     # For "participated only" visual mute: get rooms where user has sent a message
     participated_only = getattr(request.user.uzytkownik, 'email_notifications_chat_participated', False)

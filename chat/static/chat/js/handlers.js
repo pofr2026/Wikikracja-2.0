@@ -443,23 +443,21 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    document.addEventListener('click', handleRoomNameClick);
+    document.addEventListener('click', handleRoomLinkClick);
 
-    function handleRoomNameClick(e) {
-        const roomName = e.target.closest('.room-name');
-        if (!roomName) return;
-        const room_id = roomName.parentElement.getAttribute("data-room-id");
-        if (!roomName.classList.contains("joined")) {
-            roomName.parentElement.classList.add('room-tapping');
-            setTimeout(() => roomName.parentElement.classList.remove('room-tapping'), 300);
-            // Sync eye icon state after joining
-            DOM_API.getRoomLinkDiv(room_id)?.classList.remove("room-not-seen");
-            DOM_API.setRoomSeenIconState(room_id, true);
-            onRoomTryJoin(room_id);
-            // Update unread filter if it's active
-            if (typeof window.updateUnreadFilter === 'function') {
-                window.updateUnreadFilter();
-            }
+    function handleRoomLinkClick(e) {
+        if (e.target.closest('.room-controls')) return;
+        const roomLink = e.target.closest('.room-link');
+        if (!roomLink) return;
+        if (roomLink.classList.contains("joined")) return;
+        const room_id = roomLink.getAttribute("data-room-id");
+        roomLink.classList.add('room-tapping');
+        setTimeout(() => roomLink.classList.remove('room-tapping'), 300);
+        DOM_API.getRoomLinkDiv(room_id)?.classList.remove("room-not-seen");
+        DOM_API.setRoomSeenIconState(room_id, true);
+        onRoomTryJoin(room_id);
+        if (typeof window.updateUnreadFilter === 'function') {
+            window.updateUnreadFilter();
         }
     }
 

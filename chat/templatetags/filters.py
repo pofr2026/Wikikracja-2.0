@@ -1,9 +1,31 @@
 from django import template
 from django.db.models import Count
+from django.utils import timezone
+from django.utils.formats import date_format
+from django.utils.translation import gettext as _
 
 from chat.models import Room
 
 register = template.Library()
+
+
+@register.filter('relative_chat_date')
+def relative_chat_date(value):
+    """Relative date for room list: HH:MM (today), 'Yesterday', day name (<7d), '20 kwi' (same year), '20 kwi 2024' (older)."""
+    if value is None:
+        return ''
+    now = timezone.localtime(timezone.now())
+    value = timezone.localtime(value)
+    delta_days = (now.date() - value.date()).days
+    if delta_days == 0:
+        return date_format(value, 'H:i')
+    if delta_days == 1:
+        return _('Yesterday')
+    if delta_days < 7:
+        return date_format(value, 'l').capitalize()
+    if value.year == now.year:
+        return date_format(value, 'j M')
+    return date_format(value, 'j M Y')
 
 
 @register.filter('name_for')
