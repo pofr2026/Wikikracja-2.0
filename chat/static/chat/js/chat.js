@@ -864,8 +864,13 @@ async function writeToClipboard(text) {
 }
 
 function showCopyFeedback(button, success) {
+    const message = success ? _("Link copied") : _("Could not copy link");
+    if (button?.closest('.dropdown') && window.showToast) {
+        window.showToast(message);
+        return;
+    }
     if (!button || !DOM_API || typeof DOM_API.showCopyFeedback !== 'function') return;
-    DOM_API.showCopyFeedback(button, success ? _("Link copied") : _("Could not copy link"), success);
+    DOM_API.showCopyFeedback(button, message, success);
 }
 
 function buildRoomUrl(room_id) {

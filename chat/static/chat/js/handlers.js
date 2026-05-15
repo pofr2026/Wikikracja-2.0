@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', handleRoomLinkClick);
 
     function handleRoomLinkClick(e) {
-        if (e.target.closest('.room-controls')) return;
+        if (e.target.closest('.room-link__actions')) return;
         const roomLink = e.target.closest('.room-link');
         if (!roomLink) return;
         if (roomLink.classList.contains("joined")) return;

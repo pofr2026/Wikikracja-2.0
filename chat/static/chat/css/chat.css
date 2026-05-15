@@ -1061,11 +1061,6 @@ body:has(.chat-rooms) .main-area {
     font-weight: 500;
     color: var(--color-text);
 }
-.room-link.joined .seen-switch,
-.room-link.joined .notif-switch,
-.room-link.joined .copy-link-btn {
-    color: var(--color-text) !important;
-}
 .room-link.room-not-seen {
     border-color: var(--accent);
     color: var(--color-success);
@@ -1107,25 +1102,34 @@ body:has(.chat-rooms) .main-area {
     font-weight: 600;
     color: var(--color-text);
 }
-.room-link .room-controls {
+.room-link__actions {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
-    gap: 0.15rem;
-    flex-shrink: 0;
-    white-space: nowrap;
-    padding-right: .1rem;
-    min-width: fit-content;
-    max-width: 70px;
-    overflow: hidden;
-    box-sizing: border-box;
 }
-.seen-switch,
-.notif-switch,
-.copy-link-btn {
+.room-link__chevron {
+    background: transparent;
+    border: none;
+    padding: .25rem .35rem;
     color: var(--color-text-muted);
+    font-size: .8rem;
+    line-height: 1;
+    cursor: pointer;
+    border-radius: .25rem;
+    transition: opacity .15s, color .15s, background-color .15s;
 }
-.copy-link-btn {
-    position: relative;
+.room-link__chevron:hover {
+    color: var(--color-text);
+    background: var(--color-surface-offset);
+}
+@media (hover: hover) {
+    .room-link__chevron {
+        opacity: 0;
+    }
+    .room-link:hover .room-link__chevron,
+    .room-link__chevron[aria-expanded="true"] {
+        opacity: 1;
+    }
 }
 .copy-feedback {
     position: absolute;
