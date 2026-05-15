@@ -68,14 +68,20 @@ export default class DomApi {
         const msgDiv = this.getMessageDiv(message_id);
         const msgText = msgDiv?.querySelector('.msg-text');
         if (msgText) msgText.dataset.raw = message;
-        if (temp_id && msgDiv) msgDiv.dataset.tempId = temp_id;
+        if (temp_id && msgDiv) {
+            msgDiv.dataset.tempId = temp_id;
+            msgDiv.classList.add('message--pending');
+        }
     }
 
     confirmMessage(temp_id, real_id) {
         const msgDiv = this.getMessagesDiv()?.querySelector(`.message[data-temp-id="${temp_id}"]`);
         if (!msgDiv) return;
-        msgDiv.classList.remove('message--pending');
+        msgDiv.classList.remove('message--pending', 'message--failed');
         msgDiv.dataset.messageId = real_id;
+        msgDiv.querySelectorAll(`[data-message-id="${temp_id}"]`).forEach(el => {
+            el.dataset.messageId = real_id;
+        });
         delete msgDiv.dataset.tempId;
     }
 

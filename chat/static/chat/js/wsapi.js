@@ -119,15 +119,18 @@ export default class WsApi {
      * @param {string} message - Message text content
      * @param {boolean} is_anonymous - Whether to send as anonymous
      * @param {Object} attachments - Attachment data (images array)
+     * @param {number|null} reply_to_id - Reply target message ID
+     * @param {string|null} temp_id - Client-generated ID for optimistic UI matching
      */
-    sendMessage(room_id, message, is_anonymous, attachments, reply_to_id = null) {
+    sendMessage(room_id, message, is_anonymous, attachments, reply_to_id = null, temp_id = null) {
         this.sendJson({
             command: "send",
             room_id,
             message,
             is_anonymous,
             attachments,
-            ...(reply_to_id ? { reply_to_id } : {})
+            ...(reply_to_id ? { reply_to_id } : {}),
+            ...(temp_id ? { temp_id } : {}),
         });
     }
 

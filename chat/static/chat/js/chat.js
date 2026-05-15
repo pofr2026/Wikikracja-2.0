@@ -39,6 +39,10 @@ let CurrentRoomId = null;
  * @type {number|null}
  */
 let currentReplyId = null;
+let currentReplyData = null;
+
+const pendingTimeouts = new Map();
+const PENDING_TIMEOUT_MS = 10000;
 
 /**
  * Message ID to scroll to when joining a room (e.g., from link)
@@ -525,6 +529,8 @@ export async function onRoomTryLeave(sync_with_server) {
     DOM_API.clearRoomData();
     DOM_API.hideFoldedRoomHeader();
     resetSortState();
+    for (const t of pendingTimeouts.values()) clearTimeout(t);
+    pendingTimeouts.clear();
     CurrentRoomId = null;
 }
 
@@ -545,6 +551,18 @@ export async function onReceiveMessages(messages) {
     if (messages.length === 1) {
         // Single message (real-time) — normal path
         const message = messages[0];
+
+        // Optimistic UI — own message echoed back matches a pending placeholder; skip normal render path.
+        if (message.own && message.temp_id) {
+            const pending = msgdiv?.querySelector(`.message[data-temp-id="${message.temp_id}"]`);
+            if (pending) {
+                DOM_API.confirmMessage(message.temp_id, message.message_id);
+                const t = pendingTimeouts.get(message.temp_id);
+                if (t) { clearTimeout(t); pendingTimeouts.delete(message.temp_id); }
+                return;
+            }
+        }
+
         const current_banner = formatDate(message.timestamp);
         const banners = DOM_API.getLastMessageBanner();
         const previous_banner = banners.length ? banners[banners.length - 1].textContent : null;
@@ -561,13 +579,6 @@ export async function onReceiveMessages(messages) {
             message.read_by ?? []
         );
         requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(message.message_id)));
-        if (message.own) {
-            const sendBtn = document.querySelector('.send-message');
-            if (sendBtn) {
-                sendBtn.disabled = false;
-                clearTimeout(window._sendLockTimeout);
-            }
-        }
         if (message.new && document.hidden && !message.own) {
             makeNotification({ title: message.username, body: message.message });
         }
@@ -771,6 +782,7 @@ export function setReplyTarget(message_id, username, snippet) {
     const preview = document.getElementById('reply-preview');
     const previewText = document.getElementById('reply-preview-text');
     currentReplyId = coreSetReplyTarget(message_id, username, snippet, preview, previewText);
+    currentReplyData = { id: message_id, username, snippet };
 }
 
 /**
@@ -779,6 +791,7 @@ export function setReplyTarget(message_id, username, snippet) {
 export function clearReplyTarget() {
     const preview = document.getElementById('reply-preview');
     currentReplyId = coreClearReplyTarget(preview);
+    currentReplyData = null;
 }
 
 /**
@@ -881,23 +894,65 @@ export async function onSubmitMessage(message, editing_message_id) {
         // Don't stop editing immediately - let onReceiveEdit handle it after server confirms
     } else {
         const files = DOM_API.getFiles();
-        const attachments = {};
         const messageText = (typeof message === 'string')
             ? (message.replace(/<[^>]*>/g, '').trim())
             : '';
         if (messageText.length === 0 && (!files || files.length === 0)) return;
-        if (files?.length) {
-            attachments.images = (await WS_API.uploadFiles(files)).filenames;
-        }
+
         const sendBtn = document.querySelector('.send-message');
-        if (sendBtn) {
-            sendBtn.disabled = true;
-            window._sendLockTimeout = setTimeout(() => { sendBtn.disabled = false; }, 5000);
+        if (sendBtn) sendBtn.disabled = true;
+
+        const attachments = {};
+        if (files?.length) {
+            try {
+                attachments.images = (await WS_API.uploadFiles(files)).filenames;
+            } catch (err) {
+                if (sendBtn) sendBtn.disabled = false;
+                console.error('Upload failed', err);
+                return;
+            }
         }
-        WS_API.sendMessage(CurrentRoomId, message, DOM_API.getAnonymousValue(), attachments, currentReplyId);
+
+        const is_anonymous = DOM_API.getAnonymousValue();
+        const temp_id = (crypto.randomUUID?.() || `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
+        const reply_to = currentReplyData
+            ? { id: currentReplyData.id, username: currentReplyData.username, text_snippet: currentReplyData.snippet }
+            : null;
+        const ownUsername = is_anonymous
+            ? 'Anonymous User'
+            : (document.querySelector('.user-name')?.textContent?.trim() || '');
+        const now = Date.now();
+
+        DOM_API.removeNoMessagesBanner();
+        const msgdiv = DOM_API.getMessagesDiv();
+        const current_banner = formatDate(now);
+        const banners = DOM_API.getLastMessageBanner();
+        const previous_banner = banners.length ? banners[banners.length - 1].textContent : null;
+        if (previous_banner !== current_banner && msgdiv) {
+            msgdiv.insertAdjacentHTML('beforeend', `<div class='date-banner'>${current_banner}</div>`);
+        }
+
+        DOM_API.addMessage(
+            CurrentRoomId, temp_id, ownUsername, message,
+            0, 0, null, true, false,
+            attachments, now, now,
+            reply_to, { bulb: 0, question: 0 }, [], [],
+            temp_id
+        );
+        requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(temp_id)));
+        if (msgdiv) msgdiv.scrollTop = msgdiv.scrollHeight;
+
+        WS_API.sendMessage(CurrentRoomId, message, is_anonymous, attachments, currentReplyId, temp_id);
+
+        pendingTimeouts.set(temp_id, setTimeout(() => {
+            pendingTimeouts.delete(temp_id);
+            DOM_API.failMessage(temp_id);
+        }, PENDING_TIMEOUT_MS));
+
+        if (sendBtn) sendBtn.disabled = false;
+
         clearDraft(CurrentRoomId);
         clearReplyTarget();
-        // remove files from input and image preview
         DOM_API.clearFiles();
         const messageInput = DOM_API.getMessageInput();
         if (messageInput) {
@@ -910,7 +965,6 @@ export async function onSubmitMessage(message, editing_message_id) {
             }
             messageInput.dispatchEvent(new Event('input'));
         }
-        // Reset editing mode if it was active
         if (DOM_API.isEditing()) {
             DOM_API.stopEditing();
         }

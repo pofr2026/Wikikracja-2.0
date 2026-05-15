@@ -305,7 +305,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         })
 
     @handlers.register("send")
-    async def send_message_to_room(self, proxy: HandledMessage, room_id, message, is_anonymous, attachments, reply_to_id=None):
+    async def send_message_to_room(self, proxy: HandledMessage, room_id, message, is_anonymous, attachments, reply_to_id=None, temp_id=None):
         if int(room_id) not in self.rooms.items():
             raise ClientError("ROOM_ACCESS_DENIED")
 
@@ -359,6 +359,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             attachments=attachments,
             reply_to=reply_to_data,
             reactions={'bulb': 0, 'question': 0},
+            temp_id=temp_id,
         ))
 
         asyncio.create_task(self._post_send_processing(sender, room, msg, message_id))

@@ -17,6 +17,7 @@ def format_chat_message(
     reply_to: dict = None,
     reactions: dict = None,
     read_by: list = None,
+    temp_id: str = None,
 ):
     """
     Return formatted dict with message data.
@@ -26,6 +27,7 @@ def format_chat_message(
       reply_to  — {id, username, text_snippet} lub None
       reactions — {bulb: int, question: int, your_reactions: list} lub None
       read_by   — [{user_id, username, avatar_url}] lub None
+      temp_id   — client-generated ID, echoed back so sender can match optimistic placeholder
     """
     return {
         "type": "chat.message",
@@ -49,4 +51,5 @@ def format_chat_message(
             "question": 0
         },
         "read_by": read_by or [],
+        "temp_id": temp_id,
     }
