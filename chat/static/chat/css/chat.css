@@ -124,6 +124,12 @@ body:has(.chat-rooms) .main-area {
     box-shadow: 0 0 10px 2px var(--accent);
     transition: box-shadow 5s ease;
 }
+#room .messages .message.message--pending {
+    opacity: 0.55;
+}
+#room .messages .message.message--failed .message-content {
+    outline: 1px solid #ef4444;
+}
 /* ============================================================ */
 /* MESSAGE CONTENT                                              */
 /* ============================================================ */

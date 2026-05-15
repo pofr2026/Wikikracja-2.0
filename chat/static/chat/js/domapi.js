@@ -59,7 +59,7 @@ export default class DomApi {
         });
     }
 
-    addMessage(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
+    addMessage(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null, temp_id = null) {
         const html = this.buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to, reactions, your_reactions, read_by);
 
         const messagesDiv = this.getMessagesDiv();
@@ -68,6 +68,22 @@ export default class DomApi {
         const msgDiv = this.getMessageDiv(message_id);
         const msgText = msgDiv?.querySelector('.msg-text');
         if (msgText) msgText.dataset.raw = message;
+        if (temp_id && msgDiv) msgDiv.dataset.tempId = temp_id;
+    }
+
+    confirmMessage(temp_id, real_id) {
+        const msgDiv = this.getMessagesDiv()?.querySelector(`.message[data-temp-id="${temp_id}"]`);
+        if (!msgDiv) return;
+        msgDiv.classList.remove('message--pending');
+        msgDiv.dataset.messageId = real_id;
+        delete msgDiv.dataset.tempId;
+    }
+
+    failMessage(temp_id) {
+        const msgDiv = this.getMessagesDiv()?.querySelector(`.message[data-temp-id="${temp_id}"]`);
+        if (!msgDiv) return;
+        msgDiv.classList.remove('message--pending');
+        msgDiv.classList.add('message--failed');
     }
 
     getMessageDiv(message_id) {
