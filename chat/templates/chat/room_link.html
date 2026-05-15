@@ -8,6 +8,24 @@
   data-room-archived="{{ room.archived }}"
   data-last-activity="{{ room.last_activity|date:'U' }}">
 
+  <div class="room-link__avatar room-link__avatar--{{ room_kind|default:'public' }}">
+    {% if room_kind == 'task' %}
+      <i class="fas fa-tasks" aria-hidden="true"></i>
+    {% elif room_kind == 'vote' %}
+      <i class="fas fa-vote-yea" aria-hidden="true"></i>
+    {% elif room_kind == 'private' %}
+      {% with other=room|other_user:user %}
+        {% if other.uzytkownik.avatar %}
+          <img src="{{ other.uzytkownik.avatar.url }}" alt="" loading="lazy">
+        {% else %}
+          <i class="fas fa-user" aria-hidden="true"></i>
+        {% endif %}
+      {% endwith %}
+    {% else %}
+      <i class="fas fa-users" aria-hidden="true"></i>
+    {% endif %}
+  </div>
+
   <div class="room-link__status">
     {% if room.archived %}
       <i class="fas fa-lock nav-status nav-status--locked" aria-hidden="true"></i>

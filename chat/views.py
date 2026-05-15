@@ -94,17 +94,20 @@ def chat(request: HttpRequest):
     Root page view. This is essentially a single-page app, if you ignore the
     login and admin parts.
     """
-    # Get a list of rooms, ordered alphabetically
-    # Optimize queries by:
-    # 1. Prefetch allowed users for private rooms (needed for displayed_name)
-    # 2. Annotate with message count (for seen_by filter)
-    # 3. Annotate with is_seen status (for seen_by filter)
-    allowed_rooms = Room.objects.filter(allowed=request.user.id).select_related('last_message_sender').prefetch_related(Prefetch('allowed', queryset=User.objects.only('id', 'username')), 'muted_by', 'tracked_by').annotate(messages_count=Count('messages'), is_seen=Exists(Room.seen_by.through.objects.filter(room_id=OuterRef('pk'), user_id=request.user.id))).order_by("title")
+    base_rooms = Room.objects.filter(allowed=request.user.id).select_related('last_message_sender').annotate(messages_count=Count('messages'), is_seen=Exists(Room.seen_by.through.objects.filter(room_id=OuterRef('pk'), user_id=request.user.id))).order_by("title")
 
-    public_active = allowed_rooms.filter(public=True, archived=False)
-    public_archived = allowed_rooms.filter(public=True, archived=True)
-    private_active = allowed_rooms.filter(public=False, archived=False)
-    private_archived = allowed_rooms.filter(public=False, archived=True)
+    # Public rooms can have hundreds of `allowed` users — keep that prefetch lean.
+    public_allowed = Prefetch('allowed', queryset=User.objects.only('id', 'username'))
+    # Private (DM) rooms need the other user's avatar — pull uzytkownik in the same query.
+    private_allowed = Prefetch('allowed', queryset=User.objects.select_related('uzytkownik'))
+
+    public_pool = base_rooms.prefetch_related(public_allowed, 'muted_by', 'tracked_by')
+    private_pool = base_rooms.prefetch_related(private_allowed, 'muted_by', 'tracked_by')
+
+    public_active = public_pool.filter(public=True, archived=False)
+    public_archived = public_pool.filter(public=True, archived=True)
+    private_active = private_pool.filter(public=False, archived=False)
+    private_archived = private_pool.filter(public=False, archived=True)
 
     task_room_ids = Task.objects.filter(chat_room__isnull=False).values_list('chat_room_id', flat=True)
     vote_room_ids = Decyzja.objects.filter(chat_room__isnull=False).values_list('chat_room_id', flat=True)

@@ -34,6 +34,14 @@ def name_for(room, user):
     return room.displayed_name(user)
 
 
+@register.filter('other_user')
+def other_user(room, user):
+    """Returns the other user in a private 1-to-1 room (None for public rooms)."""
+    if room.public:
+        return None
+    return room.get_other(user)
+
+
 def _is_seen(room, user):
     """Core logic: returns True if room has been seen by user."""
     # Annotated queryset (fast path)

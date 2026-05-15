@@ -72,13 +72,13 @@
             </div>
             <div class="nav-cat-content open" id="cat-public">
               {% for room in public_rooms_active %}
-                {% include 'chat/room_link.html' %}
+                {% include 'chat/room_link.html' with room_kind='public' %}
               {% empty %}
                 <p class="text-muted text-center small">{% trans 'None' %}</p>
               {% endfor %}
               <div id="content-pub-rooms-archive" class="archive-section">
                 {% for room in public_rooms_archived %}
-                  {% include 'chat/room_link.html' %}
+                  {% include 'chat/room_link.html' with room_kind='public' %}
                 {% empty %}
                   <p class="text-muted text-center small">{% trans 'None' %}</p>
                 {% endfor %}
@@ -97,7 +97,7 @@
             <div class="nav-cat-content open" id="cat-tasks">
               {% for task in tasks_tree_active %}
                 {% with room=task.chat_room override_label=task.title %}
-                  {% include 'chat/room_link.html' %}
+                  {% include 'chat/room_link.html' with room_kind='task' %}
                 {% endwith %}
               {% empty %}
                 <p class="text-muted text-center small">{% trans 'None' %}</p>
@@ -105,7 +105,7 @@
               <div id="content-tasks-archive" class="archive-section">
                 {% for task in tasks_tree_archived %}
                   {% with room=task.chat_room override_label=task.title %}
-                    {% include 'chat/room_link.html' %}
+                    {% include 'chat/room_link.html' with room_kind='task' %}
                   {% endwith %}
                 {% empty %}
                   <p class="text-muted text-center small">{% trans 'None' %}</p>
@@ -125,7 +125,7 @@
             <div class="nav-cat-content open" id="cat-votes">
               {% for vote in votes_tree_active %}
                 {% with room=vote.chat_room override_label=vote.title %}
-                  {% include 'chat/room_link.html' %}
+                  {% include 'chat/room_link.html' with room_kind='vote' %}
                 {% endwith %}
               {% empty %}
                 <p class="text-muted text-center small">{% trans 'None' %}</p>
@@ -133,7 +133,7 @@
               <div id="content-votes-archive" class="archive-section">
                 {% for vote in votes_tree_archived %}
                   {% with room=vote.chat_room override_label=vote.title %}
-                    {% include 'chat/room_link.html' %}
+                    {% include 'chat/room_link.html' with room_kind='vote' %}
                   {% endwith %}
                 {% empty %}
                   <p class="text-muted text-center small">{% trans 'None' %}</p>
@@ -152,13 +152,13 @@
             </div>
             <div class="nav-cat-content open" id="cat-private">
               {% for room in private_active %}
-                {% include 'chat/room_link.html' %}
+                {% include 'chat/room_link.html' with room_kind='private' %}
               {% empty %}
                 <p class="text-muted text-center small">{% trans 'None' %}</p>
               {% endfor %}
               <div id="content-prv-archive" class="archive-section">
                 {% for room in private_archived %}
-                  {% include 'chat/room_link.html' %}
+                  {% include 'chat/room_link.html' with room_kind='private' %}
                 {% empty %}
                   <p class="text-muted text-center small">{% trans 'None' %}</p>
                 {% endfor %}
