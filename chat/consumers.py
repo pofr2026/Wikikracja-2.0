@@ -338,6 +338,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         msg.id = message_id
 
         await self.repo.save_attachments(message_id, attachments)
+        await self.repo.update_room_last_message(room_id, msg)
 
         reply_to_data = None
         if reply_to_id:

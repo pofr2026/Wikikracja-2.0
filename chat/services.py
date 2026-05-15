@@ -176,6 +176,15 @@ class ChatRepository:
         return message.id
 
     @database_sync_to_async
+    def update_room_last_message(self, room_id, message):
+        Room.objects.filter(id=room_id).update(
+            last_message_text=message.text[:200],
+            last_message_sender_id=message.sender_id,
+            last_message_at=message.time,
+            last_message_anonymous=message.anonymous,
+        )
+
+    @database_sync_to_async
     def get_message(self, message_id):
         try:
             return Message.objects.get(pk=message_id)
