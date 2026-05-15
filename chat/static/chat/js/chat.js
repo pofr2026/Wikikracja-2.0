@@ -415,17 +415,11 @@ function expandCategoryForRoom(roomLink) {
         }
     }
 
-    // If it's inside an archive section, show it too
-    const archiveSection = roomLink.closest('.archive-section');
-    if (archiveSection) {
-        archiveSection.classList.add('visible');
-        const archiveSectionId = archiveSection.id; // e.g. 'content-pub-rooms-archive'
-        const targetId = archiveSectionId.replace('content-', ''); // e.g. 'pub-rooms-archive'
-        const archiveBtn = document.querySelector(`.archive-toggle[data-target="${targetId}"]`);
-        if (archiveBtn) {
-            archiveBtn.classList.add('active');
-            localStorage.setItem(`chat-archive-${targetId}`, 'visible');
-        }
+    // If it's inside an archive section, reveal all archived rooms via the global toggle
+    if (roomLink.closest('.archive-section')) {
+        document.querySelectorAll('.archive-section').forEach(s => s.classList.add('visible'));
+        document.getElementById('archive-toggle-global-btn')?.classList.add('active');
+        localStorage.setItem('chat-archive-global', 'visible');
     }
 }
 

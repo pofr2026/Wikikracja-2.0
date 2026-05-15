@@ -154,23 +154,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Restore archive section states from localStorage
-    // The state is stored under the key `chat-archive-${targetId}` with values 'visible' or 'hidden'.
-    // If no value is stored (first visit), we explicitly set it to 'hidden' to ensure the default
-    // behaviour matches the requirement: the "Show archived rooms" button is unchecked.
-    const archiveTargets = ['pub-rooms-archive', 'tasks-archive', 'votes-archive', 'prv-archive'];
-    archiveTargets.forEach(targetId => {
-        const archiveSection = document.getElementById(`content-${targetId}`);
-        const archiveBtn = document.querySelector(`.archive-toggle[data-target="${targetId}"]`);
-        if (!archiveSection || !archiveBtn) return;
-        const savedState = localStorage.getItem(`chat-archive-${targetId}`);
-        if (savedState === 'visible') {
-            archiveSection.classList.add('visible');
-            archiveBtn.classList.add('active');
-        } else {
-            archiveSection.classList.remove('visible');
-            archiveBtn.classList.remove('active');
-        }
+    const globalArchiveBtn = document.getElementById('archive-toggle-global-btn');
+    const archiveSectionIds = ['pub-rooms-archive', 'tasks-archive', 'votes-archive', 'prv-archive'];
+
+    function setArchivesVisible(visible) {
+        archiveSectionIds.forEach(targetId => {
+            document.getElementById(`content-${targetId}`)?.classList.toggle('visible', visible);
+        });
+        globalArchiveBtn?.classList.toggle('active', visible);
+        if (visible) localStorage.setItem('chat-archive-global', 'visible');
+        else localStorage.removeItem('chat-archive-global');
+    }
+
+    if (localStorage.getItem('chat-archive-global') === 'visible') {
+        setArchivesVisible(true);
+    }
+
+    globalArchiveBtn?.addEventListener('click', () => {
+        setArchivesVisible(!globalArchiveBtn.classList.contains('active'));
+    });
+
+    const roomSearchInput = document.getElementById('room-search');
+    roomSearchInput?.addEventListener('input', () => {
+        const query = roomSearchInput.value.trim().toLowerCase();
+        document.querySelectorAll('.room-link[data-room-id]').forEach(roomLink => {
+            const name = (roomLink.querySelector('.room-name')?.textContent || '').toLowerCase();
+            roomLink.classList.toggle('search-filtered-out', query !== '' && !name.includes(query));
+        });
     });
 
     // nav-cat-btn click: toggle category open/closed
@@ -243,26 +253,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('click', createImageClickHandler());
-
-    document.addEventListener('click', (e) => {
-        const archiveBtn = e.target.closest('.archive-toggle');
-        if (archiveBtn) {
-            const targetId = archiveBtn.dataset.target;
-            const archiveSection = document.getElementById(`content-${targetId}`);
-            if (archiveSection) {
-                const isVisible = archiveSection.classList.contains('visible');
-                if (isVisible) {
-                    archiveSection.classList.remove('visible');
-                    archiveBtn.classList.remove('active');
-                    localStorage.setItem(`chat-archive-${targetId}`, 'hidden');
-                } else {
-                    archiveSection.classList.add('visible');
-                    archiveBtn.classList.add('active');
-                    localStorage.setItem(`chat-archive-${targetId}`, 'visible');
-                }
-            }
-        }
-    });
 
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.notif-switch');
