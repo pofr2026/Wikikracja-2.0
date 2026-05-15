@@ -129,6 +129,8 @@ export function initGlobalPasteImageHandler() {
         if (!fileInput) return;
         const ext = blob.type.split('/')[1]?.split('+')[0] || 'png';
         const dt = new DataTransfer();
+        // Preserve existing files so pasted images append rather than replace.
+        for (const f of fileInput.files || []) dt.items.add(f);
         dt.items.add(new File([blob], `paste-${Date.now()}.${ext}`, { type: blob.type }));
         fileInput.files = dt.files;
         fileInput.dispatchEvent(new Event('change', { bubbles: true }));
