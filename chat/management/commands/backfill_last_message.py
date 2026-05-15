@@ -14,12 +14,16 @@ class Command(BaseCommand):
             if last_msg is None:
                 skipped += 1
                 continue
-            Room.objects.filter(id=room.id).update(
-                last_message_text=last_msg.text[:200],
-                last_message_sender_id=last_msg.sender_id,
-                last_message_at=last_msg.time,
-                last_message_anonymous=last_msg.anonymous,
-            )
+            update_kwargs = {
+                'last_message_text': last_msg.text[:200],
+                'last_message_sender_id': last_msg.sender_id,
+                'last_message_at': last_msg.time,
+                'last_message_anonymous': last_msg.anonymous,
+            }
+            # Don't move last_activity backwards — room may have been touched after the last message.
+            if last_msg.time > room.last_activity:
+                update_kwargs['last_activity'] = last_msg.time
+            Room.objects.filter(id=room.id).update(**update_kwargs)
             updated += 1
         self.stdout.write(self.style.SUCCESS(
             f'Backfill complete: {updated} rooms updated, {skipped} empty rooms skipped.'

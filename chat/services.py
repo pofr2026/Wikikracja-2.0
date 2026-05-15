@@ -177,11 +177,13 @@ class ChatRepository:
 
     @database_sync_to_async
     def update_room_last_message(self, room_id, message):
+        # Set last_activity explicitly — .update() bypasses the auto_now hook.
         Room.objects.filter(id=room_id).update(
             last_message_text=message.text[:200],
             last_message_sender_id=message.sender_id,
             last_message_at=message.time,
             last_message_anonymous=message.anonymous,
+            last_activity=message.time,
         )
 
     @database_sync_to_async
