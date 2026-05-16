@@ -1,6 +1,15 @@
 // Profile page - email notification toggles
 
+const SCROLL_KEY = 'profile_scroll_restore';
+
 document.addEventListener('DOMContentLoaded', function() {
+	const savedScroll = sessionStorage.getItem(SCROLL_KEY);
+	if (savedScroll !== null) {
+		sessionStorage.removeItem(SCROLL_KEY);
+		// behavior: 'instant' omija globalne `scroll-behavior: smooth` — tylko dla restoreu po zmianie jezyka.
+		window.scrollTo({ top: parseInt(savedScroll, 10), left: 0, behavior: 'instant' });
+	}
+
 	const toggles = document.querySelectorAll('[id^="toggle-"]');
 
 	function updateBadge(badge, isEnabled) {
@@ -20,6 +29,12 @@ document.addEventListener('DOMContentLoaded', function() {
 		const parts = value.split(`; ${name}=`);
 		if (parts.length === 2) return parts.pop().split(';').shift();
 	}
+
+	document.querySelectorAll('form[data-lang-form]').forEach(form => {
+		form.addEventListener('submit', () => {
+			sessionStorage.setItem(SCROLL_KEY, window.scrollY);
+		});
+	});
 
 	toggles.forEach(toggle => {
 		toggle.addEventListener('change', function() {
