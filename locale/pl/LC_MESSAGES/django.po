@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-16 07:14+0200\n"
+"POT-Creation-Date: 2026-05-16 21:45+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -109,13 +109,13 @@ msgid "Category"
 msgstr "Kategoria"
 
 #: .\board\models.py:28 .\board\templates\board\post_detail.html:49
-#: .\chat\templates\chat\chat.html:70 .\events\models.py:50
+#: .\chat\templates\chat\chat.html:72 .\events\models.py:50
 #: .\events\templates\events\event_detail.html:41
 msgid "Public"
 msgstr "Publiczne"
 
 #: .\board\models.py:29 .\tasks\templates\tasks\_task_card.html:25
-#: .\tasks\views.py:88
+#: .\tasks\views.py:89
 msgid "Important"
 msgstr "Ważne"
 
@@ -372,7 +372,7 @@ msgid "Back"
 msgstr "Wróć"
 
 #: .\board\templates\board\post_detail.html:49
-#: .\chat\templates\chat\chat.html:150
+#: .\chat\templates\chat\chat.html:152
 #: .\events\templates\events\_event_card.html:42
 #: .\events\templates\events\event_detail.html:45
 msgid "Private"
@@ -817,7 +817,7 @@ msgid "Cannot delete partner because it is in use. Remove all transactions that 
 msgstr "Nie można usunąć partnera, ponieważ jest w użyciu. Usuń najpierw wszystkie transakcje, które go wykorzystują."
 
 #: .\categories\templates\categories\_category_modal.html:9
-#: .\chat\templates\chat\chat.html:187 .\chat\templates\chat\chat.html:225
+#: .\chat\templates\chat\chat.html:189 .\chat\templates\chat\chat.html:227
 #: .\tasks\templates\tasks\task_detail.html:212
 #: .\tasks\templates\tasks\task_list.html:171
 msgid "Close"
@@ -887,99 +887,99 @@ msgid "Search rooms"
 msgstr "Szukaj pokoi"
 
 #: .\chat\templates\chat\chat.html:35
-msgid "Sort by latest activity"
-msgstr "Sortuj wg ostatniej aktywności"
-
-#: .\chat\templates\chat\chat.html:38
 msgid "Show only unread rooms"
 msgstr "Pokaż tylko nieprzeczytane pokoje"
 
-#: .\chat\templates\chat\chat.html:42
-msgid "More"
-msgstr "Więcej"
+#: .\chat\templates\chat\chat.html:38
+msgid "Sort by latest activity"
+msgstr "Sortuj wg ostatniej aktywności"
 
-#: .\chat\templates\chat\chat.html:46
-msgid "Add room"
-msgstr "Nowy pokój"
-
-#: .\chat\templates\chat\chat.html:47
+#: .\chat\templates\chat\chat.html:41
 msgid "Show by category"
 msgstr "Wg kategorii"
 
-#: .\chat\templates\chat\chat.html:48
+#: .\chat\templates\chat\chat.html:45
+msgid "More"
+msgstr "Więcej"
+
+#: .\chat\templates\chat\chat.html:49
+msgid "Add room"
+msgstr "Nowy pokój"
+
+#: .\chat\templates\chat\chat.html:50
 msgid "Collapse/expand all"
 msgstr "Zwiń/rozwiń wszystko"
 
-#: .\chat\templates\chat\chat.html:49
+#: .\chat\templates\chat\chat.html:51
 msgid "Show archived rooms"
 msgstr "Pokaż zarchiwizowane pokoje"
 
-#: .\chat\templates\chat\chat.html:51
+#: .\chat\templates\chat\chat.html:53
 msgid "Info"
 msgstr "Info"
 
-#: .\chat\templates\chat\chat.html:54
+#: .\chat\templates\chat\chat.html:56
 msgid "Hide room list"
 msgstr "Ukryj listę pokoi"
 
-#: .\chat\templates\chat\chat.html:77 .\chat\templates\chat\chat.html:83
-#: .\chat\templates\chat\chat.html:103 .\chat\templates\chat\chat.html:111
-#: .\chat\templates\chat\chat.html:131 .\chat\templates\chat\chat.html:139
-#: .\chat\templates\chat\chat.html:157 .\chat\templates\chat\chat.html:163
+#: .\chat\templates\chat\chat.html:79 .\chat\templates\chat\chat.html:85
+#: .\chat\templates\chat\chat.html:105 .\chat\templates\chat\chat.html:113
+#: .\chat\templates\chat\chat.html:133 .\chat\templates\chat\chat.html:141
+#: .\chat\templates\chat\chat.html:159 .\chat\templates\chat\chat.html:165
 #: .\tasks\templates\tasks\task_detail.html:43
 msgid "None"
 msgstr "Brak"
 
-#: .\chat\templates\chat\chat.html:94 .\chat\templates\chat\chat.html:208
+#: .\chat\templates\chat\chat.html:96 .\chat\templates\chat\chat.html:210
 #: .\home\templates\home\base.html:206 .\home\templates\home\base.html:240
 #: .\home\templates\home\home.html:47 .\home\templates\home\search.html:63
 #: .\home\views.py:406 .\obywatele\templates\obywatele\szczegoly.html:130
 msgid "Tasks"
 msgstr "Zadania"
 
-#: .\chat\templates\chat\chat.html:122 .\chat\templates\chat\chat.html:212
+#: .\chat\templates\chat\chat.html:124 .\chat\templates\chat\chat.html:214
 msgid "Referendums"
 msgstr "Głosowania"
 
-#: .\chat\templates\chat\chat.html:182
+#: .\chat\templates\chat\chat.html:184
 msgid "Changes history"
 msgstr "Historia zmian"
 
-#: .\chat\templates\chat\chat.html:199
+#: .\chat\templates\chat\chat.html:201
 msgid "Chat Information"
 msgstr "Informacje o czacie"
 
-#: .\chat\templates\chat\chat.html:204
+#: .\chat\templates\chat\chat.html:206
 msgid "Public Rooms"
 msgstr "Publiczne"
 
-#: .\chat\templates\chat\chat.html:205
+#: .\chat\templates\chat\chat.html:207
 #, python-format
 msgid "Public chat rooms are archived if they are not used for %(archive_days)s days. After %(delete_days)s days they are deleted."
 msgstr "Publiczne pokoje czatu są archiwizowane, jeśli nie są używane przez %(archive_days)s dni. Po %(delete_days)s dniach są usuwane."
 
-#: .\chat\templates\chat\chat.html:209
+#: .\chat\templates\chat\chat.html:211
 msgid "Task rooms are created for specific tasks and projects. They are protected from automatic deletion and are used for collaborative work discussions."
 msgstr "Pokoje zadań są tworzone dla konkretnych zadań i projektów. Są one chronione przed automatycznym usunięciem i służą do dyskusji nad pracą zespołową."
 
-#: .\chat\templates\chat\chat.html:213
+#: .\chat\templates\chat\chat.html:215
 msgid "Referendum rooms are created for voting and decision-making processes. They are protected from automatic deletion and provide a space for discussions about proposals."
 msgstr "Pokoje głosowań są tworzone dla procesów głosowania i podejmowania decyzji. Są one chronione przed automatycznym usunięciem i zapewniają przestrzeń do dyskusji na temat propozycji."
 
-#: .\chat\templates\chat\chat.html:216
+#: .\chat\templates\chat\chat.html:218
 msgid "Private Messages"
 msgstr "Prywatne wiadomości"
 
-#: .\chat\templates\chat\chat.html:217
+#: .\chat\templates\chat\chat.html:219
 #, python-format
 msgid "Private messages are archived when user is blocked and deleted after %(delete_days)s days."
 msgstr "Prywatne wiadomości są archiwizowane, gdy użytkownik jest blokowany i usuwany po %(delete_days)s dniach."
 
-#: .\chat\templates\chat\chat.html:220
+#: .\chat\templates\chat\chat.html:222
 msgid "Archives"
 msgstr "Archiwa"
 
-#: .\chat\templates\chat\chat.html:221
+#: .\chat\templates\chat\chat.html:223
 msgid "Click the archive button (folder icon) next to each category to show archived rooms."
 msgstr "Kliknij przycisk archiwum (ikona folderu) obok każdej kategorii, aby pokazać zarchiwizowane pokoje."
 
@@ -1004,14 +1004,6 @@ msgstr "Wyciszony"
 msgid "Room actions"
 msgstr "Działania"
 
-#: .\chat\templates\chat\room_link.html:73
-msgid "Untrack room"
-msgstr "Usuń śledzenie pokoju"
-
-#: .\chat\templates\chat\room_link.html:73
-msgid "Track room"
-msgstr "Śledź pokój"
-
 #: .\chat\templates\chat\room_link.html:82
 msgid "Mark as unread"
 msgstr "Oznacz jako nieprzeczytane"
@@ -1023,14 +1015,6 @@ msgstr "Cofnij wyciszenie"
 #: .\chat\templates\chat\room_link.html:90
 msgid "Mute room"
 msgstr "Wycisz pokój"
-
-#: chat/views.py
-msgid "Reply to the appropriate message..."
-msgstr "Odpowiedz do odpowiedniej wiadomości..."
-
-#: chat/views.py
-msgid "Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list"
-msgstr "Shift+↵ nowa linia · Ctrl+B pogrubienie · Ctrl+I kursywa · - lub * lista"
 
 #: .\chat\templates\chat\room_link.html:97
 msgid "Copy link"
@@ -1418,7 +1402,7 @@ msgstr "Podpisana"
 #: .\glosowania\templates\glosowania\_proposal_card.html:26
 #: .\glosowania\templates\glosowania\menu.html:27
 #: .\glosowania\templates\glosowania\szczegoly.html:34
-#: .\glosowania\views.py:239 .\home\views.py:656
+#: .\glosowania\views.py:240 .\home\views.py:656
 msgid "Discussion"
 msgstr "Dyskusja"
 
@@ -1432,7 +1416,7 @@ msgstr "Nie zabrała podpisów"
 #: .\glosowania\templates\glosowania\menu.html:34
 #: .\glosowania\templates\glosowania\szczegoly.html:30
 #: .\glosowania\templates\glosowania\szczegoly.html:35
-#: .\glosowania\views.py:240 .\home\views.py:657
+#: .\glosowania\views.py:241 .\home\views.py:657
 msgid "Referendum"
 msgstr "Referendum"
 
@@ -1440,7 +1424,7 @@ msgstr "Referendum"
 #: .\glosowania\templates\glosowania\_proposal_card.html:32
 #: .\glosowania\templates\glosowania\menu.html:41
 #: .\glosowania\templates\glosowania\szczegoly.html:37
-#: .\glosowania\views.py:242 .\home\views.py:659
+#: .\glosowania\views.py:243 .\home\views.py:659
 msgid "Approved"
 msgstr "Zatwierdzone"
 
@@ -1448,13 +1432,13 @@ msgstr "Zatwierdzone"
 #: .\glosowania\templates\glosowania\_proposal_card.html:30
 #: .\glosowania\templates\glosowania\menu.html:50
 #: .\glosowania\templates\glosowania\szczegoly.html:36
-#: .\glosowania\views.py:241 .\home\views.py:658 .\tasks\models.py:53
+#: .\glosowania\views.py:242 .\home\views.py:658 .\tasks\models.py:53
 #: .\tasks\templates\tasks\_task_card.html:29
-#: .\tasks\templates\tasks\task_list.html:150 .\tasks\views.py:90
+#: .\tasks\templates\tasks\task_list.html:150 .\tasks\views.py:91
 msgid "Rejected"
 msgstr "Odrzucone"
 
-#: .\glosowania\management\commands\vote.py:169 .\glosowania\views.py:398
+#: .\glosowania\management\commands\vote.py:169 .\glosowania\views.py:400
 #: .\obywatele\forms.py:308
 #, python-brace-format
 msgid "Why you received this email? Here is explanation: {url}"
@@ -1845,19 +1829,19 @@ msgstr "Dodaj argument przeciw"
 msgid "Your argument against..."
 msgstr "Twój argument przeciw..."
 
-#: .\glosowania\views.py:40 .\glosowania\views.py:238 .\home\views.py:655
+#: .\glosowania\views.py:41 .\glosowania\views.py:239 .\home\views.py:655
 msgid "Proposition"
 msgstr "Propozycja"
 
-#: .\glosowania\views.py:45
+#: .\glosowania\views.py:46
 msgid "New proposal has been saved."
 msgstr "Nowa propozycja została zapisana."
 
-#: .\glosowania\views.py:48 .\glosowania\views.py:49
+#: .\glosowania\views.py:49 .\glosowania\views.py:50
 msgid "New law proposal"
 msgstr "Nowa propozycja przepisu"
 
-#: .\glosowania\views.py:49
+#: .\glosowania\views.py:50
 #, python-brace-format
 msgid ""
 "{user} added new law proposal: \"{title}\"\n"
@@ -1866,16 +1850,16 @@ msgstr ""
 "{user} dodał/a nową propozycję przepisu: \"{title}\"\n"
 "Możesz ją zobaczyć tutaj: {url}"
 
-#: .\glosowania\views.py:81
+#: .\glosowania\views.py:82
 msgid "Saved."
 msgstr "Zapisane."
 
-#: .\glosowania\views.py:84
+#: .\glosowania\views.py:85
 #, python-brace-format
 msgid "Proposal no. {} has been modified"
 msgstr "Propozycja nr. {} została zmodyfikowana"
 
-#: .\glosowania\views.py:84
+#: .\glosowania\views.py:85
 #, python-brace-format
 msgid ""
 "{user} modified proposal: \"{title}\"\n"
@@ -1884,65 +1868,65 @@ msgstr ""
 "{user} zmodyfikował/a propozycję przepisu: \"{title}\"\n"
 "Możesz zobaczyć nową wersję tutaj: {url}"
 
-#: .\glosowania\views.py:125
+#: .\glosowania\views.py:126
 msgid "You signed this motion for a referendum."
 msgstr "Podpisałeś ten wniosek o referendum."
 
-#: .\glosowania\views.py:142
+#: .\glosowania\views.py:143
 msgid "Not signed."
 msgstr "Nie podpisane."
 
-#: .\glosowania\views.py:172
+#: .\glosowania\views.py:173
 msgid "Your vote has been saved. You voted Yes."
 msgstr "Twój głos został zapisany. Zagłosowałeś na Tak."
 
-#: .\glosowania\views.py:175 .\glosowania\views.py:214
+#: .\glosowania\views.py:176 .\glosowania\views.py:215
 #, python-format
 msgid "Your verification code is: %(code)s"
 msgstr "Twój kod weryfikacyjny to: %(code)s"
 
-#: .\glosowania\views.py:180 .\glosowania\views.py:219
+#: .\glosowania\views.py:181 .\glosowania\views.py:220
 msgid "Write down your code or create screenshot to verify it when the referendum is over. This code will be presented just once and will be not related to you."
 msgstr "Zapisz swój kod na kartce lub zrób zrzut ekranu aby zweryfikować go po zakończeniu referendum. Ten kod zostanie przedstawiony tylko raz i nie będzie powiązany z twoją osobą."
 
-#: .\glosowania\views.py:211
+#: .\glosowania\views.py:212
 msgid "Your vote has been saved. You voted No."
 msgstr "Twój głos został zapisany. Zagłosowałeś na Nie."
 
-#: .\glosowania\views.py:309
+#: .\glosowania\views.py:311
 msgid "Arguments cannot be added after voting has ended."
 msgstr "Argumenty nie mogą być dodawane po zakończeniu głosowania."
 
-#: .\glosowania\views.py:321
+#: .\glosowania\views.py:323
 #, python-brace-format
 msgid "Your {type} argument has been added."
 msgstr "Twój argument {type} został dodany."
 
-#: .\glosowania\views.py:326
+#: .\glosowania\views.py:328
 msgid "There was an error with your argument. Please try again."
 msgstr "Wystąpił błąd z twoim argumentem. Spróbuj ponownie."
 
-#: .\glosowania\views.py:338
+#: .\glosowania\views.py:340
 msgid "You can only edit your own arguments."
 msgstr "Możesz edytować tylko własne argumenty."
 
-#: .\glosowania\views.py:343
+#: .\glosowania\views.py:345
 msgid "Arguments cannot be edited after voting has ended."
 msgstr "Argumenty nie mogą być edytowane po zakończeniu głosowania."
 
-#: .\glosowania\views.py:350
+#: .\glosowania\views.py:352
 msgid "Your argument has been updated."
 msgstr "Twój argument został zaktualizowany."
 
-#: .\glosowania\views.py:371
+#: .\glosowania\views.py:373
 msgid "You can only delete your own arguments."
 msgstr "Możesz usuwać tylko własne argumenty."
 
-#: .\glosowania\views.py:376
+#: .\glosowania\views.py:378
 msgid "Arguments cannot be deleted after voting has ended."
 msgstr "Argumenty nie mogą być usuwane po zakończeniu głosowania."
 
-#: .\glosowania\views.py:382
+#: .\glosowania\views.py:384
 msgid "Your argument has been deleted."
 msgstr "Twój argument został usunięty."
 
@@ -2920,14 +2904,6 @@ msgstr "Powiadomienia o nowych wiadomościach na czacie"
 msgid "Chat notifications"
 msgstr "Powiadomienia na czacie"
 
-#: .\obywatele\models.py:76
-msgid "Receive notifications only for chat rooms where I have participated"
-msgstr "Powiadomienia o nowych wiadomościach na czacie"
-
-#: .\obywatele\models.py:76
-msgid "Chat notifications — participated only"
-msgstr "Powiadomienia na czacie"
-
 #: .\obywatele\models.py:98
 msgid "New Candidate"
 msgstr "Nowy kandydat"
@@ -3518,14 +3494,6 @@ msgstr "Propozycje głosowań, przypomnienia o głosowaniu, wyniki"
 msgid "New messages in all chat rooms"
 msgstr "Nowe wiadomości we wszystkich pokojach czatu"
 
-#: .\obywatele\views.py:702
-msgid "Chat — my active discussions"
-msgstr "Czat — moje aktywne dyskusje"
-
-#: .\obywatele\views.py:703
-msgid "New messages only in rooms where I have sent at least one message"
-msgstr "Nowe wiadomości tylko w pokojach, w których wysłałem/am przynajmniej jedną wiadomość"
-
 #: .\obywatele\views.py:819
 msgid "Changes was saved"
 msgstr "Zmiany zostały zapisane"
@@ -3637,11 +3605,11 @@ msgstr "Porażka"
 msgid "Discussion room for task \"%(task_title)s\": %(task_url)s"
 msgstr "Pokój dyskusji do zadania \"%(task_title)s\": %(task_url)s"
 
-#: .\tasks\templates\tasks\_task_card.html:23 .\tasks\views.py:87
+#: .\tasks\templates\tasks\_task_card.html:23 .\tasks\views.py:88
 msgid "Critical"
 msgstr "Krytyczne"
 
-#: .\tasks\templates\tasks\_task_card.html:27 .\tasks\views.py:89
+#: .\tasks\templates\tasks\_task_card.html:27 .\tasks\views.py:90
 msgid "Beneficial"
 msgstr "Korzystne"
 
