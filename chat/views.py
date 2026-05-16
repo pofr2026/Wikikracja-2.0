@@ -7,7 +7,6 @@ from datetime import timedelta as td
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.db import IntegrityError
 from django.db.models import Count, Exists, OuterRef, Prefetch
 from django.dispatch import receiver
