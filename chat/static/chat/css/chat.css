@@ -98,36 +98,42 @@ body:has(.chat-rooms) .main-area {
     overflow-y: auto;
     overflow-x: hidden;
 }
-#room .messages .empty-chat-message {
+.messages .empty-chat-message {
     font-size: 1.25rem;
     color: var(--color-text-muted);
     margin: 2.5rem 0;
     text-align: center;
 }
-#room .messages .date-banner {
+.messages .date-banner {
     text-align: center;
     margin-top: .1rem;
     margin-bottom: .3rem;
 }
-#room .messages .message {
+.messages .message {
     display: flex;
-    margin-right: 6%;
+    margin-right: 2%;
     margin-bottom: .6rem;
     margin-left: .3rem;
 }
-#room .messages .message.own {
+.messages .message.own {
     justify-content: flex-end;
-    margin-left: 6%;
+    margin-left: 2%;
     margin-right: .3rem;
 }
-#room .messages .message.msg-highlight .message-content {
+#room .messages .message {
+    margin-right: 6%;
+}
+#room .messages .message.own {
+    margin-left: 6%;
+}
+.messages .message.msg-highlight .message-content {
     box-shadow: 0 0 10px 2px var(--accent);
     transition: box-shadow 5s ease;
 }
-#room .messages .message.message--pending {
+.messages .message.message--pending {
     opacity: 0.55;
 }
-#room .messages .message.message--failed .message-content {
+.messages .message.message--failed .message-content {
     outline: 1px solid #ef4444;
 }
 /* ============================================================ */
@@ -1200,9 +1206,7 @@ body:has(.chat-rooms) .main-area {
 /* DESKTOP MEDIA QUERY                                         */
 /* ============================================================ */
 @media (min-width: 768px) {
-    #room .messages .message {
-        max-width: 80%;
-    }
+    #room .messages .message,
     #room .messages .message.own {
         max-width: 80%;
     }
