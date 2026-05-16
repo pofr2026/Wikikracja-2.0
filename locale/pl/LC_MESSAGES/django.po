@@ -1020,6 +1020,14 @@ msgstr "Wycisz pokój"
 msgid "Copy link"
 msgstr "Skopiuj link"
 
+#: .\chat\views.py:213
+msgid "Reply to the appropriate message..."
+msgstr "Odpowiedz na odpowiednią wiadomość..."
+
+#: .\chat\views.py:244
+msgid "Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list"
+msgstr "Shift+↵ nowa linia · Ctrl+B pogrubienie · Ctrl+I kursywa · - lub * lista"
+
 #: .\chat\templatetags\filters.py:23
 msgid "Yesterday"
 msgstr "Wczoraj"
