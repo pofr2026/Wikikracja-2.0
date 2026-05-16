@@ -53,7 +53,7 @@
     {% endif %}
   </div>
 
-  <div class="room-link__meta">
+  <div class="room-link__meta" data-muted="{% if room|is_muted_by:user %}true{% else %}false{% endif %}">
     {% if room|is_muted_by:user %}
       <i class="fas fa-bell-slash room-link__muted-icon" title="{% trans 'Muted' %}" aria-label="{% trans 'Muted' %}"></i>
     {% endif %}
@@ -87,7 +87,7 @@
           class="dropdown-item notif-switch"
           data-room-id="{{ room.id }}"
           data-enabled="{% if room|is_muted_by:user %}false{% else %}true{% endif %}">
-          <i class="far fa-bell{% if room|is_muted_by:user %}-slash{% endif %} fa-fw me-2"></i>{% trans 'Toggle notifications' %}
+          <i class="far fa-bell{% if room|is_muted_by:user %}-slash{% endif %} fa-fw me-2"></i><span class="notif-label">{% if room|is_muted_by:user %}{% trans 'Unmute room' %}{% else %}{% trans 'Mute room' %}{% endif %}</span>
         </button>
       </li>
       <li>

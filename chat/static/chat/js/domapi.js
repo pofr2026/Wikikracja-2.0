@@ -407,6 +407,23 @@ export default class DomApi {
             icon.classList.toggle('fa-bell', is_enabled);
             icon.classList.toggle('fa-bell-slash', !is_enabled);
         }
+        const label = btn.querySelector('.notif-label');
+        if (label) label.textContent = is_enabled ? _('Mute room') : _('Unmute room');
+        const meta = btn.closest('.room-link')?.querySelector('.room-link__meta');
+        if (meta) {
+            meta.dataset.muted = is_enabled ? 'false' : 'true';
+            let mutedIcon = meta.querySelector('.room-link__muted-icon');
+            if (!is_enabled) {
+                if (!mutedIcon) {
+                    mutedIcon = document.createElement('i');
+                    mutedIcon.className = 'fas fa-bell-slash room-link__muted-icon';
+                    mutedIcon.title = _('Muted');
+                    meta.appendChild(mutedIcon);
+                }
+            } else {
+                mutedIcon?.remove();
+            }
+        }
     }
 
     setRoomSeenIconState(room_id, is_seen) {

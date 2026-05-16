@@ -28,7 +28,7 @@ import {
     setReplyTarget
 } from './chat.js';
 import DomApi from './domapi.js';
-import { $, $$ } from './utility.js';
+import { $, $$, _ } from './utility.js';
 
 /**
  * DOM API instance for UI operations
@@ -262,6 +262,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const icon = $("i", btn);
             icon?.classList.toggle('fa-bell', newState);
             icon?.classList.toggle('fa-bell-slash', !newState);
+            const label = btn.querySelector('.notif-label');
+            if (label) label.textContent = newState ? _('Mute room') : _('Unmute room');
+            const meta = btn.closest('.room-link')?.querySelector('.room-link__meta');
+            if (meta) {
+                meta.dataset.muted = newState ? 'false' : 'true';
+                let mutedIcon = meta.querySelector('.room-link__muted-icon');
+                if (!newState) {
+                    if (!mutedIcon) {
+                        mutedIcon = document.createElement('i');
+                        mutedIcon.className = 'fas fa-bell-slash room-link__muted-icon';
+                        mutedIcon.title = _('Muted');
+                        meta.appendChild(mutedIcon);
+                    }
+                } else {
+                    mutedIcon?.remove();
+                }
+            }
             onToggleNotifications(btn.dataset.roomId, newState);
         }
     });
