@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-16 21:45+0200\n"
+"POT-Creation-Date: 2026-05-16 22:38+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -983,40 +983,40 @@ msgstr "Archiwa"
 msgid "Click the archive button (folder icon) next to each category to show archived rooms."
 msgstr "Kliknij przycisk archiwum (ikona folderu) obok każdej kategorii, aby pokazać zarchiwizowane pokoje."
 
-#: .\chat\templates\chat\room_link.html:33
+#: .\chat\templates\chat\room_link.html:31
 #: .\home\templates\home\activity.html:16 .\home\templates\home\home.html:630
 msgid "Unread"
 msgstr "Nieprzeczytane"
 
-#: .\chat\templates\chat\room_link.html:48 .\home\views.py:750
+#: .\chat\templates\chat\room_link.html:46 .\home\views.py:750
 msgid "Anonymous"
 msgstr "Anonim"
 
-#: .\chat\templates\chat\room_link.html:50
+#: .\chat\templates\chat\room_link.html:48
 msgid "attachment"
 msgstr "załącznik"
 
-#: .\chat\templates\chat\room_link.html:58
+#: .\chat\templates\chat\room_link.html:56
 msgid "Muted"
 msgstr "Wyciszony"
 
-#: .\chat\templates\chat\room_link.html:63
+#: .\chat\templates\chat\room_link.html:61
 msgid "Room actions"
 msgstr "Działania"
 
-#: .\chat\templates\chat\room_link.html:82
+#: .\chat\templates\chat\room_link.html:70
 msgid "Mark as unread"
 msgstr "Oznacz jako nieprzeczytane"
 
-#: .\chat\templates\chat\room_link.html:90
+#: .\chat\templates\chat\room_link.html:78
 msgid "Unmute room"
 msgstr "Cofnij wyciszenie"
 
-#: .\chat\templates\chat\room_link.html:90
+#: .\chat\templates\chat\room_link.html:78
 msgid "Mute room"
 msgstr "Wycisz pokój"
 
-#: .\chat\templates\chat\room_link.html:97
+#: .\chat\templates\chat\room_link.html:85
 msgid "Copy link"
 msgstr "Skopiuj link"
 
@@ -1509,7 +1509,7 @@ msgid "The path this bill took."
 msgstr "Historia propozycji"
 
 #: .\glosowania\models.py:60 .\home\templatetags\feed_filters.py:36
-#: .\home\views.py:737 .\obywatele\views.py:1200 .\tasks\models.py:91
+#: .\home\views.py:737 .\obywatele\views.py:1193 .\tasks\models.py:91
 msgid "Chat room"
 msgstr "Pokój czatu"
 
@@ -1958,7 +1958,7 @@ msgstr "Nie wylogowuj mnie"
 
 #: .\home\models.py:12 .\home\models.py:42
 #: .\home\templatetags\feed_filters.py:32 .\home\views.py:641
-#: .\obywatele\views.py:1180
+#: .\obywatele\views.py:1173
 msgid "Task"
 msgstr "Zadanie"
 
@@ -2012,7 +2012,7 @@ msgid "Log out"
 msgstr "Wyloguj"
 
 #: .\home\templates\home\base.html:170 .\home\templatetags\feed_filters.py:38
-#: .\home\views.py:721 .\obywatele\models.py:79
+#: .\home\views.py:721 .\obywatele\models.py:78
 msgid "Citizen"
 msgstr "Ludzie"
 
@@ -2031,7 +2031,7 @@ msgstr "Głosowania"
 
 #: .\home\templates\home\base.html:208 .\home\templates\home\base.html:256
 #: .\home\templates\home\home.html:55 .\home\templates\home\search.html:87
-#: .\home\views.py:409 .\obywatele\models.py:80
+#: .\home\views.py:409 .\obywatele\models.py:79
 #: .\obywatele\templates\obywatele\menu.html:14
 #: .\obywatele\templates\obywatele\start.html:9
 msgid "Citizens"
@@ -2904,15 +2904,15 @@ msgstr "Powiadomienia o nowych wiadomościach na czacie"
 msgid "Chat notifications"
 msgstr "Powiadomienia na czacie"
 
-#: .\obywatele\models.py:98
+#: .\obywatele\models.py:97
 msgid "New Candidate"
 msgstr "Nowy kandydat"
 
-#: .\obywatele\models.py:99
+#: .\obywatele\models.py:98
 msgid "User Activated"
 msgstr "Nowa osoba została zaakceptowana"
 
-#: .\obywatele\models.py:100
+#: .\obywatele\models.py:99
 msgid "User Blocked"
 msgstr "Osoba została zablokowana"
 
@@ -3474,7 +3474,7 @@ msgstr ""
 "zaproponował/a nową osobę\n"
 "Możesz ją zatwierdzić tutaj:"
 
-#: .\obywatele\views.py:593 .\obywatele\views.py:946
+#: .\obywatele\views.py:593 .\obywatele\views.py:939
 msgid "Please correct the highlighted errors."
 msgstr "Popraw podświetlone błędy."
 
@@ -3491,59 +3491,59 @@ msgid "Law proposals, voting reminders, results"
 msgstr "Propozycje głosowań, przypomnienia o głosowaniu, wyniki"
 
 #: .\obywatele\views.py:697
-msgid "New messages in all chat rooms"
-msgstr "Nowe wiadomości we wszystkich pokojach czatu"
+msgid "New messages from rooms you haven't muted"
+msgstr "Nowe wiadomości z pokoi, których nie wyciszyłeś"
 
-#: .\obywatele\views.py:819
+#: .\obywatele\views.py:812
 msgid "Changes was saved"
 msgstr "Zmiany zostały zapisane"
 
-#: .\obywatele\views.py:943
+#: .\obywatele\views.py:936
 msgid "Candidate profile has been updated."
 msgstr "Profil kandydata został zaktualizowany."
 
-#: .\obywatele\views.py:983
+#: .\obywatele\views.py:976
 msgid "Fill out your onboarding form"
 msgstr "Wypełnij formularz rejestracyjny"
 
-#: .\obywatele\views.py:984
+#: .\obywatele\views.py:977
 #, python-format
 msgid "Your email has been confirmed. Please fill out your onboarding form here: %(link)s"
 msgstr "Twoj email został potwierdzony. Wypełnij proszę formularz rejestracyjny (jeśli jeszcze tego nie zrobiłeś/aś): %(link)s"
 
-#: .\obywatele\views.py:1078
+#: .\obywatele\views.py:1071
 msgid "Created task"
 msgstr "Utworzone zadanie"
 
-#: .\obywatele\views.py:1089
+#: .\obywatele\views.py:1082
 msgid "Assigned task"
 msgstr "Przydzielone zadanie"
 
-#: .\obywatele\views.py:1100
+#: .\obywatele\views.py:1093
 msgid "Voted on task"
 msgstr "Zagłosowano na zadanie"
 
-#: .\obywatele\views.py:1111
+#: .\obywatele\views.py:1104
 msgid "Evaluated task"
 msgstr "Oceniono zadanie"
 
-#: .\obywatele\views.py:1122
+#: .\obywatele\views.py:1115
 msgid "Added argument"
 msgstr "Dodano argument"
 
-#: .\obywatele\views.py:1134
+#: .\obywatele\views.py:1127
 msgid "Signed proposal"
 msgstr "Podpisano propozycję"
 
-#: .\obywatele\views.py:1145
+#: .\obywatele\views.py:1138
 msgid "Voted in referendum"
 msgstr "Zagłosowano w referendum"
 
-#: .\obywatele\views.py:1156
+#: .\obywatele\views.py:1149
 msgid "Citizenship event"
 msgstr "Zdarzenie obywatelskie"
 
-#: .\obywatele\views.py:1190
+#: .\obywatele\views.py:1183
 msgid "Voting proposal"
 msgstr "Propozycja głosowania"
 

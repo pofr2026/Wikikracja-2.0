@@ -694,7 +694,7 @@ def my_profile(request: HttpRequest):
         {
             'type': 'chat',
             'title': _('Chat'),
-            'description': _('New messages in all chat rooms'),
+            'description': _('New messages from rooms you haven\'t muted'),
             'enabled': profile.email_notifications_chat,
         },
     ]
