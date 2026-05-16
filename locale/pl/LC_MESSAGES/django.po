@@ -1024,6 +1024,10 @@ msgstr "Cofnij wyciszenie"
 msgid "Mute room"
 msgstr "Wycisz pokój"
 
+#: chat/views.py
+msgid "Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list"
+msgstr "Shift+↵ nowa linia · Ctrl+B pogrubienie · Ctrl+I kursywa · - lub * lista"
+
 #: .\chat\templates\chat\room_link.html:97
 msgid "Copy link"
 msgstr "Skopiuj link"

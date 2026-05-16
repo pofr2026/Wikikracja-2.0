@@ -17,6 +17,7 @@ from django.views.generic import CreateView, DetailView, TemplateView, UpdateVie
 
 from categories.views import CategoryAPIBase, CategoryDeleteAPI, CategoryEditAPI, CategoryReorderAPI
 from chat.models import Room
+from chat.views import get_translations as get_chat_translations
 
 from .forms import TaskForm, TaskStatusForm
 from .models import Category, Task, TaskEvaluation, TaskVote
@@ -354,6 +355,7 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
             task.chat_room_pulse_class = task.get_chat_room_pulse_class(self.request.user)
         context["task"] = task
         context["MESSAGE_MAX_LENGTH"] = settings.MESSAGE_MAX_LENGTH
+        context["ec_translations"] = get_chat_translations()
         return context
 
 

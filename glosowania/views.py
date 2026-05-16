@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
 
+from chat.views import get_translations as get_chat_translations
 from glosowania.forms import ArgumentForm, DecyzjaForm
 from glosowania.models import Argument, Decyzja, KtoJuzGlosowal, VoteCode, ZebranePodpisy
 from zzz.utils import build_site_url, get_site_domain
@@ -296,6 +297,7 @@ def details(request: HttpRequest, pk: int):
         'negative_arguments': negative_arguments,
         'argument_form': argument_form,
         'MESSAGE_MAX_LENGTH': s.MESSAGE_MAX_LENGTH,
+        'ec_translations': get_chat_translations(),
     })
 
 

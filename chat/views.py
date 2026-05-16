@@ -253,6 +253,7 @@ def get_translations():
         "attachment",
         "Mute room",
         "Unmute room",
+        "Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list",
     ]
     translation = {
         x: _(x) for x in strings

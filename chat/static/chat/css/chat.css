@@ -505,6 +505,16 @@ body:has(.chat-rooms) .main-area {
     color: var(--color-text-muted);
     pointer-events: none;
     opacity: .6;
+    display: block;
+}
+.message-input-rich:empty::after {
+    content: attr(data-hint);
+    display: block;
+    font-size: .7rem;
+    color: var(--color-text-muted);
+    opacity: .4;
+    pointer-events: none;
+    margin-top: .2rem;
 }
 .compose-box.input--error {
     border-color: var(--color-error);

@@ -12,6 +12,7 @@ import {
     createReactionHandler,
     createReplyHandler,
     createVoteHandler,
+    handleListTrigger,
     initFormattingToolbar,
     initGlobalPasteImageHandler,
 } from './chat-core.js';
@@ -229,17 +230,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); updateToolbarState(); return; }
             if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
             if (mod && e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateToolbarState(); return; }
-            // Ctrl+Enter = wyślij; Enter = nowa linia (domyślne zachowanie contenteditable)
-            if (e.key === 'Enter' && mod) {
+            if (handleListTrigger(e)) return;
+            // Enter = wyślij, Shift+Enter = nowa linia
+            if (e.key === 'Enter') {
                 e.preventDefault();
-                onSubmitMessage(DOM_API.getEnteredText(), DOM_API.getEditedMessageId());
+                if (e.shiftKey) { document.execCommand('insertLineBreak'); }
+                else { onSubmitMessage(DOM_API.getEnteredText(), DOM_API.getEditedMessageId()); }
                 return;
             }
-            // Zwykły Enter: pozwól przeglądarce wstawić nową linię
             return;
         }
 
-        if (e.key === "Enter" && mod) {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             onSubmitMessage(DOM_API.getEnteredText(), DOM_API.getEditedMessageId());
         }

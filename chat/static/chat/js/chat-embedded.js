@@ -7,7 +7,7 @@
  *   <script type="module" src="{% static 'chat/js/chat-embedded.js' %}"></script>
  */
 
-import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, initFormattingToolbar, initGlobalPasteImageHandler, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
+import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, handleListTrigger, initFormattingToolbar, initGlobalPasteImageHandler, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
 import { Message } from './templates.js';
 import { _, formatDate, formatTime } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
@@ -43,7 +43,8 @@ async function initEmbeddedChat(container) {
                 <div class="compose-box ec-form-row" id="ec-form-row-${roomId}">
                     <div id="ec-input-${roomId}" class="message-input-rich" role="textbox"
                          contenteditable="true" aria-multiline="true"
-                         data-placeholder="${_('Reply to the appropriate message...')}"></div>
+                         data-placeholder="${_('Reply to the appropriate message...')}"
+                         data-hint="${_('Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list')}"></div>
                     <div class="compose-bar">
                         <div class="compose-bar-left">
                             <input type="file" id="ec-file-input-${roomId}" class="file-input ec-file-input" multiple="multiple" style="display:none;"/>
@@ -365,9 +366,9 @@ async function initEmbeddedChat(container) {
         if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); updateToolbarState(); return; }
         if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
         if (mod && e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateToolbarState(); return; }
-        // Handle Enter key via chat-core
+        if (handleListTrigger(e)) return;
+        // Enter = wyślij, Shift+Enter = nowa linia
         if (handleEnterKey(e, submitInput)) return;
-        // zwykły Enter = nowa linia (domyślne zachowanie contenteditable)
     });
 
     // Anuluj odpowiedź

@@ -85,17 +85,45 @@ export function updateCounter(inputEl, counterEl, counterVal, sendBtn, maxLength
 }
 
 /**
- * Ctrl+Enter / Cmd+Enter submits, plain Enter passes through.
+ * WhatsApp-style Enter handling:
+ *   Enter          → send
+ *   Shift+Enter    → new line (insertLineBreak)
  * @returns {boolean} true if handled
  */
 export function handleEnterKey(e, submitCallback) {
-    const mod = e.ctrlKey || e.metaKey;
-    if (e.key === 'Enter' && mod) {
-        e.preventDefault();
+    if (e.key !== 'Enter') return false;
+    e.preventDefault();
+    if (e.shiftKey) {
+        document.execCommand('insertLineBreak');
+    } else {
         submitCallback();
-        return true;
     }
-    return false;
+    return true;
+}
+
+/**
+ * Auto-convert `- ` or `* ` typed at the start of a line into `• `.
+ * Call on keydown with e.key === ' '.
+ * @returns {boolean} true if handled
+ */
+export function handleListTrigger(e) {
+    if (e.key !== ' ') return false;
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return false;
+    const range = sel.getRangeAt(0);
+    if (!range.collapsed) return false;
+    const node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) return false;
+    const textBefore = node.textContent.slice(0, range.startOffset);
+    if (textBefore !== '-' && textBefore !== '*') return false;
+    e.preventDefault();
+    const newRange = document.createRange();
+    newRange.setStart(node, 0);
+    newRange.setEnd(node, range.startOffset);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    document.execCommand('insertText', false, '• ');
+    return true;
 }
 
 /**
