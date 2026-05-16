@@ -751,13 +751,17 @@ body:has(.chat-rooms) .main-area {
 .room-list-controls-inner {
     display: flex;
     align-items: center;
-    gap: .35rem;
+    gap: .25rem;
     justify-content: flex-end;
+}
+.room-list-controls-inner .sort-btn {
+    padding: .28rem .45rem;
+    flex-shrink: 0;
 }
 .room-search-wrapper {
     position: relative;
     flex: 1 1 auto;
-    min-width: 0;
+    min-width: 3rem;
 }
 .room-search-input {
     width: 100%;
