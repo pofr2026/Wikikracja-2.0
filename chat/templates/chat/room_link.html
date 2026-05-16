@@ -1,8 +1,6 @@
 {% load i18n filters %}
 
-{% with is_tracked=room|is_tracked_by:user is_not_participated=room|not_participated:participated_room_ids %}
-{% is_auto_muted participated_only is_not_participated is_tracked as auto_muted %}
-<div class="room-link {{ room|seen_by:user }}{% if auto_muted %} room-auto-muted{% endif %}"
+<div class="room-link {{ room|seen_by:user }}"
   data-room-type="{% if room.public %}public{% else %}private{% endif %}"
   data-room-id="{{ room.id }}"
   data-room-archived="{{ room.archived }}"
@@ -64,22 +62,12 @@
       <i class="fas fa-chevron-down" aria-hidden="true"></i>
     </button>
     <ul class="dropdown-menu dropdown-menu-end">
-      {% if participated_only %}
-      <li>
-        <button type="button"
-          class="dropdown-item track-switch{% if is_tracked %} active{% endif %}"
-          data-room-id="{{ room.id }}"
-          data-tracked="{% if is_tracked %}true{% else %}false{% endif %}">
-          <i class="{% if is_tracked %}fas{% else %}far{% endif %} fa-bookmark fa-fw me-2"></i>{% if is_tracked %}{% trans 'Untrack room' %}{% else %}{% trans 'Track room' %}{% endif %}
-        </button>
-      </li>
-      {% endif %}
       <li>
         <button type="button"
           class="dropdown-item seen-switch"
           data-room-id="{{ room.id }}"
           data-seen="{{ room|is_seen_by:user }}">
-          <i class="fas fa-eye{% if auto_muted %}-slash{% elif room|is_seen_by:user == "true" %}{% else %}-slash{% endif %} fa-fw me-2"></i>{% trans 'Mark as unread' %}
+          <i class="fas fa-eye{% if room|is_seen_by:user == "true" %}{% else %}-slash{% endif %} fa-fw me-2"></i>{% trans 'Mark as unread' %}
         </button>
       </li>
       <li>
@@ -100,4 +88,3 @@
     </ul>
   </div>
 </div>
-{% endwith %}

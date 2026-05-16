@@ -376,26 +376,12 @@ export async function onSocketMessage(data) {
     else if (data.online_data) onReceiveOnlineUpdates(data.online_data);
     else if (data.update_reactions) onReceiveReactions(data.update_reactions);
     else if (data.messages_read) onReceiveReadBy(data.messages_read);
-    else if (data.type === 'room-tracked') onRoomTracked(data.room_id, data.tracked);
     // unread_count is consumed by the home page WS listener — ignore here
     else console.log("Cannot handle message!");
 }
 
 export async function onReceiveNotification(notification) {
     makeNotification(notification);
-}
-
-function onRoomTracked(roomId, tracked) {
-    const roomDiv = document.querySelector(`.room-link[data-room-id="${roomId}"]`);
-    if (!roomDiv) return;
-    const btn = roomDiv.querySelector('.track-switch');
-    if (btn) {
-        btn.dataset.tracked = tracked ? 'true' : 'false';
-        btn.classList.toggle('active', tracked);
-        const icon = btn.querySelector('i');
-        if (icon) icon.className = tracked ? 'fas fa-bookmark' : 'far fa-bookmark';
-    }
-    if (tracked) roomDiv.classList.remove('room-auto-muted');
 }
 
 /**

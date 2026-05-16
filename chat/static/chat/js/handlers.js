@@ -303,34 +303,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.track-switch');
-        if (btn) {
-            e.preventDefault();
-            e.stopPropagation();
-            const isTracked = btn.dataset.tracked === 'true';
-            const newTracked = !isTracked;
-            btn.dataset.tracked = newTracked;
-            btn.classList.toggle('active', newTracked);
-            const icon = btn.querySelector('i');
-            if (icon) {
-                icon.className = newTracked ? 'fas fa-bookmark' : 'far fa-bookmark';
-            }
-            const roomDiv = btn.closest('.room-link');
-            if (roomDiv) {
-                roomDiv.classList.toggle('room-auto-muted', !newTracked && roomDiv.dataset.autoMuted !== 'false');
-            }
-            fetch('/chat/api/toggle-track/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ room_id: btn.dataset.roomId, tracked: newTracked }),
-            });
-        }
-    });
-
-    document.addEventListener('click', (e) => {
         const btn = e.target.closest('.anonymous-toggle');
         if (btn) {
             btn.classList.toggle('active');
