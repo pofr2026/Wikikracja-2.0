@@ -553,6 +553,7 @@ export async function onReceiveMessages(messages) {
                 DOM_API.confirmMessage(message.temp_id, message.message_id);
                 const t = pendingTimeouts.get(message.temp_id);
                 if (t) { clearTimeout(t); pendingTimeouts.delete(message.temp_id); }
+                DOM_API.updateSidebarForMessage(message);
                 return;
             }
         }
@@ -572,6 +573,7 @@ export async function onReceiveMessages(messages) {
             message.your_reactions ?? [],
             message.read_by ?? []
         );
+        DOM_API.updateSidebarForMessage(message);
         requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(message.message_id)));
         if (message.new && document.hidden && !message.own) {
             makeNotification({ title: message.username, body: message.message });

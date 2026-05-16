@@ -535,4 +535,46 @@ export default class DomApi {
         }
     }
 
+    updateSidebarForMessage(msg) {
+        const roomLink = document.querySelector(`.room-link[data-room-id="${msg.room_id}"]`);
+        if (!roomLink) return;
+
+        roomLink.dataset.lastActivity = Math.floor(msg.timestamp / 1000);
+
+        const dateEl = roomLink.querySelector('.room-link__date');
+        if (dateEl) dateEl.textContent = _relativeChatDate(msg.timestamp);
+
+        const senderEl = roomLink.querySelector('.room-link__sender');
+        if (senderEl) senderEl.textContent = (msg.anonymous ? _('Anonymous') : (msg.username || '—')) + ':';
+
+        const snippetEl = roomLink.querySelector('.room-link__snippet');
+        if (snippetEl) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = msg.message || '';
+            const text = tmp.textContent.replace(/\s+/g, ' ').trim();
+            snippetEl.textContent = text || _('attachment');
+        }
+
+        const container = roomLink.closest('.nav-cat-content, #room-list-flat');
+        if (container && container.firstElementChild !== roomLink) {
+            container.prepend(roomLink);
+        }
+    }
+
+}
+
+const _DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const _MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function _relativeChatDate(tsMs) {
+    const now = new Date();
+    const d = new Date(tsMs);
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const msgMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const deltaDays = Math.round((todayMidnight - msgMidnight) / 86400000);
+    if (deltaDays === 0) return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    if (deltaDays === 1) return _('Yesterday');
+    if (deltaDays < 7) return _(_DAYS[d.getDay()]);
+    if (d.getFullYear() === now.getFullYear()) return `${d.getDate()} ${_(_MONTHS[d.getMonth()])}`;
+    return `${d.getDate()} ${_(_MONTHS[d.getMonth()])} ${d.getFullYear()}`;
 }

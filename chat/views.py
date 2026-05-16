@@ -250,6 +250,9 @@ def get_translations():
         "Sorting and filter",
         "Likes",
         "Popular",
+        "attachment",
+        "Mute room",
+        "Unmute room",
     ]
     translation = {
         x: _(x) for x in strings
