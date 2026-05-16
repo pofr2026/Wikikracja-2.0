@@ -1025,6 +1025,10 @@ msgid "Mute room"
 msgstr "Wycisz pokój"
 
 #: chat/views.py
+msgid "Reply to the appropriate message..."
+msgstr "Odpowiedz do odpowiedniej wiadomości..."
+
+#: chat/views.py
 msgid "Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list"
 msgstr "Shift+↵ nowa linia · Ctrl+B pogrubienie · Ctrl+I kursywa · - lub * lista"
 
