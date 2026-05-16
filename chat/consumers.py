@@ -345,7 +345,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             reply_to_data = await self.repo.get_reply_to_data(int(reply_to_id))
 
         # Broadcast directly (not via proxy) so subscribers receive the message before this handler returns.
-        # Per-recipient bookkeeping (tracked_by, unread state, push notifications) runs in a background task.
+        # Per-recipient bookkeeping (unread state, push notifications) runs in a background task.
         await self.channel_layer.group_send(room.group_name, format_chat_message(
             room_id=room_id,
             user_id=sender.id,
@@ -368,20 +368,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
     async def _post_send_processing(self, sender, room, msg, message_id):
         try:
-            participated_only = await database_sync_to_async(lambda: getattr(sender.uzytkownik, 'email_notifications_chat_participated', False))()
-            if participated_only:
-                already_tracked = await database_sync_to_async(lambda: room.tracked_by.filter(id=sender.id).exists())()
-                if not already_tracked:
-                    await database_sync_to_async(room.tracked_by.add)(sender)
-                    try:
-                        await self.send(text_data=json.dumps({
-                            'type': 'room-tracked',
-                            'room_id': room.id,
-                            'tracked': True,
-                        }))
-                    except Exception:
-                        pass  # sender may have disconnected
-
             room_members = await database_sync_to_async(lambda: list(room.allowed.all()))()
             other_members = [m for m in room_members if m.id != sender.id]
             if not other_members:
@@ -684,11 +670,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         try:
             if await self.repo.user_has_muted_room(user.id, room_id):
                 return
-            participated_only = await database_sync_to_async(lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False))()
-            if participated_only:
-                has_participated = await database_sync_to_async(lambda: Message.objects.filter(room_id=room_id, sender=user).exists())()
-                if not has_participated:
-                    return
             title = "Anonymous User" if message.anonymous else message.sender.username
             body = message.text[:100]
             site_url = f"https://{domain}"

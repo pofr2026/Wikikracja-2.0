@@ -17,11 +17,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 from PIL import Image
 
 from chat.forms import RoomForm
-from chat.models import Message, Room
+from chat.models import Room
 from chat.signals import user_accepted, user_deleted
 from glosowania.models import Decyzja
 from tasks.models import Task
@@ -84,7 +83,6 @@ def _chat_room_prefetches():
     return [
         Prefetch('chat_room__seen_by', queryset=User.objects.only('id')),
         Prefetch('chat_room__muted_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__tracked_by', queryset=User.objects.only('id')),
     ]
 
 
@@ -101,8 +99,8 @@ def chat(request: HttpRequest):
     # Private (DM) rooms need the other user's avatar — pull uzytkownik in the same query.
     private_allowed = Prefetch('allowed', queryset=User.objects.select_related('uzytkownik'))
 
-    public_pool = base_rooms.prefetch_related(public_allowed, 'muted_by', 'tracked_by')
-    private_pool = base_rooms.prefetch_related(private_allowed, 'muted_by', 'tracked_by')
+    public_pool = base_rooms.prefetch_related(public_allowed, 'muted_by')
+    private_pool = base_rooms.prefetch_related(private_allowed, 'muted_by')
 
     public_active = public_pool.filter(public=True, archived=False)
     public_archived = public_pool.filter(public=True, archived=True)
@@ -139,13 +137,6 @@ def chat(request: HttpRequest):
         chat_room__archived=True,
     ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
-    # For "participated only" visual mute: get rooms where user has sent a message
-    participated_only = getattr(request.user.uzytkownik, 'email_notifications_chat_participated', False)
-    participated_room_ids = set()
-    if participated_only:
-        participated_room_ids = set(Message.objects.filter(sender=request.user).values_list('room_id', flat=True).distinct())
-
-    # Render that in the chat template
     return render(request, "chat/chat.html", {
         'translations': get_translations(),
         'public_rooms_active': public_rooms_active,
@@ -157,8 +148,6 @@ def chat(request: HttpRequest):
         'private_active': private_active,
         'private_archived': private_archived,
         'user': request.user,
-        'participated_only': participated_only,
-        'participated_room_ids': participated_room_ids,
         'ARCHIVE_PUBLIC_CHAT_ROOM': td(days=settings.ARCHIVE_PUBLIC_CHAT_ROOM).days,
         'DELETE_PUBLIC_CHAT_ROOM': td(days=settings.DELETE_PUBLIC_CHAT_ROOM).days,
         'MESSAGE_MAX_LENGTH': settings.MESSAGE_MAX_LENGTH,
@@ -388,34 +377,6 @@ def toggle_notifications(request: HttpRequest):
         return JsonResponse({
             'error': str(e)
         }, status=500)
-
-
-@login_required
-@require_POST
-def toggle_track(request: HttpRequest):
-    """Toggle tracking of a room for the current user."""
-    try:
-        data = json.loads(request.body)
-        room_id = data.get('room_id')
-        tracked = data.get('tracked')
-        if room_id is None or tracked is None:
-            return JsonResponse({
-                'error': 'Missing room_id or tracked'
-            }, status=400)
-        room = get_object_or_404(Room, id=room_id, allowed=request.user)
-        if tracked:
-            room.tracked_by.add(request.user)
-        else:
-            room.tracked_by.remove(request.user)
-        return JsonResponse({
-            'success': True,
-            'tracked': tracked
-        })
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'error': 'Invalid JSON'
-        }, status=400)
-
 
 
 @login_required
