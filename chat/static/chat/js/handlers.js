@@ -84,6 +84,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const { updateToolbarState } = initFormattingToolbar(document, () => $('#message-input'));
 
+    // Inicjalizacja dropdownow w liscie pokoi z popper strategy:'fixed'.
+    // Pozwala dropdownowi wyjsc poza overflow:hidden na .nav-cat-content (animacja collapse).
+    if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+        document.querySelectorAll('.room-link__chevron[data-bs-toggle="dropdown"]').forEach(btn => {
+            new bootstrap.Dropdown(btn, {
+                popperConfig(defaultConfig) {
+                    return { ...defaultConfig, strategy: 'fixed' };
+                },
+            });
+        });
+    }
+
     // Update counter on input; no auto-resize needed for contenteditable
     document.addEventListener('input', (e) => {
         if (e.target.id === 'message-input') {
