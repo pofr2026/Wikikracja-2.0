@@ -216,7 +216,7 @@ def _generate_feed_raw():
     Fetch all feed data WITHOUT user-specific is_read flags.
     Result is cached globally in Redis (TTL 1h). Each item stores
     content_type + object_id so is_read can be attached per-request.
-    Invalidated by signals on Post/Task/Book/Decyzja/CitizenActivity/Event/Message.
+    Invalidated by signals on Post/Task/Decyzja/CitizenActivity/Event/Message.
     """
     cached = cache.get(FEED_CACHE_KEY)
     if cached is not None:
@@ -348,7 +348,6 @@ def generate_feed_items(user):
     ct_map = {
         'post': ReadStatus.ContentType.POST,
         'task': ReadStatus.ContentType.TASK,
-        'book': ReadStatus.ContentType.BOOK,
         'event': ReadStatus.ContentType.EVENT,
         'decision': ReadStatus.ContentType.DECISION,
         'citizen': ReadStatus.ContentType.CITIZEN,
@@ -407,7 +406,6 @@ def activity_page(request):
         ('decision', _('Votings')),
         ('event', _('Calendar')),
         ('citizen', _('Citizens')),
-        ('book', _('Library')),
         ('room_messages', _('Chat')),
     ]
 
@@ -605,7 +603,7 @@ def mark_unread(request):
         })
 
 
-ALL_SEARCH_CATS = ['post', 'task', 'decision', 'event', 'book', 'citizen', 'chat']
+ALL_SEARCH_CATS = ['post', 'task', 'decision', 'event', 'citizen', 'chat']
 
 
 @login_required

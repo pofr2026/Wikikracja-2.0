@@ -12,7 +12,6 @@ def content_type_color(content_type):
     color_map = {
         'post': 'primary',
         'task': 'success',
-        'book': 'secondary',
         'event': 'primary',
         'message': 'primary',
         'room_messages': 'info',  # New content type for grouped room messages
@@ -30,7 +29,6 @@ def content_type_label(content_type):
     label_map = {
         'post': _('Post'),
         'task': _('Task'),
-        'book': _('Book'),
         'event': _('Event'),
         'message': _('Message'),
         'room_messages': _('Chat room'),  # New content type for grouped room messages
