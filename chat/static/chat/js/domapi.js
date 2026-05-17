@@ -152,7 +152,7 @@ export default class DomApi {
                 msgText.dataset.raw = text;
                 msgText.innerHTML = this.wrapExpandable(this.formatMessage(text));
                 // Re-evaluate overflow after content change
-                msgText.querySelectorAll('.expandable').forEach(exp => exp.classList.remove('no-overflow'));
+                msgText.querySelectorAll('.expandable').forEach(exp => exp.classList.remove('has-overflow'));
                 requestAnimationFrame(() => this.markOverflow(msgText));
                 return msgText;
             }
@@ -210,13 +210,12 @@ export default class DomApi {
             `</div>`;
     }
 
-    // After inserting into DOM, mark expandables that don't actually overflow as no-overflow.
+    // After inserting into DOM, mark expandables that actually overflow — hint i klikalnosc dopiero po potwierdzeniu.
     markOverflow(container) {
         container?.querySelectorAll('.expandable:not(.is-open)').forEach(exp => {
             const body = exp.querySelector('.expandable-body');
-            if (body && body.scrollHeight <= body.clientHeight) {
-                exp.classList.add('no-overflow');
-            }
+            if (!body) return;
+            exp.classList.toggle('has-overflow', body.scrollHeight > body.clientHeight);
         });
     }
 

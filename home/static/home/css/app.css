@@ -1754,7 +1754,6 @@ a:hover {
 /* ── EXPANDABLE CONTENT ── */
 /* Full text always in DOM — max-height clips body; .expandable-hint sits bottom-right inline on last visible line */
 .expandable {
-  cursor: pointer;
   position: relative;
 }
 .expandable-body {
@@ -1779,9 +1778,10 @@ a:hover {
   pointer-events: none;
   z-index: 1;
 }
-.expandable:not(.is-open):not(.no-overflow) > .expandable-hint { display: block; }
+/* Fail-closed: hint i kursor wskazujacy klikalnosc tylko gdy JS potwierdzi overflow */
+.expandable.has-overflow { cursor: pointer; }
+.expandable.has-overflow:not(.is-open) > .expandable-hint { display: block; }
 .expandable.is-open > .expandable-body { max-height: 9999px; }
-.expandable.no-overflow { cursor: default; }
 
 /* TinyMCE — global responsive styles */
 .tox-tinymce {
