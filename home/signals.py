@@ -1,8 +1,8 @@
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import m2m_changed, post_delete, post_save
 from django.dispatch import receiver
 
 from board.models import Post
-from chat.models import Message
+from chat.models import Message, Room
 from events.models import Event
 from glosowania.models import Argument, Decyzja, KtoJuzGlosowal
 from obywatele.models import CitizenActivity
@@ -48,3 +48,9 @@ for _sender in _FEED_SIGNAL_SENDERS:
     def _invalidate_feed_cache(sender, **kwargs):
         from .views import invalidate_feed_cache
         invalidate_feed_cache()
+
+
+@receiver(m2m_changed, sender=Room.allowed.through, weak=False)
+def _invalidate_feed_cache_on_room_access_change(sender, **kwargs):
+    from .views import invalidate_feed_cache
+    invalidate_feed_cache()

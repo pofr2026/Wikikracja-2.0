@@ -303,6 +303,8 @@ def _generate_feed_raw():
                 'object_id': room.id,
                 'room_id': room.id,
                 'message_count': len(recent_msgs),
+                '_is_public': room.public,
+                '_allowed_user_ids': {u.id for u in room.allowed.all()},
             })
 
     decisions = Decyzja.objects.filter(data_ostatniej_modyfikacji__gte=timezone.now() - td(days=30)).order_by('-data_ostatniej_modyfikacji')
@@ -362,7 +364,7 @@ def generate_feed_items(user):
         ct = item['content_type']
         # rooms: filter to rooms the user has access to
         if ct == 'room_messages':
-            if user.id not in item.get('_allowed_user_ids', set()):
+            if not item.get('_is_public') and user.id not in item.get('_allowed_user_ids', set()):
                 continue
             item = {
                 **item, 'is_read': item['object_id'] in seen_room_ids
