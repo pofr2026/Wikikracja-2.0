@@ -1281,6 +1281,10 @@ body:has(.chat-rooms) .main-area {
     #toggle-room-list-btn .fa-angles-right {
         transform: scaleX(-1);
     }
+    /* Mobile: hide text labels in sort buttons so the >> toggle fits on screen */
+    .chat-sort-toolbar .sort-btn span {
+        display: none;
+    }
     .room-list .row {
         width: 100% !important;
         max-width: 100% !important;
