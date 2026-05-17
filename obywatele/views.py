@@ -162,6 +162,7 @@ def wspolnota_calendar(request: HttpRequest):
     })
 
 
+@login_required
 def wspolnota(request: HttpRequest):
 
     # --- stats ---
