@@ -104,6 +104,8 @@ async function initEmbeddedChat(container) {
 
         const html = Message({
             room_id: roomId,
+            user_id: msg.user_id ?? null,
+            avatar_url: msg.avatar_url ?? null,
             message_id: msg.message_id,
             username: msg.username,
             message: formatMessage(msg.message),

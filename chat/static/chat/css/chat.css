@@ -169,6 +169,36 @@ body:has(.chat-rooms) .main-area {
     color: var(--color-text-muted);
     font-weight: bold;
 }
+.username-link {
+    text-decoration: none;
+    color: var(--color-text-muted);
+}
+.username-link:hover,
+.username-link:focus {
+    color: var(--accent-hover, var(--accent));
+    text-decoration: underline;
+}
+.msg-author-avatar {
+    height: 1.875rem;
+    width: 1.875rem;
+    border-radius: 50%;
+    object-fit: cover;
+    vertical-align: middle;
+    margin-right: 0.35rem;
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+}
+.msg-author-initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-accent, var(--accent));
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.75rem;
+    line-height: 1;
+    text-transform: uppercase;
+}
 .message-header-center {
     display: flex;
     align-items: center;

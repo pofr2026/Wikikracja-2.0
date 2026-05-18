@@ -135,7 +135,14 @@ const message_template = `
 
     <div class='message-header'>
       <div class='message-header-left'>
-        <span class='username'><%=username%></span>
+        <% const _hasProfileLink = (typeof user_id !== 'undefined' && user_id); %>
+        <% if (_hasProfileLink) { %><a class='username username-link' href='/obywatele/<%- user_id %>/'><% } else { %><span class='username'><% } %>
+          <% if (typeof avatar_url !== 'undefined' && avatar_url) { %>
+            <img class='msg-author-avatar' src='<%- avatar_url %>' alt=''>
+          <% } else { %>
+            <span class='msg-author-avatar msg-author-initials'><%= (username || '').slice(0, 2).toUpperCase() %></span>
+          <% } %><%= username %>
+        <% if (_hasProfileLink) { %></a><% } else { %></span><% } %>
         <span class='message-timestamp ms-2' data-message-id='<%-message_id%>'><%- latest_ts %></span>
         <button type='button' class='btn btn-sm ms-1 message-btn show-history' <% if (!edited) { %> style='display:none' <% } %>
           data-message-id='<%-message_id%>'

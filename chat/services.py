@@ -55,15 +55,18 @@ def _username_to_color(username: str) -> str:
     return f"hsl({hue}, 60%, 55%)"
 
 
-def _get_avatar_url(user) -> str:
-    """Get user avatar URL, fallback to initials placeholder."""
+def get_avatar_url(user):
+    """Get user's uploaded avatar URL, or None when user has no avatar.
+
+    Callers decide the fallback (placeholder image, initials, etc.).
+    """
     try:
-        profile = user.profile
+        profile = user.uzytkownik
         if profile.avatar:
             return profile.avatar.url
     except Exception:
         pass
-    return "/static/home/images/favicon.ico"
+    return None
 
 
 class ChatRepository:
@@ -156,7 +159,7 @@ class ChatRepository:
             log.debug("Attempted to fetch user with ID None; returning None")
             return None
         try:
-            return User.objects.get(id=id)
+            return User.objects.select_related('uzytkownik').get(id=id)
         except User.DoesNotExist:
             log.error(f"User with ID {id} does not exist")
             return None
@@ -383,11 +386,11 @@ class ChatRepository:
     @database_sync_to_async
     def get_read_by_data(self, message_id: int) -> list:
         """Return list of {user_id, username, avatar_url} for message."""
-        entries = MessageReadBy.objects.filter(message_id=message_id).select_related('user__profile').order_by('id')[:10]
+        entries = MessageReadBy.objects.filter(message_id=message_id).select_related('user__uzytkownik').order_by('id')[:10]
         result = []
         for entry in entries:
             user = entry.user
-            avatar_url = _get_avatar_url(user)
+            avatar_url = get_avatar_url(user) or "/static/home/images/favicon.ico"
             result.append({
                 'user_id': user.id,
                 'username': user.username,
@@ -495,7 +498,7 @@ class ChatRepository:
             return {'messages': [], 'users': {}, 'user_votes': {}}
 
         sender_ids = {msg.sender_id for msg in messages if msg.sender_id}
-        users = {u.id: u for u in User.objects.filter(id__in=sender_ids)} if sender_ids else {}
+        users = {u.id: u for u in User.objects.filter(id__in=sender_ids).select_related('uzytkownik')} if sender_ids else {}
 
         user_votes = {}
         for msg in messages:

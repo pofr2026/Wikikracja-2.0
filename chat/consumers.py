@@ -16,7 +16,8 @@ from zzz.utils import get_site_domain
 from .exceptions import ClientError
 from .group_messages import format_chat_message
 from .models import Message, Room
-from .services import CHAT_UNREAD_CACHE_KEY, ChatRepository
+from .serializers import build_chat_message_payload
+from .services import CHAT_UNREAD_CACHE_KEY, ChatRepository, get_avatar_url
 from .utils import HandledMessage, Handlers, OnlineUserRegistry, RoomRegistry, helper_method
 
 log = logging.getLogger(__name__)
@@ -692,45 +693,29 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def format_chat_message_data(self, event):
         user = await self.repo.get_user_by_id(event["user_id"])
         vote = await self.repo.get_vote(event['message_id'])
-        event_copy = {
-            **event
-        }
-        del event_copy["user_id"]
-        del event_copy["type"]
-        return {
-            **event_copy,
-            'username': 'Anonymous User' if event["anonymous"] else user.username if user else None,
-            "new": event["new"] if self.scope['user'] != user else False,
-            "your_vote": vote.vote if vote is not None else None,
-            "own": self.scope['user'] == user,
-            "bulb_count": event.get('bulb_count', 0),
-            "question_count": event.get('question_count', 0),
-        }
+        vote_value = vote.vote if vote is not None else None
+        avatar_url = get_avatar_url(user)
+        return build_chat_message_payload(
+            event,
+            user=user,
+            vote_value=vote_value,
+            current_user=self.scope['user'],
+            avatar_url=avatar_url,
+        )
 
     def format_chat_message_data_batch(self, event, users_dict, user_votes_dict, user_reactions_dict=None):
-        sender_id = event["user_id"]
-        message_id = event['message_id']
-        user = users_dict.get(sender_id)
-        vote_value = user_votes_dict.get(message_id)
-        your_reactions = (user_reactions_dict or {}).get(message_id, [])
-        event_copy = {
-            **event
-        }
-        del event_copy["user_id"]
-        del event_copy["type"]
-        reactions = event.get('reactions', {})
-        bulb_count = reactions.get('bulb', 0) if isinstance(reactions, dict) else 0
-        question_count = reactions.get('question', 0) if isinstance(reactions, dict) else 0
-        return {
-            **event_copy,
-            'username': 'Anonymous User' if event["anonymous"] else user.username if user else None,
-            "new": event["new"] if self.scope['user'] != user else False,
-            "your_vote": vote_value if vote_value else None,
-            "own": self.scope['user'] == user,
-            "your_reactions": your_reactions,
-            "bulb_count": bulb_count,
-            "question_count": question_count,
-        }
+        user = users_dict.get(event["user_id"])
+        vote_value = user_votes_dict.get(event["message_id"])
+        your_reactions = (user_reactions_dict or {}).get(event["message_id"], [])
+        avatar_url = get_avatar_url(user)
+        return build_chat_message_payload(
+            event,
+            user=user,
+            vote_value=vote_value,
+            current_user=self.scope['user'],
+            your_reactions=your_reactions,
+            avatar_url=avatar_url,
+        )
 
     ###########################################################
     # Handlers for messages sent over the channel layer       #

@@ -44,10 +44,10 @@ export default class DomApi {
         return room ? $('.messages', room) : null;
     }
 
-    buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
+    buildMessageHtml(room_id, user_id, avatar_url, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
         const formatted = this.formatMessage(message);
         return Message({
-            room_id, message_id, username,
+            room_id, user_id, avatar_url, message_id, username,
             message: this.wrapExpandable(formatted),
             upvotes, downvotes, vote, own, edited, attachments,
             original_ts, latest_ts: formatTime(latest_ts),
@@ -59,8 +59,8 @@ export default class DomApi {
         });
     }
 
-    addMessage(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null, temp_id = null) {
-        const html = this.buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to, reactions, your_reactions, read_by);
+    addMessage(room_id, user_id, avatar_url, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null, temp_id = null) {
+        const html = this.buildMessageHtml(room_id, user_id, avatar_url, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to, reactions, your_reactions, read_by);
 
         const messagesDiv = this.getMessagesDiv();
         messagesDiv?.insertAdjacentHTML('beforeend', html);
