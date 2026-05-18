@@ -8,6 +8,8 @@ node_modules/
 media/board/attachments/*
 media/board/featured/*
 media/avatars/
+media/elibrary/*
+!media/elibrary/.gitkeep
 memory/
 
 *.DS_Store
