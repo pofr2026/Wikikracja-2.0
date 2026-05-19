@@ -4,6 +4,7 @@ import json
 import logging
 import time
 from datetime import date, timedelta
+from urllib.parse import urlencode
 
 from allauth.account.models import EmailAddress
 from allauth.account.signals import email_confirmed, user_signed_up
@@ -11,6 +12,7 @@ from django.conf import settings as s
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
+import django.contrib.messages as messages
 from django.contrib.messages import error, success
 from django.core.mail import send_mail
 from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
@@ -57,23 +59,22 @@ def get_onboarding_user_from_request(request: HttpRequest):
 
     DESIGN NOTE: Three ways to access onboarding form:
     1. Session (immediate after signup) - primary method
-    2. Email link with uid/token (backup after email confirmation)
+    2. Email link with signed token (backup after email confirmation)
     3. Fallback for already active users with incomplete onboarding
 
     Without this logic, users get "Could not find your onboarding account" error.
     """
     onboarding_user_id = request.session.get('onboarding_user_id')
 
-    # METHOD 2: Email link with signed token (backup method)
-    uid = request.GET.get('uid')
+    # METHOD 2: Email link with signed token
+    # Token contains uid: signer.sign(uid) -> '<uid>:<timestamp>:<signature>'
     token = request.GET.get('token')
-    if uid and token:
+    if token:
         try:
             signed_value = signer.unsign(token, max_age=s.DELETE_INACTIVE_USER_AFTER * 24 * 60 * 60)
-            if signed_value == str(uid):
-                onboarding_user_id = int(uid)
-                request.session['onboarding_user_id'] = onboarding_user_id
-                request.session.modified = True
+            onboarding_user_id = int(signed_value)
+            request.session['onboarding_user_id'] = onboarding_user_id
+            request.session.modified = True
         except (BadSignature, SignatureExpired, ValueError):
             onboarding_user_id = None
 
@@ -948,27 +949,18 @@ def set_onboarding_email_confirmed(sender, request, email_address, **kwargs):
         profile.onboarding_status = Uzytkownik.OnboardingStatus.EMAIL_CONFIRMED
         profile.save()
 
-    onboarding_token = signer.sign(str(user.id))
-    onboarding_link = build_site_url(f'/obywatele/onboarding/?uid={user.id}&token={onboarding_token}')
-    subject = f'[{HOST}] ' + _('Fill out your onboarding form')
-    message = _('Your email has been confirmed. Please fill out your onboarding form here: %(link)s') % {
-        'link': onboarding_link
-    }
+        messages.success(request, _('You have confirmed %(email)s.') % {'email': email_address.email})
 
-    try:
-        time.sleep(s.EMAIL_SEND_DELAY_SECONDS)
-        send_mail(subject, message, s.DEFAULT_FROM_EMAIL, [user.email], fail_silently=False)
-        log.info(f'Onboarding email sent successfully after confirmation to {user.email}; subject: {subject}')
-    except Exception as e:
-        log.error(f'Failed sending onboarding email after confirmation: {e}')
+        # Send onboarding email with link to form
+        onboarding_token = signer.sign(str(user.id))
+        query_params = urlencode({'token': onboarding_token})
+        onboarding_url = request.build_absolute_uri(
+            reverse('obywatele:onboarding_details') + f'?{query_params}'
+        )
 
-    # # Trigger count_citizens command after email confirmation
-    # try:
-    #     log.info(f"Running count_citizens command triggered by email confirmation for user {user.email}")
-    #     call_command('count_citizens')
-    #     log.info(f"count_citizens command completed successfully")
-    # except Exception as e:
-    #     log.error(f"Error running count_citizens after email confirmation: {e}", exc_info=True)
+        subject = _('Fill out your onboarding form')
+        body = _('Your email has been confirmed.\n\nPlease fill out your onboarding form here: %(link)s') % {'link': onboarding_url}
+        send_mail(subject, body, s.DEFAULT_FROM_EMAIL, [email_address.email], fail_silently=False)
 
 
 @login_required

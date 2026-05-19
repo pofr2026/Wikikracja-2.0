@@ -1,2 +1,0 @@
-{% load i18n %}
-{% blocktrans %}You have confirmed {{email}}. Please wait until group will accept you. You will receive email when that happen.{% endblocktrans %}

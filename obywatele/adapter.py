@@ -34,12 +34,6 @@ class CustomAccountAdapter(DefaultAccountAdapter):
 
         return user
 
-    def get_signup_redirect_url(self, request):
-        """
-        Override signup redirect to ensure session is preserved
-        """
-        return super().get_signup_redirect_url(request)
-
     def is_auto_signup_allowed(self, request, sociallogin):  # noqa: ARG002 - allauth API requires this signature
         """
         Disable auto signup for social accounts to ensure onboarding flow
@@ -66,3 +60,14 @@ class CustomAccountAdapter(DefaultAccountAdapter):
             return '/obywatele/onboarding/'
 
         return super().get_login_redirect_url(request)
+
+    def add_message(self, request, level, message_template, message_context=None, *args, **kwargs):
+        """
+        Override to prevent allauth from adding default email confirmation message.
+
+        DESIGN NOTE: We add our own message in the email_confirmed signal handler.
+        Allauth sends this message via 'account/messages/email_confirmed.txt' template.
+        """
+        if message_template == 'account/messages/email_confirmed.txt':
+            return
+        return super().add_message(request, level, message_template, message_context, *args, **kwargs)
