@@ -56,5 +56,7 @@ data/*
 *.lock
 *.bak
 *.json
+!package.json
+!package-lock.json
 /locale/en/LC_MESSAGES/django.mo
 /locale/pl/LC_MESSAGES/django.mo

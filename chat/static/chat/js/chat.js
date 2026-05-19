@@ -81,7 +81,7 @@ function restoreDraft(roomId) {
     } else {
         input.value = draft;
     }
-    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new InputEvent('input', { bubbles: true }));
 }
 
 function clearDraft(roomId) {
@@ -938,7 +938,6 @@ export async function onSubmitMessage(message, editing_message_id) {
 
         if (sendBtn) sendBtn.disabled = false;
 
-        clearDraft(CurrentRoomId);
         clearReplyTarget();
         DOM_API.clearFiles();
         const messageInput = DOM_API.getMessageInput();
@@ -950,7 +949,8 @@ export async function onSubmitMessage(message, editing_message_id) {
                 messageInput.style.height = 'auto';
                 messageInput.style.height = '38px';
             }
-            messageInput.dispatchEvent(new Event('input'));
+            clearDraft(CurrentRoomId);
+            messageInput.dispatchEvent(new InputEvent('input', { bubbles: true }));
         }
         if (DOM_API.isEditing()) {
             DOM_API.stopEditing();

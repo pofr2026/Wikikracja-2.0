@@ -362,7 +362,7 @@ export default class DomApi {
                 input.value = '';
             }
             input.style.borderColor = '';
-            input.dispatchEvent(new Event('input'));
+            input.dispatchEvent(new InputEvent('input', { bubbles: true }));
         }
         this.clearFiles();
     }
