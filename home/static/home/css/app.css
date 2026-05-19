@@ -48,6 +48,8 @@
   --badge-approved-color: #00bc8c;
   --badge-rejected-bg: rgba(239, 68, 68, .15);
   --badge-rejected-color: #f87171;
+  --input-bg: #252d4a;
+  --input-border: rgba(255, 255, 255, .25);
 }
 /* Civic theme — niebieskawa, formalna, instytucjonalna */
 [data-theme="civic"] {
@@ -79,6 +81,8 @@
   --badge-approved-color: #4ade80;
   --badge-rejected-bg: rgba(239, 68, 68, .12);
   --badge-rejected-color: #f87171;
+  --input-bg: #1e3050;
+  --input-border: rgba(59, 130, 246, .3);
 }
 /* Official theme — granatowy sidebar, pomarańczowy akcent */
 [data-theme="official"] {
@@ -110,6 +114,8 @@
   --badge-approved-color: #047a6a;
   --badge-rejected-bg: rgba(239, 68, 68, .1);
   --badge-rejected-color: #dc2626;
+  --input-bg: #ffffff;
+  --input-border: rgba(0, 0, 0, .18);
 }
 /* Light theme */
 [data-theme="light"] {
@@ -141,6 +147,8 @@
   --badge-approved-color: #047a6a;
   --badge-rejected-bg: rgba(239, 68, 68, .12);
   --badge-rejected-color: #dc2626;
+  --input-bg: #ffffff;
+  --input-border: rgba(0, 0, 0, .18);
 }
 :root {
   --app-max-width: 1200px;
@@ -471,10 +479,11 @@ img {
 .form-control,
 .form-select,
 textarea.form-control {
-  background: var(--bg-base) !important;
-  border: 1px solid var(--border) !important;
+  background: var(--input-bg) !important;
+  border: 1px solid var(--input-border) !important;
   color: var(--text-primary) !important;
   border-radius: .45rem !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, .15);
   transition: border-color .15s;
 }
 .form-control::placeholder {
@@ -485,9 +494,9 @@ textarea.form-control {
 .form-select:focus,
 textarea.form-control:focus {
   outline: none !important;
-  border-color: rgba(0, 209, 178, .5) !important;
-  box-shadow: 0 0 0 3px rgba(0, 209, 178, .12) !important;
-  background: var(--bg-base) !important;
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 3px var(--accent-muted) !important;
+  background: var(--input-bg) !important;
   color: var(--text-primary) !important;
 }
 .form-label {
@@ -796,7 +805,7 @@ hr {
 }
 .pagination .page-item.active .page-link {
   background: var(--accent-muted) !important;
-  border-color: rgba(0, 209, 178, .4) !important;
+  border-color: var(--accent-glow) !important;
   color: var(--accent) !important;
 }
 .pagination .page-item.disabled .page-link {
@@ -1407,8 +1416,8 @@ html, body {
   font-weight: 500;
 }
 .topbar .search-box {
-  background: var(--bg-base);
-  border: 1px solid var(--border);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: .5rem;
   padding: .38rem .85rem;
   color: var(--text-primary);
