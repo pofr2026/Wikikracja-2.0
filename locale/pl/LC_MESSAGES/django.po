@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-09 13:34+0200\n"
+"POT-Creation-Date: 2026-05-19 17:41+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -3133,20 +3133,20 @@ msgid "Remember: your email is not confirmed yet. Please confirm it using the li
 msgstr "Pamiętaj: Twój email nie został jeszcze potwierdzony. Poprosimy o potwierdzenie go poprzez kliknięcie linka z emaila wysłanego do Ciebie."
 
 #: .\obywatele\templates\obywatele\onboarding_details.html:15
-msgid "Please fill form below"
-msgstr "Wypełnij proszę poniższy formularz"
+msgid "Please fill the form below."
+msgstr "Wypełnij proszę poniższy formularz."
 
 #: .\obywatele\templates\obywatele\onboarding_details.html:16
-msgid "This information will help the group make a decision"
-msgstr "Te informacje pomogą grupie podjąć decyzję"
+msgid "This information will allow us to contact you and activate your account."
+msgstr "Te informacje pozwolą nam skonaktować się z Tobą i aktywować twoje konto."
 
 #: .\obywatele\templates\obywatele\onboarding_details.html:17
-msgid "You can edit this information later"
-msgstr "Później będziesz mógł edytować te informacje"
+msgid "You will be able to edit this information later."
+msgstr "Później będziesz mógł edytować te informacje."
 
 #: .\obywatele\templates\obywatele\onboarding_details.html:18
-msgid "Mandatory fields are marked with *"
-msgstr "Pola obowiązkowe oznaczone są gwiazdką*"
+msgid "Mandatory fields are marked with *."
+msgstr "Pola obowiązkowe oznaczone są gwiazdką*."
 
 #: .\obywatele\templates\obywatele\onboarding_details.html:34
 msgid "Save form"
@@ -3170,8 +3170,8 @@ msgid "Your onboarding form has been saved."
 msgstr "Twoje zgłoszenie zostało zapisane."
 
 #: .\obywatele\templates\obywatele\onboarding_waiting.html:18
-msgid "Now please wait for group approval."
-msgstr "Teraz musisz poczekać na zatwierdzenie przez grupę."
+msgid "Please wait for contact from our side."
+msgstr "Prosimy o cierpliwość, skontaktujemy się z Tobą."
 
 #: .\obywatele\templates\obywatele\parameters.html:13
 msgid "Population"
