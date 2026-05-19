@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-18 01:09+0200\n"
+"POT-Creation-Date: 2026-05-19 18:25+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -1525,7 +1525,7 @@ msgstr "Podpisana"
 
 #: .\glosowania\management\commands\vote.py:100
 #: .\glosowania\templates\glosowania\_proposal_card.html:26
-#: .\glosowania\templates\glosowania\menu.html:27
+#: .\glosowania\templates\glosowania\menu.html:29
 #: .\glosowania\templates\glosowania\szczegoly.html:34
 #: .\glosowania\views.py:240 .\home\views.py:656
 msgid "Discussion"
@@ -1538,7 +1538,7 @@ msgstr "Nie zabrała podpisów"
 #: .\glosowania\management\commands\vote.py:122
 #: .\glosowania\templates\glosowania\_proposal_card.html:28
 #: .\glosowania\templates\glosowania\_proposal_card.html:144
-#: .\glosowania\templates\glosowania\menu.html:34
+#: .\glosowania\templates\glosowania\menu.html:36
 #: .\glosowania\templates\glosowania\szczegoly.html:30
 #: .\glosowania\templates\glosowania\szczegoly.html:35
 #: .\glosowania\views.py:241 .\home\views.py:657
@@ -1547,7 +1547,7 @@ msgstr "Referendum"
 
 #: .\glosowania\management\commands\vote.py:140
 #: .\glosowania\templates\glosowania\_proposal_card.html:32
-#: .\glosowania\templates\glosowania\menu.html:41
+#: .\glosowania\templates\glosowania\menu.html:43
 #: .\glosowania\templates\glosowania\szczegoly.html:37
 #: .\glosowania\views.py:243 .\home\views.py:659
 msgid "Approved"
@@ -1555,7 +1555,7 @@ msgstr "Zatwierdzone"
 
 #: .\glosowania\management\commands\vote.py:156
 #: .\glosowania\templates\glosowania\_proposal_card.html:30
-#: .\glosowania\templates\glosowania\menu.html:50
+#: .\glosowania\templates\glosowania\menu.html:53
 #: .\glosowania\templates\glosowania\szczegoly.html:36
 #: .\glosowania\views.py:242 .\home\views.py:658 .\tasks\models.py:53
 #: .\tasks\templates\tasks\_task_card.html:29
@@ -1787,11 +1787,11 @@ msgstr "Nowa propozycja przepisu"
 msgid "Edit Argument"
 msgstr "Edytuj argument"
 
-#: .\glosowania\templates\glosowania\menu.html:10
+#: .\glosowania\templates\glosowania\menu.html:13
 msgid "How do votes work?"
 msgstr "Jak działają głosowania?"
 
-#: .\glosowania\templates\glosowania\menu.html:20
+#: .\glosowania\templates\glosowania\menu.html:22
 msgid "Suggestions"
 msgstr "Propozycje"
 

@@ -770,14 +770,28 @@ button.proposal-helpers-btn:focus-visible {
   color: var(--stepper-color);
   font-weight: 600;
 }
-.stepper-step-num {
-  font-size: .65rem;
+.stepper-step-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 .3rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  color: var(--text-muted);
+  font-size: .6rem;
   font-weight: 700;
-  opacity: .6;
+  line-height: 1;
   flex-shrink: 0;
 }
-.stepper-step-wrap.active .stepper-step-num {
-  opacity: 1;
+.stepper-step-wrap.active .stepper-step-count {
+  background: var(--stepper-color);
+  color: #111;
+}
+.stepper-rejected .stepper-step-count {
+  background: var(--badge-rejected-bg);
+  color: var(--badge-rejected-color);
 }
 .stepper-sep {
   width: 1px;

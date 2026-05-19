@@ -948,6 +948,10 @@ hr {
 [data-theme="light"] .stepper-step:hover {
   color: var(--text-primary);
 }
+[data-theme="light"] .stepper-step-count,
+[data-theme="official"] .stepper-step-count {
+  background: rgba(0, 0, 0, .08);
+}
 /* Nav tabs */
 [data-theme="light"] .nav-tabs {
   border-bottom-color: var(--border) !important;
