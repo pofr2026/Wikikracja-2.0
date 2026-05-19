@@ -137,9 +137,9 @@
 {# ── Calendar ── #}
 <div class="card mb-3">
   <div class="card-header d-flex justify-content-between align-items-center">
-    <span class="wspol-section-title mb-0">
+    <a href="{% url 'events:list' %}" class="wspol-section-title mb-0">
       <i class="fas fa-calendar-days"></i>{% trans "Calendar" %}
-    </span>
+    </a>
     <a href="{% url 'events:create' %}" class="btn btn-sm btn-outline-primary">
       <i class="fas fa-plus me-1"></i>{% trans "Add event" %} &rarr;
     </a>

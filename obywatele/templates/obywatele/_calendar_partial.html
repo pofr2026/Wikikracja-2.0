@@ -46,7 +46,10 @@
               </span>
             </a>
           {% else %}
-            <span class="cal-day {% if cell.is_today %}today{% endif %}">{{ cell.day }}</span>
+            <a href="{% url 'events:list' %}#day-{{ cell.iso_date }}"
+               class="cal-day-link" data-day="{{ cell.iso_date }}">
+              <span class="cal-day {% if cell.is_today %}today{% endif %}">{{ cell.day }}</span>
+            </a>
           {% endif %}
         {% endif %}
       </td>

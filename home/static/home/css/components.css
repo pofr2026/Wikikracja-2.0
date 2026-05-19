@@ -1798,6 +1798,10 @@ button.proposal-helpers-btn:focus-visible {
 .wspol-section-title i {
   color: var(--accent);
 }
+a.wspol-section-title {
+  text-decoration: none;
+  color: var(--text-muted);
+}
 .wspol-member-row {
   display: flex;
   align-items: center;
