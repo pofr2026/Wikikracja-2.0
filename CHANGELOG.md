@@ -1,6 +1,14 @@
 # CHANGELOG
 
 
+## v1.3.2 (2026-05-19)
+
+### Bug Fixes
+
+- **scheduler**: Konwertuj czas spotkania na lokalna strefe czasowa w powiadomieniach
+  ([`9e21fdf`](https://github.com/soma115/Wikikracja/commit/9e21fdf6064ffaee97f069ef389fefdb2fd0b41c))
+
+
 ## v1.3.1 (2026-05-09)
 
 ### Bug Fixes
@@ -105,18 +113,18 @@ Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
 
 ### Features
 
-- **categories**: Shared category system for board & tasks
+- **categories**: Shared category system for board, tasks & elibrary
   ([`2fe94cd`](https://github.com/soma115/Wikikracja/commit/2fe94cd2404caf19828615c0ef289b2a09ca624c))
 
 - New `categories` app: AbstractCategory base model + generic API views (CategoryAPIBase,
   CategoryEditAPI, CategoryDeleteAPI, CategoryReorderAPI) - board: PostCategory inherits
   AbstractCategory, category filter dropdown, manage modal with drag-and-drop reorder, cache
-  invalidation - tasks: Category refactored onto shared base, reorder API added -
-  SortableJS (local, v1.15.6) for DnD reorder; shared JS modules (category-manager.js,
-  sortable-list.js) loaded globally from base.html - Global design: inline styles extracted to
-  CSS utility classes (.post-row-link, .post-card-link, .cat-group-icon, .text-*-clamp,
-  .avatar-*, .book-*, .text-meta, .text-author); board templates unified to
-  card/card-header/card-body structure - Removed stale
+  invalidation for elibrary - tasks: Category refactored onto shared base, reorder API added -
+  elibrary: category filter + manage modal reusing board categories - SortableJS (local, v1.15.6)
+  for DnD reorder; shared JS modules (category-manager.js, sortable-list.js) loaded globally from
+  base.html - Global design: inline styles extracted to CSS utility classes (.post-row-link,
+  .post-card-link, .cat-group-icon, .text-*-clamp, .avatar-*, .book-*, .text-meta, .text-author);
+  board/elibrary templates unified to card/card-header/card-body structure - Removed stale
   postcategory_list/form/confirm_delete templates - Polish translations updated for all new UI
   strings
 
@@ -246,14 +254,15 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 - **ui**: Persistent filters and view settings via PagePrefs
   ([`4ac97b0`](https://github.com/soma115/Wikikracja/commit/4ac97b04cd3381ec04151209bee4c508c9488c8a))
 
-Replaces 4 separate localStorage wrappers (setTaskView, setProposalsView, setBoardView,
-  setActivityView) with a single global PagePrefs module. Filters (URL params),
+Replaces 5 separate localStorage wrappers (setTaskView, setProposalsView, setElibraryView,
+  setBoardView, setActivityView) with a single global PagePrefs module. Filters (URL params),
   grid/list toggle and Bootstrap tab selection are now stored per-scope in one JSON key
   (wikikracja:prefs:{scope}) and restored on return visit without flashing.
 
 - Anti-FOUC head-script restores URL filters before body renders - Patches history.pushState to
   capture JS-driven URL changes (category filter) - HTML uses data-view / data-view-container
-  conventions — zero onclick bindings - One-shot migration of legacy localStorage keys on first load
+  conventions — zero onclick bindings - Elibrary category filter gains URL sync (was DOM-only, now
+  shareable) - One-shot migration of legacy localStorage keys on first load
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 
@@ -396,7 +405,8 @@ Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
 - **editor**: Improve TinyMCE layout and usability globally
   ([`2750c7e`](https://github.com/soma115/Wikikracja/commit/2750c7e250d97b8f6f84e81aea93fc6140ec1b9a))
 
-- uploader.js: sliding toolbar mode, fixed height 500px, manual resize handle, remove autoresize
+- elibrary book_form: widen editor column (col-md-6 → col-md-8), narrow uploads sidebar (col-md-4) -
+  uploader.js: sliding toolbar mode, fixed height 500px, manual resize handle, remove autoresize
   plugin - app.css: ensure .tox-tinymce fills container width on all screen sizes
 
 Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
@@ -532,7 +542,11 @@ ZASTOSOWANIE W FORMULARZACH - tasks: TaskForm.description → RichTextWidget. Sz
   event_form.html ładuje {{form.media}}.
 
 POLA Z TINYMCE — CELOWO NIETKNIĘTE (zaufana treść admina/długie teksty) - board.post.text — TinyMCE
-  + |safe (bez zmian). - home.start.text, home.footer.text, activity.description — bez zmian
+  + |safe (bez zmian). - elibrary.book.abstract — używa TinyMCE poprzez static/js/uploader.js
+  (tinymce.init({selector:'textarea'})) ładowane w book_form.html. KOREKTA: book_list.html i
+  book_detail.html teraz renderują {{...|safe}} zamiast escape'owanego tekstu (wcześniej tagi
+  <p>/<strong> wyświetlały się jako tekst). UpdateBookForm pozostaje na forms.Textarea — TinyMCE
+  zamienia ją client-side. - home.start.text, home.footer.text, activity.description — bez zmian
   (treść redagowana w panelu admina, dozwolony pełen HTML).
 
 GLOBALNIE - home/templates/home/base.html: DOMPurify ładowany raz globalnie (używany i przez chat
