@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-19 18:25+0200\n"
+"POT-Creation-Date: 2026-05-20 10:46+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -1176,6 +1176,19 @@ msgstr "Popularne"
 #: .\chat\views.py:247
 msgid "Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list"
 msgstr "Shift+↵ nowa linia · Ctrl+B pogrubienie · Ctrl+I kursywa · - lub * lista"
+
+#: .\chat\views.py:248
+msgid "Select a room from the list"
+msgstr "Wybierz pokój z listy"
+
+#: .\chat\views.py:249
+msgid "No unread messages"
+msgstr "Brak nieprzeczytanych wiadomości"
+
+#: .\chat\views.py:250
+#, python-brace-format
+msgid "Tap {icon} above the list to disable the unread filter"
+msgstr "Kliknij {icon} nad listą, aby wyłączyć filtr nieprzeczytanych"
 
 #: .\events\forms.py:32 .\events\models.py:47
 msgid "Week of month"

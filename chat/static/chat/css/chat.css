@@ -1527,3 +1527,54 @@ body:has(.chat-rooms) .main-area {
         font-size: 1.8rem;
     }
 }
+/* ============================================================ */
+/* EMPTY STATES — placeholder "Wybierz pokoj" + brak nieprzeczytanych */
+/* ============================================================ */
+.chat-no-room-placeholder,
+.chat-no-unread-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    flex: 1;
+    padding: 2rem 1.5rem;
+    color: var(--color-text-muted);
+    gap: 0.75rem;
+}
+.chat-no-room-icon,
+.chat-no-unread-icon {
+    font-size: 2.5rem;
+    color: var(--color-primary);
+    opacity: 0.6;
+}
+.chat-no-room-text,
+.chat-no-unread-title {
+    margin: 0;
+    font-size: 1rem;
+    color: var(--color-text);
+}
+.chat-no-unread-hint {
+    margin: 0;
+    font-size: var(--text-sm);
+    color: var(--color-text-muted);
+    max-width: 28ch;
+    line-height: 1.4;
+}
+.chat-no-unread-inline-icon {
+    color: var(--color-primary);
+    margin: 0 0.2em;
+    vertical-align: -0.05em;
+}
+/* Gdy pokazany jest empty state "brak nieprzeczytanych", chowamy drzewo kategorii.
+   Nie ruszamy inline style .row — sort wg czasu tez ukrywa .row przez display:none,
+   a manipulacja inline style'em z dwoch miejsc daje "widmo" drzewa po zdjeciu filtra. */
+#room-list:has(.chat-no-unread-empty-state) .row {
+    display: none;
+}
+@media (max-width: 767px) {
+    .chat-no-room-placeholder,
+    .chat-no-unread-empty-state {
+        padding: 1.5rem 1rem;
+    }
+}

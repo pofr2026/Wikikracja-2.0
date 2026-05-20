@@ -137,6 +137,109 @@ function bindSortToolbar() {
     applyActiveStyles();
 }
 
+/**
+ * Czysta funkcja decyzyjna dla startu chat'a na podstawie URL params + stanu DOM.
+ * UWAGA: synchronizować z chat/static/chat/js/__tests__/startup_action.test.js
+ * (wzór jak draft.test.js — funkcja kopiowana 1:1 do testu).
+ */
+function decideStartupAction({ search = '', hasHash = false, isMobile = false } = {}) {
+    // Hash ma bezwzględny priorytet — użytkownik chce konkretny pokój
+    if (hasHash) {
+        return { mode: 'default', joinAction: 'auto' };
+    }
+    const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+    if (params.get('view') === 'rooms') {
+        return {
+            mode: 'rooms', unreadFilter: 'off', showPlaceholder: true,
+            forceListVisible: true, mobileShowList: isMobile,
+            joinAction: 'none', stripParam: 'view',
+        };
+    }
+    // ?unread=1 to legacy alias (stare bookmark'y / push'e) — traktowany jak ?view=unread.
+    // Akcja celowo nie zawiera showUnreadEmptyState — empty state jest pochodna stanu
+    // filtra, obsluguje go applyUnreadFilter (zarowno przy starcie jak i w runtime).
+    const wantsUnreadView = params.get('view') === 'unread' || params.get('unread') === '1';
+    if (wantsUnreadView) {
+        return {
+            mode: 'unread', unreadFilter: 'on', showPlaceholder: true,
+            forceListVisible: true, mobileShowList: isMobile,
+            joinAction: 'none',
+            stripParam: params.get('unread') === '1' ? 'unread' : 'view',
+        };
+    }
+    return { mode: 'default', joinAction: 'auto' };
+}
+
+// Placeholder "Wybierz pokoj" w lewej kolumnie — gdy nie ma joinowanego pokoju.
+// Tekst budujemy przez textContent (defense-in-depth — gdyby kiedys w tlumaczeniu
+// pojawil sie znak < lub &, to nie zlamie HTML'a).
+function showRoomPlaceholder() {
+    const messages = document.querySelector('.chat-root-messages');
+    if (!messages || document.getElementById('chat-no-room-placeholder')) return;
+    const div = document.createElement('div');
+    div.id = 'chat-no-room-placeholder';
+    div.className = 'chat-no-room-placeholder';
+
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-comments chat-no-room-icon';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const text = document.createElement('p');
+    text.className = 'chat-no-room-text';
+    text.textContent = _("Select a room from the list");
+
+    div.append(icon, text);
+    messages.appendChild(div);
+}
+
+function hideRoomPlaceholder() {
+    document.getElementById('chat-no-room-placeholder')?.remove();
+}
+
+// Empty state w prawej kolumnie — gdy filtr unread aktywny ale brak nieprzeczytanych.
+// Tekst budujemy przez textContent; w hint'cie ikona inline jest realnym elementem
+// DOM (a nie innerHTML'em wstrzyknietym z tlumaczenia) — bezpieczne nawet gdy
+// tlumaczenie zawiera znaki specjalne wokol placeholdera {icon}.
+// .row chowamy przez CSS :has() (patrz chat.css) — nie tykamy inline style,
+// zeby nie kolidowac z sort'em wg czasu, ktory tez ustawia .row { display: none }.
+function showUnreadEmptyState() {
+    const roomList = document.querySelector('#room-list');
+    if (!roomList || document.getElementById('chat-no-unread-empty-state')) return;
+
+    const div = document.createElement('div');
+    div.id = 'chat-no-unread-empty-state';
+    div.className = 'chat-no-unread-empty-state';
+
+    const iconBig = document.createElement('i');
+    iconBig.className = 'fas fa-envelope-open chat-no-unread-icon';
+    iconBig.setAttribute('aria-hidden', 'true');
+
+    const title = document.createElement('p');
+    title.className = 'chat-no-unread-title';
+    title.textContent = _("No unread messages");
+
+    // Hint: split tlumaczenia po {icon} i wstaw realny <i> miedzy text nodes.
+    // Ikona jest dokladnie ta sama co w #unread-filter-btn — wizualnie spina
+    // komunikat z akcja, ktora user ma wykonac.
+    const hint = document.createElement('p');
+    hint.className = 'chat-no-unread-hint';
+    const [before, after] = _("Tap {icon} above the list to disable the unread filter").split('{icon}');
+    hint.appendChild(document.createTextNode(before));
+    const inlineIcon = document.createElement('i');
+    inlineIcon.className = 'fas fa-eye-slash chat-no-unread-inline-icon';
+    inlineIcon.setAttribute('aria-hidden', 'true');
+    hint.appendChild(inlineIcon);
+    hint.appendChild(document.createTextNode(after));
+
+    div.append(iconBig, title, hint);
+    roomList.appendChild(div);
+}
+
+function hideUnreadEmptyState() {
+    // .remove() wystarcza — CSS :has() wyrejestruje regule .row { display: none } sam
+    document.getElementById('chat-no-unread-empty-state')?.remove();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     WS_API = new WsApi();
     DOM_API = new DomApi();
@@ -152,9 +255,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const unreadFilterBtn = $('#unread-filter-btn');
     let isUnreadFilterActive = false;
 
-    // Restore filter state from localStorage
+    // Restore filter state from localStorage. URL params bija zapisany stan:
+    //   ?view=rooms   -> wymuszamy filtr OFF (sidebar)
+    //   ?view=unread  -> wymuszamy filtr ON  (dashboard badge; ?unread=1 to legacy alias)
+    // Robimy to juz tu (nie tylko w wsOnConnect), zeby unikac wizualnego migniecia.
+    const initialParams = new URLSearchParams(location.search);
+    const initialView = initialParams.get('view');
+    const wantsUnreadStart = initialView === 'unread' || initialParams.get('unread') === '1';
     const savedFilterState = localStorage.getItem('chat-unread-filter');
-    if (savedFilterState === 'active') {
+    const shouldRestoreFilter = wantsUnreadStart
+        || (savedFilterState === 'active' && initialView !== 'rooms');
+    if (shouldRestoreFilter) {
         isUnreadFilterActive = true;
         unreadFilterBtn?.classList.add('active');
         applyUnreadFilter();
@@ -185,6 +296,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 roomLink.classList.remove('filtered-out');
             }
         });
+        // Empty state w prawej kolumnie — zawsze gdy filtr daje 0 wynikow
+        const unreadCount = $$('.room-link.room-not-seen[data-room-id]').length;
+        if (unreadCount === 0) {
+            showUnreadEmptyState();
+        } else {
+            hideUnreadEmptyState();
+        }
     }
 
     function removeUnreadFilter() {
@@ -192,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allRoomLinks.forEach(roomLink => {
             roomLink.classList.remove('filtered-out');
         });
+        hideUnreadEmptyState();
     }
 
     // Function to reapply unread filter when room seen status changes
@@ -311,30 +430,46 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // ?unread=1 from home page badge: activate unread filter
-        const urlParams = new URLSearchParams(location.search);
-        if (urlParams.get('unread') === '1') {
-            history.replaceState(null, '', location.pathname + location.hash);
-            if (!isUnreadFilterActive) {
-                isUnreadFilterActive = true;
-                unreadFilterBtn?.classList.add('active');
-                localStorage.setItem('chat-unread-filter', 'active');
-                applyUnreadFilter();
-            }
-            // On desktop: open most-recent unread room; on mobile: stay on room list
-            if (window.innerWidth >= 768) {
-                const unreadRooms = $$('.room-link.room-not-seen[data-room-id]');
-                const mostRecent = [...unreadRooms].reduce((best, el) => {
-                    return !best || parseInt(el.dataset.lastActivity) > parseInt(best.dataset.lastActivity) ? el : best;
-                }, null);
-                if (mostRecent) {
-                    onRoomTryJoin(parseInt(mostRecent.dataset.roomId));
-                    return;
-                }
-            } else {
-                return; // stay on room list view with filter active
+        const action = decideStartupAction({
+            search: location.search,
+            hasHash: !!window.location.hash,
+            isMobile: window.innerWidth < 768,
+        });
+
+        // Usun zuzyty param zeby nie zostal w URL po reload
+        if (action.stripParam) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete(action.stripParam);
+            history.replaceState(null, '', url.pathname + url.search + url.hash);
+        }
+
+        if (action.unreadFilter === 'on' && !isUnreadFilterActive) {
+            isUnreadFilterActive = true;
+            unreadFilterBtn?.classList.add('active');
+            localStorage.setItem('chat-unread-filter', 'active');
+            applyUnreadFilter();
+        } else if (action.unreadFilter === 'off' && isUnreadFilterActive) {
+            isUnreadFilterActive = false;
+            unreadFilterBtn?.classList.remove('active');
+            localStorage.removeItem('chat-unread-filter');
+            removeUnreadFilter();
+        }
+
+        // Wymus widocznosc listy pokoi TYLKO na ten widok — bez kasowania zapisanej
+        // preferencji "hide list" (uzytkownik mogl ja swiadomie ustawic; przy nastepnym
+        // bezposrednim wejsciu na /chat/ ma sie zachowac jak zapamietano).
+        if (action.forceListVisible) {
+            const chatRoomsEl = document.querySelector('.chat-rooms');
+            chatRoomsEl?.classList.remove('room-list-hidden');
+            if (action.mobileShowList) {
+                chatRoomsEl?.classList.add('room-list-showing');
             }
         }
+
+        if (action.showPlaceholder) showRoomPlaceholder();
+
+        // ?view=rooms / ?view=unread — bez auto-joina, koniec
+        if (action.joinAction === 'none') return;
 
         let room_id = 0;
         if (window.location.hash) {
@@ -449,6 +584,7 @@ export async function onRoomTryJoin(room_id) {
     if (RoomLock.locked()) await RoomLock.wait();
     if (CurrentRoomId) await onRoomTryLeave(false);
 
+    hideRoomPlaceholder();
     DOM_API.getRoomLinkDiv(room_id)?.classList.add("joined");
     if (CurrentRoomId) return; // joined another room while awaiting confirmation
 

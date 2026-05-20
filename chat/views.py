@@ -245,6 +245,9 @@ def get_translations():
         "Mute room": _("Mute room"),
         "Unmute room": _("Unmute room"),
         "Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list": _("Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list"),
+        "Select a room from the list": _("Select a room from the list"),
+        "No unread messages": _("No unread messages"),
+        "Tap {icon} above the list to disable the unread filter": _("Tap {icon} above the list to disable the unread filter"),
     }
 
 

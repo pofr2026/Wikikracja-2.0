@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase
+from django.urls import reverse
 
 from chat.models import Message, Room
 from home.views import FEED_CACHE_KEY, generate_feed_items
@@ -44,3 +45,60 @@ class ActivityFeedChatTest(TestCase):
         chat_items = [i for i in feed if i['content_type'] == 'room_messages']
 
         self.assertEqual(len(chat_items), 0, "Uzytkownik bez dostepu nie powinien widziec pokoju")
+
+
+class HomeChatBadgeTest(TestCase):
+    """
+    Pulpit (badge na stronie glownej) zawsze prowadzi do czatu z filtrem unread
+    (`?view=unread`), niezaleznie od liczby nieprzeczytanych. Gdy brak
+    nieprzeczytanych — chat.js pokazuje empty state w prawej kolumnie.
+
+    Dynamiczny JS aktualizujacy badge po WS/visibilitychange musi uzywac tego
+    samego URL'a w obu galeziach (count > 0 i count == 0).
+    """
+
+    def setUp(self):
+        cache.clear()
+        self.user = User.objects.create_user(username='dashuser', password='pass')
+
+    def tearDown(self):
+        cache.clear()
+
+    def test_badge_href_is_unconditional_view_unread(self):
+        """Niezaleznie od chat_unread_count, href badge'a zawsze prowadzi do
+        ?view=unread (chat.js sam obsluguje 0-wynikow przez empty state)."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('home'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '?view=unread')
+        self.assertNotContains(response, '?unread=1')
+        self.assertNotContains(response, '?notify=no-unread')
+
+    def test_badge_style_accentuated_when_unread(self):
+        """Sam href jest staly, ale styl badge'a (background accent + licznik
+        w label'u) musi sie wlaczac tylko gdy sa nieprzeczytane."""
+        room = Room.objects.create(title='Pokój A', public=False)
+        room.allowed.add(self.user)
+        Message.objects.create(sender=self.user, text='hej', room=room)
+
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, 'background:rgba(99,102,241,.15)')
+
+    def test_badge_style_neutral_without_unread(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('home'))
+
+        self.assertNotContains(response, 'background:rgba(99,102,241,.15)')
+
+    def test_dynamic_badge_js_uses_view_unread_in_both_branches(self):
+        """JS w home.html aktualizuje badge.href po nadejsciu WS event'u — w obu
+        galeziach (count > 0 i count == 0) musi prowadzic do ?view=unread."""
+        self.client.force_login(self.user)
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, "'?view=unread'")
+        self.assertNotContains(response, "'?notify=no-unread'")
+        self.assertNotContains(response, "'?unread=1'")

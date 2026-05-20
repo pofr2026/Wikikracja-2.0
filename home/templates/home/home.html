@@ -102,7 +102,7 @@
     <i class="{% if unread_items_no_events %}fas{% else %}far{% endif %} fa-bell me-1"></i>{% if unread_items_no_events %}{{ unread_items_no_events|length }}{% else %}0{% endif %}
   </a>
   <a id="chat-unread-badge"
-     href="{% url 'chat:chat' %}{% if chat_unread_count %}?unread=1{% endif %}"
+     href="{% url 'chat:chat' %}?view=unread"
      class="badge-status"
      style="text-decoration:none;{% if chat_unread_count %}background:rgba(99,102,241,.15);color:#818cf8;border:1px solid rgba(99,102,241,.3);{% endif %}">
     <i class="fas fa-comments me-1"></i>
@@ -672,15 +672,16 @@ document.querySelectorAll('.onboarding-read-btn').forEach(function(btn) {
   var CHAT_LABEL = "{% trans 'Chat' %}";
 
   function applyCount(count) {
+    // Badge zawsze prowadzi do /chat/?view=unread — chat.js sam pokaze empty
+    // state w prawej kolumnie, gdy filtr jest aktywny ale brak nieprzeczytanych.
+    badge.href = CHAT_URL + '?view=unread';
     if (count > 0) {
       label.textContent = count + ' ' + UNREAD_LABEL;
-      badge.href = CHAT_URL + '?unread=1';
       badge.style.background = 'rgba(99,102,241,.15)';
       badge.style.color = '#818cf8';
       badge.style.border = '1px solid rgba(99,102,241,.3)';
     } else {
       label.textContent = CHAT_LABEL;
-      badge.href = CHAT_URL;
       badge.style.background = '';
       badge.style.color = '';
       badge.style.border = '';
