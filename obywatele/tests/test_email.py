@@ -3,13 +3,14 @@ Tests for email deduplication:
   1. New person sign-up → SendEmailToAll fires exactly once.
   2. chat_messages command → each user receives exactly one email per run.
 
-EMAIL_SEND_DELAY_SECONDS is overridden to 0 so threads finish quickly.
-EMAIL_BACKEND is overridden to locmem so no real SMTP is used.
+threading.Thread is patched in production code paths to run targets synchronously,
+so the test's TestCase transaction is visible to recipient queries and mail.outbox
+captures the send. EMAIL_BACKEND is overridden to locmem so no real SMTP is used.
 """
 # Standard library imports
 import secrets
-import threading
 from datetime import datetime
+from unittest import mock
 
 from django.contrib.auth.models import User
 from django.core import mail
@@ -27,12 +28,22 @@ FAST_EMAIL_SETTINGS = {
 }
 
 
-def _drain_threads():
-    main = threading.main_thread()
-    for t in threading.enumerate():
-        if t is main or not t.daemon:
-            continue
-        t.join(timeout=5)
+class _SyncThread:
+    # Drop-in zamiennik dla threading.Thread w testach: start() wywołuje target()
+    # synchronicznie w głównym wątku, dzięki czemu kod widzi nieskomitowaną
+    # transakcję TestCase i zapisuje email do mail.outbox.
+    def __init__(self, target=None, **kwargs):
+        self._target = target
+
+    def setDaemon(self, daemon):
+        pass
+
+    def start(self):
+        if self._target:
+            self._target()
+
+    def join(self, timeout=None):
+        pass
 
 
 def make_active_user(username, email):
@@ -45,9 +56,13 @@ def make_active_user(username, email):
 
 @override_settings(**FAST_EMAIL_SETTINGS)
 class NewPersonEmailTest(TestCase):
+    def setUp(self):
+        patcher = mock.patch('obywatele.forms.threading.Thread', _SyncThread)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def _call_send_email_to_all(self, subject, message):
         SendEmailToAll(subject, message)
-        _drain_threads()
 
     def test_send_email_to_all_sends_exactly_one_email(self):
         make_active_user('citizen1', 'citizen1@example.com')
@@ -72,6 +87,10 @@ class NewPersonEmailTest(TestCase):
 @override_settings(**FAST_EMAIL_SETTINGS)
 class ChatMessagesEmailTest(TestCase):
     def setUp(self):
+        patcher = mock.patch('chat.management.commands.chat_messages.threading.Thread', _SyncThread)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.sender = make_active_user('sender', 'sender@example.com')
         self.recipient = make_active_user('recipient', 'recipient@example.com')
         self.room = Room.objects.create(title='Test Room', public=True)
@@ -82,7 +101,6 @@ class ChatMessagesEmailTest(TestCase):
 
     def _run_chat_messages_command(self):
         call_command('chat_messages')
-        _drain_threads()
 
     def _add_message(self, text='Hello'):
         return Message.objects.create(sender=self.sender, room=self.room, text=text)
