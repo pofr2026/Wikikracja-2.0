@@ -3,6 +3,7 @@
     "ms-python.python",
     "batisteo.vscode-django",
     "charliermarsh.ruff",
-    "eeyore.yapf"
+    "eeyore.yapf",
+    "ms-playwright.playwright"
   ]
 }
