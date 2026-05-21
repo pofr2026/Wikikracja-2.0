@@ -28,6 +28,13 @@ memory/
 .idea/
 *.code-workspace
 .env
+.env.local
+.coverage
+
+# Playwright e2e
+playwright-report/
+test-results/
+e2e/.auth/
 .python-version
 .pytest_cache/
 
