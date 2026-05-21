@@ -452,7 +452,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('.room-link__actions')) return;
         const roomLink = e.target.closest('.room-link');
         if (!roomLink) return;
-        if (roomLink.classList.contains("joined")) return;
+        if (roomLink.classList.contains("joined")) {
+            // Mobile: klik w już aktywny pokój = wróć do tego pokoju (zwiń rozwiniętą listę)
+            if (window.innerWidth < 768) mobileHideRoomList();
+            return;
+        }
         const room_id = roomLink.getAttribute("data-room-id");
         roomLink.classList.add('room-tapping');
         setTimeout(() => roomLink.classList.remove('room-tapping'), 300);
