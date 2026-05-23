@@ -6,14 +6,15 @@
 <!DOCTYPE html>
 <html lang="{{ request.LANGUAGE_CODE }}" data-theme="dark" data-prefs-scope="{% block prefs_scope %}{% endblock %}">
 <head>
-	<title>{{ request.site.name }}</title>
+	<title>{{ branding.branding_text|default:request.site.name }}</title>
 	<meta charset="utf-8">
 	<meta name="description" content="{{ site_description|default:'' }}">
 	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=yes">
 
 	<!-- PWA Meta Tags -->
 	<link rel="manifest" href="{% url 'manifest' %}">
-	<link rel="apple-touch-icon" href="{% static 'home/images/favicon.ico' %}">
+	<link rel="icon" type="image/x-icon" href="{% if branding.brand_mark %}{{ MEDIA_URL }}site_branding/derived/favicon.ico?v={{ branding_version }}{% else %}{% static 'home/images/favicon.ico' %}{% endif %}">
+	<link rel="apple-touch-icon" href="{% if branding.brand_mark %}{{ MEDIA_URL }}site_branding/derived/apple-touch-icon.png?v={{ branding_version }}{% else %}{% static 'home/images/favicon.ico' %}{% endif %}">
 	<meta name="theme-color" content="#00d1b2">
 	<meta name="mobile-web-app-capable" content="yes">
 	<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -65,8 +66,8 @@
     <!-- Logo -->
     <div class="sidebar-logo">
       <a href="{% url 'home' %}" style="text-decoration:none;">
-        <span class="logo-title"><i class="fas fa-fw fa-building-columns"></i><span class="logo-label ms-1">{{ request.site.name }}</span></span>
-        <a href="{% url 'site_admin' %}" style="text-decoration:none;"><span class="logo-sub">v.{{ app_version }}</span></a>
+        <span class="logo-title">{% include 'home/_brand_mark.html' %}<span class="logo-label ms-1">{{ branding.branding_text|default:request.site.name }}</span></span>
+        <a href="{% url 'site_admin' %}" style="text-decoration:none;"><span class="logo-sub">Wikikracja v.{{ app_version }}</span></a>
       </a>
     </div>
 
@@ -194,8 +195,8 @@
           <i class="fas fa-bars"></i>
         </button>
         <a href="{% url 'home' %}" class="topbar-logo">
-          <i class="fas fa-fw fa-building-columns"></i>
-          <span class="logo-label ms-1">{{ request.site.name }}</span>
+          {% include 'home/_brand_mark.html' %}
+          <span class="logo-label ms-1">{{ branding.branding_text|default:request.site.name }}</span>
         </a>
         <span class="sep">›</span>
         <span class="current">

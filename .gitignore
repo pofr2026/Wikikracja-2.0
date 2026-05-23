@@ -10,6 +10,7 @@ media/board/featured/*
 media/avatars/
 media/elibrary/*
 !media/elibrary/.gitkeep
+media/site_branding/
 memory/
 
 *.DS_Store

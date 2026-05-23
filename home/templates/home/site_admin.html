@@ -170,6 +170,112 @@
     </div>
   </div>
 
+  {# ── BRANDING ── #}
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fas fa-palette" style="color:var(--accent);opacity:.8;font-size:.85rem;"></i>
+      <span class="section-heading" style="font-size:.85rem;">{% trans "Branding" %}</span>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="save_branding" value="1">
+
+        <div class="card-intro">
+          <i class="fas fa-info-circle me-1" style="color:var(--accent);opacity:.6;"></i>
+          {% trans "Upload a PNG graphic mark (longest side 512-1024 px, max 1 MB, transparent background recommended). Non-square images are letterboxed to a square on save. The mark replaces the default icon in the header and is the source for favicon and PWA icons." %}
+        </div>
+
+        <div class="mb-3">
+          <label for="id_branding_text" class="form-label fw-semibold form-label-sm">
+            <i class="fas fa-font me-2 field-label-icon"></i>{% trans "Branding text" %}
+          </label>
+          {{ branding_form.branding_text }}
+          <div class="field-hint">
+            {% trans "Name displayed next to the brand mark. Leave empty to use the Django Sites site name." %}
+            {% blocktrans with max=branding_form.branding_text.field.max_length %}Max {{ max }} characters.{% endblocktrans %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="id_brand_mark" class="form-label fw-semibold form-label-sm">
+            <i class="fas fa-image me-2 field-label-icon"></i>{% trans "Brand mark" %}
+          </label>
+          <div class="brand-mark-field-row">
+            {% if ss.brand_mark %}
+              <a href="{{ ss.brand_mark.url }}?v={{ branding_version }}" target="_blank" rel="noopener" title="{% trans 'View full size' %}">
+                <img src="{{ ss.brand_mark.url }}?v={{ branding_version }}" class="brand-mark-preview" alt="">
+              </a>
+            {% endif %}
+            <input type="file" name="brand_mark" id="id_brand_mark" accept="image/png" class="brand-mark-file-hidden" hidden>
+            <button type="button" class="btn btn-sm btn-outline-secondary brand-mark-choose-btn" data-target="id_brand_mark">
+              <i class="fas fa-upload me-1"></i>
+              {% if ss.brand_mark %}{% trans "Choose new file" %}{% else %}{% trans "Choose file" %}{% endif %}
+            </button>
+            <span class="brand-mark-file-name text-muted small" data-empty-text="{% trans 'No file chosen' %}">{% trans "No file chosen" %}</span>
+            {% if ss.brand_mark %}
+              <label class="form-check-label small text-muted">
+                <input type="checkbox" name="brand_mark-clear" class="form-check-input me-1">
+                {% trans "Remove" %}
+              </label>
+            {% endif %}
+          </div>
+          <div class="field-hint">
+            {% trans "Used on light themes (Light, Official) and as source for favicon/PWA icons." %}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label for="id_brand_mark_dark" class="form-label fw-semibold form-label-sm">
+            <i class="fas fa-moon me-2 field-label-icon"></i>{% trans "Brand mark (dark themes)" %}
+          </label>
+          <div class="brand-mark-field-row">
+            {% if ss.brand_mark_dark %}
+              <a href="{{ ss.brand_mark_dark.url }}?v={{ branding_version }}" target="_blank" rel="noopener" title="{% trans 'View full size' %}">
+                <img src="{{ ss.brand_mark_dark.url }}?v={{ branding_version }}" class="brand-mark-preview" alt="">
+              </a>
+            {% endif %}
+            <input type="file" name="brand_mark_dark" id="id_brand_mark_dark" accept="image/png" class="brand-mark-file-hidden" hidden>
+            <button type="button" class="btn btn-sm btn-outline-secondary brand-mark-choose-btn" data-target="id_brand_mark_dark">
+              <i class="fas fa-upload me-1"></i>
+              {% if ss.brand_mark_dark %}{% trans "Choose new file" %}{% else %}{% trans "Choose file" %}{% endif %}
+            </button>
+            <span class="brand-mark-file-name text-muted small" data-empty-text="{% trans 'No file chosen' %}">{% trans "No file chosen" %}</span>
+            {% if ss.brand_mark_dark %}
+              <label class="form-check-label small text-muted">
+                <input type="checkbox" name="brand_mark_dark-clear" class="form-check-input me-1">
+                {% trans "Remove" %}
+              </label>
+            {% endif %}
+          </div>
+          <div class="field-hint">
+            {% trans "Optional variant for dark themes (Dark, Civic). Falls back to the main brand mark if empty." %}
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-sm btn-primary">{% trans "Save" %}</button>
+      </form>
+    </div>
+    <script>
+      // przycisk "Wybierz [nowy] plik" → trigger ukrytego <input type="file">
+      document.querySelectorAll('.brand-mark-choose-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.getElementById(btn.dataset.target).click();
+        });
+      });
+      // po wybraniu pliku — pokaż jego nazwę obok przycisku
+      document.querySelectorAll('.brand-mark-file-hidden').forEach(function(input) {
+        input.addEventListener('change', function(e) {
+          var row = e.target.closest('.brand-mark-field-row');
+          var nameEl = row && row.querySelector('.brand-mark-file-name');
+          if (!nameEl) return;
+          var file = e.target.files[0];
+          nameEl.textContent = file ? file.name : nameEl.dataset.emptyText;
+        });
+      });
+    </script>
+  </div>
+
   <style>
   /* dark + civic: jasna ikonka */
   :root #onboarding-accordion .accordion-button::after,

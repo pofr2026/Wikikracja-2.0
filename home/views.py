@@ -27,7 +27,9 @@ from events.models import Event
 from glosowania.models import Argument as DecyzjaArgument
 from glosowania.models import Decyzja, KtoJuzGlosowal
 from obywatele.models import CitizenActivity, Uzytkownik
+from site_settings.forms import SiteSettingsBrandingForm
 from site_settings.models import SiteSettings
+from site_settings.services import get_branding_version
 from tasks.models import Task
 
 from .forms import RememberLoginForm
@@ -800,6 +802,18 @@ def haslo(request: HttpRequest):
 
 def manifest(request):
     """Serve dynamic PWA manifest JSON"""
+    ss = SiteSettings.get()
+    if ss.brand_mark:
+        derived_url = settings.MEDIA_URL + 'site_branding/derived/'
+        version_q = f'?v={get_branding_version(ss)}'
+        favicon_src = derived_url + 'favicon.ico' + version_q
+        icon_192_src = derived_url + 'icon-192.png' + version_q
+        icon_512_src = derived_url + 'icon-512.png' + version_q
+    else:
+        favicon_src = '/static/home/images/favicon.ico'
+        icon_192_src = '/static/home/images/icon-192.png'
+        icon_512_src = '/static/home/images/icon-512.png'
+
     data = {
         'name': settings.SITE_NAME,
         'short_name': settings.SITE_NAME_MAX_12_CHARS,
@@ -812,17 +826,17 @@ def manifest(request):
         "prefer_related_applications": False,
         "related_applications": [],
         'icons': [{
-            'src': '/static/home/images/favicon.ico',
+            'src': favicon_src,
             'sizes': "16x16 32x32 48x48",
             'type': 'image/x-icon',
             "purpose": "any"
         }, {
-            'src': '/static/home/images/icon-192.png',
+            'src': icon_192_src,
             'sizes': "192x192",
             'type': 'image/png',
             "purpose": "any"
         }, {
-            'src': '/static/home/images/icon-512.png',
+            'src': icon_512_src,
             'sizes': "512x512",
             'type': 'image/png',
             "purpose": "any"
@@ -906,6 +920,17 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         messages.success(request, _('Onboarding zapisany.'))
         return redirect('site_admin')
 
+    if request.method == 'POST' and 'save_branding' in request.POST:
+        form = SiteSettingsBrandingForm(request.POST, request.FILES, instance=ss)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Branding zapisany.'))
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+        return redirect('site_admin')
+
     selected_ids = set(ss.onboarding_posts.values_list('id', flat=True))
     categories_with_posts = []
     for cat in PostCategory.objects.order_by('name'):
@@ -926,6 +951,7 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         'referendum_span': settings.CZAS_TRWANIA_REFERENDUM,
         'documents': Post.objects.all().order_by('title'),
         'ss': ss,
+        'branding_form': SiteSettingsBrandingForm(instance=ss),
         'categories_with_posts': categories_with_posts,
         'selected_onboarding_post_ids': selected_ids,
         'message_max_length': settings.MESSAGE_MAX_LENGTH,
