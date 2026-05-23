@@ -2019,7 +2019,7 @@ msgstr "Twój kod weryfikacyjny to: %(code)s"
 
 #: .\glosowania\views.py:181 .\glosowania\views.py:220
 msgid "Write down your code or create screenshot to verify it when the referendum is over. This code will be presented just once and will be not related to you."
-msgstr "Zapisz swój kod na kartce lub zrób zrzut ekranu aby zweryfikować go po zakończeniu referendum. Ten kod zostanie przedstawiony tylko raz i nie będzie powiązany z twoją osobą."
+msgstr "Zapisz swój kod na kartce lub zrób zrzut ekranu aby zweryfikować go po zakończeniu referendum. Ten kod zostanie pokazany tylko raz i nie będzie powiązany z twoją osobą."
 
 #: .\glosowania\views.py:212
 msgid "Your vote has been saved. You voted No."

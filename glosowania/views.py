@@ -160,15 +160,8 @@ def details(request: HttpRequest, pk: int):
             glos = KtoJuzGlosowal(projekt=nowy_projekt, ktory_uzytkownik_juz_zaglosowal=osoba_glosujaca)
             Decyzja.objects.filter(pk=pk).update(za=F('za') + 1)
             glos.save()
-
-        # TODO: Kod oddanego głosu
-        # - wygeneruj kod
-        # - tak
-        # - projekt
-        # - zapisz
-        # - wyswietl
-        code = generate_code()
-        report = VoteCode.objects.create(project=nowy_projekt, code=code, vote=True)
+            code = generate_code()
+            VoteCode.objects.create(project=nowy_projekt, code=code, vote=True)
 
         message1 = str(_('Your vote has been saved. You voted Yes.'))
         messages.success(request, (message1))
@@ -199,15 +192,8 @@ def details(request: HttpRequest, pk: int):
             glos = KtoJuzGlosowal(projekt=nowy_projekt, ktory_uzytkownik_juz_zaglosowal=osoba_glosujaca)
             Decyzja.objects.filter(pk=pk).update(przeciw=F('przeciw') + 1)
             glos.save()
-
-        # TODO: Kod oddanego głosu
-        # - wygeneruj kod
-        # - nie
-        # - projekt
-        # - zapisz
-        # - wyswietl
-        code = generate_code()
-        report = VoteCode.objects.create(project=nowy_projekt, code=code, vote=False)
+            code = generate_code()
+            VoteCode.objects.create(project=nowy_projekt, code=code, vote=False)
 
         message1 = str(_('Your vote has been saved. You voted No.'))
         messages.success(request, (message1))
