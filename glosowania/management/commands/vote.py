@@ -4,7 +4,6 @@ import re
 import time
 from datetime import datetime, timedelta
 
-import django
 from django.conf import settings as s
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
@@ -17,8 +16,6 @@ from glosowania.models import Decyzja
 from zzz.utils import get_site_domain
 
 log = logging.getLogger(__name__)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "zzz.settings")
-django.setup()
 
 
 class Command(BaseCommand):
@@ -26,11 +23,6 @@ class Command(BaseCommand):
     help = 'Send chat messages through email'
 
     def handle(self, *args, **options):
-        pass
-        '''Jeśli tego nie będzie to: raise NotImplementedError('subclasses of BaseCommand must provide a handle() method')
-        NotImplementedError: subclasses of BaseCommand must provide a handle() method'''
-
-    def __init__(self, *args, **kwargs):
         translation.activate(s.LANGUAGE_CODE)
 
         HOST = get_site_domain()
