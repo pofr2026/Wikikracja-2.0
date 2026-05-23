@@ -70,6 +70,9 @@ def edit(request: HttpRequest, pk: int):
     if decision.author != request.user:
         return redirect('glosowania:details', pk)
 
+    if decision.status != 1:
+        return redirect('glosowania:details', pk)
+
     if request.method == 'POST':
         form = DecyzjaForm(request.POST)
         if form.is_valid():
