@@ -59,14 +59,15 @@ def get_onboarding_user_from_request(request: HttpRequest):
 
     DESIGN NOTE: Three ways to access onboarding form:
     1. Session (immediate after signup) - primary method
-    2. Email link with signed token (backup after email confirmation)
+    2. Email link with signed token (backup after email confirmation) - overrides session
     3. Fallback for already active users with incomplete onboarding
 
     Without this logic, users get "Could not find your onboarding account" error.
     """
+    # METHOD 1: Session - set immediately after signup
     onboarding_user_id = request.session.get('onboarding_user_id')
 
-    # METHOD 2: Email link with signed token
+    # METHOD 2: Email link with signed token - overrides session if present
     # Token contains uid: signer.sign(uid) -> '<uid>:<timestamp>:<signature>'
     token = request.GET.get('token')
     if token:
@@ -81,7 +82,7 @@ def get_onboarding_user_from_request(request: HttpRequest):
     if not onboarding_user_id:
         return None
 
-    # METHOD 1: Standard flow - inactive user (just signed up)
+    # Standard path: inactive user (just signed up, not yet approved)
     user = User.objects.filter(pk=onboarding_user_id, is_active=False).first()
     if user:
         return user
@@ -107,10 +108,6 @@ def population():
 
 
 def required_reputation():
-    if population() <= s.ACCEPTANCE * 2:
-        return population() - s.ACCEPTANCE
-    if population() > s.ACCEPTANCE * 2:
-        return s.ACCEPTANCE
     '''
     Załóżmy, że próg akceptacji wynosi 3.
     W grupie pojawiają się po kolei 1, 2, 3 osoby.
@@ -124,7 +121,7 @@ def required_reputation():
     3 - 3 =  0
     4 - 3 = +1
     5 - 3 = +2
-    6 - 3 = +3
+    6 - 3 = +3  # tutaj zaczyna być używany docelowy_próg_akceptacji
     7 - 3 = +3
     8 - 3 = +3
 
@@ -133,8 +130,13 @@ def required_reputation():
     ale pierwszej osobie w grupie nikt nie dał Akceptuję,
     to po automatycznym podniesieniu progu - pierwsza osoba jest usuwana.
 
-    Stąd bierze się mechanizm automatycznego nadawania istniejącym osobom punktów reputacji.
+    Stąd bierze się mechanizm automatycznego nadawania istniejącym osobom punktów reputacji:
+    grant_automatic_reputation()
     '''
+    pop = population()
+    if pop < s.ACCEPTANCE * 2:
+        return pop - s.ACCEPTANCE
+    return s.ACCEPTANCE
 
 
 @login_required

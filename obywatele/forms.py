@@ -126,7 +126,7 @@ class ProfileForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ProfileForm, self).__init__(*args, **kwargs)
-        self.fields['phone'].label = _('Communicator or Phone number')
+        self.fields['phone'].label = _('Communicator or Phone')
         self.fields['phone'].required = True
         self.fields['city'].required = True
         self.fields['job'].required = True
@@ -167,7 +167,7 @@ class OnboardingDetailsForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(OnboardingDetailsForm, self).__init__(*args, **kwargs)
-        self.fields['phone'].label = _('Communicator or Phone number')
+        self.fields['phone'].label = _('Communicator or Phone')
         self.fields['phone'].required = True
         self.fields['city'].required = True
         self.fields['job'].required = True
