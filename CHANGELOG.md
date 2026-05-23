@@ -1,6 +1,742 @@
 # CHANGELOG
 
 
+## v1.4.0 (2026-05-23)
+
+### Bug Fixes
+
+- Dropdown z-index i wyciszanie pokoju
+  ([`c402d00`](https://github.com/soma115/Wikikracja/commit/c402d0097bc0e54b3f1687c3ac432f27327e01cc))
+
+- dropdown-menu nie byl zaslaniany przez pokoje ponizej (overflow: clip na kontenerach, position:
+  relative na .room-link) - .room-list-controls z-index 10->20 + position: relative (kebab menu
+  wychodzi ponad liste) - globalny styl .dropdown-menu/.dropdown-item z CSS variables design systemu
+  - ikona wyciszenia (fa-bell-slash) pojawia sie/znika natychmiast po kliknieciu bez odswiezenia
+  strony - etykieta przycisku: "Toggle notifications" -> "Wycisz pokoj" / "Cofnij wyciszenie" - i18n
+  PL: Wycisz pokoj / Cofnij wyciszenie
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Embedded chat - wiadomosci sklejone i za duze marginesy
+  ([`5d6655b`](https://github.com/soma115/Wikikracja/commit/5d6655bf2daffa9303e01af98e0aa31f284ca240))
+
+Selektory .message scopowane do #room nie dzialaly w embedded chacie (#ec-messages zamiast #room).
+  Rozwiazanie:
+
+- bazowe reguly .messages .message bez #room: display:flex, margin-bottom, margin-right/left 2%
+  (odpowiednie dla waskego embedded) - #room .messages .message override: marginesy 6% i max-width
+  80/90% tylko dla glownego czatu (desktop i mobile media query) - embedded chat automatycznie
+  dostaje pelna szerokosc bez ograniczen
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Invalidate unread cache for offline recipients on message send
+  ([`75689ff`](https://github.com/soma115/Wikikracja/commit/75689ff9195d1d65c90505a835e8ad553c749a97))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Merge
+  ([`9f73487`](https://github.com/soma115/Wikikracja/commit/9f73487d11fb1f75a2584af91eb38b582ed63cff))
+
+- Message_max_length 1500zn, przekaż do embedded chata (glosowania, tasks)
+  ([`e5851c7`](https://github.com/soma115/Wikikracja/commit/e5851c78e0597ac55fc1ff84ceb1cfc1ce47cae4))
+
+Widoki głosowania i zadań nie przekazywały MESSAGE_MAX_LENGTH do kontekstu, przez co embedded chat
+  używał fallbacku 500 zamiast globalnego ustawienia.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Napraw link do profilu kandydata na stronie /poczekalnia/
+  ([`321c13d`](https://github.com/soma115/Wikikracja/commit/321c13d1d5241f94b0a3326370a6f4b4ac4a9880))
+
+citizens_list.js crashował na /poczekalnia/ bo brakowało elementów #citizens-list-view,
+  #citizens-grid-view i #citizens-search. Dodano null guardy — skrypt działa teraz na obu stronach.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Ogranicz szerokość dropdownu kategorii na mobile
+  ([`12f6ca0`](https://github.com/soma115/Wikikracja/commit/12f6ca0923865f318d0ac391155608c168b14b83))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Paste image appendowal pliki zamiast je podmieniac
+  ([`30a8a02`](https://github.com/soma115/Wikikracja/commit/30a8a02f8a3d6be2e4afb0eed080062f0849cced))
+
+initGlobalPasteImageHandler tworzyl nowy DataTransfer z tylko wklejonym plikiem i przypisywal go do
+  fileInput.files, niszczac wczesniej wklejone/ wybrane obrazki. Po fixie istniejace pliki sa
+  przepisywane do nowego DataTransfer przed dodaniem nowego pliku.
+
+Po fixie kolejne CTRL+V dodaja nowe obrazki zamiast zastepowac poprzednie.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Replace blocking alert() with toast for WS errors
+  ([`4622723`](https://github.com/soma115/Wikikracja/commit/4622723a7d50190c592e5f410eb0322121e7e4cf))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Restored translations used in JS
+  ([`82931c9`](https://github.com/soma115/Wikikracja/commit/82931c9abe31b3f2448bdbb1678f7e89d85ca9dc))
+
+- Ukryj prywatne DM-y na profilu obywatela
+  ([`4ed4cf3`](https://github.com/soma115/Wikikracja/commit/4ed4cf34e9d051900947e808089c5db5fabf03a9))
+
+Zakładki "Czaty" i "Założono" pokazywały wiadomości i pokoje z prywatnych rozmów 1-na-1, co
+  ujawniało treści prywatnych DM-ów osobom trzecim.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Zsynchronizuj last_activity z last_message_at
+  ([`8a88e8b`](https://github.com/soma115/Wikikracja/commit/8a88e8b83c5025ec57a1eea008842b0f6829f378))
+
+Commit denormalizujacy last_message wprowadzil regresje: Room.objects.filter ().update(...) omija
+  auto_now, wiec last_activity przestal byc aktualizowany przy nowych wiadomosciach. Sort sidebara
+  po dacie pokazywal pokoje wedlug zatluczonego last_activity (np. tralla z ostatnia wiadomoscia
+  dzis ladowala ponizej pokoju z wiadomoscia sprzed 2 tygodni).
+
+Sidebar template uzywa teraz last_message_at jako primary sort key z default_if_none na
+  last_activity dla pustych pokojow.
+
+consumers przez services.update_room_last_message ustawia last_activity explicit na message.time —
+  fix dotyczy tez obywatele/citizen_czaty (sortowanie pokojow w profilu uzytkownika).
+
+Backfill management command zaktualizowany — uzywa last_activity = max(current, message.time) zeby
+  nie cofnac dat dla pokojow modyfikowanych po ostatniej wiadomosci. Re-uruchomiony na bazie: 19
+  pokojow zaktualizowanych.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **activity**: Chat messages nie pokazywaly sie w aktywnosc/
+  ([`6a60b13`](https://github.com/soma115/Wikikracja/commit/6a60b138fece28c801a04547001b1a79f22d58c1))
+
+_generate_feed_raw() budowal elementy pokojow bez _allowed_user_ids, przez co generate_feed_items()
+  zawsze pomijal wiadomosci z chatu.
+
+Dodano _is_public i _allowed_user_ids do cache, poprawiono filtr aby uwzgledniał publiczne pokoje,
+  dodano sygnal m2m_changed dla Room.allowed (inwalidacja cache po zmianie dostepu) oraz testy TDD.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Draft nie kasuje sie po wyslaniu wiadomosci
+  ([`388cda0`](https://github.com/soma115/Wikikracja/commit/388cda0f78a7264bf4d79b2352a70c50364d35ac))
+
+clearDraft() byl wolany przed innerHTML='', przez co natywny input event przegladarki (ze stara
+  trescia) nadpisywal draft z powrotem. Przesunieto clearDraft po wyczyszczeniu inputa.
+
+Dodatkowo: new Event('input') zamieniony na InputEvent z bubbles:true we wszystkich 3 miejscach
+  (restoreDraft, onSubmitMessage, stopEditing) — event nie docieral do document-level listenerow
+  (counter, saveDraft).
+
+Dodano setup Jest + testy regresyjne (draft.test.js).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Mobile — tap aktywnego pokoju zwija rozwiniętą listę
+  ([`a307616`](https://github.com/soma115/Wikikracja/commit/a307616e1b1e9c315a667e485c089d8bdb4fbb41))
+
+Bez tego klik w już-joined room z rozwiniętej listy (mobile) nie robił nic (early-return po klasie
+  .joined), więc nie było jak wrócić do pokoju inaczej niż przez `>>` w nagłówku listy.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat**: Nie pokazuj "... pokaz wiecej" dla krotkich wiadomosci
+  ([`0fb015d`](https://github.com/soma115/Wikikracja/commit/0fb015de6f359de7c18d5306b9af8ce7c79473ff))
+
+Odwroc logike expandable z fail-open na fail-closed: hint i klikalnosc wlaczane dopiero gdy JS
+  potwierdzi overflow (.has-overflow), zamiast domyslnie wlaczonych z opcjonalnym wylaczeniem
+  (.no-overflow). Wczesniej kazde niepowodzenie detekcji (timing fontow, edit-flow) zostawialo "...
+  pokaz wiecej" przy krotkich wiadomosciach.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat**: Pokaz przycisk zwijania listy pokoi na mobile
+  ([`0b28430`](https://github.com/soma115/Wikikracja/commit/0b28430733e205193c6886d344a936d1ab209a32))
+
+Ukryj tekstowe etykiety (Date/Likes/Popular) w pasku sortowania ponizej 768px, zeby przycisk >> mial
+  miejsce na ekranie.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **i18n**: Napraw ekstrakcje tlumaczen chat/views.py + dropdown chevron sidebar
+  ([`0b013cd`](https://github.com/soma115/Wikikracja/commit/0b013cd799dbba2920ac68a3abd06317ec3f830b))
+
+Problemy: 1. Wzor `{x: _(x) for x in strings}` w get_translations() nie byl widoczny dla
+  makemessages - wszystkie te stringi byly tracone z .po przy kazdym `start_dev.py --full`, co
+  powodowalo regresje w UI czatu (placeholder, hint skrotow, reactions). 2. Dropdown chevron przy
+  pokojach w sidebarze byl obcinany przez overflow:hidden na .nav-cat-content (uzywany do animacji
+  collapse).
+
+Zmiany: - chat/views.py: get_translations() zwraca dict literal z jawnym _("...") na kazdym kluczu -
+  kazdy string jest teraz widoczny dla xgettext - locale/pl: dodane/poprawione polskie tlumaczenia
+  dla wszystkich stringow w get_translations() (Reply, Shift hint, Upvote/Downvote, miesiace
+  Jan-Dec, Tomorrow, Link copied, edit/edited, Popular, Sorting and filter, Likes, Could not copy
+  link, Copy message link) - handlers.js: bootstrap.Dropdown dla .room-link__chevron z
+  popperConfig.strategy='fixed' - dropdown pozycjonowany wzgledem viewportu, omija overflow rodzica
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **obywatele**: Last_login pokazuje rzeczywista aktywnosc usera
+  ([`4ac98fe`](https://github.com/soma115/Wikikracja/commit/4ac98fedd5f5b9df0bfbd5a6c1af335d8b11d491))
+
+Middleware UpdateLastSeenMiddleware aktualizuje last_login przy kazdym requescie zalogowanego usera
+  (throttling 5 min przez Redis). Bez tego /obywatele/?sort=-last_login pokazywal stare daty -
+  Django aktualizuje last_login tylko przy formalnym logowaniu, a sesje trwaja 90 dni.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **tasks**: Filtrowanie po kategorii nie pokazywalo zadan
+  ([`3f39e85`](https://github.com/soma115/Wikikracja/commit/3f39e85fcaeb0a9d30911cd2bd9b4bb0c0c7e847))
+
+Karta zadania miala data-category=\"{{ task.category }}\" co przez __str__ AbstractCategory
+  renderowalo NAZWE kategorii. Filter dropdown przekazuje SLUGI (data-key={{ cat.slug }}). JS
+  porownywal slug z nazwa, nigdy nie matchowalo, wszystkie karty znikaly.
+
+Zmiana: data-category={{ task.category.slug }}. Spojne z backendowym _filter_by_category ktory tez
+  uzywa slugow.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **ui**: Pola tekstowe widoczne na tle strony — nowe tokeny --input-bg / --input-border
+  ([`264002d`](https://github.com/soma115/Wikikracja/commit/264002d499def92d367cbfb6bde49718e390974c))
+
+Inputy i textarea używały --bg-base (tło strony), przez co zlewały się z tłem. Dodano tokeny
+  --input-bg i --input-border per-temat; objęte: .form-control, .compose-box, .richtext-wrapper,
+  .arg-inline-form textarea, .cat-mgr-input, .topbar .search-box. Focus state naprawiony z hardcoded
+  dark-accent na var(--accent) / var(--accent-muted).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Chores
+
+- Ignoruj uploady w media/elibrary
+  ([`872f23d`](https://github.com/soma115/Wikikracja/commit/872f23dc4d064f263fe3a56c75489dde86bb9976))
+
+Pliki w media/elibrary/ to dynamiczne uploady — nie powinny trafiac do repozytorium (analogicznie do
+  media/board/attachments i media/avatars).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Usun nieuzywany import cache z chat/views
+  ([`c4c4e5e`](https://github.com/soma115/Wikikracja/commit/c4c4e5e449d313ef552d93ea995d3d12cc0db0e8))
+
+Pozostalosc po wczesniejszym refactor cleanupie.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **i18n**: Odswiez referencje linii w pl/django.po
+  ([`1f3a9a5`](https://github.com/soma115/Wikikracja/commit/1f3a9a5241e3fe5deacda8ea8b3426bc9c9b2210))
+
+Auto-generated przez makemessages po zmianach kodu - same numery linii i POT-Creation-Date, brak
+  zmian w tlumaczeniach.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **test**: Add pytest infrastructure
+  ([`77e0c1f`](https://github.com/soma115/Wikikracja/commit/77e0c1fd08c1e3cc8564709af327b4e07dabd118))
+
+- Add pytest, pytest-django, pytest-asyncio, factory-boy to requirements - Configure pytest in
+  pyproject.toml with zzz.test_settings - Set asyncio_mode=auto for native async def test support -
+  Create tests/ package for cross-cutting test suite
+
+Existing Django TestCase suites (chat, events, home, obywatele, tasks) work natively under pytest —
+  no migration needed.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **vscode**: Recommend Playwright extension
+  ([`1933805`](https://github.com/soma115/Wikikracja/commit/1933805001bb1efa272689103f2aaab98c316013))
+
+Po dodaniu @playwright/test devom przy klonie projektu VSCode zasugeruje instalację oficjalnego
+  rozszerzenia (test runner UI, codegen, debug).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+### Documentation
+
+- Add test migration plan with discovered signal behaviors
+  ([`10d3b8c`](https://github.com/soma115/Wikikracja/commit/10d3b8c5bd6708946790730f06d00c40ee807b60))
+
+Documents the cherry-pick approach used to migrate tests from the `tests` branch (jordan
+  exploration): hybrid co-located + /tests/ structure, pytest adoption, 24 tests kept out of ~200
+  from source branch (rest rejected as placebo or duplicates).
+
+Records two non-obvious signal behaviors discovered during migration: -
+  obywatele.models.create_user_profile: auto-creates Uzytkownik per User -
+  glosowania.signals.create_or_update_chat_room_for_referendum: auto-creates chat_room with specific
+  properties (public, protected, founder, welcome message, allowed.set(active_users)) on
+  Decyzja(status=1)
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Features
+
+- Add pending/failed message states to DOM API and CSS
+  ([`811c8d2`](https://github.com/soma115/Wikikracja/commit/811c8d27ccbe7f2b90bfdc54d330569f6a7f0b7a))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Avatar/ikona pokoju w liscie
+  ([`e43a9e3`](https://github.com/soma115/Wikikracja/commit/e43a9e3af82ebf0f0f3a3205b1fc76d831aa8210))
+
+Kazdy pokoj dostaje kolko po lewej z ikona zalezna od typu — publiczna grupa (users), zadanie
+  (tasks), referendum (vote-yea), DM (avatar drugiej osoby z Uzytkownik.avatar, fallback fa-user).
+  Klasa modifier --public/--task/--vote/ --private zachowana w DOM dla pozniejszej kolorystyki
+  per-typ.
+
+Rozdzielony prefetch listy pokojow w views.py: publiczne dostaja lean only('id','username') (moga
+  miec setki czlonkow), prywatne select_related ('uzytkownik') zeby zaladowac avatar jednym
+  zapytaniem.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Denormalizacja last_message na Room
+  ([`02410db`](https://github.com/soma115/Wikikracja/commit/02410db2640f3dc01ba0b3eb5f5bb94d503532ec))
+
+Dodaje 4 pola (text/sender/at/anonymous) aktualizowane w consumers po zapisie wiadomosci. Eliminuje
+  join na Message przy renderze listy pokojow w sidebarze, gdy bedziemy pokazywac preview ostatniej
+  wiadomosci. Backfill istniejacych pokojow management commandem.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Dwuliniowy uklad pokoju z podgladem ostatniej wiadomosci
+  ([`c2afbf1`](https://github.com/soma115/Wikikracja/commit/c2afbf12d0e0f78bf188da3a6704e4ae4498b969))
+
+Sidebar wyswietla 2 linie per pokoj: nazwa + data po prawej nad linia "nadawca: podglad". Pokoje
+  nieprzeczytane maja pogrubiona nazwe i date w akcencie, wyciszone pokazuja dzwoneczek
+  przekreslony. Pusta tresc (tylko zalacznik) renderuje "zalacznik" jako fallback. Pokoje bez
+  wiadomosci pokazuja tylko 1 linie.
+
+Dodaje filter relative_chat_date (HH:MM/Wczoraj/dzien/dzien miesiac/+rok) i
+  select_related('last_message_sender') na queryset listy pokojow.
+
+Naprawia 3 bugi w handleRoomLinkClick (dawniej handleRoomNameClick): - parentElement dawniej zwracal
+  .room-link, po zmianie nestingu juz nie; - click na 2. linii (preview) nie joinowal pokoju —
+  rozszerzony target na cale .room-link z wykluczeniem .room-controls; - pre-existing:
+  classList.contains("joined") sprawdzane na .room-name (zawsze false bo klasa jest na .room-link).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Hover-reveal kontrolek pokoju (chevron + dropdown)
+  ([`b9591cd`](https://github.com/soma115/Wikikracja/commit/b9591cdfe91d78414432336a6d47a9fc60bd6a0d))
+
+Cztery przyciski (track/seen/notif/copy) chowaja sie pod chevronem ktory pojawia sie tylko przy
+  hover na pokoj (desktop) lub jest permanentnie widoczny na touch (@media (hover: hover)
+  detection). Klik chevronu otwiera Bootstrap dropdown z labelkami tekstowymi przy opcjach.
+
+Istniejace klasy .track-switch/.seen-switch/.notif-switch/.copy-room-url zachowane na
+  dropdown-itemach, wiec wszystkie handlery dzialaja bez zmian.
+
+Naprawia copy-link feedback: button w dropdownie znika razem z menu po klikniecu, wiec inline badge
+  nie zdazyl sie pokazac — teraz uzywa window.show Toast. Message copy zostaje na inline feedback.
+
+Usuwa martwy CSS po .copy-link-btn (klasa juz nie istnieje w templatce).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Live update sidebara po nowej wiadomosci
+  ([`b3fba3d`](https://github.com/soma115/Wikikracja/commit/b3fba3db211e40d7c448d69d0a52b3562ebed386))
+
+Po wyslaniu/odebraniu wiadomosci pokoj natychmiast wskakuje na gore swojej kategorii z aktualna
+  godzina i podgladem tekstu — bez odswiezania strony.
+
+- DomApi.updateSidebarForMessage() aktualizuje date, nadawce, snippet i przesuwa .room-link na
+  poczatek kontenera - _relativeChatDate() replikuje logike Django relative_chat_date w JS (korzysta
+  z TRANSLATIONS: Yesterday, dni tygodnia, skroty miesiecy) - wywolanie przy optimistic UI
+  (confirmMessage) i normalnej sciezce - 'attachment', 'Mute room', 'Unmute room' dodane do
+  get_translations()
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Merge UI branch (without tests)
+  ([`ee1710b`](https://github.com/soma115/Wikikracja/commit/ee1710bfe0f615d72f9d71211194c1e7256f8573))
+
+- Nawiguj do konkretnej wiadomości z profilu obywatela
+  ([`280ffdc`](https://github.com/soma115/Wikikracja/commit/280ffdcb31a7d060ec506e8ce9f1e41fa9662f56))
+
+Link z zakładki "Czaty" teraz przekazuje message_id, dzięki czemu chat przewija do wybranej
+  wiadomości i podświetla ją przez 5 sekund.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Przycisk 'wg kategorii' w toolbarze pokoi
+  ([`cb53a71`](https://github.com/soma115/Wikikracja/commit/cb53a71871941ccc1eff162b4abc58169ccf9001))
+
+sort-reset-btn wyciagniety z dropdown do toolbaru jako ikona fa-layer-group. Kolejnosc: szukaj |
+  nieprzeczytane | czas | wg kategorii | ... | >> Padding sort-btn w toolbarze zmniejszony (.45rem)
+  i gap (.25rem) zeby wszystko zmieszcilo sie na mobile.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Redesign listy obywateli — awatar, zebra stripes, spójność z design system
+  ([`df16da5`](https://github.com/soma115/Wikikracja/commit/df16da5d7ff0adfb06239cfed4b67c8600e70aff))
+
+- Awatar w widoku listy (28px) z kropką statusu nałożoną w rogu, jak w gridzie - Nick pogrubiony
+  (font-weight 600) w kolumnie listy - Zebra stripes przez color-mix(bg-card 93%, blue 7%) — solidny
+  kolor bez problemu z przezroczystością na Darkly theme - Reset szarego tła Bootstrap na bg-card
+  dla wszystkich wierszy tabeli - Grid: minmax 140px→180px, awatar 40px→48px, hover tło accent-muted
+  - proposal-chat-link: hardkodowane rgba zastąpione przez --accent-muted i --accent-glow -
+  citizens_list.css: usunięto redundantny hover cursor i hardkodowany kolor hover
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Redesign strony logowania — global design, theme toggle, podgląd hasła
+  ([`7c1b395`](https://github.com/soma115/Wikikracja/commit/7c1b3950c267b23edae49bb93aab664c36fd65a1))
+
+- login.html: CSS variables zamiast text-info, show/hide password - app.css: #login-box card styles
+  oparte wyłącznie na design tokenach - base.html: theme toggle button w anon-nav (ta sama logika co
+  po zalogowaniu) - app.js: poprawiony komentarz (handler był błędnie przypisany do base.html)
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Redesign toolbara listy pokojow (szukajka + kebab)
+  ([`792c7c8`](https://github.com/soma115/Wikikracja/commit/792c7c88d0428fe8fd00635fd882be2a23290cbb))
+
+Nowy uklad: szukajka po nazwie pokoju + sort-time + unread-filter + kebab (z opcjami Dodaj/Bez
+  sortowania/Zwin wszystko/Pokaz archiwum/Info) + hide-list. Globalny archive toggle zastapil 4
+  per-category buttony przy naglowkach kategorii.
+
+Pre-existing tlumaczenia PL nie zostaly zaktualizowane (makemessages bedzie zrobione zbiorczo po
+  reszcie commitow z serii UI).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Sortowanie pokoi po ostatniej aktywności (↓/↑) z resetem do kategorii
+  ([`e99dbb4`](https://github.com/soma115/Wikikracja/commit/e99dbb4441a8b1371a3dcfb13e9e583b79d03a71))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Toolbar obywateli — grid/list toggle, live search, filtr aktywności, status dot
+  ([`5cc416e`](https://github.com/soma115/Wikikracja/commit/5cc416ee3249ebe317b0656aa44995b1f233aa7d))
+
+- Toolbar: wyszukiwarka live (debounce 150ms, filtruje nick/imię/nazwisko), dropdown filtra
+  aktywności (online/7d/30d/nieaktywni), toggle widoku grid/list (PagePrefs, global design system) -
+  Widok grid: avatar z fallbackiem na inicjał, status dot, nick, imię+nazwisko, miasto, przycisk DM
+  - Status dot: 4 stany (online <5min, aktywny ≤7d, uśpiony ≤30d, nieaktywny) — tokeny w :root -
+  Kafelek '% zalogowanych' w pulpicie wspólnoty → link do ?aktywnosc=30d - Fix: sync filtrów z
+  PagePrefs przed nawigacją (zapobiega przywracaniu przez head-script) - Design system: CSS
+  variables we wszystkich nowych stylach, .view-toggle-btn/.toolbar-view zgodne z global design,
+  usunięty martwy CSS .filter-chip
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Whatsapp-style input + tlumaczenia embedded czatu
+  ([`7d64501`](https://github.com/soma115/Wikikracja/commit/7d645016b412a584cc84bac8a4e1a3ea4e8fae1c))
+
+- Enter wysyla, Shift+Enter nowa linia (zamiast Ctrl+Enter) - '-' lub '*' + spacja zamienia sie na
+  punkt listy '•' - Placeholder hints: skroty klawiaturowe w pustym polu - richtext-core.js jako
+  single source of truth dla embedded i main chat - ec_translations przekazywane z widokow tasks i
+  glosowania zeby embedded chat mial polskie tlumaczenia
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Widok obywateli — filtr aktywności, grid/list toggle, live search
+  ([`574c210`](https://github.com/soma115/Wikikracja/commit/574c210987bfe70fa2199b2a4c93f244e6670975))
+
+Dodano filtrowanie po aktywności (online/7d/30d/nieaktywni), przełącznik widoku lista↔grid z
+  pamięcią w localStorage, live search po nazwie użytkownika oraz wskaźniki statusu aktywności
+  (status-dot). Widok wspolnota linkuje do filtra 30d. Usunięto zduplikowany przycisk Dodaj w widoku
+  propozycji Agory.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Wklejanie obrazków ze schowka (Ctrl+V) w czacie głównym i embedded
+  ([`07e82ad`](https://github.com/soma115/Wikikracja/commit/07e82ada86bf8e8d3fa298dfaebdffdb964db99b))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Wymagaj logowania dla widoku wspolnota
+  ([`0dacdb6`](https://github.com/soma115/Wikikracja/commit/0dacdb69e5455635b0e6136bcfb44421e7840dcf))
+
+Dodano @login_required decorator do wspolnota view - dostep tylko dla zalogowanych uzytkownikow.
+
+- Zunifikuj widok poczekalni z listą obywateli (grid/list + szukajka)
+  ([`76e10d1`](https://github.com/soma115/Wikikracja/commit/76e10d175adb200d9023c2ce09527d893008960b))
+
+- poczekalnia.html: toolbar z szukajką i przełącznikiem widoku list/grid, awatar, ikona głosu inline
+  w wierszu, ikony statusów email/formularza, scope preferencji 'poczekalnia' - start.html:
+  data-href na wierszach i kartach (poprawka semantyczna URL) - citizens_list.js: kliknięcia używają
+  data-href zamiast hardcoded URL - app.css: klasa .candidate-vote-badge dla ikony głosu w gridzie
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **calendar**: Klikalne puste dni + klikalny kafelek kalendarza
+  ([`36a191f`](https://github.com/soma115/Wikikracja/commit/36a191f9e971d88081fff6dc6bd0b99482932da2))
+
+- Tytuł sekcji "Calendar" na /obywatele/wspolnota/ jest teraz linkiem do /events/; styl
+  text-decoration przeniesiony do a.wspol-section-title w components.css (single source of truth) -
+  Puste dni w _calendar_partial.html mają data-day + href do events:list; istniejący JS
+  (jumpToDay/setFromDate) automatycznie filtruje agendę do następnego eventu po klikniętym dniu
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Klikalne nicki + awatary autorow wiadomosci
+  ([`8f66075`](https://github.com/soma115/Wikikracja/commit/8f660759b9f7e3b22fd7573838b3ee718b6c43e4))
+
+Nick autora w naglowku wiadomosci staje sie linkiem do /obywatele/<id>/ (zarowno w normalnym czacie
+  jak i w embedded). Przed nickiem pokazujemy awatar uzytkownika: - uploaded avatar -> obrazek z
+  media/avatars/ - brak avatara -> kolko z inicjalami (2 pierwsze litery username, accent bg)
+  spojnie z stroną profilu obywatele/szczegoly.html - anonimowa wiadomosc -> ikona "?" w neutralnym
+  kole (nie zdradza autora)
+
+Rozmiar awatara dopasowany do wysokosci linii naglowka (= height ikony reply, 1.875rem). Awatar +
+  nick razem w jednym <a>, zeby caly element "autor" byl klikalny.
+
+Implementacja: - chat/serializers.py (NEW): wyciagnieto build_chat_message_payload jako czysta
+  funkcja, testowalna w izolacji. Dla anon: user_id=None, avatar_url wymuszone na
+  /static/home/images/anonymous.svg. - chat/consumers.py: oba paths (single + batch) uzywaja
+  serializera, user_id przestaje byc kasowane z payloadu. - chat/services.py: get_avatar_url
+  naprawione - uzywa user.uzytkownik zamiast user.profile (poprzednia wersja zawsze rzucala
+  AttributeError zjadany przez except, kazdy user dostawal placeholder). select_related
+  ('uzytkownik') w get_user_by_id i get_recent_messages_batch wycinaja N+1. Funkcja przemianowana z
+  _get_avatar_url na get_avatar_url (uzywana miedzymodulowo). -
+  chat/static/chat/js/{templates,domapi,chat,chat-embedded}.js: pipeline user_id + avatar_url
+  przepuszczony przez addMessage/buildMessageHtml. - chat/static/chat/css/chat.css: .username-link,
+  .msg-author-avatar, .msg-author-initials uzywaja CSS variables (--color-text-muted,
+  --color-accent, --accent-hover, --border). - home/static/home/images/anonymous.svg (NEW): "?" w
+  szarym kole. - chat/tests/test_serializers.py (NEW): 16 testow pokrywajacych user_id, avatar_url,
+  vote, reactions, own, new dla scenariuszy anon/non-anon. - chat/tests/test_services.py (NEW): 4
+  testy get_avatar_url (no upload, None user, AttributeError, happy path z SimpleUploadedFile).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat**: Rework nawigacji — ?view=rooms / ?view=unread + empty states
+  ([`6bfc4dc`](https://github.com/soma115/Wikikracja/commit/6bfc4dc6cfd58746269ab61bef7d64726bb3c1c1))
+
+Sidebar i dashboard badge prowadza teraz do dedykowanych widokow czata: - ?view=rooms (sidebar) —
+  lista pokoi, filtr unread OFF, placeholder w obszarze wiadomosci - ?view=unread (badge) — lista z
+  filtrem unread ON, empty state w prawej kolumnie gdy 0 wynikow - ?unread=1 — legacy alias dla
+  starych bookmark'ow/push'y
+
+Empty state "brak nieprzeczytanych" przeniesiony do applyUnreadFilter — dziala tez w runtime, gdy
+  user przeczyta ostatni unread przy aktywnym filtrze. Komunikat zawiera inline ikone (eye-slash)
+  wskazujaca konkretny przycisk do klikniecia.
+
+CSS :has() chowa drzewo kategorii gdy empty state widoczny — bez tykania inline style .row, zeby nie
+  kolidowac z sort'em wg czasu.
+
+Dodatkowo: TDD strict dla decideStartupAction (testy JS), testy Django dla badge'a + sidebar linka,
+  anti-flash dla restore filtra z localStorage, placeholder "Wybierz pokoj" gdy brak aktywnego
+  pokoju, tlumaczenia PL.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **glosowania**: Badge z licznikiem zamiast numeru etapu w stepperze
+  ([`d392f7f`](https://github.com/soma115/Wikikracja/commit/d392f7f994d3cb6a115017e63e1f05c22fe3e04c))
+
+- helper get_stepper_counts() (1 aggregate query z Exists na ZebranePodpisy) - template tag {%
+  glosowania_counts %} + 9 testow - badge .stepper-step-count ukryty przy 0; light/official override
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+### Performance Improvements
+
+- Compress images client-side before upload (canvas → WebP 0.75, max 1280px)
+  ([`a8b6a16`](https://github.com/soma115/Wikikracja/commit/a8b6a160ae5425e5aaa70207ac8e2ff803e40676))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Optimistic UI for sending messages
+  ([`cb73027`](https://github.com/soma115/Wikikracja/commit/cb730272f0d1ca74f4af3c0a150bdc22e6dbbb59))
+
+Renders the user's own message immediately on send with a pending state, then swaps to confirmed
+  when the server echoes it back. Matched via client-generated temp_id passed through the WS payload
+  and broadcast. Failed state shown after 10s timeout if no broadcast arrives.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat**: Apply LIMIT and ORDER BY in SQL for message batch fetch
+  ([`05b056f`](https://github.com/soma115/Wikikracja/commit/05b056f260c31c179474decaaeec67a3c5d270c6))
+
+For the common case (sort by date, no popularity filter) the query now uses the existing (room,
+  time) DB index and lets the DB do ORDER BY + LIMIT instead of loading the full room history into
+  Python.
+
+The Python path is kept for sort_by='likes' and popular_only=True because upvotes live in a
+  JSONField and cannot be ordered/filtered at the DB level.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Broadcast message before running per-recipient bookkeeping
+  ([`ce4799a`](https://github.com/soma115/Wikikracja/commit/ce4799a834385b35b165dbb7bbde7c997067b398))
+
+Previously the broadcast was queued on the proxy and only dispatched after the whole send handler
+  returned — meaning every subscriber waited for the sender's
+  tracked_by/seen_by/membership/push-notification work to finish.
+
+Now the broadcast goes directly through channel_layer.group_send right after save_message +
+  save_attachments. The remaining work (participated_only tracking, unread state for offline
+  members, browser/push notifications) moves to _post_send_processing, run via asyncio.create_task
+  so the handler returns immediately.
+
+A small _dispatch_proxy helper flushes proxy-built helper messages outside of receive_json.
+  Exceptions in the background task are logged and contained to avoid silent task-never-awaited
+  warnings.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat**: Eliminate redundant DB queries in send_message handler
+  ([`599028f`](https://github.com/soma115/Wikikracja/commit/599028fc7f41b67fe9c12462473cd09e2e0046e1))
+
+Removed a duplicate get_room() call and a get_user_by_name() lookup that re-fetched the
+  already-available self.scope['user']. Saves 2 DB queries on every message send.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Refactoring
+
+- Usun email_notifications_chat_participated z ustawien
+  ([`6007736`](https://github.com/soma115/Wikikracja/commit/6007736c6397153c368137ac301772ce3aac9c0c))
+
+- Pole email_notifications_chat_participated usuniete z modelu Uzytkownik (migracja 0020) -
+  obywatele/views.py: 4. wiersz notifications usuniety, 'chat_participated' usuniete z
+  NOTIFICATION_FIELDS w toggle_notification - profile.js: usunieto MUTUALLY_EXCLUSIVE +
+  disableToggle (frontendowy hack ktory pilnowal ze 2 toggle czatu nie sa rownoczesnie ON) -
+  django.po: usunieto nieuzywane tlumaczenia (Track room, Untrack room, Chat — my active
+  discussions, etc.)
+
+Ustawienia czatu maja teraz 1 prosty toggle ON/OFF. Per-room mute pozostaje jako precyzyjna
+  kontrola.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Usun track button + auto-mute z UI czatu
+  ([`b6c5247`](https://github.com/soma115/Wikikracja/commit/b6c524721feb5c33b54eadc10795b111882bd857))
+
+- room_link.html: usunieto {% with %} z is_tracked/is_not_participated, usunieto blok {% if
+  participated_only %} z track button, usunieto klase room-auto-muted - chat.css: usunieto style
+  .room-link.room-auto-muted - handlers.js: usunieto handler kliku na .track-switch (fetch
+  toggle-track endpoint juz nie istnieje) - chat.js: usunieto onRoomTracked websocket handler
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Usun tracked_by + participated_only z backendu czatu
+  ([`493241f`](https://github.com/soma115/Wikikracja/commit/493241f955d9a8606ca51abf0417a2c0e86ee2b4))
+
+- Room.tracked_by usuniete (migracja 0019) - Endpoint toggle_track + url + view usuniete -
+  consumers.py: usunieto participated_only filtr w push notifications i auto-track w
+  _post_send_processing (oszczednosc na queries) - chat/views.py: usunieto participated_only /
+  participated_room_ids z kontekstu chat view (eliminacja query Message.filter na kazdym wejsciu) -
+  filters.py: usunieto not_participated, is_tracked_by, is_auto_muted
+
+Per-room mute pozostaje jedynym mechanizmem precyzyjnej kontroli.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- Usuń inline style i zduplikowane skrypty z zakładek profilu
+  ([`28835b2`](https://github.com/soma115/Wikikracja/commit/28835b21fb6d0be39414ac4d7b6051869fb4b1aa))
+
+Inline font-size i max-width przeniesione do klas CSS (.table-hover-rows, .citizen-tab-empty,
+  .td-truncate). Cztery identyczne script bloki zastąpione jednym event delegation listenerem w
+  szczegoly.html.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Testing
+
+- Add bulk_create performance tests with CaptureQueriesContext
+  ([`13f63a1`](https://github.com/soma115/Wikikracja/commit/13f63a18d8f9abb631404845308027ef3eaa10b8))
+
+Asserts on query count (≤ 5) instead of wall time. Time-based thresholds in SQLite test DB are too
+  noisy and would never detect N+1 in a meaningful window — but query count flips from ~1-2 (correct
+  bulk_create) to 100+ at the moment of regression.
+
+Covers bulk_create for board.Post (100 records) and bookkeeping.Transaction (150 records).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Add per-app tests (bookkeeping Transaction, obywatele Rate)
+  ([`82514d5`](https://github.com/soma115/Wikikracja/commit/82514d5c07a82b6fc066ae99031ce3d7a849b260))
+
+- bookkeeping/tests/test_models.py: new tests/ package for previously untested app; covers
+  Transaction relations + type choices - obywatele/tests/test_reputation.py: covers Rate model with
+  unique_together constraint and reputation sum flow
+
+Both use Django TestCase (per-app convention on ui), not pytest factories. obywatele test documents
+  the post_save(User) signal that auto-creates Uzytkownik — must use .get(uid=user), not
+  .create(uid=user).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Add shared conftest and factories (allauth-compatible)
+  ([`3856942`](https://github.com/soma115/Wikikracja/commit/38569425a26def07ce975ab8316376a6de2b5a66))
+
+- tests/conftest.py: 6 fixtures (authenticated_client, chat_room, board_category, bookkeeping_*,
+  sample_users); uses force_login to bypass allauth email-only backend - tests/factories.py: 5
+  factories (UserFactory, PostCategoryFactory, PostFactory, RoomFactory, DecyzjaFactory);
+  UserFactory.password hashed via post_generation with update_fields=['password'] to isolate from
+  post_save(User) signals - tests/test_smoke.py: 6 smoke tests verifying factories + fixtures work
+
+DecyzjaFactory deliberately does NOT set chat_room — glosowania.signals auto-creates chat_room on
+  Decyzja(status=1) save; setting it would create an orphan room.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Add WebSocket integration suite for ChatConsumer (8 tests)
+  ([`5f1020b`](https://github.com/soma115/Wikikracja/commit/5f1020b51b408e1d7d4855916669caaa015de2b2))
+
+Covers ChatConsumer protocol surface with concrete error code assertions: - Anonymous user rejection
+  (close on connect) - Authenticated connect returns unread_count - Join public room returns
+  metadata (id, title, public, notifications) - Join private room as non-member returns
+  ACCESS_DENIED - Send to unjoined room returns ROOM_ACCESS_DENIED - message-react with invalid
+  reaction returns INVALID_REACTION - get-notifications-data returns 'rooms' field - Multi-user
+  broadcast via InMemoryChannelLayer reaches second user
+
+InMemoryChannelLayer from zzz/test_settings.py — no Redis required for tests.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Add workflow smoke tests (chat lifecycle + glosowania signal)
+  ([`f42fe62`](https://github.com/soma115/Wikikracja/commit/f42fe620bd924747309266d1d88b1709e6e06010))
+
+- tests/test_workflow_chat.py: full Message lifecycle (create → edit with MessageHistory →
+  MessageReadBy → MessageAttachment → reactions JSONField) - tests/test_workflow_glosowania.py:
+  complete Decyzja flow (Argument FOR/AGAINST, ZebranePodpisy, KtoJuzGlosowal, VoteCode, status
+  transition) + dedicated test_signal_auto_creates_chat_room_for_new_decyzja that explicitly asserts
+  glosowania.signals.create_or_update_chat_room_for_referendum behavior (public, protected, founder,
+  welcome message, allowed.set(active_users))
+
+These are smoke tests verifying schema/relations stay intact across releases — not business logic
+  tests for quorum/timing rules.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Configure pytest testpaths to discover per-app tests
+  ([`716f69c`](https://github.com/soma115/Wikikracja/commit/716f69c630a917acbaa41e7239cfb1e1a40510d7))
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- Fix flaky email tests with synchronous threading stub
+  ([`1f9d716`](https://github.com/soma115/Wikikracja/commit/1f9d71625e2a23cb29b8bcd1361c790f299821f9))
+
+Patch threading.Thread to a synchronous _SyncThread in setUp so the TestCase transaction is visible
+  to recipient queries inside the email worker. Production code unchanged — keeps the
+  race-protection commit that fetches recipients inside the worker just before sending.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **e2e**: Add Playwright setup with mobile chat regression test
+  ([`a9d4678`](https://github.com/soma115/Wikikracja/commit/a9d4678535fbeb24e747521d2023649c12e860da))
+
+Setup z storageState reuse (login raz w auth.setup.js), dwa projekty (mobile-chromium Pixel 5,
+  desktop-chromium 1280x800), inline loader .env.local bez zewnętrznego dotenv. Test pokrywa zarówno
+  pozytywny flow mobile (lista się zwija przy tapie aktywnego pokoju) jak i desktop guard
+  (window.innerWidth < 768 — klasa room-list-showing nie jest zdejmowana).
+
+.gitignore dorzucony też dla .coverage (untracked pytest-cov artifact).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **e2e**: Wait for #sidebar after login to confirm session persistence
+  ([`92c53b9`](https://github.com/soma115/Wikikracja/commit/92c53b95c87d5c633c6e4c6e4959a0314d311970))
+
+Dodany waitForSelector('#sidebar') po Promise.all z waitForURL — sidebar renderuje się tylko dla
+  zalogowanych ({% if user.is_authenticated %}), więc jego obecność potwierdza że sesja z
+  _auth_user_id jest zapisana i serwer ją rozpoznał. networkidle odpada bo WebSockety nigdy nie
+  milkną.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+
 ## v1.3.2 (2026-05-19)
 
 ### Bug Fixes
