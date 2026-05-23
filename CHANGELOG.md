@@ -1,6 +1,71 @@
 # CHANGELOG
 
 
+## v1.4.1 (2026-05-23)
+
+### Bug Fixes
+
+- **vote**: Wrap decision processing in atomic transaction with row-level locking
+  ([`02427c6`](https://github.com/soma115/Wikikracja/commit/02427c694bfebbc983f0db5dbdc855178ef69663))
+
+Adds transaction.atomic() block around main loop and select_for_update() on Decyzja queryset to
+  prevent race conditions when multiple vote command instances run concurrently. Moves decyzje query
+  inside transaction and filters status__in=[proposition, discussion, referendum] at DB level
+  instead of if-check per iteration. Also locks abolished decisions (znosi) with
+  select_for_update().get() to avoid concurrent status
+
+### Refactoring
+
+- **chat**: Optimize one2one room deletion using queryset filtering
+  ([`7cb32e5`](https://github.com/soma115/Wikikracja/commit/7cb32e580680f4c854b170b573552a31f88bbc51))
+
+Replaces username-in-title check with allowed=user filter on Room queryset, removes TODO comment
+  about false positives with public rooms, and uses bulk delete() instead of iterating. Moves
+  log.info() before deletion (rooms_to_delete queryset evaluates during iteration, then bulk
+  deletes).
+
+- **count_citizens**: Add clarifying comments for reputation threshold logic
+  ([`8248255`](https://github.com/soma115/Wikikracja/commit/82482558ae51fc374bdc8b2ca5894b8c482f9742))
+
+- **details**: `votecode.objects.create()` in transaction.
+  ([`cd89a10`](https://github.com/soma115/Wikikracja/commit/cd89a1055be2b3d5da9968ec018e4aec26fad9d0))
+
+- **models**: Remove unused post_save signal handler for Uzytkownik
+  ([`dd82c7a`](https://github.com/soma115/Wikikracja/commit/dd82c7a45e3f98cb731d0dd106ff4f07fe3ded2e))
+
+- **settings**: Comment out redundant X_FRAME_OPTIONS SAMEORIGIN line
+  ([`11fceb5`](https://github.com/soma115/Wikikracja/commit/11fceb56d3912daa9c0204b3b93d49aa215f529f))
+
+- **version**: Remove app_version from templates and context
+  ([`51a6ab9`](https://github.com/soma115/Wikikracja/commit/51a6ab9511ea35d64440058007909efcffa032ce))
+
+Usuwa APP_VERSION z settings (tomllib parse pyproject.toml), context_processors.site_description,
+  oraz z dwóch miejsc w UI (sidebar logo-sub, site_admin heading i card). Logo-sub teraz pokazuje
+  request.site.name zamiast v.{{ app_version }}.
+
+- **views**: Add @login_required decorator to mark_as_read view
+  ([`206ba8f`](https://github.com/soma115/Wikikracja/commit/206ba8fc432c60cd0a4b2261d6f5c650228afa78))
+
+- **views**: Add status check to prevent editing non-proposition decisions
+  ([`2900fc5`](https://github.com/soma115/Wikikracja/commit/2900fc5f374641f8575b938ea4e6c60abe63bc81))
+
+- **vote**: Add clarifying comment for proposition-to-rejected block logic
+  ([`5ba93f2`](https://github.com/soma115/Wikikracja/commit/5ba93f2743ecbf059b486d9ea760870f09650ad1))
+
+Adds NOTE comment explaining control flow for the proposition→rejected block (indent 24): it's a
+  sibling of the if/elif above, inside the outer "if i.status == proposition". Reached when (a)
+  author hasn't signed, OR (b) author signed but insufficient signatures gathered. The elif branch's
+  continue skips this block when proposal moves to discussion.
+
+- **vote**: Clean up command structure and remove redundant setup code
+  ([`430d4a0`](https://github.com/soma115/Wikikracja/commit/430d4a0df0a2a4e149c7d3cebf5dbe8a33997be7))
+
+Removes obsolete django.setup() call and imports (django, os.environ), deletes placeholder handle()
+  method with Polish comment, and moves translation.activate + main logic from __init__ to handle().
+  Django management commands auto-setup before handle() runs, making manual setup unnecessary. Line
+  numbers in locale/pl/LC_MESSAGES/django.po shift down by 8 due to removed lines.
+
+
 ## v1.4.0 (2026-05-23)
 
 ### Bug Fixes
