@@ -101,6 +101,11 @@ class Command(BaseCommand):
                             log.info(f"Proposition {i.id} changed status from PROPOSITION to DISCUSSION.")
                             continue
                     # FROM PROPOSITION TO REJECTED
+                    # NOTE: This block (indent 24) is a sibling of the if/elif above (also indent 24),
+                    # inside the outer "if i.status == proposition" (indent 20).
+                    # Reached when: (a) author has NOT signed (if not is_author_signed), OR
+                    # (b) author signed but not enough signatures gathered (elif was False).
+                    # When elif was True and proposal moved to discussion — continue skips this block.
                         if i.data_powstania + timedelta(days=s.CZAS_NA_ZEBRANIE_PODPISOW) <= dzisiaj:
                             i.status = rejected
                             i.path = str(i.path) + " -> " + _("Not enough signatures")
