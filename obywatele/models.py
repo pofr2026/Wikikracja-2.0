@@ -85,10 +85,6 @@ class Uzytkownik(models.Model):
             # no, there should be no 'self':
             Uzytkownik.objects.create(uid=instance)
 
-    @receiver(post_save, sender=User)
-    def save_user_profile(sender, instance, **kwargs):
-        if hasattr(instance, 'uzytkownik'):
-            instance.uzytkownik.save()
 
 
 class CitizenActivity(models.Model):
