@@ -134,7 +134,8 @@ class Command(BaseCommand):
             obj.save()
 
     def activate_eligible_users(self):
-        """Activate users with sufficient reputation"""
+        """Activate users with sufficient reputation.
+        if i.reputation > req_rep is intentional to avoid flapping."""
 
         inactive_users = list(Uzytkownik.objects.filter(uid__is_active=False))
         req_rep = required_reputation()
@@ -220,7 +221,8 @@ class Command(BaseCommand):
                     log.error(f'Failed to send welcome email to {uemail}: {str(e)}')
 
     def block_ineligible_users(self):
-        """Block users with insufficient reputation"""
+        """Block users with insufficient reputation.
+        if i.reputation < req_rep is intentional to avoid flapping."""
         req_rep = required_reputation()
         for i in Uzytkownik.objects.filter(uid__is_active=True):
             if i.reputation < req_rep:
