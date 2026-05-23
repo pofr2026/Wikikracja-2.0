@@ -8,6 +8,7 @@ from datetime import datetime
 from channels.db import database_sync_to_async
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.conf import settings
+from django.core.cache import cache
 
 from zzz.richtext import sanitize
 from zzz.utils import get_site_domain
@@ -15,7 +16,8 @@ from zzz.utils import get_site_domain
 from .exceptions import ClientError
 from .group_messages import format_chat_message
 from .models import Message, Room
-from .services import ChatRepository
+from .serializers import build_chat_message_payload
+from .services import CHAT_UNREAD_CACHE_KEY, ChatRepository, get_avatar_url
 from .utils import HandledMessage, Handlers, OnlineUserRegistry, RoomRegistry, helper_method
 
 log = logging.getLogger(__name__)
@@ -305,7 +307,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         })
 
     @handlers.register("send")
-    async def send_message_to_room(self, proxy: HandledMessage, room_id, message, is_anonymous, attachments, reply_to_id=None):
+    async def send_message_to_room(self, proxy: HandledMessage, room_id, message, is_anonymous, attachments, reply_to_id=None, temp_id=None):
         if int(room_id) not in self.rooms.items():
             raise ClientError("ROOM_ACCESS_DENIED")
 
@@ -328,10 +330,7 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         if not room.public and is_anonymous:
             raise ClientError("ANONYMOUS_IN_PRIVATE")
 
-        user = await self.repo.get_user_by_name(sender.username)
-        room = await self.repo.get_room(room_id)
-
-        msg = Message(sender=user, text=message_clean, room=room, anonymous=is_anonymous)
+        msg = Message(sender=sender, text=message_clean, room=room, anonymous=is_anonymous)
 
         if reply_to_id:
             msg.reply_to_id = int(reply_to_id)
@@ -339,24 +338,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         message_id = await self.repo.save_message(msg)
         msg.id = message_id
 
-        participated_only = await database_sync_to_async(lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False))()
-        if participated_only:
-            already_tracked = await database_sync_to_async(lambda: room.tracked_by.filter(id=user.id).exists())()
-            if not already_tracked:
-                await database_sync_to_async(room.tracked_by.add)(user)
-                await self.send(text_data=json.dumps({
-                    'type': 'room-tracked',
-                    'room_id': room.id,
-                    'tracked': True,
-                }))
-
         await self.repo.save_attachments(message_id, attachments)
+        await self.repo.update_room_last_message(room_id, msg)
 
         reply_to_data = None
         if reply_to_id:
             reply_to_data = await self.repo.get_reply_to_data(int(reply_to_id))
 
-        proxy.group_send(room.group_name, format_chat_message(
+        # Broadcast directly (not via proxy) so subscribers receive the message before this handler returns.
+        # Per-recipient bookkeeping (unread state, push notifications) runs in a background task.
+        await self.channel_layer.group_send(room.group_name, format_chat_message(
             room_id=room_id,
             user_id=sender.id,
             anonymous=is_anonymous,
@@ -370,45 +361,65 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             latest_date=msg.time,
             attachments=attachments,
             reply_to=reply_to_data,
-            reactions={
-                'bulb': 0,
-                'question': 0
-            },
+            reactions={'bulb': 0, 'question': 0},
+            temp_id=temp_id,
         ))
 
-        room_members = await database_sync_to_async(lambda x: list(x.allowed.all()))(room)
-        other_members = [m for m in room_members if m.id != sender.id]
-        if not other_members:
-            return
+        asyncio.create_task(self._post_send_processing(sender, room, msg, message_id))
 
-        other_member_ids = [m.id for m in other_members]
-        online_ids = ChatConsumer.online_registry.get_online()
-        offline_ids = [mid for mid in other_member_ids if mid not in online_ids]
-        if offline_ids:
-            await database_sync_to_async(lambda: Room.seen_by.through.objects.filter(room_id=room_id, user_id__in=offline_ids).delete())()
+    async def _post_send_processing(self, sender, room, msg, message_id):
+        try:
+            room_members = await database_sync_to_async(lambda: list(room.allowed.all()))()
+            other_members = [m for m in room_members if m.id != sender.id]
+            if not other_members:
+                return
 
-        membership_prefs = await database_sync_to_async(lambda: Room.get_membership_preferences_bulk(room_id, other_member_ids))()
+            other_member_ids = [m.id for m in other_members]
+            online_ids = ChatConsumer.online_registry.get_online()
+            offline_ids = [mid for mid in other_member_ids if mid not in online_ids]
+            if offline_ids:
+                await database_sync_to_async(lambda: Room.seen_by.through.objects.filter(room_id=room.id, user_id__in=offline_ids).delete())()
+                await database_sync_to_async(cache.delete_many)(
+                    [CHAT_UNREAD_CACHE_KEY.format(user_id=uid) for uid in offline_ids]
+                )
 
-        for member in other_members:
-            prefs = membership_prefs.get(member.id, {
-                'seen': False,
-                'muted': True
-            })
-            consumer = ChatConsumer.online_registry.get_consumer(member)
+            membership_prefs = await database_sync_to_async(lambda: Room.get_membership_preferences_bulk(room.id, other_member_ids))()
 
-            if not consumer and not prefs['muted']:
-                asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room_id))
-                continue
+            proxy = HandledMessage()
+            for member in other_members:
+                prefs = membership_prefs.get(member.id, {'seen': False, 'muted': True})
+                consumer = ChatConsumer.online_registry.get_consumer(member)
 
-            if consumer and consumer.rooms.present(room):
-                continue
+                if not consumer and not prefs['muted']:
+                    asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room.id))
+                    continue
 
-            if prefs['seen']:
-                await consumer.unsee_room(room)
-                await consumer.send_unsee_room(proxy=proxy, room=room)
+                if consumer and consumer.rooms.present(room):
+                    continue
 
-            if not prefs['muted']:
-                await consumer.send_notification(proxy, message_id)
+                if prefs['seen']:
+                    await consumer.unsee_room(room)
+                    await consumer.send_unsee_room(proxy=proxy, room=room)
+
+                if not prefs['muted']:
+                    await consumer.send_notification(proxy, message_id)
+
+            await self._dispatch_proxy(proxy)
+        except Exception as e:
+            log.error(f"Error in post-send processing for message {message_id}: {e}", exc_info=True)
+
+    async def _dispatch_proxy(self, proxy: HandledMessage):
+        """Flush a proxy outside of receive_json — used by background tasks that build messages via helpers."""
+        for group, message, to_consumer, _ in proxy.get_messages():
+            try:
+                if group is not None:
+                    await self.channel_layer.group_send(group, message)
+                elif to_consumer is not None:
+                    await to_consumer.send_json(message)
+                else:
+                    await self.send_json(message)
+            except Exception as e:
+                log.warning(f"Failed to dispatch proxy message: {e}")
 
     @handlers.register("get-online-users")
     async def send_online_users(self, proxy: HandledMessage):
@@ -660,11 +671,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         try:
             if await self.repo.user_has_muted_room(user.id, room_id):
                 return
-            participated_only = await database_sync_to_async(lambda: getattr(user.uzytkownik, 'email_notifications_chat_participated', False))()
-            if participated_only:
-                has_participated = await database_sync_to_async(lambda: Message.objects.filter(room_id=room_id, sender=user).exists())()
-                if not has_participated:
-                    return
             title = "Anonymous User" if message.anonymous else message.sender.username
             body = message.text[:100]
             site_url = f"https://{domain}"
@@ -687,45 +693,29 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
     async def format_chat_message_data(self, event):
         user = await self.repo.get_user_by_id(event["user_id"])
         vote = await self.repo.get_vote(event['message_id'])
-        event_copy = {
-            **event
-        }
-        del event_copy["user_id"]
-        del event_copy["type"]
-        return {
-            **event_copy,
-            'username': 'Anonymous User' if event["anonymous"] else user.username if user else None,
-            "new": event["new"] if self.scope['user'] != user else False,
-            "your_vote": vote.vote if vote is not None else None,
-            "own": self.scope['user'] == user,
-            "bulb_count": event.get('bulb_count', 0),
-            "question_count": event.get('question_count', 0),
-        }
+        vote_value = vote.vote if vote is not None else None
+        avatar_url = get_avatar_url(user)
+        return build_chat_message_payload(
+            event,
+            user=user,
+            vote_value=vote_value,
+            current_user=self.scope['user'],
+            avatar_url=avatar_url,
+        )
 
     def format_chat_message_data_batch(self, event, users_dict, user_votes_dict, user_reactions_dict=None):
-        sender_id = event["user_id"]
-        message_id = event['message_id']
-        user = users_dict.get(sender_id)
-        vote_value = user_votes_dict.get(message_id)
-        your_reactions = (user_reactions_dict or {}).get(message_id, [])
-        event_copy = {
-            **event
-        }
-        del event_copy["user_id"]
-        del event_copy["type"]
-        reactions = event.get('reactions', {})
-        bulb_count = reactions.get('bulb', 0) if isinstance(reactions, dict) else 0
-        question_count = reactions.get('question', 0) if isinstance(reactions, dict) else 0
-        return {
-            **event_copy,
-            'username': 'Anonymous User' if event["anonymous"] else user.username if user else None,
-            "new": event["new"] if self.scope['user'] != user else False,
-            "your_vote": vote_value if vote_value else None,
-            "own": self.scope['user'] == user,
-            "your_reactions": your_reactions,
-            "bulb_count": bulb_count,
-            "question_count": question_count,
-        }
+        user = users_dict.get(event["user_id"])
+        vote_value = user_votes_dict.get(event["message_id"])
+        your_reactions = (user_reactions_dict or {}).get(event["message_id"], [])
+        avatar_url = get_avatar_url(user)
+        return build_chat_message_payload(
+            event,
+            user=user,
+            vote_value=vote_value,
+            current_user=self.scope['user'],
+            your_reactions=your_reactions,
+            avatar_url=avatar_url,
+        )
 
     ###########################################################
     # Handlers for messages sent over the channel layer       #

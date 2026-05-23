@@ -10,50 +10,62 @@ export {
     updateCounter,
     formatMessage,
     handleEnterKey,
+    handleListTrigger,
     getVisibleTextLength,
+    initGlobalPasteImageHandler,
 } from '../../common/js/richtext-core.js';
 
 export const UPLOAD_MAX_BYTES = 5_000_000;
+const IMAGE_MAX_DIMENSION = 1280;
+const IMAGE_WEBP_QUALITY = 0.75;
 
-/**
- * Upload files via XHR
- * @param {FileList|Array} files - Files to upload
- * @param {string} uploadUrl - Upload endpoint URL (default: '/chat/upload/')
- * @returns {Promise<{filenames: string[]}>}
- */
+async function compressImage(file) {
+    if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
+    try {
+        const bitmap = await createImageBitmap(file);
+        const { width, height } = bitmap;
+        const scale = Math.min(1, IMAGE_MAX_DIMENSION / Math.max(width, height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(width * scale);
+        canvas.height = Math.round(height * scale);
+        canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        bitmap.close();
+        return await new Promise((res, rej) =>
+            canvas.toBlob(b => b ? res(new File([b], file.name.replace(/\.\w+$/, '.webp'), { type: 'image/webp' })) : rej(new Error('toBlob failed')), 'image/webp', IMAGE_WEBP_QUALITY)
+        );
+    } catch {
+        return file;
+    }
+}
+
 export async function uploadFiles(files, uploadUrl = '/chat/upload/') {
     if (!files || files.length === 0) {
         return { filenames: [] };
     }
 
+    const formData = new FormData();
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > UPLOAD_MAX_BYTES) {
+            alert('File is too big');
+            continue;
+        }
+        // eslint-disable-next-line no-await-in-loop
+        formData.append('images', await compressImage(file));
+    }
+
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
-        const formData = new FormData();
-
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-            if (file.size > UPLOAD_MAX_BYTES) {
-                alert('File is too big');
-                continue;
-            }
-            formData.append('images', file);
-        }
-
         xhr.onreadystatechange = () => {
             if (xhr.readyState === 4 && xhr.status === 200) {
                 try {
-                    const response = JSON.parse(xhr.responseText);
-                    resolve(response);
+                    resolve(JSON.parse(xhr.responseText));
                 } catch (e) {
                     reject(e);
                 }
             }
         };
-
-        xhr.onerror = () => {
-            reject(new Error('Upload failed'));
-        };
-
+        xhr.onerror = () => reject(new Error('Upload failed'));
         xhr.open('POST', uploadUrl, true);
         xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
         xhr.send(formData);

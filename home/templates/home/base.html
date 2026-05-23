@@ -123,7 +123,7 @@
         </li>
 
         <li class="nav-item">
-          <a href="{% url 'chat:chat' %}"
+          <a href="{% url 'chat:chat' %}?view=rooms"
              title="{% trans 'Chat' %}"
              class="{% if request.resolver_match.namespace == 'chat' %}active{% endif %}">
             <i class="fas fa-fw fa-comment-dots nav-icon"></i>
@@ -193,7 +193,10 @@
         <button class="btn btn-sm d-md-none me-2 p-1" id="sidebar-toggle">
           <i class="fas fa-bars"></i>
         </button>
-        <a href="{% url 'home' %}">{{ request.site.name }}</a>
+        <a href="{% url 'home' %}" class="topbar-logo">
+          <i class="fas fa-fw fa-building-columns"></i>
+          <span class="logo-label ms-1">{{ request.site.name }}</span>
+        </a>
         <span class="sep">›</span>
         <span class="current">
           {% if request.resolver_match.url_name == 'home' %}{% trans "Desktop" %}
@@ -242,10 +245,6 @@
               <label class="tb-chip" data-color="success">
                 <input type="checkbox" name="cat" value="event" class="d-none tb-cb">
                 <i class="fas fa-calendar me-1"></i>{% trans "Event" %}
-              </label>
-              <label class="tb-chip" data-color="info">
-                <input type="checkbox" name="cat" value="book" class="d-none tb-cb">
-                <i class="fas fa-book me-1"></i>{% trans "Library" %}
               </label>
               <label class="tb-chip" data-color="secondary">
                 <input type="checkbox" name="cat" value="citizen" class="d-none tb-cb">
@@ -309,6 +308,11 @@
           <i class="fas fa-calendar-days"></i><span class="anon-nav-text">{% trans "Calendar" %}</span>
         </a>
       </div>
+      <button id="theme-toggle-btn" class="notif-bell"
+              title="{% trans 'Toggle light / dark mode' %}"
+              style="background:none;border:none;cursor:pointer;">
+        <i id="theme-toggle-icon" class="fas fa-circle-half-stroke"></i>
+      </button>
       <a href="{% url 'login' %}" class="btn btn-sm btn-outline-secondary me-1">{% trans "Login" %}</a>
       <a href="{% url 'account_signup' %}" class="btn-cta">{% trans "Register" %}</a>
     </nav>

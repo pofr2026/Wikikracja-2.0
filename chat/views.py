@@ -7,7 +7,6 @@ from datetime import timedelta as td
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.core.cache import cache
 from django.db import IntegrityError
 from django.db.models import Count, Exists, OuterRef, Prefetch
 from django.dispatch import receiver
@@ -17,11 +16,10 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 from PIL import Image
 
 from chat.forms import RoomForm
-from chat.models import Message, Room
+from chat.models import Room
 from chat.signals import user_accepted, user_deleted
 from glosowania.models import Decyzja
 from tasks.models import Task
@@ -84,7 +82,6 @@ def _chat_room_prefetches():
     return [
         Prefetch('chat_room__seen_by', queryset=User.objects.only('id')),
         Prefetch('chat_room__muted_by', queryset=User.objects.only('id')),
-        Prefetch('chat_room__tracked_by', queryset=User.objects.only('id')),
     ]
 
 
@@ -94,17 +91,20 @@ def chat(request: HttpRequest):
     Root page view. This is essentially a single-page app, if you ignore the
     login and admin parts.
     """
-    # Get a list of rooms, ordered alphabetically
-    # Optimize queries by:
-    # 1. Prefetch allowed users for private rooms (needed for displayed_name)
-    # 2. Annotate with message count (for seen_by filter)
-    # 3. Annotate with is_seen status (for seen_by filter)
-    allowed_rooms = Room.objects.filter(allowed=request.user.id).prefetch_related(Prefetch('allowed', queryset=User.objects.only('id', 'username')), 'muted_by', 'tracked_by').annotate(messages_count=Count('messages'), is_seen=Exists(Room.seen_by.through.objects.filter(room_id=OuterRef('pk'), user_id=request.user.id))).order_by("title")
+    base_rooms = Room.objects.filter(allowed=request.user.id).select_related('last_message_sender').annotate(messages_count=Count('messages'), is_seen=Exists(Room.seen_by.through.objects.filter(room_id=OuterRef('pk'), user_id=request.user.id))).order_by("title")
 
-    public_active = allowed_rooms.filter(public=True, archived=False)
-    public_archived = allowed_rooms.filter(public=True, archived=True)
-    private_active = allowed_rooms.filter(public=False, archived=False)
-    private_archived = allowed_rooms.filter(public=False, archived=True)
+    # Public rooms can have hundreds of `allowed` users — keep that prefetch lean.
+    public_allowed = Prefetch('allowed', queryset=User.objects.only('id', 'username'))
+    # Private (DM) rooms need the other user's avatar — pull uzytkownik in the same query.
+    private_allowed = Prefetch('allowed', queryset=User.objects.select_related('uzytkownik'))
+
+    public_pool = base_rooms.prefetch_related(public_allowed, 'muted_by')
+    private_pool = base_rooms.prefetch_related(private_allowed, 'muted_by')
+
+    public_active = public_pool.filter(public=True, archived=False)
+    public_archived = public_pool.filter(public=True, archived=True)
+    private_active = private_pool.filter(public=False, archived=False)
+    private_archived = private_pool.filter(public=False, archived=True)
 
     task_room_ids = Task.objects.filter(chat_room__isnull=False).values_list('chat_room_id', flat=True)
     vote_room_ids = Decyzja.objects.filter(chat_room__isnull=False).values_list('chat_room_id', flat=True)
@@ -116,33 +116,26 @@ def chat(request: HttpRequest):
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=False,
-    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
+    ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     tasks_tree_archived = Task.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=True,
-    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
+    ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     votes_tree_active = Decyzja.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=False,
-    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
+    ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
     votes_tree_archived = Decyzja.objects.filter(
         chat_room__isnull=False,
         chat_room__allowed=request.user,
         chat_room__archived=True,
-    ).select_related('chat_room').prefetch_related(*_chat_room_prefetches()).order_by('title')
+    ).select_related('chat_room', 'chat_room__last_message_sender').prefetch_related(*_chat_room_prefetches()).order_by('title')
 
-    # For "participated only" visual mute: get rooms where user has sent a message
-    participated_only = getattr(request.user.uzytkownik, 'email_notifications_chat_participated', False)
-    participated_room_ids = set()
-    if participated_only:
-        participated_room_ids = set(Message.objects.filter(sender=request.user).values_list('room_id', flat=True).distinct())
-
-    # Render that in the chat template
     return render(request, "chat/chat.html", {
         'translations': get_translations(),
         'public_rooms_active': public_rooms_active,
@@ -154,8 +147,6 @@ def chat(request: HttpRequest):
         'private_active': private_active,
         'private_archived': private_archived,
         'user': request.user,
-        'participated_only': participated_only,
-        'participated_room_ids': participated_room_ids,
         'ARCHIVE_PUBLIC_CHAT_ROOM': td(days=settings.ARCHIVE_PUBLIC_CHAT_ROOM).days,
         'DELETE_PUBLIC_CHAT_ROOM': td(days=settings.DELETE_PUBLIC_CHAT_ROOM).days,
         'MESSAGE_MAX_LENGTH': settings.MESSAGE_MAX_LENGTH,
@@ -203,55 +194,61 @@ def upload_image(request: HttpRequest):
 
 
 def get_translations():
-    strings = [
-        "Today",
-        "Yesterday",
-        "Tomorrow",
-        "Anonymous",
-        "Enable Notifications",
-        "Yes",
-        "edit",
-        "edited",
-        "Changes History",
-        "Close",
-        "Loading...",
-        "Copy link",
-        "Copy message link",
-        "Link copied",
-        "Could not copy link",
-        "Reply to the appropriate message...",
-        "Upvote",
-        "Downvote",
-        "Title",
-        "Sunday",
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday",
-        "Saturday",
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-        "Unread",
-        "Show only unread rooms",
-        "Sorting and filter",
-        "Likes",
-        "Popular",
-    ]
-    translation = {
-        x: _(x) for x in strings
+    # Slownik literalny z jawnym _() na kazdym kluczu - makemessages potrafi
+    # wyciagnac kazdy string. Wzor {x: _(x) for x in strings} jest niewidoczny
+    # dla xgettext, przez co tlumaczenia byly tracone przy kazdym makemessages.
+    return {
+        "Today": _("Today"),
+        "Yesterday": _("Yesterday"),
+        "Tomorrow": _("Tomorrow"),
+        "Anonymous": _("Anonymous"),
+        "Enable Notifications": _("Enable Notifications"),
+        "Yes": _("Yes"),
+        "edit": _("edit"),
+        "edited": _("edited"),
+        "Changes History": _("Changes History"),
+        "Close": _("Close"),
+        "Loading...": _("Loading..."),
+        "Copy link": _("Copy link"),
+        "Copy message link": _("Copy message link"),
+        "Link copied": _("Link copied"),
+        "Could not copy link": _("Could not copy link"),
+        "Reply to the appropriate message...": _("Reply to the appropriate message..."),
+        "Upvote": _("Upvote"),
+        "Downvote": _("Downvote"),
+        "Title": _("Title"),
+        "Sunday": _("Sunday"),
+        "Monday": _("Monday"),
+        "Tuesday": _("Tuesday"),
+        "Wednesday": _("Wednesday"),
+        "Thursday": _("Thursday"),
+        "Friday": _("Friday"),
+        "Saturday": _("Saturday"),
+        "Jan": _("Jan"),
+        "Feb": _("Feb"),
+        "Mar": _("Mar"),
+        "Apr": _("Apr"),
+        "May": _("May"),
+        "Jun": _("Jun"),
+        "Jul": _("Jul"),
+        "Aug": _("Aug"),
+        "Sep": _("Sep"),
+        "Oct": _("Oct"),
+        "Nov": _("Nov"),
+        "Dec": _("Dec"),
+        "Unread": _("Unread"),
+        "Show only unread rooms": _("Show only unread rooms"),
+        "Sorting and filter": _("Sorting and filter"),
+        "Likes": _("Likes"),
+        "Popular": _("Popular"),
+        "attachment": _("attachment"),
+        "Mute room": _("Mute room"),
+        "Unmute room": _("Unmute room"),
+        "Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list": _("Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list"),
+        "Select a room from the list": _("Select a room from the list"),
+        "No unread messages": _("No unread messages"),
+        "Tap {icon} above the list to disable the unread filter": _("Tap {icon} above the list to disable the unread filter"),
     }
-    return translation
 
 
 @receiver(user_accepted)
@@ -381,34 +378,6 @@ def toggle_notifications(request: HttpRequest):
         return JsonResponse({
             'error': str(e)
         }, status=500)
-
-
-@login_required
-@require_POST
-def toggle_track(request: HttpRequest):
-    """Toggle tracking of a room for the current user."""
-    try:
-        data = json.loads(request.body)
-        room_id = data.get('room_id')
-        tracked = data.get('tracked')
-        if room_id is None or tracked is None:
-            return JsonResponse({
-                'error': 'Missing room_id or tracked'
-            }, status=400)
-        room = get_object_or_404(Room, id=room_id, allowed=request.user)
-        if tracked:
-            room.tracked_by.add(request.user)
-        else:
-            room.tracked_by.remove(request.user)
-        return JsonResponse({
-            'success': True,
-            'tracked': tracked
-        })
-    except json.JSONDecodeError:
-        return JsonResponse({
-            'error': 'Invalid JSON'
-        }, status=400)
-
 
 
 @login_required

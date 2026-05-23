@@ -26,11 +26,14 @@ class Room(models.Model):
     # List of users who disabled notifications
     muted_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='muted_rooms')
 
-    # List of users who explicitly track this room (overrides auto-mute in participated-only mode)
-    tracked_by = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='tracked_rooms', blank=True)
-
     # Last activity timestamp
     last_activity = models.DateTimeField(auto_now=True)
+
+    # Denormalized snapshot of the last message — lets the sidebar render previews without joining Message.
+    last_message_text = models.CharField(max_length=200, blank=True, default='')
+    last_message_sender = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='last_message_in_rooms')
+    last_message_at = models.DateTimeField(null=True, blank=True)
+    last_message_anonymous = models.BooleanField(default=False)
 
     # Protected rooms (for tasks, voting) should not be auto-deleted by chat_rooms command
     protected = models.BooleanField(default=False)

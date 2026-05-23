@@ -1,21 +1,40 @@
 {% extends 'obywatele/menu.html' %}
 {% load static %}
 {% load i18n %}
+{% block prefs_scope %}poczekalnia{% endblock %}
 
 {% block citizens %}
-<div class="container section">
-  <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <span class="section-heading">{% trans "Candidates" %}</span>
-      <span>
-        {% trans "New person will be accepted above" %}
-        <span class="badge text-bg-primary rounded-pill">{{ acceptance }}</span>
-        {% trans "threshold." %}
-      </span>
-    </div>
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span class="section-heading">{% trans "Candidates" %} (<span id="citizens-count">{{ uid|length }}</span>)</span>
+    <span class="text-muted small">
+      {% trans "New person will be accepted above" %}
+      <span class="badge text-bg-primary rounded-pill">{{ acceptance }}</span>
+      {% trans "threshold." %}
+    </span>
+  </div>
 
-    {% if uid %}
-    <div class="card-body p-0">
+  {% if uid %}
+
+  {# ── Toolbar ── #}
+  <div class="citizens-toolbar">
+    <input type="search" id="citizens-search" class="citizens-search-input"
+           placeholder="{% trans 'Search user...' %}" autocomplete="off">
+
+    <div class="toolbar-view">
+      <button class="view-toggle-btn" data-view="list" title="{% trans 'List view' %}">
+        <i class="fas fa-list"></i>
+      </button>
+      <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid view' %}">
+        <i class="fas fa-grip"></i>
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body p-0" data-view-container>
+
+    {# ── List view ── #}
+    <div id="citizens-list-view">
       <div class="table-responsive">
         <table class="table table-hover table-sm align-middle mb-0">
           <thead>
@@ -33,18 +52,30 @@
           </thead>
           <tbody>
             {% for i in uid|dictsortreversed:"date_joined" %}
-            <tr class="user-row" data-user-id="{{ i.pk }}">
+            <tr class="user-row"
+                data-user-id="{{ i.pk }}"
+                data-href="{% url 'obywatele:poczekalnia_szczegoly' pk=i.pk %}"
+                data-search="{{ i.username }} {{ i.first_name }} {{ i.last_name }} {{ i.email }}">
               <td>
-                <span class="d-flex align-items-center">
+                <div class="username-container">
+                  <div class="citizen-list-avatar-wrap flex-shrink-0">
+                    <div class="citizen-list-avatar">
+                      {% if i.uzytkownik.avatar %}
+                        <img src="{{ i.uzytkownik.avatar.url }}" alt="{{ i.username }}" class="rounded-circle">
+                      {% else %}
+                        {{ i.username|slice:":1"|upper }}
+                      {% endif %}
+                    </div>
+                  </div>
                   {% if i.rating == 1 %}
-                  <i class="fas fa-check-circle text-success me-2" title="{% trans 'You accepted this candidate' %}"></i>
+                    <i class="fas fa-check-circle text-success flex-shrink-0" title="{% trans 'You accepted this candidate' %}"></i>
                   {% elif i.rating == -1 %}
-                  <i class="fas fa-times-circle text-danger me-2" title="{% trans 'You rejected this candidate' %}"></i>
+                    <i class="fas fa-times-circle text-danger flex-shrink-0" title="{% trans 'You rejected this candidate' %}"></i>
                   {% else %}
-                  <i class="fas fa-circle text-secondary me-2" title="{% trans 'You are neutral about this candidate' %}"></i>
+                    <i class="fas fa-circle text-secondary flex-shrink-0" title="{% trans 'You are neutral about this candidate' %}"></i>
                   {% endif %}
-                  {{ i.username }}
-                </span>
+                  <span class="citizen-list-nick">{{ i.username }}</span>
+                </div>
               </td>
               <td class="email-cell">
                 <a href="mailto:{{ i.email }}"><i class="fas fa-envelope me-1"></i>{{ i.email }}</a>
@@ -53,24 +84,65 @@
                 </button>
               </td>
               <td class="text-center">{{ i.ratings_count }}</td>
-              <td>{% if i.email_confirmed %}{% trans 'Yes' %}{% else %}{% trans 'No' %}{% endif %}</td>
-              <td>{% if i.form_completed %}{% trans 'Yes' %}{% else %}{% trans 'No' %}{% endif %}</td>
-              <td>{{ i.first_name }}</td>
-              <td>{{ i.last_name }}</td>
+              <td>{% if i.email_confirmed %}<i class="fas fa-check text-success"></i>{% else %}<i class="fas fa-times text-danger"></i>{% endif %}</td>
+              <td>{% if i.form_completed %}<i class="fas fa-check text-success"></i>{% else %}<i class="fas fa-times text-danger"></i>{% endif %}</td>
+              <td>{{ i.first_name|default:"—" }}</td>
+              <td>{{ i.last_name|default:"—" }}</td>
               <td>{{ i.date_joined|date:"Y-m-d" }}</td>
-              <td>{% if i.uzytkownik.polecajacy %} {{ i.uzytkownik.polecajacy }} {% else %} -- {% endif %}</td>
+              <td>{% if i.uzytkownik.polecajacy %}{{ i.uzytkownik.polecajacy }}{% else %}—{% endif %}</td>
             </tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
     </div>
-    {% else %}
-    <div class="card-body">
-      <div class="alert alert-primary mb-0">{% trans "No candidates" %}</div>
+
+    {# ── Grid view ── #}
+    <div id="citizens-grid-view" class="citizens-grid">
+      {% for i in uid|dictsortreversed:"date_joined" %}
+      <div class="citizen-card"
+           data-user-id="{{ i.pk }}"
+           data-href="{% url 'obywatele:poczekalnia_szczegoly' pk=i.pk %}"
+           data-search="{{ i.username }} {{ i.first_name }} {{ i.last_name }} {{ i.email }}">
+        <div class="citizen-card-top">
+          <div class="citizen-card-avatar">
+            {% if i.uzytkownik.avatar %}
+              <img src="{{ i.uzytkownik.avatar.url }}" alt="{{ i.username }}" class="rounded-circle citizen-card-avatar-img">
+            {% else %}
+              {{ i.username|slice:":1"|upper }}
+            {% endif %}
+          </div>
+          <span class="candidate-vote-badge">
+            {% if i.rating == 1 %}
+              <i class="fas fa-check-circle text-success" title="{% trans 'You accepted this candidate' %}"></i>
+            {% elif i.rating == -1 %}
+              <i class="fas fa-times-circle text-danger" title="{% trans 'You rejected this candidate' %}"></i>
+            {% else %}
+              <i class="fas fa-circle text-secondary" title="{% trans 'You are neutral about this candidate' %}"></i>
+            {% endif %}
+          </span>
+        </div>
+        <div class="citizen-card-name">{{ i.username }}</div>
+        {% if i.first_name or i.last_name %}
+        <div class="citizen-card-fullname">{{ i.first_name }} {{ i.last_name }}</div>
+        {% endif %}
+        <div class="citizen-card-city mt-1">
+          {% if i.email_confirmed %}<i class="fas fa-envelope text-success" title="{% trans 'Email confirmed' %}"></i>{% else %}<i class="fas fa-envelope text-danger" title="{% trans 'Email confirmed' %}"></i>{% endif %}
+          {% if i.form_completed %}<i class="fas fa-file-alt text-success ms-1" title="{% trans 'Form completed' %}"></i>{% else %}<i class="fas fa-file-alt text-danger ms-1" title="{% trans 'Form completed' %}"></i>{% endif %}
+          <span class="ms-1">{{ i.ratings_count }} <i class="fas fa-star"></i></span>
+        </div>
+        <div class="citizen-card-city">{{ i.date_joined|date:"Y-m-d" }}</div>
+      </div>
+      {% endfor %}
     </div>
-    {% endif %}
+
   </div>
+
+  {% else %}
+  <div class="card-body">
+    <div class="alert alert-primary mb-0">{% trans "No candidates" %}</div>
+  </div>
+  {% endif %}
 </div>
 
 <script src="{% static 'obywatele/js/citizens_list.js' %}"></script>

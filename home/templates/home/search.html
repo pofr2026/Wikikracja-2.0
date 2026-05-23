@@ -74,12 +74,6 @@
           <i class="fas fa-calendar me-1"></i>{% trans "Event" %}
         </label>
 
-        <label class="sp-chip{% if 'book' in active_cats %} on{% endif %}" data-color="info">
-          <input type="checkbox" name="cat" value="book" class="d-none sp-cb"
-                 {% if 'book' in active_cats %}checked{% endif %}>
-          <i class="fas fa-book me-1"></i>{% trans "Library" %}
-        </label>
-
         <label class="sp-chip{% if 'citizen' in active_cats %} on{% endif %}" data-color="secondary">
           <input type="checkbox" name="cat" value="citizen" class="d-none sp-cb"
                  {% if 'citizen' in active_cats %}checked{% endif %}>

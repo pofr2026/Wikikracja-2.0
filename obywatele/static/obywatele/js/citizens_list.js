@@ -1,56 +1,75 @@
-/**
- * @file
- * Citizens list page interactive functionality.
- * Handles clickable table rows for viewing user details and copy email buttons.
- */
+document.addEventListener('DOMContentLoaded', function () {
+    const listView = document.getElementById('citizens-list-view');
+    const gridView = document.getElementById('citizens-grid-view');
+    const countEl  = document.getElementById('citizens-count');
+    const searchInput = document.getElementById('citizens-search');
 
-/**
- * Initializes interactive features on the citizens list page
- * Sets up event listeners when DOM is fully loaded
- */
-document.addEventListener('DOMContentLoaded', function() {
-    /**
-     * Makes table rows clickable to view user details
-     * Ignores clicks on interactive elements like buttons and links
-     */
-    const rows = document.querySelectorAll('.user-row');
-    rows.forEach(row => {
-        row.addEventListener('click', function(e) {
-            // Only navigate if the click wasn't on a button or other interactive element
+    // ── Sync filter dropdown → PagePrefs (prevents head-script from restoring old filter) ──
+    document.querySelectorAll('.citizens-toolbar .dropdown-item').forEach(link => {
+        link.addEventListener('click', function () {
+            if (!window.PagePrefs) return;
+            const url = new URL(this.href, window.location.origin);
+            const params = url.searchParams.toString();
+            window.PagePrefs.write({ filters: params ? '?' + params : '' });
+        });
+    });
+
+    if (searchInput) {
+        let searchTimer;
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimer);
+            searchTimer = setTimeout(() => {
+                const q = this.value.trim().toLowerCase();
+                const rows  = listView ? listView.querySelectorAll('.user-row') : [];
+                const cards = gridView ? gridView.querySelectorAll('.citizen-card') : [];
+                let visible = 0;
+
+                rows.forEach(row => {
+                    const match = !q || row.dataset.search.toLowerCase().includes(q);
+                    row.classList.toggle('d-none', !match);
+                    if (match) visible++;
+                });
+                cards.forEach(card => {
+                    const match = !q || card.dataset.search.toLowerCase().includes(q);
+                    card.classList.toggle('d-none', !match);
+                });
+
+                if (countEl) countEl.textContent = q ? visible : rows.length;
+            }, 150);
+        });
+    }
+
+    const rowContainer = listView || document;
+    rowContainer.querySelectorAll('.user-row').forEach(row => {
+        row.addEventListener('click', function (e) {
             if (!e.target.closest('button, a')) {
-                const userId = this.getAttribute('data-user-id');
-                window.location.href = `/obywatele/poczekalnia/${userId}/`;
+                window.location.href = this.dataset.href;
             }
         });
     });
 
-    /**
-     * Copy email buttons functionality
-     * Copies email to clipboard and shows visual feedback
-     */
-    const copyButtons = document.querySelectorAll('.copy-btn');
-    copyButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.stopPropagation(); // Prevent row click
-            const email = this.getAttribute('data-email');
-            navigator.clipboard.writeText(email)
-                .then(() => {
-                    // Visual feedback - show success state
-                    const originalHTML = this.innerHTML;
-                    this.innerHTML = '<i class="fas fa-check"></i>';
-                    this.classList.remove('btn-light');
-                    this.classList.add('btn-success');
+    if (gridView) gridView.querySelectorAll('.citizen-card').forEach(card => {
+        card.addEventListener('click', function (e) {
+            if (!e.target.closest('button, a')) {
+                window.location.href = this.dataset.href;
+            }
+        });
+    });
 
-                    // Restore original state after 1.5 seconds
-                    setTimeout(() => {
-                        this.innerHTML = originalHTML;
-                        this.classList.remove('btn-success');
-                        this.classList.add('btn-light');
-                    }, 1500);
-                })
-                .catch(err => {
-                    console.error('Failed to copy email:', err);
-                });
+    document.querySelectorAll('.copy-btn').forEach(button => {
+        button.addEventListener('click', function (e) {
+            e.stopPropagation();
+            navigator.clipboard.writeText(this.dataset.email).then(() => {
+                const orig = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-check"></i>';
+                this.classList.remove('btn-light');
+                this.classList.add('btn-success');
+                setTimeout(() => {
+                    this.innerHTML = orig;
+                    this.classList.remove('btn-success');
+                    this.classList.add('btn-light');
+                }, 1500);
+            });
         });
     });
 });

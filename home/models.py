@@ -10,7 +10,6 @@ class FeedItem(models.Model):
     class ContentType(models.TextChoices):
         POST = 'post', _('Post')
         TASK = 'task', _('Task')
-        BOOK = 'book', _('Book')
         EVENT = 'event', _('Event')
         MESSAGE = 'message', _('Message')
         DECISION = 'decision', _('Decision')
@@ -40,7 +39,6 @@ class ReadStatus(models.Model):
     class ContentType(models.TextChoices):
         POST = 'post', _('Post')
         TASK = 'task', _('Task')
-        BOOK = 'book', _('Book')
         EVENT = 'event', _('Event')
         MESSAGE = 'message', _('Message')
         DECISION = 'decision', _('Decision')

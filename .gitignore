@@ -8,6 +8,8 @@ node_modules/
 media/board/attachments/*
 media/board/featured/*
 media/avatars/
+media/elibrary/*
+!media/elibrary/.gitkeep
 memory/
 
 *.DS_Store
@@ -24,7 +26,15 @@ memory/
 .vscode/*
 !.vscode/extensions.json
 .idea/
+*.code-workspace
 .env
+.env.local
+.coverage
+
+# Playwright e2e
+playwright-report/
+test-results/
+e2e/.auth/
 .python-version
 .pytest_cache/
 
@@ -53,5 +63,7 @@ data/*
 *.lock
 *.bak
 *.json
+!package.json
+!package-lock.json
 /locale/en/LC_MESSAGES/django.mo
 /locale/pl/LC_MESSAGES/django.mo

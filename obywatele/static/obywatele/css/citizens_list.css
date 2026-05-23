@@ -1,12 +1,8 @@
 tr.user-row {
   cursor: pointer;
 }
-tr.user-row:hover {
-  background-color: rgba(0, 209, 178, 0.05);
-  cursor: pointer;
-}
 tr.user-row .copy-btn {
-  padding: 0px 5px;
+  padding: 0 5px;
   margin-left: 5px;
   font-size: 0.9em;
   cursor: pointer;

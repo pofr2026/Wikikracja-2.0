@@ -85,17 +85,45 @@ export function updateCounter(inputEl, counterEl, counterVal, sendBtn, maxLength
 }
 
 /**
- * Ctrl+Enter / Cmd+Enter submits, plain Enter passes through.
+ * WhatsApp-style Enter handling:
+ *   Enter          → send
+ *   Shift+Enter    → new line (insertLineBreak)
  * @returns {boolean} true if handled
  */
 export function handleEnterKey(e, submitCallback) {
-    const mod = e.ctrlKey || e.metaKey;
-    if (e.key === 'Enter' && mod) {
-        e.preventDefault();
+    if (e.key !== 'Enter') return false;
+    e.preventDefault();
+    if (e.shiftKey) {
+        document.execCommand('insertLineBreak');
+    } else {
         submitCallback();
-        return true;
     }
-    return false;
+    return true;
+}
+
+/**
+ * Auto-convert `- ` or `* ` typed at the start of a line into `• `.
+ * Call on keydown with e.key === ' '.
+ * @returns {boolean} true if handled
+ */
+export function handleListTrigger(e) {
+    if (e.key !== ' ') return false;
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return false;
+    const range = sel.getRangeAt(0);
+    if (!range.collapsed) return false;
+    const node = range.startContainer;
+    if (node.nodeType !== Node.TEXT_NODE) return false;
+    const textBefore = node.textContent.slice(0, range.startOffset);
+    if (textBefore !== '-' && textBefore !== '*') return false;
+    e.preventDefault();
+    const newRange = document.createRange();
+    newRange.setStart(node, 0);
+    newRange.setEnd(node, range.startOffset);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    document.execCommand('insertText', false, '• ');
+    return true;
 }
 
 /**
@@ -105,4 +133,34 @@ export function handleEnterKey(e, submitCallback) {
 export function getVisibleTextLength(inputEl) {
     if (!inputEl) return 0;
     return inputEl.isContentEditable ? (inputEl.textContent || '').length : (inputEl.value || '').length;
+}
+
+let _pasteHandlerReady = false;
+
+/**
+ * Global clipboard image paste handler for all .message-input-rich elements.
+ * Detects image in clipboard → injects into nearest .file-input within the same
+ * .compose-box → triggers existing file preview/upload pipeline via change event.
+ * Safe to call from multiple modules — registers only once.
+ */
+export function initGlobalPasteImageHandler() {
+    if (_pasteHandlerReady) return;
+    _pasteHandlerReady = true;
+    document.addEventListener('paste', (e) => {
+        if (!e.target.classList.contains('message-input-rich')) return;
+        const imageItem = Array.from(e.clipboardData?.items ?? []).find(it => it.type.startsWith('image/'));
+        if (!imageItem) return;
+        e.preventDefault();
+        const blob = imageItem.getAsFile();
+        if (!blob) return;
+        const fileInput = e.target.closest('.compose-box')?.querySelector('.file-input');
+        if (!fileInput) return;
+        const ext = blob.type.split('/')[1]?.split('+')[0] || 'png';
+        const dt = new DataTransfer();
+        // Preserve existing files so pasted images append rather than replace.
+        for (const f of fileInput.files || []) dt.items.add(f);
+        dt.items.add(new File([blob], `paste-${Date.now()}.${ext}`, { type: blob.type }));
+        fileInput.files = dt.files;
+        fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
 }

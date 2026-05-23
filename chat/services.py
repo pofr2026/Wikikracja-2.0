@@ -55,15 +55,18 @@ def _username_to_color(username: str) -> str:
     return f"hsl({hue}, 60%, 55%)"
 
 
-def _get_avatar_url(user) -> str:
-    """Get user avatar URL, fallback to initials placeholder."""
+def get_avatar_url(user):
+    """Get user's uploaded avatar URL, or None when user has no avatar.
+
+    Callers decide the fallback (placeholder image, initials, etc.).
+    """
     try:
-        profile = user.profile
+        profile = user.uzytkownik
         if profile.avatar:
             return profile.avatar.url
     except Exception:
         pass
-    return "/static/home/images/favicon.ico"
+    return None
 
 
 class ChatRepository:
@@ -156,7 +159,7 @@ class ChatRepository:
             log.debug("Attempted to fetch user with ID None; returning None")
             return None
         try:
-            return User.objects.get(id=id)
+            return User.objects.select_related('uzytkownik').get(id=id)
         except User.DoesNotExist:
             log.error(f"User with ID {id} does not exist")
             return None
@@ -174,6 +177,17 @@ class ChatRepository:
     def save_message(self, message):
         message.save()
         return message.id
+
+    @database_sync_to_async
+    def update_room_last_message(self, room_id, message):
+        # Set last_activity explicitly — .update() bypasses the auto_now hook.
+        Room.objects.filter(id=room_id).update(
+            last_message_text=message.text[:200],
+            last_message_sender_id=message.sender_id,
+            last_message_at=message.time,
+            last_message_anonymous=message.anonymous,
+            last_activity=message.time,
+        )
 
     @database_sync_to_async
     def get_message(self, message_id):
@@ -372,11 +386,11 @@ class ChatRepository:
     @database_sync_to_async
     def get_read_by_data(self, message_id: int) -> list:
         """Return list of {user_id, username, avatar_url} for message."""
-        entries = MessageReadBy.objects.filter(message_id=message_id).select_related('user__profile').order_by('id')[:10]
+        entries = MessageReadBy.objects.filter(message_id=message_id).select_related('user__uzytkownik').order_by('id')[:10]
         result = []
         for entry in entries:
             user = entry.user
-            avatar_url = _get_avatar_url(user)
+            avatar_url = get_avatar_url(user) or "/static/home/images/favicon.ico"
             result.append({
                 'user_id': user.id,
                 'username': user.username,
@@ -442,7 +456,6 @@ class ChatRepository:
 
     @database_sync_to_async
     def get_recent_messages_batch(self, room_id, user_id, limit=100, sort_by='date', order='desc', popular_only=False):
-        """Optimized batch fetch of messages, users, and votes."""
         qs = Message.objects.filter(room=room_id) \
             .select_related('sender', 'reply_to__sender') \
             .prefetch_related(
@@ -450,53 +463,56 @@ class ChatRepository:
                 'messagehistory'
             )
 
-        all_messages = list(qs)
-        for msg in all_messages:
-            reactions_dict = _reactions(msg)
-            msg.upvotes = len(reactions_dict.get('upvotes', []))
-            msg.downvotes = len(reactions_dict.get('downvotes', []))
-
-        if popular_only:
-            all_messages = [msg for msg in all_messages if msg.upvotes >= 1]
-
-        if sort_by == 'likes':
-            reverse = (order == 'desc')
-            all_messages.sort(key=lambda m: (m.upvotes, m.time), reverse=reverse)
+        if sort_by == 'date' and not popular_only:
+            # Fast path: DB handles ORDER BY + LIMIT using the (room, time) index
+            db_order = 'time' if order == 'asc' else '-time'
+            messages = list(qs.order_by(db_order)[:limit])
+            if order == 'desc':
+                messages = list(reversed(messages))
+            for msg in messages:
+                r = _reactions(msg)
+                msg.upvotes = len(r.get('upvotes', []))
+                msg.downvotes = len(r.get('downvotes', []))
         else:
+            # Python path: full scan needed to filter/sort by reactions (stored in JSONField)
+            all_messages = list(qs)
+            for msg in all_messages:
+                r = _reactions(msg)
+                msg.upvotes = len(r.get('upvotes', []))
+                msg.downvotes = len(r.get('downvotes', []))
+
+            if popular_only:
+                all_messages = [msg for msg in all_messages if msg.upvotes >= 1]
+
             reverse = (order == 'desc')
-            all_messages.sort(key=lambda m: m.time, reverse=reverse)
+            if sort_by == 'likes':
+                all_messages.sort(key=lambda m: (m.upvotes, m.time), reverse=reverse)
+            else:
+                all_messages.sort(key=lambda m: m.time, reverse=reverse)
 
-        messages = all_messages[:limit]
-
-        if sort_by == 'date' and order == 'desc':
-            messages = list(reversed(messages))
+            messages = all_messages[:limit]
+            if sort_by == 'date' and order == 'desc':
+                messages = list(reversed(messages))
 
         if not messages:
             return {'messages': [], 'users': {}, 'user_votes': {}}
 
         sender_ids = {msg.sender_id for msg in messages if msg.sender_id}
-        users = {}
-        if sender_ids:
-            users = {u.id: u for u in User.objects.filter(id__in=sender_ids)}
+        users = {u.id: u for u in User.objects.filter(id__in=sender_ids).select_related('uzytkownik')} if sender_ids else {}
 
         user_votes = {}
         for msg in messages:
-            reactions_dict = _reactions(msg)
-            vote_up = reactions_dict.get('upvotes', [])
-            vote_down = reactions_dict.get('downvotes', [])
-            if user_id in vote_up:
+            r = _reactions(msg)
+            if user_id in r.get('upvotes', []):
                 user_votes[msg.id] = 'upvote'
-            elif user_id in vote_down:
+            elif user_id in r.get('downvotes', []):
                 user_votes[msg.id] = 'downvote'
 
         result = []
         for msg in messages:
-            edited = hasattr(msg, 'messagehistory')
             attachments = {}
             for attachment in msg.attachments.all():
-                attachments_of_type = attachments.get(attachment.type, [])
-                attachments_of_type.append(attachment.filename)
-                attachments[attachment.type] = attachments_of_type
+                attachments.setdefault(attachment.type, []).append(attachment.filename)
 
             reply_to_data = None
             if msg.reply_to_id and msg.reply_to:
@@ -509,10 +525,7 @@ class ChatRepository:
                     'author_color': _username_to_color(ru),
                 }
 
-            reactions_dict = _reactions(msg)
-            bulb_count = len(reactions_dict.get('bulb', []))
-            question_count = len(reactions_dict.get('question', []))
-
+            r = _reactions(msg)
             result.append({
                 'id': msg.id,
                 'sender_id': msg.sender_id,
@@ -522,18 +535,14 @@ class ChatRepository:
                 'anonymous': msg.anonymous,
                 'upvotes': msg.upvotes,
                 'downvotes': msg.downvotes,
-                'edited': edited,
+                'edited': hasattr(msg, 'messagehistory'),
                 'attachments': attachments,
                 'reply_to': reply_to_data,
-                'bulb_count': bulb_count,
-                'question_count': question_count,
+                'bulb_count': len(r.get('bulb', [])),
+                'question_count': len(r.get('question', [])),
             })
 
-        return {
-            'messages': result,
-            'users': users,
-            'user_votes': user_votes,
-        }
+        return {'messages': result, 'users': users, 'user_votes': user_votes}
 
     # -- Push notification methods --
     @database_sync_to_async

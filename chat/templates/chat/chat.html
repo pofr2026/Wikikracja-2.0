@@ -28,18 +28,31 @@
       <!-- Top controls — outside scroll container, never affected by scrollbar -->
       <div class="room-list-controls">
         <div class="room-list-controls-inner">
-          <button class="sort-btn me-auto" id="info-btn" data-bs-toggle="modal" data-bs-target="#chat-info-modal" title="{% trans 'Info' %}">
-            <i class="fas fa-circle-info"></i>
-          </button>
-          <a href="{% url 'chat:add_room' %}" class="sort-btn">
-            <i class="fas fa-plus me-1"></i>{% trans 'Room' %}
-          </a>
+          <div class="room-search-wrapper">
+            <i class="fas fa-magnifying-glass room-search-icon" aria-hidden="true"></i>
+            <input type="search" class="room-search-input" id="room-search" placeholder="{% trans 'Search rooms' %}" aria-label="{% trans 'Search rooms' %}">
+          </div>
           <button class="sort-btn" id="unread-filter-btn" title="{% trans 'Show only unread rooms' %}">
-            <i class="fas fa-eye-slash me-1"></i>{% trans 'Unread' %}
+            <i class="fas fa-eye-slash"></i>
           </button>
-          <button class="sort-btn" id="collapse-all-btn" title="{% trans 'Collapse/expand all' %}">
-            <i class="fas fa-angles-up"></i>
+          <button class="sort-btn" id="sort-activity-btn" title="{% trans 'Sort by latest activity' %}">
+            <i class="fas fa-clock"></i><i class="sort-dir-icon fas fa-arrow-down"></i>
           </button>
+          <button class="sort-btn" id="sort-reset-btn" title="{% trans 'Show by category' %}">
+            <i class="fas fa-layer-group"></i>
+          </button>
+          <div class="dropdown">
+            <button class="sort-btn" type="button" id="room-list-kebab" data-bs-toggle="dropdown" aria-expanded="false" title="{% trans 'More' %}">
+              <i class="fas fa-ellipsis-vertical"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" href="{% url 'chat:add_room' %}"><i class="fas fa-plus fa-fw me-2"></i>{% trans 'Add room' %}</a></li>
+              <li><button class="dropdown-item" id="collapse-all-btn" type="button"><i class="fas fa-angles-up fa-fw me-2"></i>{% trans 'Collapse/expand all' %}</button></li>
+              <li><button class="dropdown-item" id="archive-toggle-global-btn" type="button"><i class="fas fa-archive fa-fw me-2"></i>{% trans 'Show archived rooms' %}</button></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><button class="dropdown-item" id="info-btn" type="button" data-bs-toggle="modal" data-bs-target="#chat-info-modal"><i class="fas fa-circle-info fa-fw me-2"></i>{% trans 'Info' %}</button></li>
+            </ul>
+          </div>
           <button class="sort-btn" id="room-list-toggle-static-btn" title="{% trans 'Hide room list' %}">
             <i class="fas fa-angles-right"></i>
           </button>
@@ -58,19 +71,16 @@
                 <span class="nav-cat-arrow">▼</span>
                 {% trans 'Public' %}
               </button>
-              <button class="btn btn-sm btn-secondary archive-toggle" data-target="pub-rooms-archive" title="{% trans 'Show archived rooms' %}">
-                <i class="fas fa-archive"></i>
-              </button>
             </div>
             <div class="nav-cat-content open" id="cat-public">
               {% for room in public_rooms_active %}
-                {% include 'chat/room_link.html' %}
+                {% include 'chat/room_link.html' with room_kind='public' %}
               {% empty %}
                 <p class="text-muted text-center small">{% trans 'None' %}</p>
               {% endfor %}
               <div id="content-pub-rooms-archive" class="archive-section">
                 {% for room in public_rooms_archived %}
-                  {% include 'chat/room_link.html' %}
+                  {% include 'chat/room_link.html' with room_kind='public' %}
                 {% empty %}
                   <p class="text-muted text-center small">{% trans 'None' %}</p>
                 {% endfor %}
@@ -85,14 +95,11 @@
                 <span class="nav-cat-arrow">▼</span>
                 {% trans 'Tasks' %}
               </button>
-              <button class="btn btn-sm btn-secondary archive-toggle" data-target="tasks-archive" title="{% trans 'Show archived rooms' %}">
-                <i class="fas fa-archive"></i>
-              </button>
             </div>
             <div class="nav-cat-content open" id="cat-tasks">
               {% for task in tasks_tree_active %}
                 {% with room=task.chat_room override_label=task.title %}
-                  {% include 'chat/room_link.html' %}
+                  {% include 'chat/room_link.html' with room_kind='task' %}
                 {% endwith %}
               {% empty %}
                 <p class="text-muted text-center small">{% trans 'None' %}</p>
@@ -100,7 +107,7 @@
               <div id="content-tasks-archive" class="archive-section">
                 {% for task in tasks_tree_archived %}
                   {% with room=task.chat_room override_label=task.title %}
-                    {% include 'chat/room_link.html' %}
+                    {% include 'chat/room_link.html' with room_kind='task' %}
                   {% endwith %}
                 {% empty %}
                   <p class="text-muted text-center small">{% trans 'None' %}</p>
@@ -116,14 +123,11 @@
                 <span class="nav-cat-arrow">▼</span>
                 {% trans 'Referendums' %}
               </button>
-              <button class="btn btn-sm btn-secondary archive-toggle" data-target="votes-archive" title="{% trans 'Show archived rooms' %}">
-                <i class="fas fa-archive"></i>
-              </button>
             </div>
             <div class="nav-cat-content open" id="cat-votes">
               {% for vote in votes_tree_active %}
                 {% with room=vote.chat_room override_label=vote.title %}
-                  {% include 'chat/room_link.html' %}
+                  {% include 'chat/room_link.html' with room_kind='vote' %}
                 {% endwith %}
               {% empty %}
                 <p class="text-muted text-center small">{% trans 'None' %}</p>
@@ -131,7 +135,7 @@
               <div id="content-votes-archive" class="archive-section">
                 {% for vote in votes_tree_archived %}
                   {% with room=vote.chat_room override_label=vote.title %}
-                    {% include 'chat/room_link.html' %}
+                    {% include 'chat/room_link.html' with room_kind='vote' %}
                   {% endwith %}
                 {% empty %}
                   <p class="text-muted text-center small">{% trans 'None' %}</p>
@@ -147,19 +151,16 @@
                 <span class="nav-cat-arrow">▼</span>
                 {% trans 'Private' %}
               </button>
-              <button class="btn btn-sm btn-secondary archive-toggle" data-target="prv-archive" title="{% trans 'Show archived rooms' %}">
-                <i class="fas fa-archive"></i>
-              </button>
             </div>
             <div class="nav-cat-content open" id="cat-private">
               {% for room in private_active %}
-                {% include 'chat/room_link.html' %}
+                {% include 'chat/room_link.html' with room_kind='private' %}
               {% empty %}
                 <p class="text-muted text-center small">{% trans 'None' %}</p>
               {% endfor %}
               <div id="content-prv-archive" class="archive-section">
                 {% for room in private_archived %}
-                  {% include 'chat/room_link.html' %}
+                  {% include 'chat/room_link.html' with room_kind='private' %}
                 {% empty %}
                   <p class="text-muted text-center small">{% trans 'None' %}</p>
                 {% endfor %}

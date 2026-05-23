@@ -12,7 +12,9 @@ import {
     createReactionHandler,
     createReplyHandler,
     createVoteHandler,
+    handleListTrigger,
     initFormattingToolbar,
+    initGlobalPasteImageHandler,
 } from './chat-core.js';
 import {
     copyMessageLink,
@@ -27,7 +29,7 @@ import {
     setReplyTarget
 } from './chat.js';
 import DomApi from './domapi.js';
-import { $, $$ } from './utility.js';
+import { $, $$, _ } from './utility.js';
 
 /**
  * DOM API instance for UI operations
@@ -36,6 +38,7 @@ import { $, $$ } from './utility.js';
 const DOM_API = new DomApi();
 
 document.addEventListener('DOMContentLoaded', function() {
+    initGlobalPasteImageHandler();
     const MSG_MAX = window.SITE_SETTINGS?.messageMaxLength ?? 500;
 
     function updateCounter(text) {
@@ -77,8 +80,21 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => toast.remove(), 300);
         }, 2500);
     }
+    window.showToast = showToast;
 
     const { updateToolbarState } = initFormattingToolbar(document, () => $('#message-input'));
+
+    // Inicjalizacja dropdownow w liscie pokoi z popper strategy:'fixed'.
+    // Pozwala dropdownowi wyjsc poza overflow:hidden na .nav-cat-content (animacja collapse).
+    if (typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+        document.querySelectorAll('.room-link__chevron[data-bs-toggle="dropdown"]').forEach(btn => {
+            new bootstrap.Dropdown(btn, {
+                popperConfig(defaultConfig) {
+                    return { ...defaultConfig, strategy: 'fixed' };
+                },
+            });
+        });
+    }
 
     // Update counter on input; no auto-resize needed for contenteditable
     document.addEventListener('input', (e) => {
@@ -151,23 +167,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Restore archive section states from localStorage
-    // The state is stored under the key `chat-archive-${targetId}` with values 'visible' or 'hidden'.
-    // If no value is stored (first visit), we explicitly set it to 'hidden' to ensure the default
-    // behaviour matches the requirement: the "Show archived rooms" button is unchecked.
-    const archiveTargets = ['pub-rooms-archive', 'tasks-archive', 'votes-archive', 'prv-archive'];
-    archiveTargets.forEach(targetId => {
-        const archiveSection = document.getElementById(`content-${targetId}`);
-        const archiveBtn = document.querySelector(`.archive-toggle[data-target="${targetId}"]`);
-        if (!archiveSection || !archiveBtn) return;
-        const savedState = localStorage.getItem(`chat-archive-${targetId}`);
-        if (savedState === 'visible') {
-            archiveSection.classList.add('visible');
-            archiveBtn.classList.add('active');
-        } else {
-            archiveSection.classList.remove('visible');
-            archiveBtn.classList.remove('active');
-        }
+    const globalArchiveBtn = document.getElementById('archive-toggle-global-btn');
+    const archiveSectionIds = ['pub-rooms-archive', 'tasks-archive', 'votes-archive', 'prv-archive'];
+
+    function setArchivesVisible(visible) {
+        archiveSectionIds.forEach(targetId => {
+            document.getElementById(`content-${targetId}`)?.classList.toggle('visible', visible);
+        });
+        globalArchiveBtn?.classList.toggle('active', visible);
+        if (visible) localStorage.setItem('chat-archive-global', 'visible');
+        else localStorage.removeItem('chat-archive-global');
+    }
+
+    if (localStorage.getItem('chat-archive-global') === 'visible') {
+        setArchivesVisible(true);
+    }
+
+    globalArchiveBtn?.addEventListener('click', () => {
+        setArchivesVisible(!globalArchiveBtn.classList.contains('active'));
+    });
+
+    const roomSearchInput = document.getElementById('room-search');
+    roomSearchInput?.addEventListener('input', () => {
+        const query = roomSearchInput.value.trim().toLowerCase();
+        document.querySelectorAll('.room-link[data-room-id]').forEach(roomLink => {
+            const name = (roomLink.querySelector('.room-name')?.textContent || '').toLowerCase();
+            roomLink.classList.toggle('search-filtered-out', query !== '' && !name.includes(query));
+        });
     });
 
     // nav-cat-btn click: toggle category open/closed
@@ -216,17 +242,18 @@ document.addEventListener('DOMContentLoaded', function() {
             if (mod && e.key === 'b') { e.preventDefault(); document.execCommand('bold'); updateToolbarState(); return; }
             if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
             if (mod && e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateToolbarState(); return; }
-            // Ctrl+Enter = wyślij; Enter = nowa linia (domyślne zachowanie contenteditable)
-            if (e.key === 'Enter' && mod) {
+            if (handleListTrigger(e)) return;
+            // Enter = wyślij, Shift+Enter = nowa linia
+            if (e.key === 'Enter') {
                 e.preventDefault();
-                onSubmitMessage(DOM_API.getEnteredText(), DOM_API.getEditedMessageId());
+                if (e.shiftKey) { document.execCommand('insertLineBreak'); }
+                else { onSubmitMessage(DOM_API.getEnteredText(), DOM_API.getEditedMessageId()); }
                 return;
             }
-            // Zwykły Enter: pozwól przeglądarce wstawić nową linię
             return;
         }
 
-        if (e.key === "Enter" && mod) {
+        if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             onSubmitMessage(DOM_API.getEnteredText(), DOM_API.getEditedMessageId());
         }
@@ -242,26 +269,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', createImageClickHandler());
 
     document.addEventListener('click', (e) => {
-        const archiveBtn = e.target.closest('.archive-toggle');
-        if (archiveBtn) {
-            const targetId = archiveBtn.dataset.target;
-            const archiveSection = document.getElementById(`content-${targetId}`);
-            if (archiveSection) {
-                const isVisible = archiveSection.classList.contains('visible');
-                if (isVisible) {
-                    archiveSection.classList.remove('visible');
-                    archiveBtn.classList.remove('active');
-                    localStorage.setItem(`chat-archive-${targetId}`, 'hidden');
-                } else {
-                    archiveSection.classList.add('visible');
-                    archiveBtn.classList.add('active');
-                    localStorage.setItem(`chat-archive-${targetId}`, 'visible');
-                }
-            }
-        }
-    });
-
-    document.addEventListener('click', (e) => {
         const btn = e.target.closest('.notif-switch');
         if (btn) {
             const newState = !(btn.dataset.enabled === "true" || btn.dataset.enabled === true);
@@ -269,6 +276,23 @@ document.addEventListener('DOMContentLoaded', function() {
             const icon = $("i", btn);
             icon?.classList.toggle('fa-bell', newState);
             icon?.classList.toggle('fa-bell-slash', !newState);
+            const label = btn.querySelector('.notif-label');
+            if (label) label.textContent = newState ? _('Mute room') : _('Unmute room');
+            const meta = btn.closest('.room-link')?.querySelector('.room-link__meta');
+            if (meta) {
+                meta.dataset.muted = newState ? 'false' : 'true';
+                let mutedIcon = meta.querySelector('.room-link__muted-icon');
+                if (!newState) {
+                    if (!mutedIcon) {
+                        mutedIcon = document.createElement('i');
+                        mutedIcon.className = 'fas fa-bell-slash room-link__muted-icon';
+                        mutedIcon.title = _('Muted');
+                        meta.appendChild(mutedIcon);
+                    }
+                } else {
+                    mutedIcon?.remove();
+                }
+            }
             onToggleNotifications(btn.dataset.roomId, newState);
         }
     });
@@ -287,34 +311,6 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof window.updateUnreadFilter === 'function') {
                 window.updateUnreadFilter();
             }
-        }
-    });
-
-    document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.track-switch');
-        if (btn) {
-            e.preventDefault();
-            e.stopPropagation();
-            const isTracked = btn.dataset.tracked === 'true';
-            const newTracked = !isTracked;
-            btn.dataset.tracked = newTracked;
-            btn.classList.toggle('active', newTracked);
-            const icon = btn.querySelector('i');
-            if (icon) {
-                icon.className = newTracked ? 'fas fa-bookmark' : 'far fa-bookmark';
-            }
-            const roomDiv = btn.closest('.room-link');
-            if (roomDiv) {
-                roomDiv.classList.toggle('room-auto-muted', !newTracked && roomDiv.dataset.autoMuted !== 'false');
-            }
-            fetch('/chat/api/toggle-track/', {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '',
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ room_id: btn.dataset.roomId, tracked: newTracked }),
-            });
         }
     });
 
@@ -450,23 +446,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
 
-    document.addEventListener('click', handleRoomNameClick);
+    document.addEventListener('click', handleRoomLinkClick);
 
-    function handleRoomNameClick(e) {
-        const roomName = e.target.closest('.room-name');
-        if (!roomName) return;
-        const room_id = roomName.parentElement.getAttribute("data-room-id");
-        if (!roomName.classList.contains("joined")) {
-            roomName.parentElement.classList.add('room-tapping');
-            setTimeout(() => roomName.parentElement.classList.remove('room-tapping'), 300);
-            // Sync eye icon state after joining
-            DOM_API.getRoomLinkDiv(room_id)?.classList.remove("room-not-seen");
-            DOM_API.setRoomSeenIconState(room_id, true);
-            onRoomTryJoin(room_id);
-            // Update unread filter if it's active
-            if (typeof window.updateUnreadFilter === 'function') {
-                window.updateUnreadFilter();
-            }
+    function handleRoomLinkClick(e) {
+        if (e.target.closest('.room-link__actions')) return;
+        const roomLink = e.target.closest('.room-link');
+        if (!roomLink) return;
+        if (roomLink.classList.contains("joined")) {
+            // Mobile: klik w już aktywny pokój = wróć do tego pokoju (zwiń rozwiniętą listę)
+            if (window.innerWidth < 768) mobileHideRoomList();
+            return;
+        }
+        const room_id = roomLink.getAttribute("data-room-id");
+        roomLink.classList.add('room-tapping');
+        setTimeout(() => roomLink.classList.remove('room-tapping'), 300);
+        DOM_API.getRoomLinkDiv(room_id)?.classList.remove("room-not-seen");
+        DOM_API.setRoomSeenIconState(room_id, true);
+        onRoomTryJoin(room_id);
+        if (typeof window.updateUnreadFilter === 'function') {
+            window.updateUnreadFilter();
         }
     }
 
@@ -541,3 +539,4 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+

@@ -5,7 +5,7 @@
   Oczekiwana zmienna: task — obiekt Task (z with_metrics + chat_msg_count)
 {% endcomment %}
 
-<div class="proposal-card" id="card-{{ task.pk }}" data-category="{{ task.category }}">
+<div class="proposal-card" id="card-{{ task.pk }}" data-category="{{ task.category.slug }}">
 
   {# ── NAGŁÓWEK (klikalny → toggle) ── #}
   <div class="proposal-card-header" onclick="toggleCard({{ task.pk }})" role="button" tabindex="0"

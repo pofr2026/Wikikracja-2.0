@@ -1,6 +1,15 @@
 // Profile page - email notification toggles
 
+const SCROLL_KEY = 'profile_scroll_restore';
+
 document.addEventListener('DOMContentLoaded', function() {
+	const savedScroll = sessionStorage.getItem(SCROLL_KEY);
+	if (savedScroll !== null) {
+		sessionStorage.removeItem(SCROLL_KEY);
+		// behavior: 'instant' omija globalne `scroll-behavior: smooth` — tylko dla restoreu po zmianie jezyka.
+		window.scrollTo({ top: parseInt(savedScroll, 10), left: 0, behavior: 'instant' });
+	}
+
 	const toggles = document.querySelectorAll('[id^="toggle-"]');
 
 	function updateBadge(badge, isEnabled) {
@@ -21,35 +30,17 @@ document.addEventListener('DOMContentLoaded', function() {
 		if (parts.length === 2) return parts.pop().split(';').shift();
 	}
 
-	const MUTUALLY_EXCLUSIVE = [['toggle-chat', 'toggle-chat_participated']];
-
-	function disableToggle(toggleId) {
-		const toggle = document.getElementById(toggleId);
-		if (!toggle || !toggle.checked) return;
-		toggle.checked = false;
-		const type = toggle.dataset.url.split('type=')[1];
-		const badge = document.getElementById('status-' + type);
-		fetch(toggle.dataset.url, {
-			method: 'POST',
-			headers: { 'X-CSRFToken': getCookie('csrftoken'), 'Content-Type': 'application/json' },
-			body: JSON.stringify({ enabled: false })
-		}).then(r => r.json()).then(data => { if (data.success) updateBadge(badge, false); });
-	}
+	document.querySelectorAll('form[data-lang-form]').forEach(form => {
+		form.addEventListener('submit', () => {
+			sessionStorage.setItem(SCROLL_KEY, window.scrollY);
+		});
+	});
 
 	toggles.forEach(toggle => {
 		toggle.addEventListener('change', function() {
 			const type = this.dataset.url.split('type=')[1];
 			const statusBadge = document.getElementById('status-' + type);
 			const isChecked = this.checked;
-
-			// Mutual exclusion
-			if (isChecked) {
-				MUTUALLY_EXCLUSIVE.forEach(group => {
-					if (group.includes(this.id)) {
-						group.filter(id => id !== this.id).forEach(disableToggle);
-					}
-				});
-			}
 
 			statusBadge.className = 'badge bg-warning';
 			statusBadge.textContent = statusBadge.dataset.savingText;

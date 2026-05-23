@@ -1,7 +1,7 @@
 {% load i18n %}
 {% if tasks %}
   <div class="table-responsive">
-    <table class="table table-sm table-striped table-hover-rows mb-0" style="font-size:.875rem;">
+    <table class="table table-sm table-striped table-hover-rows mb-0">
       <thead>
         <tr>
           <th>{% trans "Title" %}</th>
@@ -40,13 +40,6 @@
       </tbody>
     </table>
   </div>
-  <script>
-  document.querySelectorAll('.table-hover-rows tbody tr[data-href]').forEach(function(tr){
-    tr.addEventListener('click', function(e){
-      if (!e.target.closest('a')) window.location = tr.dataset.href;
-    });
-  });
-  </script>
 {% else %}
-  <p class="text-muted p-3 mb-0" style="font-size:.875rem;">{% trans "No tasks found." %}</p>
+  <p class="text-muted p-3 mb-0 citizen-tab-empty">{% trans "No tasks found." %}</p>
 {% endif %}

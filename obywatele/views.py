@@ -163,6 +163,7 @@ def wspolnota_calendar(request: HttpRequest):
     })
 
 
+@login_required
 def wspolnota(request: HttpRequest):
 
     # --- stats ---
@@ -284,6 +285,18 @@ def obywatele(request: HttpRequest):
         'joined': 'joined_is_blank',
     }
     default_sort = '-joined'
+
+    five_min_ago = timezone.now() - timedelta(minutes=5)
+    seven_days_ago = timezone.now() - timedelta(days=7)
+    thirty_days_ago = timezone.now() - timedelta(days=30)
+    aktywnosc = request.GET.get('aktywnosc', '')
+    _aktywnosc_filters = {
+        'online': Q(last_login__gte=five_min_ago),
+        '7d': Q(last_login__gte=seven_days_ago),
+        '30d': Q(last_login__gte=thirty_days_ago),
+        'nieaktywni': Q(last_login__lt=thirty_days_ago) | Q(last_login__isnull=True),
+    }
+
     requested_sort = request.GET.get('sort', default_sort)
     requested_field = requested_sort.lstrip('-')
 
@@ -343,11 +356,10 @@ def obywatele(request: HttpRequest):
             output_field=IntegerField(),
         ),
     ).order_by(*order_by_fields))
+    if aktywnosc in _aktywnosc_filters:
+        uid = uid.filter(_aktywnosc_filters[aktywnosc])
 
-    # Get required reputation threshold
     req_rep = required_reputation()
-
-    # Add near-threshold data to users (only need to check if reputation <= threshold + 1)
     users_with_reputation = []
     for user in uid:
         if hasattr(user, 'uzytkownik'):
@@ -355,6 +367,18 @@ def obywatele(request: HttpRequest):
             user.near_threshold = reputation <= (req_rep + 1)
         else:
             user.near_threshold = False
+
+        if user.last_login is None:
+            user.activity_status = 'inactive'
+        elif user.last_login >= five_min_ago:
+            user.activity_status = 'online'
+        elif user.last_login >= seven_days_ago:
+            user.activity_status = 'active'
+        elif user.last_login >= thirty_days_ago:
+            user.activity_status = 'dormant'
+        else:
+            user.activity_status = 'inactive'
+
         users_with_reputation.append(user)
 
     default_directions = {
@@ -385,6 +409,10 @@ def obywatele(request: HttpRequest):
             'next_param': next_param,
         }
 
+    _aktywnosc_ctx = aktywnosc if aktywnosc in _aktywnosc_filters else ''
+    sort_url_suffix = f'&aktywnosc={_aktywnosc_ctx}' if _aktywnosc_ctx else ''
+    sort_param = f'sort={requested_sort}' if requested_sort != default_sort else ''
+
     return render(
         request,
         'obywatele/start.html',
@@ -392,6 +420,9 @@ def obywatele(request: HttpRequest):
             'uid': users_with_reputation,  # Don't change to 'user' - it will break menu
             'sort_meta': sort_meta,
             'current_sort': requested_sort,
+            'aktywnosc': _aktywnosc_ctx,
+            'sort_url_suffix': sort_url_suffix,
+            'sort_param': sort_param,
         }
     )
 
@@ -665,14 +696,8 @@ def my_profile(request: HttpRequest):
         {
             'type': 'chat',
             'title': _('Chat'),
-            'description': _('New messages in all chat rooms'),
+            'description': _('New messages from rooms you haven\'t muted'),
             'enabled': profile.email_notifications_chat,
-        },
-        {
-            'type': 'chat_participated',
-            'title': _('Chat — my active discussions'),
-            'description': _('New messages only in rooms where I have sent at least one message'),
-            'enabled': profile.email_notifications_chat_participated,
         },
     ]
 
@@ -727,7 +752,6 @@ def toggle_notification(request: HttpRequest):
         'obywatele': 'email_notifications_obywatele',
         'glosowania': 'email_notifications_glosowania',
         'chat': 'email_notifications_chat',
-        'chat_participated': 'email_notifications_chat_participated',
     }
 
     try:
@@ -1000,7 +1024,7 @@ def set_user_language(request: HttpRequest):
 @login_required
 def citizen_czaty(request: HttpRequest, pk: int):
     target_user = get_object_or_404(User, pk=pk)
-    messages = (Message.objects.filter(sender=target_user).select_related('room').order_by('-time'))
+    messages = (Message.objects.filter(sender=target_user, room__public=True).select_related('room').order_by('-time'))
     rows = [{
         'room': msg.room,
         'room_name': msg.room.displayed_name(request.user),
@@ -1155,7 +1179,7 @@ def citizen_zalozono(request: HttpRequest, pk: int):
             }),
         })
 
-    for room in Room.objects.filter(founder=target_user).order_by('-last_activity'):
+    for room in Room.objects.filter(founder=target_user, public=True).order_by('-last_activity'):
         items.append({
             'title': room.displayed_name(target_user),
             'ts': room.last_activity,

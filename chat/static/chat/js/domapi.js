@@ -44,10 +44,10 @@ export default class DomApi {
         return room ? $('.messages', room) : null;
     }
 
-    buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
+    buildMessageHtml(room_id, user_id, avatar_url, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
         const formatted = this.formatMessage(message);
         return Message({
-            room_id, message_id, username,
+            room_id, user_id, avatar_url, message_id, username,
             message: this.wrapExpandable(formatted),
             upvotes, downvotes, vote, own, edited, attachments,
             original_ts, latest_ts: formatTime(latest_ts),
@@ -59,8 +59,8 @@ export default class DomApi {
         });
     }
 
-    addMessage(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null) {
-        const html = this.buildMessageHtml(room_id, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to, reactions, your_reactions, read_by);
+    addMessage(room_id, user_id, avatar_url, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to = null, reactions = null, your_reactions = null, read_by = null, temp_id = null) {
+        const html = this.buildMessageHtml(room_id, user_id, avatar_url, message_id, username, message, upvotes, downvotes, vote, own, edited, attachments, original_ts, latest_ts, reply_to, reactions, your_reactions, read_by);
 
         const messagesDiv = this.getMessagesDiv();
         messagesDiv?.insertAdjacentHTML('beforeend', html);
@@ -68,6 +68,28 @@ export default class DomApi {
         const msgDiv = this.getMessageDiv(message_id);
         const msgText = msgDiv?.querySelector('.msg-text');
         if (msgText) msgText.dataset.raw = message;
+        if (temp_id && msgDiv) {
+            msgDiv.dataset.tempId = temp_id;
+            msgDiv.classList.add('message--pending');
+        }
+    }
+
+    confirmMessage(temp_id, real_id) {
+        const msgDiv = this.getMessagesDiv()?.querySelector(`.message[data-temp-id="${temp_id}"]`);
+        if (!msgDiv) return;
+        msgDiv.classList.remove('message--pending', 'message--failed');
+        msgDiv.dataset.messageId = real_id;
+        msgDiv.querySelectorAll(`[data-message-id="${temp_id}"]`).forEach(el => {
+            el.dataset.messageId = real_id;
+        });
+        delete msgDiv.dataset.tempId;
+    }
+
+    failMessage(temp_id) {
+        const msgDiv = this.getMessagesDiv()?.querySelector(`.message[data-temp-id="${temp_id}"]`);
+        if (!msgDiv) return;
+        msgDiv.classList.remove('message--pending');
+        msgDiv.classList.add('message--failed');
     }
 
     getMessageDiv(message_id) {
@@ -130,7 +152,7 @@ export default class DomApi {
                 msgText.dataset.raw = text;
                 msgText.innerHTML = this.wrapExpandable(this.formatMessage(text));
                 // Re-evaluate overflow after content change
-                msgText.querySelectorAll('.expandable').forEach(exp => exp.classList.remove('no-overflow'));
+                msgText.querySelectorAll('.expandable').forEach(exp => exp.classList.remove('has-overflow'));
                 requestAnimationFrame(() => this.markOverflow(msgText));
                 return msgText;
             }
@@ -188,13 +210,12 @@ export default class DomApi {
             `</div>`;
     }
 
-    // After inserting into DOM, mark expandables that don't actually overflow as no-overflow.
+    // After inserting into DOM, mark expandables that actually overflow — hint i klikalnosc dopiero po potwierdzeniu.
     markOverflow(container) {
         container?.querySelectorAll('.expandable:not(.is-open)').forEach(exp => {
             const body = exp.querySelector('.expandable-body');
-            if (body && body.scrollHeight <= body.clientHeight) {
-                exp.classList.add('no-overflow');
-            }
+            if (!body) return;
+            exp.classList.toggle('has-overflow', body.scrollHeight > body.clientHeight);
         });
     }
 
@@ -341,7 +362,7 @@ export default class DomApi {
                 input.value = '';
             }
             input.style.borderColor = '';
-            input.dispatchEvent(new Event('input'));
+            input.dispatchEvent(new InputEvent('input', { bubbles: true }));
         }
         this.clearFiles();
     }
@@ -384,6 +405,23 @@ export default class DomApi {
         if (icon) {
             icon.classList.toggle('fa-bell', is_enabled);
             icon.classList.toggle('fa-bell-slash', !is_enabled);
+        }
+        const label = btn.querySelector('.notif-label');
+        if (label) label.textContent = is_enabled ? _('Mute room') : _('Unmute room');
+        const meta = btn.closest('.room-link')?.querySelector('.room-link__meta');
+        if (meta) {
+            meta.dataset.muted = is_enabled ? 'false' : 'true';
+            let mutedIcon = meta.querySelector('.room-link__muted-icon');
+            if (!is_enabled) {
+                if (!mutedIcon) {
+                    mutedIcon = document.createElement('i');
+                    mutedIcon.className = 'fas fa-bell-slash room-link__muted-icon';
+                    mutedIcon.title = _('Muted');
+                    meta.appendChild(mutedIcon);
+                }
+            } else {
+                mutedIcon?.remove();
+            }
         }
     }
 
@@ -496,4 +534,46 @@ export default class DomApi {
         }
     }
 
+    updateSidebarForMessage(msg) {
+        const roomLink = document.querySelector(`.room-link[data-room-id="${msg.room_id}"]`);
+        if (!roomLink) return;
+
+        roomLink.dataset.lastActivity = Math.floor(msg.timestamp / 1000);
+
+        const dateEl = roomLink.querySelector('.room-link__date');
+        if (dateEl) dateEl.textContent = _relativeChatDate(msg.timestamp);
+
+        const senderEl = roomLink.querySelector('.room-link__sender');
+        if (senderEl) senderEl.textContent = (msg.anonymous ? _('Anonymous') : (msg.username || '—')) + ':';
+
+        const snippetEl = roomLink.querySelector('.room-link__snippet');
+        if (snippetEl) {
+            const tmp = document.createElement('div');
+            tmp.innerHTML = msg.message || '';
+            const text = tmp.textContent.replace(/\s+/g, ' ').trim();
+            snippetEl.textContent = text || _('attachment');
+        }
+
+        const container = roomLink.closest('.nav-cat-content, #room-list-flat');
+        if (container && container.firstElementChild !== roomLink) {
+            container.prepend(roomLink);
+        }
+    }
+
+}
+
+const _DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const _MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function _relativeChatDate(tsMs) {
+    const now = new Date();
+    const d = new Date(tsMs);
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const msgMidnight = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const deltaDays = Math.round((todayMidnight - msgMidnight) / 86400000);
+    if (deltaDays === 0) return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+    if (deltaDays === 1) return _('Yesterday');
+    if (deltaDays < 7) return _(_DAYS[d.getDay()]);
+    if (d.getFullYear() === now.getFullYear()) return `${d.getDate()} ${_(_MONTHS[d.getMonth()])}`;
+    return `${d.getDate()} ${_(_MONTHS[d.getMonth()])} ${d.getFullYear()}`;
 }

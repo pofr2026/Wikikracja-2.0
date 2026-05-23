@@ -61,7 +61,8 @@ const room_template = `
       <!-- Rich text input -->
       <div id="message-input" class="message-input-rich" contenteditable="true"
            role="textbox" aria-multiline="true" aria-label="${_("Reply to the appropriate message...")}"
-           data-placeholder="${_("Reply to the appropriate message...")}"></div>
+           data-placeholder="${_("Reply to the appropriate message...")}"
+           data-hint="${_("Shift+↵ new line · Ctrl+B bold · Ctrl+I italic · - or * list")}"></div>
 
       <!-- Bottom bar: tools left, counter+send right -->
       <div class="compose-bar">
@@ -134,7 +135,14 @@ const message_template = `
 
     <div class='message-header'>
       <div class='message-header-left'>
-        <span class='username'><%=username%></span>
+        <% const _hasProfileLink = (typeof user_id !== 'undefined' && user_id); %>
+        <% if (_hasProfileLink) { %><a class='username username-link' href='/obywatele/<%- user_id %>/'><% } else { %><span class='username'><% } %>
+          <% if (typeof avatar_url !== 'undefined' && avatar_url) { %>
+            <img class='msg-author-avatar' src='<%- avatar_url %>' alt=''>
+          <% } else { %>
+            <span class='msg-author-avatar msg-author-initials'><%= (username || '').slice(0, 2).toUpperCase() %></span>
+          <% } %><%= username %>
+        <% if (_hasProfileLink) { %></a><% } else { %></span><% } %>
         <span class='message-timestamp ms-2' data-message-id='<%-message_id%>'><%- latest_ts %></span>
         <button type='button' class='btn btn-sm ms-1 message-btn show-history' <% if (!edited) { %> style='display:none' <% } %>
           data-message-id='<%-message_id%>'

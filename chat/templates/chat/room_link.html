@@ -1,55 +1,90 @@
 {% load i18n filters %}
 
-{% with is_tracked=room|is_tracked_by:user is_not_participated=room|not_participated:participated_room_ids %}
-{% is_auto_muted participated_only is_not_participated is_tracked as auto_muted %}
-<div class="room-link {{ room|seen_by:user }}{% if auto_muted %} room-auto-muted{% endif %}"
+<div class="room-link {{ room|seen_by:user }}"
   data-room-type="{% if room.public %}public{% else %}private{% endif %}"
   data-room-id="{{ room.id }}"
-  data-room-archived="{{ room.archived }}">
-  {% if room.archived %}
-    <i class="fas fa-lock nav-status nav-status--locked" aria-hidden="true"></i>
-  {% elif room|is_seen_by:user == "false" %}
-    <span class="nav-status nav-status--unread" aria-label="{% trans 'Unread' %}"></span>
-  {% else %}
-    <span class="nav-status nav-status--read" aria-hidden="true"></span>
-  {% endif %}
-  <div class="room-name flex-grow-1">
-    {% if override_label %}{{ override_label }}{% else %}{{ room|name_for:user }}{% endif %}
+  data-room-archived="{{ room.archived }}"
+  data-last-activity="{{ room.last_message_at|default_if_none:room.last_activity|date:'U' }}">
+
+  <div class="room-link__avatar room-link__avatar--{{ room_kind|default:'public' }}">
+    {% if room_kind == 'task' %}
+      <i class="fas fa-tasks" aria-hidden="true"></i>
+    {% elif room_kind == 'vote' %}
+      <i class="fas fa-vote-yea" aria-hidden="true"></i>
+    {% elif room_kind == 'private' %}
+      {% with other=room|other_user:user %}
+        {% if other.uzytkownik.avatar %}
+          <img src="{{ other.uzytkownik.avatar.url }}" alt="" loading="lazy">
+        {% else %}
+          <i class="fas fa-user" aria-hidden="true"></i>
+        {% endif %}
+      {% endwith %}
+    {% else %}
+      <i class="fas fa-users" aria-hidden="true"></i>
+    {% endif %}
   </div>
 
-  <div class="room-controls">
-    {% if participated_only %}
-    <button type="button"
-      class="btn btn-link btn-sm p-0 track-switch{% if is_tracked %} active{% endif %}"
-      data-room-id="{{ room.id }}"
-      data-tracked="{% if is_tracked %}true{% else %}false{% endif %}"
-      title="{% if is_tracked %}{% trans 'Untrack room' %}{% else %}{% trans 'Track room' %}{% endif %}">
-      <i class="{% if is_tracked %}fas{% else %}far{% endif %} fa-bookmark"></i>
-    </button>
+  <div class="room-link__status">
+    {% if room.archived %}
+      <i class="fas fa-lock nav-status nav-status--locked" aria-hidden="true"></i>
+    {% elif room|is_seen_by:user == "false" %}
+      <span class="nav-status nav-status--unread" aria-label="{% trans 'Unread' %}"></span>
+    {% else %}
+      <span class="nav-status nav-status--read" aria-hidden="true"></span>
     {% endif %}
-    <button type="button"
-      class="btn btn-link btn-sm p-0 seen-switch"
-      data-room-id="{{ room.id }}"
-      data-seen="{{ room|is_seen_by:user }}"
-      title="{% trans 'Mark as unread' %}"
-      aria-label="{% blocktrans with room_name=room|name_for:user %}Mark room {{ room_name }} as unread{% endblocktrans %}">
-      <i class="fas fa-eye{% if auto_muted %}-slash{% elif room|is_seen_by:user == "true" %}{% else %}-slash{% endif %}"></i>
+  </div>
+
+  <div class="room-link__body">
+    <div class="room-link__top">
+      <span class="room-name">
+        {% if override_label %}{{ override_label }}{% else %}{{ room|name_for:user }}{% endif %}
+      </span>
+      <span class="room-link__date">{{ room.last_message_at|relative_chat_date }}</span>
+    </div>
+    {% if room.last_message_at %}
+      <div class="room-link__preview">
+        <span class="room-link__sender">{% if room.last_message_anonymous %}{% trans 'Anonymous' %}{% elif room.last_message_sender %}{{ room.last_message_sender.username }}{% else %}—{% endif %}:</span>
+        {% with stripped=room.last_message_text|striptags %}
+          <span class="room-link__snippet">{% if stripped|cut:" " %}{{ stripped|truncatechars:60 }}{% else %}{% trans 'attachment' %}{% endif %}</span>
+        {% endwith %}
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="room-link__meta" data-muted="{% if room|is_muted_by:user %}true{% else %}false{% endif %}">
+    {% if room|is_muted_by:user %}
+      <i class="fas fa-bell-slash room-link__muted-icon" title="{% trans 'Muted' %}" aria-label="{% trans 'Muted' %}"></i>
+    {% endif %}
+  </div>
+
+  <div class="room-link__actions dropdown">
+    <button type="button" class="room-link__chevron" data-bs-toggle="dropdown" aria-expanded="false" aria-label="{% trans 'Room actions' %}">
+      <i class="fas fa-chevron-down" aria-hidden="true"></i>
     </button>
-    <button type="button"
-      class="btn btn-link btn-sm p-0 notif-switch"
-      data-room-id="{{ room.id }}"
-      data-enabled="{% if room|is_muted_by:user %}false{% else %}true{% endif %}"
-      title="{% trans 'Toggle notifications (chat and email)' %}"
-      aria-label="{% blocktrans with room_name=room|name_for:user %}Toggle notifications for room {{ room_name }}{% endblocktrans %}">
-      <i class="far fa-bell{% if room|is_muted_by:user %}-slash{% endif %}"></i>
-    </button>
-    <button type="button"
-      class="btn btn-link btn-sm p-0 copy-link-btn copy-room-url"
-      data-room-id="{{ room.id }}"
-      title="{% trans 'Copy link' %}"
-      aria-label="{% blocktrans with room_name=room|name_for:user %}Copy link to room {{ room_name }}{% endblocktrans %}">
-      <i class="fas fa-link"></i>
-    </button>
+    <ul class="dropdown-menu dropdown-menu-end">
+      <li>
+        <button type="button"
+          class="dropdown-item seen-switch"
+          data-room-id="{{ room.id }}"
+          data-seen="{{ room|is_seen_by:user }}">
+          <i class="fas fa-eye{% if room|is_seen_by:user == "true" %}{% else %}-slash{% endif %} fa-fw me-2"></i>{% trans 'Mark as unread' %}
+        </button>
+      </li>
+      <li>
+        <button type="button"
+          class="dropdown-item notif-switch"
+          data-room-id="{{ room.id }}"
+          data-enabled="{% if room|is_muted_by:user %}false{% else %}true{% endif %}">
+          <i class="far fa-bell{% if room|is_muted_by:user %}-slash{% endif %} fa-fw me-2"></i><span class="notif-label">{% if room|is_muted_by:user %}{% trans 'Unmute room' %}{% else %}{% trans 'Mute room' %}{% endif %}</span>
+        </button>
+      </li>
+      <li>
+        <button type="button"
+          class="dropdown-item copy-room-url"
+          data-room-id="{{ room.id }}">
+          <i class="fas fa-link fa-fw me-2"></i>{% trans 'Copy link' %}
+        </button>
+      </li>
+    </ul>
   </div>
 </div>
-{% endwith %}

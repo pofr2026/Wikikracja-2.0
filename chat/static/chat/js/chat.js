@@ -39,6 +39,10 @@ let CurrentRoomId = null;
  * @type {number|null}
  */
 let currentReplyId = null;
+let currentReplyData = null;
+
+const pendingTimeouts = new Map();
+const PENDING_TIMEOUT_MS = 10000;
 
 /**
  * Message ID to scroll to when joining a room (e.g., from link)
@@ -77,7 +81,7 @@ function restoreDraft(roomId) {
     } else {
         input.value = draft;
     }
-    input.dispatchEvent(new Event('input'));
+    input.dispatchEvent(new InputEvent('input', { bubbles: true }));
 }
 
 function clearDraft(roomId) {
@@ -133,6 +137,109 @@ function bindSortToolbar() {
     applyActiveStyles();
 }
 
+/**
+ * Czysta funkcja decyzyjna dla startu chat'a na podstawie URL params + stanu DOM.
+ * UWAGA: synchronizować z chat/static/chat/js/__tests__/startup_action.test.js
+ * (wzór jak draft.test.js — funkcja kopiowana 1:1 do testu).
+ */
+function decideStartupAction({ search = '', hasHash = false, isMobile = false } = {}) {
+    // Hash ma bezwzględny priorytet — użytkownik chce konkretny pokój
+    if (hasHash) {
+        return { mode: 'default', joinAction: 'auto' };
+    }
+    const params = new URLSearchParams(search.startsWith('?') ? search.slice(1) : search);
+    if (params.get('view') === 'rooms') {
+        return {
+            mode: 'rooms', unreadFilter: 'off', showPlaceholder: true,
+            forceListVisible: true, mobileShowList: isMobile,
+            joinAction: 'none', stripParam: 'view',
+        };
+    }
+    // ?unread=1 to legacy alias (stare bookmark'y / push'e) — traktowany jak ?view=unread.
+    // Akcja celowo nie zawiera showUnreadEmptyState — empty state jest pochodna stanu
+    // filtra, obsluguje go applyUnreadFilter (zarowno przy starcie jak i w runtime).
+    const wantsUnreadView = params.get('view') === 'unread' || params.get('unread') === '1';
+    if (wantsUnreadView) {
+        return {
+            mode: 'unread', unreadFilter: 'on', showPlaceholder: true,
+            forceListVisible: true, mobileShowList: isMobile,
+            joinAction: 'none',
+            stripParam: params.get('unread') === '1' ? 'unread' : 'view',
+        };
+    }
+    return { mode: 'default', joinAction: 'auto' };
+}
+
+// Placeholder "Wybierz pokoj" w lewej kolumnie — gdy nie ma joinowanego pokoju.
+// Tekst budujemy przez textContent (defense-in-depth — gdyby kiedys w tlumaczeniu
+// pojawil sie znak < lub &, to nie zlamie HTML'a).
+function showRoomPlaceholder() {
+    const messages = document.querySelector('.chat-root-messages');
+    if (!messages || document.getElementById('chat-no-room-placeholder')) return;
+    const div = document.createElement('div');
+    div.id = 'chat-no-room-placeholder';
+    div.className = 'chat-no-room-placeholder';
+
+    const icon = document.createElement('i');
+    icon.className = 'fas fa-comments chat-no-room-icon';
+    icon.setAttribute('aria-hidden', 'true');
+
+    const text = document.createElement('p');
+    text.className = 'chat-no-room-text';
+    text.textContent = _("Select a room from the list");
+
+    div.append(icon, text);
+    messages.appendChild(div);
+}
+
+function hideRoomPlaceholder() {
+    document.getElementById('chat-no-room-placeholder')?.remove();
+}
+
+// Empty state w prawej kolumnie — gdy filtr unread aktywny ale brak nieprzeczytanych.
+// Tekst budujemy przez textContent; w hint'cie ikona inline jest realnym elementem
+// DOM (a nie innerHTML'em wstrzyknietym z tlumaczenia) — bezpieczne nawet gdy
+// tlumaczenie zawiera znaki specjalne wokol placeholdera {icon}.
+// .row chowamy przez CSS :has() (patrz chat.css) — nie tykamy inline style,
+// zeby nie kolidowac z sort'em wg czasu, ktory tez ustawia .row { display: none }.
+function showUnreadEmptyState() {
+    const roomList = document.querySelector('#room-list');
+    if (!roomList || document.getElementById('chat-no-unread-empty-state')) return;
+
+    const div = document.createElement('div');
+    div.id = 'chat-no-unread-empty-state';
+    div.className = 'chat-no-unread-empty-state';
+
+    const iconBig = document.createElement('i');
+    iconBig.className = 'fas fa-envelope-open chat-no-unread-icon';
+    iconBig.setAttribute('aria-hidden', 'true');
+
+    const title = document.createElement('p');
+    title.className = 'chat-no-unread-title';
+    title.textContent = _("No unread messages");
+
+    // Hint: split tlumaczenia po {icon} i wstaw realny <i> miedzy text nodes.
+    // Ikona jest dokladnie ta sama co w #unread-filter-btn — wizualnie spina
+    // komunikat z akcja, ktora user ma wykonac.
+    const hint = document.createElement('p');
+    hint.className = 'chat-no-unread-hint';
+    const [before, after] = _("Tap {icon} above the list to disable the unread filter").split('{icon}');
+    hint.appendChild(document.createTextNode(before));
+    const inlineIcon = document.createElement('i');
+    inlineIcon.className = 'fas fa-eye-slash chat-no-unread-inline-icon';
+    inlineIcon.setAttribute('aria-hidden', 'true');
+    hint.appendChild(inlineIcon);
+    hint.appendChild(document.createTextNode(after));
+
+    div.append(iconBig, title, hint);
+    roomList.appendChild(div);
+}
+
+function hideUnreadEmptyState() {
+    // .remove() wystarcza — CSS :has() wyrejestruje regule .row { display: none } sam
+    document.getElementById('chat-no-unread-empty-state')?.remove();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     WS_API = new WsApi();
     DOM_API = new DomApi();
@@ -148,9 +255,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const unreadFilterBtn = $('#unread-filter-btn');
     let isUnreadFilterActive = false;
 
-    // Restore filter state from localStorage
+    // Restore filter state from localStorage. URL params bija zapisany stan:
+    //   ?view=rooms   -> wymuszamy filtr OFF (sidebar)
+    //   ?view=unread  -> wymuszamy filtr ON  (dashboard badge; ?unread=1 to legacy alias)
+    // Robimy to juz tu (nie tylko w wsOnConnect), zeby unikac wizualnego migniecia.
+    const initialParams = new URLSearchParams(location.search);
+    const initialView = initialParams.get('view');
+    const wantsUnreadStart = initialView === 'unread' || initialParams.get('unread') === '1';
     const savedFilterState = localStorage.getItem('chat-unread-filter');
-    if (savedFilterState === 'active') {
+    const shouldRestoreFilter = wantsUnreadStart
+        || (savedFilterState === 'active' && initialView !== 'rooms');
+    if (shouldRestoreFilter) {
         isUnreadFilterActive = true;
         unreadFilterBtn?.classList.add('active');
         applyUnreadFilter();
@@ -181,6 +296,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 roomLink.classList.remove('filtered-out');
             }
         });
+        // Empty state w prawej kolumnie — zawsze gdy filtr daje 0 wynikow
+        const unreadCount = $$('.room-link.room-not-seen[data-room-id]').length;
+        if (unreadCount === 0) {
+            showUnreadEmptyState();
+        } else {
+            hideUnreadEmptyState();
+        }
     }
 
     function removeUnreadFilter() {
@@ -188,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allRoomLinks.forEach(roomLink => {
             roomLink.classList.remove('filtered-out');
         });
+        hideUnreadEmptyState();
     }
 
     // Function to reapply unread filter when room seen status changes
@@ -199,6 +322,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Make function globally available for other modules
     window.updateUnreadFilter = updateUnreadFilter;
+
+    // Sort rooms by last activity — cycles: off → newest → oldest → newest…
+    const sortActivityBtn = $('#sort-activity-btn');
+    const sortResetBtn = $('#sort-reset-btn');
+    let isSortActive = false;
+    let sortMode = null; // 'newest' | 'oldest'
+    let roomOriginalPositions = null;
+    let flatContainer = null;
+
+    const savedSort = localStorage.getItem('chat-sort-mode');
+    if (savedSort === 'newest' || savedSort === 'oldest') {
+        applySortView(savedSort);
+    }
+
+    sortActivityBtn?.addEventListener('click', () => {
+        if (!isSortActive) {
+            applySortView('newest');
+        } else {
+            applySortView(sortMode === 'newest' ? 'oldest' : 'newest');
+        }
+    });
+
+    sortResetBtn?.addEventListener('click', resetSortView);
+
+    function applySortView(mode) {
+        const roomListEl = $('#room-list');
+        const categoryRow = roomListEl?.querySelector('.row');
+        if (!categoryRow) return;
+
+        if (!isSortActive) {
+            const rooms = [...$$('.room-link[data-room-id]')].filter(room => {
+                const archive = room.closest('.archive-section');
+                return !archive || archive.classList.contains('visible');
+            });
+
+            roomOriginalPositions = new Map(rooms.map(room => [room, {
+                parent: room.parentElement,
+                nextSibling: room.nextSibling,
+            }]));
+
+            flatContainer = document.createElement('div');
+            flatContainer.id = 'room-list-flat';
+            rooms.forEach(room => flatContainer.appendChild(room));
+
+            categoryRow.style.display = 'none';
+            roomListEl.appendChild(flatContainer);
+            isSortActive = true;
+        }
+
+        const roomsInFlat = [...flatContainer.querySelectorAll('.room-link[data-room-id]')];
+        roomsInFlat.sort((a, b) => {
+            const diff = parseInt(b.dataset.lastActivity || '0') - parseInt(a.dataset.lastActivity || '0');
+            return mode === 'oldest' ? -diff : diff;
+        });
+        roomsInFlat.forEach(room => flatContainer.appendChild(room));
+
+        sortMode = mode;
+        sortActivityBtn?.classList.add('active');
+        const dirIcon = sortActivityBtn?.querySelector('.sort-dir-icon');
+        if (dirIcon) dirIcon.className = `sort-dir-icon fas fa-arrow-${mode === 'oldest' ? 'up' : 'down'}`;
+        localStorage.setItem('chat-sort-mode', mode);
+    }
+
+    function resetSortView() {
+        if (!isSortActive || !roomOriginalPositions) return;
+
+        roomOriginalPositions.forEach((pos, room) => {
+            if (pos.nextSibling?.parentElement === pos.parent) {
+                pos.parent.insertBefore(room, pos.nextSibling);
+            } else {
+                pos.parent.appendChild(room);
+            }
+        });
+
+        flatContainer?.remove();
+        flatContainer = null;
+        roomOriginalPositions = null;
+        sortMode = null;
+
+        const categoryRow = $('#room-list')?.querySelector('.row');
+        if (categoryRow) categoryRow.style.display = '';
+
+        isSortActive = false;
+        sortActivityBtn?.classList.remove('active');
+        const dirIcon = sortActivityBtn?.querySelector('.sort-dir-icon');
+        if (dirIcon) dirIcon.className = 'sort-dir-icon fas fa-arrow-down';
+        localStorage.removeItem('chat-sort-mode');
+    }
 
     WS_API.wsOnConnect = async () => {
         for (const user of (await WS_API.getOnlineUsers()).online_data) {
@@ -219,28 +430,46 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        // ?unread=1 from home page badge: activate unread filter
-        const urlParams = new URLSearchParams(location.search);
-        if (urlParams.get('unread') === '1') {
-            history.replaceState(null, '', location.pathname + location.hash);
-            if (!isUnreadFilterActive) {
-                isUnreadFilterActive = true;
-                unreadFilterBtn?.classList.add('active');
-                localStorage.setItem('chat-unread-filter', 'active');
-                applyUnreadFilter();
-            }
-            // On desktop: open the first unread room immediately
-            // On mobile: stay on the room list so the user can pick a room
-            if (window.innerWidth >= 768) {
-                const firstUnread = $('.room-link.room-not-seen[data-room-id]');
-                if (firstUnread) {
-                    onRoomTryJoin(parseInt(firstUnread.dataset.roomId));
-                    return;
-                }
-            } else {
-                return; // stay on room list view with filter active
+        const action = decideStartupAction({
+            search: location.search,
+            hasHash: !!window.location.hash,
+            isMobile: window.innerWidth < 768,
+        });
+
+        // Usun zuzyty param zeby nie zostal w URL po reload
+        if (action.stripParam) {
+            const url = new URL(window.location.href);
+            url.searchParams.delete(action.stripParam);
+            history.replaceState(null, '', url.pathname + url.search + url.hash);
+        }
+
+        if (action.unreadFilter === 'on' && !isUnreadFilterActive) {
+            isUnreadFilterActive = true;
+            unreadFilterBtn?.classList.add('active');
+            localStorage.setItem('chat-unread-filter', 'active');
+            applyUnreadFilter();
+        } else if (action.unreadFilter === 'off' && isUnreadFilterActive) {
+            isUnreadFilterActive = false;
+            unreadFilterBtn?.classList.remove('active');
+            localStorage.removeItem('chat-unread-filter');
+            removeUnreadFilter();
+        }
+
+        // Wymus widocznosc listy pokoi TYLKO na ten widok — bez kasowania zapisanej
+        // preferencji "hide list" (uzytkownik mogl ja swiadomie ustawic; przy nastepnym
+        // bezposrednim wejsciu na /chat/ ma sie zachowac jak zapamietano).
+        if (action.forceListVisible) {
+            const chatRoomsEl = document.querySelector('.chat-rooms');
+            chatRoomsEl?.classList.remove('room-list-hidden');
+            if (action.mobileShowList) {
+                chatRoomsEl?.classList.add('room-list-showing');
             }
         }
+
+        if (action.showPlaceholder) showRoomPlaceholder();
+
+        // ?view=rooms / ?view=unread — bez auto-joina, koniec
+        if (action.joinAction === 'none') return;
 
         let room_id = 0;
         if (window.location.hash) {
@@ -282,26 +511,12 @@ export async function onSocketMessage(data) {
     else if (data.online_data) onReceiveOnlineUpdates(data.online_data);
     else if (data.update_reactions) onReceiveReactions(data.update_reactions);
     else if (data.messages_read) onReceiveReadBy(data.messages_read);
-    else if (data.type === 'room-tracked') onRoomTracked(data.room_id, data.tracked);
     // unread_count is consumed by the home page WS listener — ignore here
     else console.log("Cannot handle message!");
 }
 
 export async function onReceiveNotification(notification) {
     makeNotification(notification);
-}
-
-function onRoomTracked(roomId, tracked) {
-    const roomDiv = document.querySelector(`.room-link[data-room-id="${roomId}"]`);
-    if (!roomDiv) return;
-    const btn = roomDiv.querySelector('.track-switch');
-    if (btn) {
-        btn.dataset.tracked = tracked ? 'true' : 'false';
-        btn.classList.toggle('active', tracked);
-        const icon = btn.querySelector('i');
-        if (icon) icon.className = tracked ? 'fas fa-bookmark' : 'far fa-bookmark';
-    }
-    if (tracked) roomDiv.classList.remove('room-auto-muted');
 }
 
 /**
@@ -321,17 +536,11 @@ function expandCategoryForRoom(roomLink) {
         }
     }
 
-    // If it's inside an archive section, show it too
-    const archiveSection = roomLink.closest('.archive-section');
-    if (archiveSection) {
-        archiveSection.classList.add('visible');
-        const archiveSectionId = archiveSection.id; // e.g. 'content-pub-rooms-archive'
-        const targetId = archiveSectionId.replace('content-', ''); // e.g. 'pub-rooms-archive'
-        const archiveBtn = document.querySelector(`.archive-toggle[data-target="${targetId}"]`);
-        if (archiveBtn) {
-            archiveBtn.classList.add('active');
-            localStorage.setItem(`chat-archive-${targetId}`, 'visible');
-        }
+    // If it's inside an archive section, reveal all archived rooms via the global toggle
+    if (roomLink.closest('.archive-section')) {
+        document.querySelectorAll('.archive-section').forEach(s => s.classList.add('visible'));
+        document.getElementById('archive-toggle-global-btn')?.classList.add('active');
+        localStorage.setItem('chat-archive-global', 'visible');
     }
 }
 
@@ -375,6 +584,7 @@ export async function onRoomTryJoin(room_id) {
     if (RoomLock.locked()) await RoomLock.wait();
     if (CurrentRoomId) await onRoomTryLeave(false);
 
+    hideRoomPlaceholder();
     DOM_API.getRoomLinkDiv(room_id)?.classList.add("joined");
     if (CurrentRoomId) return; // joined another room while awaiting confirmation
 
@@ -435,6 +645,8 @@ export async function onRoomTryLeave(sync_with_server) {
     DOM_API.clearRoomData();
     DOM_API.hideFoldedRoomHeader();
     resetSortState();
+    for (const t of pendingTimeouts.values()) clearTimeout(t);
+    pendingTimeouts.clear();
     CurrentRoomId = null;
 }
 
@@ -455,6 +667,19 @@ export async function onReceiveMessages(messages) {
     if (messages.length === 1) {
         // Single message (real-time) — normal path
         const message = messages[0];
+
+        // Optimistic UI — own message echoed back matches a pending placeholder; skip normal render path.
+        if (message.own && message.temp_id) {
+            const pending = msgdiv?.querySelector(`.message[data-temp-id="${message.temp_id}"]`);
+            if (pending) {
+                DOM_API.confirmMessage(message.temp_id, message.message_id);
+                const t = pendingTimeouts.get(message.temp_id);
+                if (t) { clearTimeout(t); pendingTimeouts.delete(message.temp_id); }
+                DOM_API.updateSidebarForMessage(message);
+                return;
+            }
+        }
+
         const current_banner = formatDate(message.timestamp);
         const banners = DOM_API.getLastMessageBanner();
         const previous_banner = banners.length ? banners[banners.length - 1].textContent : null;
@@ -462,7 +687,7 @@ export async function onReceiveMessages(messages) {
             msgdiv.insertAdjacentHTML('beforeend', `<div class='date-banner'>${current_banner}</div>`);
         }
         DOM_API.addMessage(
-            message.room_id, message.message_id, message.username, message.message,
+            message.room_id, message.user_id ?? null, message.avatar_url ?? null, message.message_id, message.username, message.message,
             message.upvotes, message.downvotes, message.your_vote, message.own, message.edited,
             message.attachments, message.timestamp, message.latest_timestamp,
             message.reply_to ?? null,
@@ -470,14 +695,8 @@ export async function onReceiveMessages(messages) {
             message.your_reactions ?? [],
             message.read_by ?? []
         );
+        DOM_API.updateSidebarForMessage(message);
         requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(message.message_id)));
-        if (message.own) {
-            const sendBtn = document.querySelector('.send-message');
-            if (sendBtn) {
-                sendBtn.disabled = false;
-                clearTimeout(window._sendLockTimeout);
-            }
-        }
         if (message.new && document.hidden && !message.own) {
             makeNotification({ title: message.username, body: message.message });
         }
@@ -494,7 +713,7 @@ export async function onReceiveMessages(messages) {
                 lastBannerText = current_banner;
             }
             batchHtml += DOM_API.buildMessageHtml(
-                message.room_id, message.message_id, message.username, message.message,
+                message.room_id, message.user_id ?? null, message.avatar_url ?? null, message.message_id, message.username, message.message,
                 message.upvotes, message.downvotes, message.your_vote, message.own, message.edited,
                 message.attachments, message.timestamp, message.latest_timestamp,
                 message.reply_to ?? null,
@@ -547,7 +766,7 @@ export async function onReplaceMessages(messages, room_id) {
 
     for (const message of messages) {
         DOM_API.addMessage(
-            message.room_id, message.message_id, message.username, message.message,
+            message.room_id, message.user_id ?? null, message.avatar_url ?? null, message.message_id, message.username, message.message,
             message.upvotes, message.downvotes, message.your_vote, message.own, message.edited,
             message.attachments, message.timestamp, message.latest_timestamp,
             message.reply_to ?? null,
@@ -681,6 +900,7 @@ export function setReplyTarget(message_id, username, snippet) {
     const preview = document.getElementById('reply-preview');
     const previewText = document.getElementById('reply-preview-text');
     currentReplyId = coreSetReplyTarget(message_id, username, snippet, preview, previewText);
+    currentReplyData = { id: message_id, username, snippet };
 }
 
 /**
@@ -689,6 +909,7 @@ export function setReplyTarget(message_id, username, snippet) {
 export function clearReplyTarget() {
     const preview = document.getElementById('reply-preview');
     currentReplyId = coreClearReplyTarget(preview);
+    currentReplyData = null;
 }
 
 /**
@@ -767,8 +988,13 @@ async function writeToClipboard(text) {
 }
 
 function showCopyFeedback(button, success) {
+    const message = success ? _("Link copied") : _("Could not copy link");
+    if (button?.closest('.dropdown') && window.showToast) {
+        window.showToast(message);
+        return;
+    }
     if (!button || !DOM_API || typeof DOM_API.showCopyFeedback !== 'function') return;
-    DOM_API.showCopyFeedback(button, success ? _("Link copied") : _("Could not copy link"), success);
+    DOM_API.showCopyFeedback(button, message, success);
 }
 
 function buildRoomUrl(room_id) {
@@ -791,23 +1017,64 @@ export async function onSubmitMessage(message, editing_message_id) {
         // Don't stop editing immediately - let onReceiveEdit handle it after server confirms
     } else {
         const files = DOM_API.getFiles();
-        const attachments = {};
         const messageText = (typeof message === 'string')
             ? (message.replace(/<[^>]*>/g, '').trim())
             : '';
         if (messageText.length === 0 && (!files || files.length === 0)) return;
-        if (files?.length) {
-            attachments.images = (await WS_API.uploadFiles(files)).filenames;
-        }
+
         const sendBtn = document.querySelector('.send-message');
-        if (sendBtn) {
-            sendBtn.disabled = true;
-            window._sendLockTimeout = setTimeout(() => { sendBtn.disabled = false; }, 5000);
+        if (sendBtn) sendBtn.disabled = true;
+
+        const attachments = {};
+        if (files?.length) {
+            try {
+                attachments.images = (await WS_API.uploadFiles(files)).filenames;
+            } catch (err) {
+                if (sendBtn) sendBtn.disabled = false;
+                console.error('Upload failed', err);
+                return;
+            }
         }
-        WS_API.sendMessage(CurrentRoomId, message, DOM_API.getAnonymousValue(), attachments, currentReplyId);
-        clearDraft(CurrentRoomId);
+
+        const is_anonymous = DOM_API.getAnonymousValue();
+        const temp_id = (crypto.randomUUID?.() || `tmp-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
+        const reply_to = currentReplyData
+            ? { id: currentReplyData.id, username: currentReplyData.username, text_snippet: currentReplyData.snippet }
+            : null;
+        const ownUsername = is_anonymous
+            ? 'Anonymous User'
+            : (document.querySelector('.user-name')?.textContent?.trim() || '');
+        const now = Date.now();
+
+        DOM_API.removeNoMessagesBanner();
+        const msgdiv = DOM_API.getMessagesDiv();
+        const current_banner = formatDate(now);
+        const banners = DOM_API.getLastMessageBanner();
+        const previous_banner = banners.length ? banners[banners.length - 1].textContent : null;
+        if (previous_banner !== current_banner && msgdiv) {
+            msgdiv.insertAdjacentHTML('beforeend', `<div class='date-banner'>${current_banner}</div>`);
+        }
+
+        DOM_API.addMessage(
+            CurrentRoomId, null, null, temp_id, ownUsername, message,
+            0, 0, null, true, false,
+            attachments, now, now,
+            reply_to, { bulb: 0, question: 0 }, [], [],
+            temp_id
+        );
+        requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(temp_id)));
+        if (msgdiv) msgdiv.scrollTop = msgdiv.scrollHeight;
+
+        WS_API.sendMessage(CurrentRoomId, message, is_anonymous, attachments, currentReplyId, temp_id);
+
+        pendingTimeouts.set(temp_id, setTimeout(() => {
+            pendingTimeouts.delete(temp_id);
+            DOM_API.failMessage(temp_id);
+        }, PENDING_TIMEOUT_MS));
+
+        if (sendBtn) sendBtn.disabled = false;
+
         clearReplyTarget();
-        // remove files from input and image preview
         DOM_API.clearFiles();
         const messageInput = DOM_API.getMessageInput();
         if (messageInput) {
@@ -818,9 +1085,9 @@ export async function onSubmitMessage(message, editing_message_id) {
                 messageInput.style.height = 'auto';
                 messageInput.style.height = '38px';
             }
-            messageInput.dispatchEvent(new Event('input'));
+            clearDraft(CurrentRoomId);
+            messageInput.dispatchEvent(new InputEvent('input', { bubbles: true }));
         }
-        // Reset editing mode if it was active
         if (DOM_API.isEditing()) {
             DOM_API.stopEditing();
         }
