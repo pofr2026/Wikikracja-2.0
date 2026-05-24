@@ -109,6 +109,7 @@ async function initEmbeddedChat(container) {
             message_id: msg.message_id,
             username: msg.username,
             message: formatMessage(msg.message),
+            raw_message: msg.message,
             upvotes: msg.upvotes ?? 0,
             downvotes: msg.downvotes ?? 0,
             vote: msg.your_vote ?? null,
@@ -137,7 +138,11 @@ async function initEmbeddedChat(container) {
         if (!msgDiv) return;
         const textEl = msgDiv.querySelector('.msg-text');
         const timeEl = msgDiv.querySelector('.message-timestamp');
-        if (textEl) textEl.innerHTML = formatMessage(message);
+        if (textEl) {
+            // data-raw musi nadążać za innerHTML — następna edycja czyta dataset.raw jako "oryginalny tekst do edytowania".
+            textEl.dataset.raw = message;
+            textEl.innerHTML = formatMessage(message);
+        }
         if (timeEl) timeEl.textContent = formatTime(latest_timestamp);
     }
 

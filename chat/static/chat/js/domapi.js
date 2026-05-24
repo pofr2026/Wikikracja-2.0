@@ -49,6 +49,7 @@ export default class DomApi {
         return Message({
             room_id, user_id, avatar_url, message_id, username,
             message: this.wrapExpandable(formatted),
+            raw_message: message,
             upvotes, downvotes, vote, own, edited, attachments,
             original_ts, latest_ts: formatTime(latest_ts),
             type: this.getRoomType(room_id),
@@ -66,8 +67,6 @@ export default class DomApi {
         messagesDiv?.insertAdjacentHTML('beforeend', html);
         this.getVoteDiv(message_id, vote)?.classList.add('active');
         const msgDiv = this.getMessageDiv(message_id);
-        const msgText = msgDiv?.querySelector('.msg-text');
-        if (msgText) msgText.dataset.raw = message;
         if (temp_id && msgDiv) {
             msgDiv.dataset.tempId = temp_id;
             msgDiv.classList.add('message--pending');
