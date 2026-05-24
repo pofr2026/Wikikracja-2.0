@@ -452,3 +452,13 @@ document.addEventListener('click', function(e) {
     const el = e.target.closest('.expandable-body')?.closest('.expandable');
     if (el?.classList.contains('has-overflow')) el.classList.toggle('is-open');
 });
+
+// Globalna inicjalizacja Bootstrap tooltipów — każdy [data-bs-toggle="tooltip"] działa
+// bez per-page boilerplate'u. Trigger 'hover' (bez focus) żeby chip nie zostawał
+// "kliknięty" po tap'ie na mobile.
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return;
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+        new bootstrap.Tooltip(el, { trigger: 'hover' });
+    });
+});

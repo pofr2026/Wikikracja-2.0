@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import timedelta as td
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
@@ -11,7 +12,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.contrib.staticfiles import finders
 from django.core.cache import cache
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -20,7 +21,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from board.models import Post, PostCategory
-from bookkeeping.models import Transaction
+from bookkeeping.models import Asset
+from bookkeeping.services import asset_balances
 from chat.models import Message, Room
 from chat.services import CHAT_UNREAD_CACHE_KEY, get_unread_count_for_user
 from events.models import Event
@@ -150,12 +152,22 @@ def home(request: HttpRequest):
     _occurrences.sort(key=lambda o: o['date'])
     upcoming_events = _occurrences[:5]
 
-    # Karta 5 — Finanse: przychody/wydatki za bieżący rok
-    current_year = today_dt.year
-    finance_qs = Transaction.objects.filter(payment_received_date__year=current_year)
-    income = finance_qs.filter(type='I').aggregate(total=Sum('amount'))['total'] or 0
-    expenses = finance_qs.filter(type='O').aggregate(total=Sum('amount'))['total'] or 0
-    balance = income - expenses
+    # Karta 5 — Finanse: salda CAŁEJ historii w walucie domyślnej (default asset).
+    # Jeśli default asset nie istnieje (pusta baza assetów) → wszystkie pola = None i template
+    # pokazuje onboarding CTA "dodaj aktywo". Jeśli default istnieje, ale 0 transakcji →
+    # asset_balances() zwraca pustą listę → wyświetlamy 0/0/0 w symbolu defaultu.
+    default_asset = Asset.get_default()
+    if default_asset is None:
+        default_income = default_expenses = default_balance = None
+        default_symbol = None
+    else:
+        balances = asset_balances(asset=default_asset)
+        if balances:
+            row = balances[0]
+            default_income, default_expenses, default_balance = row['income'], row['expenses'], row['balance']
+        else:
+            default_income = default_expenses = default_balance = Decimal('0')
+        default_symbol = default_asset.symbol
 
     # Karta 6 — Nowi obywatele: 6 ostatnio dołączonych aktywnych
     new_citizens = list(Uzytkownik.objects.filter(uid__is_active=True).select_related('uid').order_by('-uid__date_joined')[:7])
@@ -201,10 +213,11 @@ def home(request: HttpRequest):
         'onboarding_docs': onboarding_docs,
         'onboarding_docs_read_ids': onboarding_docs_read_ids,
         'upcoming_events': upcoming_events,
-        'income': income,
-        'expenses': expenses,
-        'balance': balance,
-        'current_year': current_year,
+        'default_asset': default_asset,
+        'default_income': default_income,
+        'default_expenses': default_expenses,
+        'default_balance': default_balance,
+        'default_symbol': default_symbol,
         'new_citizens': new_citizens,
         'candidates_count': candidates_count,
         'last_feed_items': last_feed_items,
