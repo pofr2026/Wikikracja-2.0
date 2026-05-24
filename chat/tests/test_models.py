@@ -148,6 +148,68 @@ class MessageHistoryTest(TestCase):
         self.assertFalse(MessageHistory.objects.filter(id=history.id).exists())
 
 
+class RoomLastMessageSignalTest(TestCase):
+    """Signal post_save(Message) → Room.last_message_* sync."""
+
+    def setUp(self):
+        self.user = make_user("signaluser")
+        self.room = Room.objects.create(title="SignalRoom", public=True)
+        self.room.allowed.add(self.user)
+
+    def test_creating_message_updates_last_message_at(self):
+        self.assertIsNone(self.room.last_message_at)
+        msg = Message.objects.create(sender=self.user, room=self.room, text="Hi")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.last_message_at, msg.time)
+
+    def test_creating_message_updates_last_message_text(self):
+        Message.objects.create(sender=self.user, room=self.room, text="Hello world")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.last_message_text, "Hello world")
+
+    def test_creating_message_updates_last_message_sender(self):
+        Message.objects.create(sender=self.user, room=self.room, text="Hi")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.last_message_sender_id, self.user.id)
+
+    def test_creating_anonymous_message_sets_anonymous_flag(self):
+        Message.objects.create(sender=None, room=self.room, text="Anon", anonymous=True)
+        self.room.refresh_from_db()
+        self.assertTrue(self.room.last_message_anonymous)
+
+    def test_long_message_text_truncated_to_200_chars(self):
+        Message.objects.create(sender=self.user, room=self.room, text="A" * 300)
+        self.room.refresh_from_db()
+        self.assertEqual(len(self.room.last_message_text), 200)
+
+    def test_other_rooms_unaffected_by_message_in_one_room(self):
+        other_room = Room.objects.create(title="OtherSignalRoom", public=True)
+        Message.objects.create(sender=self.user, room=self.room, text="Hi")
+        other_room.refresh_from_db()
+        self.assertIsNone(other_room.last_message_at)
+        self.assertEqual(other_room.last_message_text, '')
+
+    def test_message_does_not_move_last_activity_backwards(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+        future = timezone.now() + timedelta(hours=1)
+        Room.objects.filter(id=self.room.id).update(last_activity=future)
+        Message.objects.create(sender=self.user, room=self.room, text="Hi")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.last_activity, future)
+
+    def test_editing_message_does_not_update_last_message_text(self):
+        msg = Message.objects.create(sender=self.user, room=self.room, text="Original")
+        self.room.refresh_from_db()
+        original_text = self.room.last_message_text
+
+        msg.text = "Edited"
+        msg.save(update_fields=['text'])
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.last_message_text, original_text)
+
+
 class MessageAttachmentTest(TestCase):
     def setUp(self):
         self.user = make_user("uploader")

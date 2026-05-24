@@ -695,7 +695,7 @@ export async function onReceiveMessages(messages) {
             message.your_reactions ?? [],
             message.read_by ?? []
         );
-        DOM_API.updateSidebarForMessage(message);
+        if (message.new) DOM_API.updateSidebarForMessage(message);
         requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(message.message_id)));
         if (message.new && document.hidden && !message.own) {
             makeNotification({ title: message.username, body: message.message });

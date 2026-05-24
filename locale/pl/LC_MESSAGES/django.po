@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 23:09+0200\n"
+"POT-Creation-Date: 2026-05-24 14:01+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -34,8 +34,8 @@ msgstr "Załączniki"
 #: .\glosowania\templates\glosowania\edit.html:22
 #: .\glosowania\templates\glosowania\edit_argument.html:33
 #: .\home\templates\home\haslo.html:25
-#: .\home\templates\home\site_admin.html:275
-#: .\home\templates\home\site_admin.html:379
+#: .\home\templates\home\site_admin.html:256
+#: .\home\templates\home\site_admin.html:378
 #: .\obywatele\templates\obywatele\candidate_edit.html:56
 #: .\obywatele\templates\obywatele\change_email.html:23
 #: .\obywatele\templates\obywatele\change_username.html:18
@@ -2738,15 +2738,15 @@ msgstr "Logo (tematy ciemne)"
 msgid "Optional variant for dark themes (Dark, Civic). Falls back to the main brand mark if empty."
 msgstr "Opcjonalny wariant dla tematów ciemnych (Dark, Civic). Fallback do głównego logo, gdy puste."
 
-#: .\home\templates\home\site_admin.html:299
+#: .\home\templates\home\site_admin.html:298
 msgid "Onboarding"
 msgstr "Formularz rejestracyjny"
 
-#: .\home\templates\home\site_admin.html:309
+#: .\home\templates\home\site_admin.html:308
 msgid "Mandatory documents"
 msgstr "Dokumenty obowiązkowe"
 
-#: .\home\templates\home\site_admin.html:373
+#: .\home\templates\home\site_admin.html:372
 msgid "No documents in any category."
 msgstr "Brak dokumentów w żadnej kategorii."
 
