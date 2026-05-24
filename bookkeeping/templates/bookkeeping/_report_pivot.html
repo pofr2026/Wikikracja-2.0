@@ -1,0 +1,138 @@
+{% load i18n %}
+{% load bookkeeping_extras %}
+
+{% comment %}
+  Partial: pivot kategorie × aktywa (Wzorzec 2) z 2 wariantami:
+   - DESKTOP (>=md): pełna tabela z kolumnami per asset, default first.
+   - MOBILE (<md):   karty per kategoria, lista wartości per asset (przez d-md-*).
+   - FALLBACK (uses_fallback=True, >5 walut): osobne sekcje per waluta (Wzorzec 1)
+                                             — szeroka tabela byłaby nieczytelna.
+
+  Wymagane zmienne kontekstowe:
+    pivot_rows, asset_columns, asset_totals, uses_fallback, totals_label
+{% endcomment %}
+
+{% if uses_fallback %}
+  {# ── Wzorzec 1: sekcje per waluta dla >5 walut ─────────────────── #}
+  {% for asset in asset_columns %}
+    <div class="px-3 pt-3 {% if not forloop.last %}pb-2{% endif %}">
+      <h6 class="mb-2"><i class="fas fa-coins me-1 text-muted"></i>{{ asset.code }} <small class="text-muted">— {{ asset.name }}</small></h6>
+      <table class="table table-sm mb-0">
+        <thead>
+          <tr>
+            <th>{% trans 'Category' %}</th>
+            <th class="text-end">{% trans 'Sum' %}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in pivot_rows %}
+            {% with value=row.by_asset|get_item:asset.pk %}
+              {% if value is not None %}
+                <tr>
+                  <td>{{ row.category_name }}</td>
+                  <td class="text-end {% if value > 0 %}text-success{% elif value < 0 %}text-danger{% endif %}">
+                    {{ value|normalize_decimal }} {{ asset.symbol }}
+                  </td>
+                </tr>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+        <tfoot class="fw-bold border-top">
+          {% with total=asset_totals|get_item:asset.pk %}
+            <tr>
+              <td>{{ totals_label }}</td>
+              <td class="text-end {% if total > 0 %}text-success{% elif total < 0 %}text-danger{% endif %}">
+                {{ total|normalize_decimal }} {{ asset.symbol }}
+              </td>
+            </tr>
+          {% endwith %}
+        </tfoot>
+      </table>
+    </div>
+  {% endfor %}
+
+{% else %}
+  {# ── DESKTOP: pivot kategorie × aktywa (Wzorzec 2) ──────────────── #}
+  <div class="table-responsive d-none d-md-block">
+    <table class="table table-sm mb-0">
+      <thead>
+        <tr>
+          <th>{% trans 'Category' %}</th>
+          {% for asset in asset_columns %}
+            <th class="text-end" title="{{ asset.name }}">{{ asset.code }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in pivot_rows %}
+          <tr>
+            <td>{{ row.category_name }}</td>
+            {% for asset in asset_columns %}
+              {% with value=row.by_asset|get_item:asset.pk %}
+                {% if value is not None %}
+                  <td class="text-end {% if value > 0 %}text-success{% elif value < 0 %}text-danger{% endif %}">
+                    {{ value|normalize_decimal }} {{ asset.symbol }}
+                  </td>
+                {% else %}
+                  <td class="text-end text-muted">—</td>
+                {% endif %}
+              {% endwith %}
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="fw-bold border-top">
+        <tr>
+          <td>{{ totals_label }}</td>
+          {% for asset in asset_columns %}
+            {% with total=asset_totals|get_item:asset.pk %}
+              <td class="text-end {% if total > 0 %}text-success{% elif total < 0 %}text-danger{% endif %}">
+                {{ total|normalize_decimal }} {{ asset.symbol }}
+              </td>
+            {% endwith %}
+          {% endfor %}
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {# ── MOBILE: karty per kategoria (Wzorzec A z analizy UX) ──────── #}
+  <div class="d-md-none">
+    {% for row in pivot_rows %}
+      <div class="border-bottom px-3 py-2">
+        <div class="fw-semibold mb-1">{{ row.category_name }}</div>
+        <div class="d-flex flex-column gap-1" style="font-size:.85rem;">
+          {% for asset in asset_columns %}
+            {% with value=row.by_asset|get_item:asset.pk %}
+              {% if value is not None %}
+                <div class="d-flex justify-content-between">
+                  <span class="text-muted">{{ asset.code }}</span>
+                  <span class="{% if value > 0 %}text-success{% elif value < 0 %}text-danger{% endif %}">
+                    {{ value|normalize_decimal }} {{ asset.symbol }}
+                  </span>
+                </div>
+              {% endif %}
+            {% endwith %}
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+    {# Mobile totals — osobna sekcja na końcu list kart #}
+    <div class="px-3 py-2 bg-body-tertiary">
+      <div class="fw-bold mb-1">{{ totals_label }}</div>
+      <div class="d-flex flex-column gap-1" style="font-size:.85rem;">
+        {% for asset in asset_columns %}
+          {% with total=asset_totals|get_item:asset.pk %}
+            <div class="d-flex justify-content-between">
+              <span class="text-muted">{{ asset.code }}</span>
+              <span class="fw-semibold {% if total > 0 %}text-success{% elif total < 0 %}text-danger{% endif %}">
+                {{ total|normalize_decimal }} {{ asset.symbol }}
+              </span>
+            </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+{% endif %}
