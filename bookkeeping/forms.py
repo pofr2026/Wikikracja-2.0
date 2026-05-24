@@ -12,7 +12,7 @@ class AssetForm(forms.ModelForm):
     """Form for creating and updating Asset records."""
     class Meta:
         model = Asset
-        fields = ['code', 'name', 'symbol', 'decimal_places', 'is_currency']
+        fields = ['code', 'name', 'symbol', 'decimal_places', 'is_currency', 'is_default']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -24,6 +24,7 @@
         <th>{% trans 'Symbol' %}</th>
         <th>{% trans 'Decimal places' %}</th>
         <th>{% trans 'Is currency' %}</th>
+        <th title="{% trans 'Main asset shown on the dashboard' %}">{% trans 'Default' %}</th>
         <th class="text-end">{% trans 'Actions' %}</th>
       </tr>
     </thead>
@@ -42,6 +43,13 @@
             {% endif %}
           </td>
           <td>
+            {% if asset.is_default %}
+              <i class="fas fa-star text-warning" title="{% trans 'Default asset' %}"></i>
+            {% else %}
+              <i class="far fa-star text-muted"></i>
+            {% endif %}
+          </td>
+          <td>
             <div class="btn-group float-end" role="group">
               <a href="{% url 'bookkeeping:asset_update' asset.id %}" class="btn btn-sm me-1 mb-1 btn-primary">{% trans 'Edit' %}</a>
               <a href="{% url 'bookkeeping:asset_delete' asset.id %}" class="btn btn-sm me-1 mb-1 btn-danger">{% trans 'Delete' %}</a>
@@ -50,7 +58,7 @@
         </tr>
       {% empty %}
         <tr>
-          <td colspan="6">{% trans 'No records found.' %}</td>
+          <td colspan="7">{% trans 'No records found.' %}</td>
         </tr>
       {% endfor %}
     </tbody>
