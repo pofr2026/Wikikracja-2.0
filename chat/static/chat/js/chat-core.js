@@ -13,6 +13,7 @@ export {
     handleListTrigger,
     getVisibleTextLength,
     initGlobalPasteImageHandler,
+    insertPlainTextAtCaret,
 } from '../../common/js/richtext-core.js';
 
 export const UPLOAD_MAX_BYTES = 5_000_000;

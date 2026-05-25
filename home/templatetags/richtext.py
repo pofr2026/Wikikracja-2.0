@@ -10,12 +10,10 @@ register = template.Library()
 def richtext(value):
     """
     Render user-entered text with allowed HTML (b/i/u/br/a), auto-linked URLs,
-    and \\n converted to <br>. Output is marked safe.
+    and \\n converted to <br> (handled centrally by sanitize()). Output is marked safe.
 
     Replaces ad-hoc combinations of |linebreaks, |linebreaksbr, |urlize, |safe.
     """
     if not value:
         return ''
-    text = str(value).replace('\r\n', '\n').replace('\r', '\n')
-    text = text.replace('\n', '<br>')
-    return mark_safe(sanitize(text, linkify=True))
+    return mark_safe(sanitize(str(value), linkify=True))

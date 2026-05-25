@@ -7,7 +7,7 @@
  *   <script type="module" src="{% static 'chat/js/chat-embedded.js' %}"></script>
  */
 
-import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, handleListTrigger, initFormattingToolbar, initGlobalPasteImageHandler, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
+import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, handleListTrigger, initFormattingToolbar, initGlobalPasteImageHandler, insertPlainTextAtCaret, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
 import { Message } from './templates.js';
 import { _, formatDate, formatTime } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
@@ -355,15 +355,12 @@ async function initEmbeddedChat(container) {
 
     inputEl.addEventListener('input', () => updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX));
 
+    // insertPlainTextAtCaret turns \n into explicit <br> nodes (not browser-wrapped
+    // <div> blocks) and fires 'input', so the counter listener handles updates.
     inputEl.addEventListener('paste', (e) => {
         e.preventDefault();
         const pasted = (e.clipboardData || window.clipboardData).getData('text');
-        const currentLen = (inputEl.textContent || '').length;
-        const sel = window.getSelection();
-        const selLen = sel?.toString().length ?? 0;
-        const available = EC_MAX - currentLen + selLen;
-        document.execCommand('insertText', false, pasted.slice(0, Math.max(0, available)));
-        updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
+        insertPlainTextAtCaret(inputEl, pasted, EC_MAX);
     });
 
     const { updateToolbarState } = initFormattingToolbar(container, inputEl);
