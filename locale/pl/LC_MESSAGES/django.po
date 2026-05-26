@@ -3511,7 +3511,7 @@ msgstr "Wypełnij proszę poniższy formularz."
 #: .\obywatele\templates\obywatele\onboarding_details.html:16
 msgid ""
 "This information will allow us to contact you and activate your account."
-msgstr ""
+msgstr "Te informacje pozwolą nam skontaktować się z Tobą i aktywować Twoje konto."
 
 #: .\obywatele\templates\obywatele\onboarding_details.html:17
 msgid "You will be able to edit this information later."
@@ -3539,7 +3539,7 @@ msgstr ""
 
 #: .\obywatele\templates\obywatele\onboarding_waiting.html:13
 msgid "We will contact you soon."
-msgstr ""
+msgstr "Skontaktujemy się z Tobą wkrótce."
 
 #: .\obywatele\templates\obywatele\parameters.html:13
 msgid "Population"
@@ -4383,7 +4383,7 @@ msgstr "Potwierdź proszę swój email"
 
 #: .\templates\allauth\account\account_inactive.html:10
 msgid "We have sent an email with a confirmation link to your inbox."
-msgstr ""
+msgstr "Wysłaliśmy email z linkiem potwierdzającym na Twoją skrzynkę."
 
 #: .\templates\allauth\account\account_inactive.html:11
 msgid "Please click this link to confirm your email address."
