@@ -2,6 +2,7 @@
 /* Layout (theme-independent) */
 :root {
   --font-mono: 'Courier New', monospace;
+  --shadow-overlay: 0 8px 32px rgba(0,0,0,.55);
   --sidebar-width: 240px;
   --topbar-height: 60px;
   --sidebar-collapsed-width: 52px;
@@ -688,6 +689,55 @@ textarea.form-control:focus {
   background: rgba(239, 68, 68, .1) !important;
   color: #f89898 !important;
   border-color: rgba(239, 68, 68, .25) !important;
+}
+.toast-container {
+  position: fixed;
+  top: 33%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1090;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+  min-width: 280px;
+  max-width: min(480px, 90vw);
+}
+.toast-msg {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .75rem 1.1rem;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border);
+  font-size: .9rem;
+  font-weight: 500;
+  background: var(--bg-card);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-overlay);
+  animation: toast-in .2s ease;
+}
+/* Semi-transparent rgba zamiast zmiennych — celowo, żeby toast wyglądał spójnie na wszystkich 4 tematach */
+.toast-msg.toast-success { background: rgba(0,188,140,.55);  color: #d0fff5; border-color: rgba(0,188,140,.7); }
+.toast-msg.toast-error,
+.toast-msg.toast-danger  { background: rgba(239,68,68,.55);  color: #ffe0e0; border-color: rgba(239,68,68,.7); }
+.toast-msg.toast-warning { background: rgba(243,156,18,.55); color: #fff0c0; border-color: rgba(243,156,18,.7); }
+.toast-msg.toast-info    { background: rgba(52,152,219,.55); color: #daf0ff; border-color: rgba(52,152,219,.7); }
+.toast-close {
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: .6;
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+.toast-close:hover { opacity: 1; }
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(.5rem); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 /* ── Tabele ─────────────────────────────────────────────────── */
 /* Bootstrap 5 używa box-shadow inset + CSS variables zamiast background,

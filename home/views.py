@@ -934,6 +934,7 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         messages.success(request, _('Onboarding zapisany.'))
         return redirect('site_admin')
 
+
     if request.method == 'POST' and 'save_branding' in request.POST:
         form = SiteSettingsBrandingForm(request.POST, request.FILES, instance=ss)
         if form.is_valid():
@@ -970,3 +971,23 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         'selected_onboarding_post_ids': selected_ids,
         'message_max_length': settings.MESSAGE_MAX_LENGTH,
     })
+
+
+@login_required
+def remove_brand_mark(request: HttpRequest) -> JsonResponse:
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    ss = SiteSettings.get()
+    if ss.brand_mark:
+        ss.brand_mark.delete(save=True)
+    return JsonResponse({'ok': True})
+
+
+@login_required
+def remove_brand_mark_dark(request: HttpRequest) -> JsonResponse:
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    ss = SiteSettings.get()
+    if ss.brand_mark_dark:
+        ss.brand_mark_dark.delete(save=True)
+    return JsonResponse({'ok': True})
