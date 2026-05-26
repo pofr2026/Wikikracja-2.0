@@ -142,6 +142,62 @@
     syncVoterEmptyState();
   }
 
+  // ─── Coordinator take/resign live update ──────────────────────
+  function handleCoordSubmit(e) {
+    var form = e.target.closest && e.target.closest('form');
+    if (!form) return;
+    var action = form.action || '';
+    if (!/\/(take|resign)\/?$/.test(action)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var csrf = form.querySelector('[name="csrfmiddlewaretoken"]');
+    if (!csrf) return;
+
+    fetch(action, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ csrfmiddlewaretoken: csrf.value }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.ok) return;
+        updateCoordinatorUI(form, data);
+      })
+      .catch(function () {
+        // silent fail — user can retry
+      });
+  }
+
+  function updateCoordinatorUI(form, data) {
+    var isAssigned = data.assigned_to !== null;
+    // Scope to enclosing card on task list; document elsewhere (detail page has no .proposal-card)
+    var card = form.closest('.proposal-card');
+    var scope = card || document;
+
+    scope.querySelectorAll('[data-coord-state="empty"]').forEach(function (el) {
+      el.hidden = isAssigned;
+    });
+    scope.querySelectorAll('[data-coord-state="me"]').forEach(function (el) {
+      el.hidden = !isAssigned;
+    });
+
+    // Detail page coordinator label: update text in `Coordinator: <span>...</span>`
+    var label = document.querySelector('[data-coord-label]');
+    if (label) {
+      var coordI18n = window.TASK_COORD_I18N || {};
+      label.textContent = isAssigned
+        ? (data.assigned_to.username || '')
+        : (coordI18n.none_label || 'None');
+    }
+  }
+
+  document.addEventListener('submit', handleCoordSubmit, true);
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
       new bootstrap.Tooltip(el, { trigger: 'hover' });

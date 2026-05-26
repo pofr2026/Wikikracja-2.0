@@ -80,27 +80,45 @@
 
       <i class="fas fa-arrow-right proposal-meta-arrow" aria-hidden="true"></i>
 
-      {% if task.assigned_to %}
-      <a href="{% url 'obywatele:obywatele_szczegoly' pk=task.assigned_to.pk %}"
-         class="proposal-coordinator-link" onclick="event.stopPropagation()"
-         data-bs-toggle="tooltip"
-         title="{% trans 'Coordinator' %}: {{ task.assigned_to.username }}">
-        <i class="fas fa-user-gear proposal-role-icon" aria-hidden="true"></i>
-        <span class="proposal-coordinator-avatar">
-          {% if task.assigned_to.uzytkownik.avatar %}
-            <img src="{{ task.assigned_to.uzytkownik.avatar.url }}" alt="">
-          {% else %}
-            {{ task.assigned_to.username|slice:":2"|upper }}
-          {% endif %}
-        </span>
-        <span class="proposal-coordinator-name">{{ task.assigned_to.username }}</span>
-      </a>
+      {% if task.assigned_to and task.assigned_to != request.user %}
+        {# Someone else is coordinator — static, no live update possible from this user #}
+        <a href="{% url 'obywatele:obywatele_szczegoly' pk=task.assigned_to.pk %}"
+           class="proposal-coordinator-link" onclick="event.stopPropagation()"
+           data-bs-toggle="tooltip"
+           title="{% trans 'Coordinator' %}: {{ task.assigned_to.username }}">
+          <i class="fas fa-user-gear proposal-role-icon" aria-hidden="true"></i>
+          <span class="proposal-coordinator-avatar">
+            {% if task.assigned_to.uzytkownik.avatar %}
+              <img src="{{ task.assigned_to.uzytkownik.avatar.url }}" alt="">
+            {% else %}
+              {{ task.assigned_to.username|slice:":2"|upper }}
+            {% endif %}
+          </span>
+          <span class="proposal-coordinator-name">{{ task.assigned_to.username }}</span>
+        </a>
       {% else %}
-      <span class="proposal-coordinator-empty"
-            data-bs-toggle="tooltip" title="{% trans 'No coordinator yet' %}">
-        <i class="fas fa-user-gear proposal-role-icon" aria-hidden="true"></i>
-        <span>{% trans 'no coordinator' %}</span>
-      </span>
+        {# I'm coordinator OR no coordinator — pre-render both; JS toggles `hidden` on take/resign #}
+        <a href="{% url 'obywatele:obywatele_szczegoly' pk=request.user.pk %}"
+           class="proposal-coordinator-link" onclick="event.stopPropagation()"
+           data-coord-state="me"{% if not task.assigned_to %} hidden{% endif %}
+           data-bs-toggle="tooltip"
+           title="{% trans 'Coordinator' %}: {{ request.user.username }}">
+          <i class="fas fa-user-gear proposal-role-icon" aria-hidden="true"></i>
+          <span class="proposal-coordinator-avatar">
+            {% if request.user.uzytkownik.avatar %}
+              <img src="{{ request.user.uzytkownik.avatar.url }}" alt="">
+            {% else %}
+              {{ request.user.username|slice:":2"|upper }}
+            {% endif %}
+          </span>
+          <span class="proposal-coordinator-name">{{ request.user.username }}</span>
+        </a>
+        <span class="proposal-coordinator-empty"
+              data-coord-state="empty"{% if task.assigned_to %} hidden{% endif %}
+              data-bs-toggle="tooltip" title="{% trans 'No coordinator yet' %}">
+          <i class="fas fa-user-gear proposal-role-icon" aria-hidden="true"></i>
+          <span>{% trans 'no coordinator' %}</span>
+        </span>
       {% endif %}
 
       <span class="proposal-meta-sep">·</span>
@@ -246,8 +264,9 @@
         </button>
       </form>
 
-      {% if task.assigned_to == request.user %}
-        <form method="post" action="{% url 'tasks:resign' task.pk %}">
+      {% if not task.assigned_to or task.assigned_to == request.user %}
+        {# Pre-render both states; JS toggles `hidden` after AJAX take/resign #}
+        <form method="post" action="{% url 'tasks:resign' task.pk %}" data-coord-state="me"{% if not task.assigned_to %} hidden{% endif %}>
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
           <button type="submit" class="task-resign-btn" onclick="event.stopPropagation()"
@@ -256,8 +275,7 @@
             <i class="fas fa-xmark"></i> {% trans 'Resign as coordinator' %}
           </button>
         </form>
-      {% elif not task.assigned_to %}
-        <form method="post" action="{% url 'tasks:take' task.pk %}">
+        <form method="post" action="{% url 'tasks:take' task.pk %}" data-coord-state="empty"{% if task.assigned_to %} hidden{% endif %}>
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
           <button type="submit" class="task-take-btn" onclick="event.stopPropagation()"

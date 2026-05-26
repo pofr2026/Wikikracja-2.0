@@ -183,6 +183,42 @@ class TakeResignTaskTest(TestCase):
         self.task.refresh_from_db()
         self.assertEqual(self.task.assigned_to, self.other)
 
+    def test_take_task_ajax_returns_user_data(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(
+            reverse("tasks:take", kwargs={"pk": self.task.pk}),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertIsNotNone(data["assigned_to"])
+        self.assertEqual(data["assigned_to"]["id"], self.user.id)
+        self.assertEqual(data["assigned_to"]["username"], self.user.username)
+
+    def test_resign_task_ajax_returns_null_assigned_to(self):
+        self.task.assigned_to = self.user
+        self.task.save()
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(
+            reverse("tasks:resign", kwargs={"pk": self.task.pk}),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertIsNone(data["assigned_to"])
+
+    def test_resign_task_ajax_403_if_not_coordinator(self):
+        self.task.assigned_to = self.other
+        self.task.save()
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(
+            reverse("tasks:resign", kwargs={"pk": self.task.pk}),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 403)
+
     def test_resign_unassigned_task_does_nothing(self):
         # assigned_to=None — nikomu nie przypisane, resign nie powinien crashować
         self.assertIsNone(self.task.assigned_to)

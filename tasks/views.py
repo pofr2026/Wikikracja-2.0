@@ -303,8 +303,11 @@ def task_against_json(request: HttpRequest, pk: int) -> JsonResponse:
 @login_required
 def take_task(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=pk)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     task.assigned_to = request.user
     task.save(update_fields=["assigned_to", "updated_at"])
+    if is_ajax:
+        return JsonResponse({"ok": True, "assigned_to": _serialize_user(request.user)})
     return redirect(request.POST.get("next") or "tasks:list")
 
 
@@ -312,14 +315,19 @@ def take_task(request: HttpRequest, pk: int) -> HttpResponse:
 @login_required
 def resign_task(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=pk)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     next_url = request.POST.get("next")
     if task.assigned_to != request.user:
+        if is_ajax:
+            return JsonResponse({"ok": False, "error": "not coordinator"}, status=403)
         if next_url:
             return redirect(next_url)
         return redirect("tasks:detail", pk=pk)
 
     task.assigned_to = None
     task.save(update_fields=["assigned_to", "updated_at"])
+    if is_ajax:
+        return JsonResponse({"ok": True, "assigned_to": None})
     if next_url:
         return redirect(next_url)
     return redirect("tasks:list")

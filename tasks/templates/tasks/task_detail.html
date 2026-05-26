@@ -40,7 +40,7 @@
         {% endif %}
       </div>
       <p class="text-muted small mb-1">{% trans "Author" %}: {{ task.created_by|default:_("Unknown") }}</p>
-      <p class="text-muted small mb-1">{% trans "Coordinator" %}: {{ task.assigned_to|default:_("None") }}</p>
+      <p class="text-muted small mb-1">{% trans "Coordinator" %}: <span data-coord-label>{{ task.assigned_to|default:_("None") }}</span></p>
       <p class="text-muted small mb-1">{% trans "Status" %}: {{ task.get_status_display }}</p>
       <p class="text-muted small mb-1">{% trans "Created" %}: {{ task.created_at|date:"Y-m-d H:i" }}</p>
 
@@ -72,9 +72,9 @@
                 data-tooltip-inactive="{% trans 'Vote to help with this task. Click again to withdraw.' %}"
                 title="{% if vote_value == 1 %}{% trans "Click to withdraw your vote" %}{% else %}{% trans "Vote to help with this task. Click again to withdraw." %}{% endif %}">
           {% if vote_value == 1 %}
-            <i class="fas fa-check"></i> {% trans "Helping" %}
+            <i class="fas fa-check fa-fw"></i> {% trans "Helping" %}
           {% else %}
-            <i class="fas fa-plus"></i> {% trans "I want to help" %}
+            <i class="fas fa-plus fa-fw"></i> {% trans "I want to help" %}
           {% endif %}
         </button>
       </form>
@@ -94,50 +94,51 @@
                 data-tooltip-inactive="{% trans 'Vote against this task. At -2 votes the task is rejected.' %}"
                 title="{% if vote_value == -1 %}{% trans "Click to withdraw your vote" %}{% else %}{% trans "Vote against this task. At -2 votes the task is rejected." %}{% endif %}">
           {% if vote_value == -1 %}
-            <i class="fas fa-check"></i> {% trans "Against" %}
+            <i class="fas fa-check fa-fw"></i> {% trans "Against" %}
           {% else %}
-            <i class="fas fa-minus"></i> {% trans "Let's not do that" %}
+            <i class="fas fa-minus fa-fw"></i> {% trans "Let's not do that" %}
           {% endif %}
         </button>
       </form>
       {% endwith %}
 
-      {% if not task.assigned_to %}
-        <form class="d-inline" method="post" action="{% url 'tasks:take' task.pk %}">
+      {% if not task.assigned_to or task.assigned_to == request.user %}
+        {# Pre-render both states; JS toggles `hidden` after AJAX take/resign #}
+        <form class="d-inline" method="post" action="{% url 'tasks:take' task.pk %}" data-coord-state="empty"{% if task.assigned_to %} hidden{% endif %}>
           {% csrf_token %}
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
           <button type="submit"
-                  class="task-take-btn"
+                  class="action-btn action-btn-take"
                   data-bs-toggle="tooltip"
                   title="{% trans "Take responsibility for coordinating this task" %}">
-            <i class="fas fa-hand-paper"></i> {% trans "Become coordinator" %}
+            <i class="fas fa-hand-paper fa-fw"></i> {% trans "Become coordinator" %}
           </button>
         </form>
-      {% endif %}
 
-      {% if task.assigned_to == request.user %}
+        <form class="d-inline" method="post" action="{% url 'tasks:resign' task.pk %}" data-coord-state="me"{% if not task.assigned_to %} hidden{% endif %}>
+          {% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit"
+                  class="action-btn action-btn-withdraw"
+                  data-bs-toggle="tooltip"
+                  title="{% trans "Step down and release this task back to the waiting pool" %}">
+            <i class="fas fa-sign-out-alt fa-fw"></i> {% trans "Resign as coordinator" %}
+          </button>
+        </form>
         <a class="action-btn action-btn-edit"
            href="{% url 'tasks:edit' task.pk %}"
+           data-coord-state="me"{% if not task.assigned_to %} hidden{% endif %}
            data-bs-toggle="tooltip"
            title="{% trans "Edit title, description and category" %}">
-          <i class="fas fa-pen"></i> {% trans "Edit" %}
+          <i class="fas fa-pen fa-fw"></i> {% trans "Edit" %}
         </a>
         <a class="action-btn action-btn-sign"
            href="{% url 'tasks:close' task.pk %}"
+           data-coord-state="me"{% if not task.assigned_to %} hidden{% endif %}
            data-bs-toggle="tooltip"
            title="{% trans "Mark task as completed or cancelled" %}">
-          <i class="fas fa-check-circle"></i> {% trans "Close task" %}
+          <i class="fas fa-check-circle fa-fw"></i> {% trans "Close task" %}
         </a>
-        <form class="d-inline" method="post" action="{% url 'tasks:resign' task.pk %}">
-          {% csrf_token %}
-          <input type="hidden" name="next" value="{{ request.get_full_path }}">
-          <button type="submit"
-                  class="task-resign-btn"
-                  data-bs-toggle="tooltip"
-                  title="{% trans "Step down and release this task back to the waiting pool" %}">
-            <i class="fas fa-sign-out-alt"></i> {% trans "Resign as coordinator" %}
-          </button>
-        </form>
       {% endif %}
     {% endif %}
 
@@ -146,7 +147,7 @@
               class="action-btn action-btn-withdraw"
               data-bs-toggle="modal"
               data-bs-target="#confirmDeleteModal">
-        <i class="fas fa-trash"></i> {% trans "Delete task" %}
+        <i class="fas fa-trash fa-fw"></i> {% trans "Delete task" %}
       </button>
     {% endif %}
   </div>
@@ -199,7 +200,7 @@
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ request.get_full_path }}">
         <button type="submit" class="action-btn action-btn-sign">
-          <i class="fas fa-redo"></i> {% trans "Reopen task" %}
+          <i class="fas fa-redo fa-fw"></i> {% trans "Reopen task" %}
         </button>
       </form>
     </div>
@@ -212,7 +213,7 @@
             <input type="hidden" name="value" value="success">
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <button type="submit" class="action-btn action-btn-yes">
-              <i class="fas fa-thumbs-up"></i> {% trans "Success" %}
+              <i class="fas fa-thumbs-up fa-fw"></i> {% trans "Success" %}
             </button>
           </form>
           <form method="post" action="{% url 'tasks:evaluate' task.pk %}">
@@ -220,7 +221,7 @@
             <input type="hidden" name="value" value="failure">
             <input type="hidden" name="next" value="{{ request.get_full_path }}">
             <button type="submit" class="action-btn action-btn-no">
-              <i class="fas fa-thumbs-down"></i> {% trans "Failure" %}
+              <i class="fas fa-thumbs-down fa-fw"></i> {% trans "Failure" %}
             </button>
           </form>
         </div>
@@ -267,6 +268,7 @@
     avatar_url: "{% if request.user.uzytkownik.avatar %}{{ request.user.uzytkownik.avatar.url|escapejs }}{% endif %}",
     profile_url: "{% url 'obywatele:obywatele_szczegoly' request.user.id %}",
   };
+  window.TASK_COORD_I18N = { none_label: "{% trans 'None' %}" };
 </script>
 <script src="{% static 'tasks/js/tasks.js' %}"></script>
 {% endblock %}
