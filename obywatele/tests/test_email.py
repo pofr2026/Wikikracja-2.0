@@ -14,7 +14,7 @@ from datetime import datetime
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.management import call_command
-from django.test import TestCase, override_settings
+from django.test import TestCase, TransactionTestCase, override_settings
 from django.utils.timezone import make_aware, now
 
 from chat.models import Message, Room
@@ -44,7 +44,10 @@ def make_active_user(username, email):
 
 
 @override_settings(**FAST_EMAIL_SETTINGS)
-class NewPersonEmailTest(TestCase):
+class NewPersonEmailTest(TransactionTestCase):
+    # TransactionTestCase (zamiast TestCase) — SendEmailToAll spawnuje wątek tła
+    # który czyta DB; transakcja TestCase byłaby niewidoczna dla tego wątku
+    # (table lock). TransactionTestCase commit'uje dane → wątek je widzi.
     def _call_send_email_to_all(self, subject, message):
         SendEmailToAll(subject, message)
         _drain_threads()
