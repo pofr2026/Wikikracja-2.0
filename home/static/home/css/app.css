@@ -1,6 +1,7 @@
 /* ===== DESIGN TOKENS — single source of truth ===== */
 /* Layout (theme-independent) */
 :root {
+  --font-mono: 'Courier New', monospace;
   --sidebar-width: 240px;
   --topbar-height: 60px;
   --sidebar-collapsed-width: 52px;
@@ -998,12 +999,7 @@ hr {
 [data-theme="official"] .sidebar-logo .logo-sub {
   color: rgba(232, 234, 240, .5);
 }
-[data-theme="official"] .sidebar-version-link {
-  color: rgba(232, 234, 240, .4);
-}
-[data-theme="official"] .sidebar-version-link:hover {
-  color: rgba(232, 234, 240, .8) !important;
-}
+
 
 /* ── board view helpers ── */
 /* ── domyślny widok: lista ── */
@@ -1227,24 +1223,7 @@ html, body {
   max-width: var(--sidebar-width);
   box-sizing: border-box;
 }
-.sidebar-version-link {
-  font-size: .6rem;
-  color: var(--text-muted);
-  font-family: 'Courier New', monospace;
-  display: inline-block;
-  margin-top: 3px;
-  text-align: right;
-  text-decoration: none !important;
-  border: 1px solid transparent;
-  border-radius: .35rem;
-  padding: .15rem .4rem;
-  transition: color .15s, border-color .15s;
-  float: right;
-}
-.sidebar-version-link:hover {
-  color: var(--text-primary) !important;
-  border-color: rgba(255, 255, 255, .2);
-}
+
 .sidebar-logo .logo-title {
   color: var(--accent);
   font-weight: 700;
@@ -1326,9 +1305,12 @@ html, body {
   color: var(--text-muted);
   font-size: .6rem;
   letter-spacing: .14em;
-  text-transform: uppercase;
   display: block;
   margin-top: 2px;
+  transition: color .15s;
+}
+.sidebar-logo a:hover .logo-sub {
+  color: var(--text-primary);
 }
 .sidebar-nav {
   flex: 1;
