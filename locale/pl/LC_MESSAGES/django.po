@@ -3693,7 +3693,7 @@ msgid ""
 msgstr ""
 "Twój email został potwierdzony.\n"
 "\n"
-"Wypełnij proszę swój formularz rejestracyjny tutaj: %(link)sTwoj email został potwierdzony. Wypełnij proszę formularz rejestracyjny (jeśli jeszcze tego nie zrobiłeś/aś): %(link)s"
+"Wypełnij proszę swój formularz rejestracyjny tutaj: %(link)s"
 
 #: .\obywatele\views.py:1066
 msgid "Created task"
