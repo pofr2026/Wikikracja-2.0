@@ -138,8 +138,8 @@ def run_meeting_notification():
 
     for event in starting_events:
         try:
-            # Format event time for display
-            event_time = event.start_date.strftime('%H:%M')
+            # Format event time for display (convert to local timezone first)
+            event_time = timezone.localtime(event.start_date).strftime('%H:%M')
 
             # Build detailed notification message
             body_parts = [event.title]

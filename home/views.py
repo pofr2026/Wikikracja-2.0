@@ -465,6 +465,7 @@ def mark_doc_read(request, post_id):
     })
 
 
+@login_required
 @require_POST
 def mark_as_read(request):
     """Mark a feed item as read"""

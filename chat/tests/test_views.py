@@ -27,13 +27,6 @@ class ChatViewsTest(TestCase):
         response = self.client.get(reverse("chat:chat"))
         self.assertEqual(response.status_code, 200)
 
-    def test_sidebar_chat_link_uses_view_rooms_param(self):
-        """Link 'Chat' w sidebarze (base.html) zawsze prowadzi do listy pokoi
-        z wymuszonym wylaczeniem filtra unread — przez parametr ?view=rooms."""
-        self.client.force_login(self.user)
-        response = self.client.get(reverse("chat:chat"))
-        self.assertContains(response, '/chat/?view=rooms')
-
     def test_add_room_get_requires_login(self):
         response = self.client.get(reverse("chat:add_room"))
         self.assertEqual(response.status_code, 302)

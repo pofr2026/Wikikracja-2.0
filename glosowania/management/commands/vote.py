@@ -4,8 +4,8 @@ import re
 import time
 from datetime import datetime, timedelta
 
-import django
 from django.conf import settings as s
+from django.db import transaction
 from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.core.management.base import BaseCommand
@@ -17,8 +17,6 @@ from glosowania.models import Decyzja
 from zzz.utils import get_site_domain
 
 log = logging.getLogger(__name__)
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "zzz.settings")
-django.setup()
 
 
 class Command(BaseCommand):
@@ -26,11 +24,6 @@ class Command(BaseCommand):
     help = 'Send chat messages through email'
 
     def handle(self, *args, **options):
-        pass
-        '''Jeśli tego nie będzie to: raise NotImplementedError('subclasses of BaseCommand must provide a handle() method')
-        NotImplementedError: subclasses of BaseCommand must provide a handle() method'''
-
-    def __init__(self, *args, **kwargs):
         translation.activate(s.LANGUAGE_CODE)
 
         HOST = get_site_domain()
@@ -58,7 +51,6 @@ class Command(BaseCommand):
             approved = 5
 
             dzisiaj = datetime.today().date()
-            decyzje = Decyzja.objects.all()
 
             approved_for = _("is approved for referendum")
             became = _('became abiding law today')
@@ -80,10 +72,12 @@ class Command(BaseCommand):
             _was = _('was approved')
             was_removed = _('and was removed from queue')
 
-            for i in decyzje:
-                # Nie ma sensu procesowoać zatwierdzonych i odrzuconych więc odrzućmy je na starcie:
-                if i.status == proposition or i.status == discussion or i.status == referendum:
+            with transaction.atomic():
+                decyzje = Decyzja.objects.select_for_update().filter(
+                    status__in=[proposition, discussion, referendum]
+                )
 
+                for i in decyzje:
                     # FROM PROPOSITION TO DISCUSSION
                     if i.status == proposition:
                         if not i.is_author_signed:
@@ -107,6 +101,11 @@ class Command(BaseCommand):
                             log.info(f"Proposition {i.id} changed status from PROPOSITION to DISCUSSION.")
                             continue
                     # FROM PROPOSITION TO REJECTED
+                    # NOTE: This block (indent 24) is a sibling of the if/elif above (also indent 24),
+                    # inside the outer "if i.status == proposition" (indent 20).
+                    # Reached when: (a) author has NOT signed (if not is_author_signed), OR
+                    # (b) author signed but not enough signatures gathered (elif was False).
+                    # When elif was True and proposal moved to discussion — continue skips this block.
                         if i.data_powstania + timedelta(days=s.CZAS_NA_ZEBRANIE_PODPISOW) <= dzisiaj:
                             i.status = rejected
                             i.path = str(i.path) + " -> " + _("Not enough signatures")
@@ -142,7 +141,7 @@ class Command(BaseCommand):
                             if i.znosi:
                                 separated = re.split(r'\W+', i.znosi)
                                 for z in separated:
-                                    abolish = Decyzja.objects.get(pk=str(z))
+                                    abolish = Decyzja.objects.select_for_update().get(pk=str(z))
                                     abolish.status = rejected
                                     abolish.save()
                                     log.info(f"Proposition {z} was rejected in {i.id}")

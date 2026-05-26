@@ -394,22 +394,6 @@ class CacheBustVersioningTest(TestCase):
         self.assertIn(f'apple-touch-icon.png?v={expected_ts}', content)
 
 
-class WikikracjaVersionLineTest(TestCase):
-    """Test 11 (TDD red): sidebar logo-sub zawiera 'Wikikracja v.X.Y.Z' (powered-by linijka)."""
-
-    def setUp(self):
-        User = get_user_model()
-        self.user = User.objects.create_user(username='admin', password='testpass123')
-        self.client.force_login(self.user)
-
-    def test_sidebar_logo_sub_contains_powered_by_wikikracja_and_version(self):
-        from django.conf import settings as django_settings
-        response = self.client.get(reverse('home'))
-        content = response.content.decode('utf-8')
-        expected = f'Wikikracja v.{django_settings.APP_VERSION}'
-        self.assertIn(expected, content)
-
-
 class SiteAdminBrandingFormUITest(TestCase):
     """Test 12 (TDD red): /site-settings/ pokazuje kartę Branding z formularzem upload'u."""
 

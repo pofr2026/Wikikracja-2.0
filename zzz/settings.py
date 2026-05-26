@@ -1,17 +1,8 @@
 import json
 import logging
 import mimetypes
-import tomllib
-from pathlib import Path
 from os import getenv, path
 
-try:
-    pyproject_path = Path(__file__).parent.parent / "pyproject.toml"
-    with open(pyproject_path, "rb") as f:
-        pyproject = tomllib.load(f)
-        APP_VERSION = pyproject["project"]["version"]
-except (FileNotFoundError, KeyError, Exception):
-    APP_VERSION = "0.95.0-dev"
 
 from dotenv import load_dotenv
 from firebase_admin import credentials
@@ -152,7 +143,7 @@ DELETE_INACTIVE_USER_AFTER = env_int("DELETE_INACTIVE_USER_AFTER", 30)
 
 GROUP_IS_PUBLIC = env_bool("GROUP_IS_PUBLIC", True)
 
-X_FRAME_OPTIONS = 'SAMEORIGIN'
+# X_FRAME_OPTIONS = 'SAMEORIGIN'
 # X_FRAME_OPTIONS = 'ALLOW'
 # TODO: Na produkcji jest:
 X_FRAME_OPTIONS = 'DENY'

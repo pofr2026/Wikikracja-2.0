@@ -289,11 +289,10 @@ def create_one2one_rooms(sender, **kwargs):
 
 @receiver(user_deleted)
 def delete_one2one_rooms(sender, user, **kwargs):
-    private_rooms = Room.objects.filter(public=False)
-    for room in private_rooms:
-        if user.username in room.title:  # TODO: If Public room have name of the user in it - it will be deleted
-            log.info(f"Room {room} deleted.")
-            room.delete()
+    rooms_to_delete = Room.objects.filter(public=False, allowed=user)
+    for room in rooms_to_delete:
+        log.info(f"Room {room} deleted.")
+    rooms_to_delete.delete()
 
 
 @login_required

@@ -8,12 +8,7 @@
   <div class="alert alert-warning">
     {% trans "You still need to confirm your email address using the link sent to your inbox." %}
   </div>
-{% else %}
-  <div class="alert alert-success">
-    {% trans "Your email address is confirmed." %}
-  </div>
 {% endif %}
 
-<p>{% trans "Your onboarding form has been saved." %}</p>
-<p><b>{% trans "Now please wait for group approval." %}</b></p>
+<p>{% trans "We will contact you soon." %}</p>
 {% endblock %}

@@ -116,8 +116,26 @@ class Command(BaseCommand):
             except IntegrityError as e:
                 log.error(f"Skipping reputation update for profile id={i.id}, uid_id={i.uid_id}: {e}")
 
+    def grant_automatic_reputation(self, new_citizen: Uzytkownik):
+        """New citizen automatically gives reputation=1 to all existing active users.
+
+        Only applies when group size is <= ACCEPTANCE * 2.
+        For larger groups this mechanism is disabled.
+        """
+        current_population = population()
+        if current_population > s.ACCEPTANCE * 2:
+            return
+        for k in Uzytkownik.objects.filter(uid__is_active=True):
+            if new_citizen == k:  # but not yourself
+                continue
+            obj, created = Rate.objects.update_or_create(obywatel=new_citizen, kandydat=k, defaults={
+                'rate': '1'
+            })
+            obj.save()
+
     def activate_eligible_users(self):
-        """Activate users with sufficient reputation"""
+        """Activate users with sufficient reputation.
+        if i.reputation > req_rep is intentional to avoid flapping."""
 
         inactive_users = list(Uzytkownik.objects.filter(uid__is_active=False))
         req_rep = required_reputation()
@@ -161,18 +179,7 @@ class Command(BaseCommand):
                 log.info(f'EMAIL_DIAG trigger=user_accepted_signal user_id={i.uid.id} email={i.uid.email} username={i.uid.username} source=count_citizens.activate_eligible_users')
                 signals.user_accepted.send(sender='user_accepted', user=i)
 
-                # New person automatically gives reputation to all existing active users
-                # This happens only when group size is <= ACCEPTANCE * 2 members
-                # For larger groups, new users do not give automatic reputation
-                current_population = population()
-                if current_population <= s.ACCEPTANCE * 2:
-                    for k in Uzytkownik.objects.filter(uid__is_active=True):
-                        if i == k:  # but not yourself
-                            continue
-                        obj, created = Rate.objects.update_or_create(obywatel=i, kandydat=k, defaults={
-                            'rate': '1'
-                        })
-                        obj.save()
+                self.grant_automatic_reputation(i)
 
                 uname = str(i.uid.username)
                 uemail = str(i.uid.email)
@@ -214,7 +221,8 @@ class Command(BaseCommand):
                     log.error(f'Failed to send welcome email to {uemail}: {str(e)}')
 
     def block_ineligible_users(self):
-        """Block users with insufficient reputation"""
+        """Block users with insufficient reputation.
+        if i.reputation < req_rep is intentional to avoid flapping."""
         req_rep = required_reputation()
         for i in Uzytkownik.objects.filter(uid__is_active=True):
             if i.reputation < req_rep:
