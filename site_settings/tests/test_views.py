@@ -444,3 +444,72 @@ class SiteAdminBrandingFormUITest(TestCase):
                 content = response.content.decode('utf-8')
                 # thumbnail wrapped in <a target="_blank"> with link to media URL
                 self.assertRegex(content, r'<a[^>]+href="/media/site_branding/[^"]+"[^>]*target="_blank"')
+
+
+class BrandMarkAjaxRemoveTest(TestCase):
+    """Test 13: AJAX POST do remove_brand_mark / remove_brand_mark_dark usuwa pole i plik."""
+
+    def setUp(self):
+        self.tmp_media = tempfile.mkdtemp(prefix='wikikracja_test_media_')
+        self.override = override_settings(MEDIA_ROOT=self.tmp_media)
+        self.override.enable()
+
+        User = get_user_model()
+        self.user = User.objects.create_user(username='testuser', password='testpass123')
+        self.client.force_login(self.user)
+
+    def tearDown(self):
+        self.override.disable()
+        shutil.rmtree(self.tmp_media, ignore_errors=True)
+
+    def _upload(self, field='brand_mark'):
+        ss = SiteSettings.get()
+        setattr(ss, field, make_branding_png())
+        ss.save()
+        return SiteSettings.get()
+
+    def test_remove_brand_mark_clears_field(self):
+        self._upload('brand_mark')
+        response = self.client.post(reverse('remove_brand_mark'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'ok': True})
+        self.assertFalse(bool(SiteSettings.get().brand_mark))
+
+    def test_remove_brand_mark_deletes_file_from_disk(self):
+        ss = self._upload('brand_mark')
+        path = ss.brand_mark.path
+        self.assertTrue(os.path.exists(path))
+        self.client.post(reverse('remove_brand_mark'))
+        self.assertFalse(os.path.exists(path))
+
+    def test_remove_brand_mark_dark_clears_field(self):
+        self._upload('brand_mark_dark')
+        response = self.client.post(reverse('remove_brand_mark_dark'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'ok': True})
+        self.assertFalse(bool(SiteSettings.get().brand_mark_dark))
+
+    def test_remove_brand_mark_dark_does_not_affect_brand_mark(self):
+        ss = SiteSettings.get()
+        ss.brand_mark = make_branding_png()
+        ss.brand_mark_dark = make_branding_png()
+        ss.save()
+        self.client.post(reverse('remove_brand_mark_dark'))
+        ss = SiteSettings.get()
+        self.assertTrue(bool(ss.brand_mark))
+        self.assertFalse(bool(ss.brand_mark_dark))
+
+    def test_remove_brand_mark_when_empty_returns_ok(self):
+        # pole puste — nie powinno rzucać wyjątku
+        response = self.client.post(reverse('remove_brand_mark'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {'ok': True})
+
+    def test_remove_brand_mark_requires_post(self):
+        response = self.client.get(reverse('remove_brand_mark'))
+        self.assertEqual(response.status_code, 405)
+
+    def test_remove_brand_mark_requires_login(self):
+        self.client.logout()
+        response = self.client.post(reverse('remove_brand_mark'))
+        self.assertNotEqual(response.status_code, 200)
