@@ -406,3 +406,35 @@ class CategoryAPITest(TestCase):
         task.refresh_from_db()
         self.assertIsNone(task.category)
 
+
+class TaskAgainstJsonTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("requester")
+        self.task = make_task(created_by=self.user)
+
+    def test_requires_login(self):
+        response = self.client.get(reverse("tasks:against_json", kwargs={"pk": self.task.pk}))
+        self.assertEqual(response.status_code, 302)
+
+    def test_returns_only_down_voters(self):
+        helper = make_user("helper")
+        opponent = make_user("opponent")
+        TaskVote.objects.create(task=self.task, user=helper, value=TaskVote.Value.UP)
+        TaskVote.objects.create(task=self.task, user=opponent, value=TaskVote.Value.DOWN)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:against_json", kwargs={"pk": self.task.pk}))
+        data = response.json()
+        self.assertEqual(data["total"], 1)
+        self.assertEqual(len(data["helpers"]), 1)
+        self.assertEqual(data["helpers"][0]["username"], "opponent")
+
+    def test_returns_empty_when_no_down_votes(self):
+        helper = make_user("helper")
+        TaskVote.objects.create(task=self.task, user=helper, value=TaskVote.Value.UP)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:against_json", kwargs={"pk": self.task.pk}))
+        data = response.json()
+        self.assertEqual(data["total"], 0)
+        self.assertEqual(data["helpers"], [])
+

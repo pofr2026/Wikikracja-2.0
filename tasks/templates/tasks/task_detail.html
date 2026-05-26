@@ -154,17 +154,42 @@
   <div class="card mb-4">
     <div class="card-body">
       <h2 class="h5 mb-3">{% trans "Willing to help" %}</h2>
-      {% if helping_votes %}
-        <ul class="mb-0 ps-3">
-          {% for vote in helping_votes %}
-            <li>
-              <a href="{% url 'obywatele:obywatele_szczegoly' vote.user_id %}">{{ vote.user }}</a>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <p class="text-muted mb-0">{% trans "No one wants to help at the moment" %}</p>
-      {% endif %}
+      <div class="helpers-popover-list" data-voter-list="helpers"{% if not helping_votes %} hidden{% endif %}>
+        {% for vote in helping_votes %}
+          <a class="helpers-popover-item" href="{% url 'obywatele:obywatele_szczegoly' vote.user_id %}" data-user-id="{{ vote.user_id }}">
+            <span class="helpers-popover-avatar">
+              {% if vote.user.uzytkownik.avatar %}
+                <img src="{{ vote.user.uzytkownik.avatar.url }}" alt="">
+              {% else %}
+                {{ vote.user.username|slice:":2"|upper }}
+              {% endif %}
+            </span>
+            <span class="helpers-popover-name">{{ vote.user.username }}</span>
+          </a>
+        {% endfor %}
+      </div>
+      <p class="text-muted mb-0" data-voter-empty="helpers"{% if helping_votes %} hidden{% endif %}>{% trans "No one wants to help at the moment" %}</p>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-body">
+      <h2 class="h5 mb-3">{% trans "Against this task" %}</h2>
+      <div class="helpers-popover-list" data-voter-list="against"{% if not against_votes %} hidden{% endif %}>
+        {% for vote in against_votes %}
+          <a class="helpers-popover-item" href="{% url 'obywatele:obywatele_szczegoly' vote.user_id %}" data-user-id="{{ vote.user_id }}">
+            <span class="helpers-popover-avatar">
+              {% if vote.user.uzytkownik.avatar %}
+                <img src="{{ vote.user.uzytkownik.avatar.url }}" alt="">
+              {% else %}
+                {{ vote.user.username|slice:":2"|upper }}
+              {% endif %}
+            </span>
+            <span class="helpers-popover-name">{{ vote.user.username }}</span>
+          </a>
+        {% endfor %}
+      </div>
+      <p class="text-muted mb-0" data-voter-empty="against"{% if against_votes %} hidden{% endif %}>{% trans "No one is against at the moment" %}</p>
     </div>
   </div>
 
@@ -235,5 +260,13 @@
 
 {% load static %}
 {% block extra_js %}
+<script>
+  window.CURRENT_USER = {
+    id: {{ request.user.id|default:"null" }},
+    username: "{{ request.user.username|escapejs }}",
+    avatar_url: "{% if request.user.uzytkownik.avatar %}{{ request.user.uzytkownik.avatar.url|escapejs }}{% endif %}",
+    profile_url: "{% url 'obywatele:obywatele_szczegoly' request.user.id %}",
+  };
+</script>
 <script src="{% static 'tasks/js/tasks.js' %}"></script>
 {% endblock %}

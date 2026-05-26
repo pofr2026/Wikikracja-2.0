@@ -32,13 +32,12 @@ Użycie:
 </section>
 
 
-{% now "U" as v %}
-<link rel="stylesheet" href="{% static 'chat/css/chat.css' %}?v={{ v }}">
+<link rel="stylesheet" href="{% static 'chat/css/chat.css' %}">
 <script>
   // var (not const/let) goes to global scope accessible by name from ES modules
   if (typeof TRANSLATIONS === 'undefined') var TRANSLATIONS = {{ ec_translations|default:"{}"|safe }};
   if (typeof SITE_SETTINGS === 'undefined') var SITE_SETTINGS = { messageMaxLength: {{ MESSAGE_MAX_LENGTH|default:500 }} };
 </script>
-<script src="{% static 'chat/js/ejs.min.js' %}?v={{ v }}"></script>
-<script src="{% static 'chat/js/chat-embedded.js' %}?v={{ v }}" type="module"></script>
+<script src="{% static 'chat/js/ejs.min.js' %}"></script>
+<script src="{% static 'chat/js/chat-embedded.js' %}" type="module"></script>
 {% endif %}

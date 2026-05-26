@@ -128,6 +128,22 @@
         <span class="proposal-signatures-count">{{ task.votes_up|default:0 }}</span>
       </button>
 
+      <button type="button"
+              class="proposal-against proposal-against-btn"
+              onclick="event.stopPropagation()"
+              data-task-against="{{ task.pk }}"
+              data-against-url="{% url 'tasks:against_json' pk=task.pk %}"
+              data-bs-toggle="popover"
+              data-bs-trigger="manual"
+              data-bs-placement="bottom"
+              data-bs-html="true"
+              data-bs-title="{% trans 'People against' %}"
+              data-bs-content="<div class='helpers-popover-loading'>{% trans 'Loading…' %}</div>"
+              aria-label="{% trans 'People against. Click to see the list.' %}">
+        <i class="fas fa-ban fa-fw"></i>
+        <span class="proposal-against-count">{{ task.votes_down|default:0 }}</span>
+      </button>
+
       <a href="{% url 'tasks:detail' pk=task.pk %}"
          class="proposal-details-inline" onclick="event.stopPropagation()"
          data-bs-toggle="tooltip"

@@ -884,7 +884,9 @@ hr {
 [data-theme="light"] .proposal-author-link:hover,
 [data-theme="light"] .proposal-coordinator-link:hover,
 [data-theme="light"] button.proposal-helpers-btn:hover,
-[data-theme="light"] button.proposal-helpers-btn:focus-visible {
+[data-theme="light"] button.proposal-helpers-btn:focus-visible,
+[data-theme="light"] button.proposal-against-btn:hover,
+[data-theme="light"] button.proposal-against-btn:focus-visible {
   background: rgba(0, 0, 0, .05);
 }
 [data-theme="light"] .sort-btn.active,

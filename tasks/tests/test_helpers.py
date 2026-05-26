@@ -117,6 +117,16 @@ class ApplyTaskSortTest(SimpleTestCase):
         result = _apply_task_sort(self.tasks, "score", "asc")
         self.assertEqual(result[0], self.t2)
 
+    def test_sort_by_score_uses_votes_up_not_votes_score(self):
+        # 'Poparcie' = liczba helpers (votes_up); głosy sprzeciwu nie obniżają
+        # rankingu zadania — są osobnym sygnałem (próg rejection).
+        # Bez tego zabezpieczenia zadanie z mniejszą liczbą helpers, ale lepszym
+        # netto, byłoby wyżej — co myli usera widzącego tylko liczbę helpers.
+        more_helpers_some_against = make_annotated_task("A", votes_score=2, votes_up=5)
+        fewer_helpers_no_against = make_annotated_task("B", votes_score=3, votes_up=3)
+        result = _apply_task_sort([more_helpers_some_against, fewer_helpers_no_against], "score", "desc")
+        self.assertEqual(result[0].title, "A")
+
     def test_sort_by_buzz_desc(self):
         result = _apply_task_sort(self.tasks, "buzz", "desc")
         self.assertEqual(result[0], self.t1)
