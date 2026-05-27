@@ -139,7 +139,8 @@ export function formatMessage(raw) {
         ? DOMPurify.sanitize(raw, { ALLOWED_TAGS, ALLOWED_ATTR })
         : String(raw ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // Linkify only URLs that are not already inside an <a> element.
-    const URL_REGEX = /(?:<a\b[^>]*>[^<]*<\/a>)|(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*))/g;
+    // `&amp;` matched as a unit (listed before char class) — keeps trailing ';' out of plain URL matches.
+    const URL_REGEX = /(?:<a\b[^>]*>[^<]*<\/a>)|(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:&amp;|[-a-zA-Z0-9()@:%_+.~#?&/=])*)/g;
     return clean.replace(URL_REGEX, (match, url) => {
         if (!url) return match; // pre-existing <a>...</a>, leave untouched
         const isInternal = url.replace(/^https?/, 'http').startsWith(window.location.origin.replace(/^https?/, 'http'));

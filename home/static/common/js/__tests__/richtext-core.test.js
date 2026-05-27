@@ -282,6 +282,62 @@ describe('insertPlainTextAtCaret — DOM structure', () => {
     });
 });
 
+// ── formatMessage: linkifikacja URL-i z &amp; w query stringu ─────────────────
+//
+// Bug: URL_REGEX nie zawierał ';' w character class query stringu, więc gdy
+// bleach.clean zamieniał & → &amp;, regex zatrzymywał się na ';' i ucinał
+// resztę parametrów (np. &t=721 w YouTube URL).
+//
+// Fix: podejście A — alternacja (char_class|&amp;)* zamiast dodania ';' do
+// char class. Dzięki temu ';' jest akceptowany TYLKO jako część sekwencji &amp;,
+// a samotny ';' na końcu zdania nie jest wciągany do URL.
+//
+// Uwaga o środowisku testowym: loadCore() działa przez new Function bez DOMPurify,
+// więc typeof DOMPurify === 'undefined' i input nie jest sanityzowany.
+// Testy operują bezpośrednio na wyjściu bleach.clean (stan po backendzkie), co jest
+// dokładnie tym stanem, który trafia do formatMessage() w produkcji.
+
+describe('formatMessage — linkifikacja URL z parametrami', () => {
+
+    test('URL z &amp; (encja HTML) linkifikuje cały query string', () => {
+        // Backend (bleach.clean) produkuje &amp; zamiast & — frontend musi go złapać.
+        const input = 'https://www.youtube.com/watch?v=GBISeUYMzoU&amp;t=721';
+        const result = core.formatMessage(input);
+        expect(result).toContain('href="https://www.youtube.com/watch?v=GBISeUYMzoU&amp;t=721"');
+        expect(result).not.toContain('href="https://www.youtube.com/watch?v=GBISeUYMzoU&amp"');
+    });
+
+    test('URL z wieloma parametrami (&amp; jako separator) linkifikuje wszystkie', () => {
+        const input = 'https://example.com/page?a=1&amp;b=2&amp;c=3';
+        const result = core.formatMessage(input);
+        expect(result).toContain('href="https://example.com/page?a=1&amp;b=2&amp;c=3"');
+    });
+
+    test('prosty URL bez parametrów nadal działa', () => {
+        const input = 'https://example.com/path';
+        const result = core.formatMessage(input);
+        expect(result).toContain('href="https://example.com/path"');
+    });
+
+    test('regresja: średnik po URL (koniec zdania) nie jest wciągany do linku', () => {
+        // Samotny ';' nie jest w char class ani nie startuje '&amp;' — URL urwie się przed nim.
+        const input = 'Zobacz https://example.com/page; potem coś';
+        const result = core.formatMessage(input);
+        expect(result).toContain('href="https://example.com/page"');
+        expect(result).not.toContain('href="https://example.com/page;"');
+    });
+
+    test('URL już zawinięty w <a> przez backend nie jest podwójnie linkifikowany', () => {
+        // Alt 1 regexa (?:<a\b...) łapie istniejące <a> i zwraca je niezmienione.
+        // Guard dla głównego flow chatu — backend (bleach.linkify) już linkifikuje URL,
+        // więc formatMessage nie powinno tworzyć zagnieżdżonych <a>.
+        const input = 'Zobacz <a href="https://youtube.com/?v=X&amp;t=721" target="_blank" rel="noopener">YouTube</a> dzisiaj';
+        const result = core.formatMessage(input);
+        expect(result).not.toMatch(/<a[^>]*><a/);
+        expect(result).toContain('href="https://youtube.com/?v=X&amp;t=721"');
+    });
+});
+
 // ── Integracja: paste-flow end-to-end ────────────────────────────────────────
 
 describe('insertPlainTextAtCaret + getInputHtml — paste flow E2E', () => {
