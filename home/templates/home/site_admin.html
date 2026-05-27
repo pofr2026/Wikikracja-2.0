@@ -195,9 +195,14 @@
             <i class="fas fa-image me-2 field-label-icon"></i>{% trans "Brand mark" %}
           </label>
           <div class="brand-mark-field-row">
-            <img src="{% if ss.brand_mark %}{{ ss.brand_mark.url }}?v={{ branding_version }}{% endif %}"
-                 class="brand-mark-preview{% if not ss.brand_mark %} d-none{% endif %}"
-                 id="preview_brand_mark" alt="">
+            <a {% if ss.brand_mark %}href="{{ ss.brand_mark.url }}"{% endif %}
+               target="_blank" rel="noopener"
+               class="brand-mark-preview-link{% if not ss.brand_mark %} d-none{% endif %}"
+               data-brand-mark-link>
+              <img src="{% if ss.brand_mark %}{{ ss.brand_mark.url }}?v={{ branding_version }}{% endif %}"
+                   class="brand-mark-preview{% if not ss.brand_mark %} d-none{% endif %}"
+                   id="preview_brand_mark" alt="">
+            </a>
             <input type="file" name="brand_mark" id="id_brand_mark" accept="image/png" class="brand-mark-file-hidden" data-preview="preview_brand_mark" hidden>
             <button type="button" class="btn btn-sm btn-outline-secondary brand-mark-choose-btn" data-target="id_brand_mark">
               <i class="fas fa-upload me-1"></i>
@@ -221,9 +226,14 @@
             <i class="fas fa-moon me-2 field-label-icon"></i>{% trans "Brand mark (dark themes)" %}
           </label>
           <div class="brand-mark-field-row">
-            <img src="{% if ss.brand_mark_dark %}{{ ss.brand_mark_dark.url }}?v={{ branding_version }}{% endif %}"
-                 class="brand-mark-preview{% if not ss.brand_mark_dark %} d-none{% endif %}"
-                 id="preview_brand_mark_dark" alt="">
+            <a {% if ss.brand_mark_dark %}href="{{ ss.brand_mark_dark.url }}"{% endif %}
+               target="_blank" rel="noopener"
+               class="brand-mark-preview-link{% if not ss.brand_mark_dark %} d-none{% endif %}"
+               data-brand-mark-link>
+              <img src="{% if ss.brand_mark_dark %}{{ ss.brand_mark_dark.url }}?v={{ branding_version }}{% endif %}"
+                   class="brand-mark-preview{% if not ss.brand_mark_dark %} d-none{% endif %}"
+                   id="preview_brand_mark_dark" alt="">
+            </a>
             <input type="file" name="brand_mark_dark" id="id_brand_mark_dark" accept="image/png" class="brand-mark-file-hidden" data-preview="preview_brand_mark_dark" hidden>
             <button type="button" class="btn btn-sm btn-outline-secondary brand-mark-choose-btn" data-target="id_brand_mark_dark">
               <i class="fas fa-upload me-1"></i>
@@ -312,6 +322,8 @@
               if (preview) {
                 preview.src = ev.target.result;
                 preview.classList.remove('d-none');
+                var link = preview.closest('[data-brand-mark-link]');
+                if (link) { link.href = ev.target.result; link.classList.remove('d-none'); }
               }
               if (nameEl) {
                 nameEl.textContent = file.name + ' — ';
@@ -336,7 +348,12 @@
           }).then(function(r) { return r.json(); }).then(function(data) {
             if (!data.ok) return;
             var preview = document.getElementById(btn.dataset.preview);
-            if (preview) { preview.src = ''; preview.classList.add('d-none'); }
+            if (preview) {
+              preview.src = '';
+              preview.classList.add('d-none');
+              var link = preview.closest('[data-brand-mark-link]');
+              if (link) { link.removeAttribute('href'); link.classList.add('d-none'); }
+            }
             var row = btn.closest('.brand-mark-field-row');
             var nameEl = row && row.querySelector('.brand-mark-file-name');
             if (nameEl) { nameEl.textContent = ''; nameEl.classList.add('d-none'); }
