@@ -447,10 +447,36 @@ window.initActivityFeedMarkRead = function(containerSelector, linkSelector) {
 };
 
 // Toggle .expandable blocks — clicking body toggles open/close (only when overflow detected).
+function hasSelectedTextInside(container) {
+    const selection = window.getSelection?.();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return false;
+    if (!(selection.toString() || '').trim()) return false;
+    const range = selection.getRangeAt(0);
+
+    if (typeof range.intersectsNode === 'function') {
+        try {
+            return range.intersectsNode(container);
+        } catch (err) {
+            // Fall through to compatibility checks below.
+        }
+    }
+
+    if (container.contains(range.startContainer) || container.contains(range.endContainer)) {
+        return true;
+    }
+
+    const ancestor = range.commonAncestorContainer;
+    const ancestorEl = ancestor.nodeType === Node.ELEMENT_NODE ? ancestor : ancestor.parentElement;
+    return !!(ancestorEl && container.contains(ancestorEl));
+}
+
 document.addEventListener('click', function(e) {
     if (e.target.closest('a')) return;
-    const el = e.target.closest('.expandable-body')?.closest('.expandable');
-    if (el?.classList.contains('has-overflow')) el.classList.toggle('is-open');
+    const body = e.target.closest('.expandable-body');
+    const el = body?.closest('.expandable');
+    if (!el?.classList.contains('has-overflow')) return;
+    if (hasSelectedTextInside(body)) return;
+    el.classList.toggle('is-open');
 });
 
 // Globalna inicjalizacja Bootstrap tooltipów — każdy [data-bs-toggle="tooltip"] działa
