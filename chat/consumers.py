@@ -397,7 +397,8 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                     continue
 
                 if prefs['seen']:
-                    await consumer.unsee_room(room)
+                    await consumer.repo.unsee_room(room)
+                    await consumer.push_unread_count()
                     await consumer.send_unsee_room(proxy=proxy, room=room)
 
                 if not prefs['muted']:
