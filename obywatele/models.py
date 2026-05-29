@@ -110,6 +110,27 @@ class CitizenActivity(models.Model):
         return f"{self.uzytkownik.uid.username}: {self.get_activity_type_display()}"
 
 
+class DeletionRequest(models.Model):
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='deletion_request',
+        verbose_name=_('User'),
+    )
+    requested_at = models.DateTimeField(auto_now_add=True, verbose_name=_('Requested at'))
+    scheduled_for = models.DateTimeField(verbose_name=_('Scheduled for'))
+
+    class Meta:
+        verbose_name = _('Deletion request')
+        verbose_name_plural = _('Deletion requests')
+        indexes = [
+            models.Index(fields=['scheduled_for'], name='deletion_request_scheduled_idx'),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} (scheduled: {self.scheduled_for.date()})"
+
+
 class Rate(models.Model):
     kandydat = models.ForeignKey(Uzytkownik, on_delete=models.CASCADE, related_name='kandydat')
     obywatel = models.ForeignKey(Uzytkownik, on_delete=models.CASCADE, related_name='obywatel')
