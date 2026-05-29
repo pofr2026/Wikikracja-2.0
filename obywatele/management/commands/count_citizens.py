@@ -202,7 +202,7 @@ class Command(BaseCommand):
                             password_url=f"{host}/haslo/"
                         )
                         # Convert HTML <br> to newlines for plain text email
-                        message = message.replace('<br>', '\n')
+                        message = message.replace('<br>', '\n').replace('<p>', '').replace('</p>', '')
                         subject = f"[{host}] {welcome_post.title}"
                         log.info(f'Using welcome email from system post for user {uemail}')
                     except KeyError as e:
