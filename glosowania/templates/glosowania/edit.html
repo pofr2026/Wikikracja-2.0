@@ -5,6 +5,29 @@
 
 {% block extra_css %}{{ form.media }}{% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const wymagaKaryCheckbox = document.getElementById('id_wymaga_kary');
+    const karaField = document.getElementById('div_id_kara');
+    
+    function toggleKaraField() {
+        if (wymagaKaryCheckbox.checked) {
+            karaField.style.display = 'block';
+        } else {
+            karaField.style.display = 'none';
+        }
+    }
+    
+    // Initial state based on server-side value
+    toggleKaraField();
+    
+    // Toggle on checkbox change
+    wymagaKaryCheckbox.addEventListener('change', toggleKaraField);
+});
+</script>
+{% endblock %}
+
 {% block glosowania %}
 <div class="card">
   <div class="card-header">
@@ -16,6 +39,7 @@
       {{ form.title|as_crispy_field }}
       {{ form.tresc|as_crispy_field }}
       {{ form.uzasadnienie|as_crispy_field }}
+      {{ form.wymaga_kary|as_crispy_field }}
       {{ form.kara|as_crispy_field }}
       {{ form.znosi|as_crispy_field }}
       <div class="d-flex gap-2">

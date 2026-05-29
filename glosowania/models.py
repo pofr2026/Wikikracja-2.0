@@ -24,7 +24,8 @@ class Decyzja(models.Model):
     author = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True)
     title = models.TextField(max_length=200, null=True, verbose_name=_('Title'), help_text=_('Enter short title describing new law.'))
     tresc = models.TextField(max_length=2000, null=True, verbose_name=_('Law text'), help_text=_('Enter the exact wording of the law as it is to be applied.'))
-    kara = models.TextField(max_length=500, null=True, verbose_name=_('Penalty for non-compliance'), help_text=_('What is the penalty for non-compliance with this rule. This can be, for example: "Banishment for 3 months", "Banishment forever", etc.'))
+    kara = models.TextField(max_length=500, null=True, blank=True, verbose_name=_('Penalty for non-compliance'), help_text=_('What is the penalty for non-compliance with this rule. This can be, for example: "Banishment for 3 months", "Banishment forever", etc.'))
+    wymaga_kary = models.BooleanField(default=False, verbose_name=_('Add penalty if execution is not automatic'), help_text=_('Check this box if the rule execution depends on human action and requires a penalty for non-compliance.'))
     uzasadnienie = models.TextField(max_length=2000, null=True, verbose_name=_('Reasoning'), help_text=_('Why do we need this law? What events or thoughts inspired this bill? What are the expected results?'))
     args_for = models.TextField(
         # TODO: This field should be filled out by anyone - like comments or chat:

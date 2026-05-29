@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-23 16:43+0200\n"
+"POT-Creation-Date: 2026-05-29 16:46+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -30,8 +30,8 @@ msgstr "Załączniki"
 #: .\board\templates\board\edit_post.html:33 .\bookkeeping\forms.py:21
 #: .\bookkeeping\forms.py:34 .\bookkeeping\forms.py:47
 #: .\bookkeeping\forms.py:92 .\chat\templates\chat\add.html:15
-#: .\glosowania\templates\glosowania\dodaj.html:38
-#: .\glosowania\templates\glosowania\edit.html:22
+#: .\glosowania\templates\glosowania\dodaj.html:66
+#: .\glosowania\templates\glosowania\edit.html:46
 #: .\glosowania\templates\glosowania\edit_argument.html:33
 #: .\home\templates\home\haslo.html:25
 #: .\home\templates\home\site_admin.html:264
@@ -74,7 +74,7 @@ msgstr "Podtytuł"
 #: .\board\models.py:24 .\board\templates\board\post_detail.html:49
 #: .\bookkeeping\models.py:59
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:29
-#: .\glosowania\models.py:117
+#: .\glosowania\models.py:118
 #: .\obywatele\templates\obywatele\_citizen_zadania_partial.html:32
 #: .\obywatele\templates\obywatele\citizen_zadania.html:55
 #: .\tasks\templates\tasks\_task_card.html:62
@@ -365,8 +365,8 @@ msgstr "Czy na pewno chcesz usunąć to ogłoszenie?"
 #: .\board\templates\board\post_detail.html:10
 #: .\board\templates\board\post_detail.html:55
 #: .\chat\templates\chat\add.html:16
-#: .\glosowania\templates\glosowania\dodaj.html:39
-#: .\glosowania\templates\glosowania\edit.html:23
+#: .\glosowania\templates\glosowania\dodaj.html:67
+#: .\glosowania\templates\glosowania\edit.html:47
 #: .\obywatele\templates\obywatele\dodaj.html:71
 #: .\tasks\templates\tasks\task_form.html:49
 msgid "Back"
@@ -1540,7 +1540,7 @@ msgstr "Podpisana"
 #: .\glosowania\templates\glosowania\_proposal_card.html:26
 #: .\glosowania\templates\glosowania\menu.html:29
 #: .\glosowania\templates\glosowania\szczegoly.html:34
-#: .\glosowania\views.py:226 .\home\views.py:657
+#: .\glosowania\views.py:231 .\home\views.py:657
 msgid "Discussion"
 msgstr "Dyskusja"
 
@@ -1554,7 +1554,7 @@ msgstr "Nie zabrała podpisów"
 #: .\glosowania\templates\glosowania\menu.html:36
 #: .\glosowania\templates\glosowania\szczegoly.html:30
 #: .\glosowania\templates\glosowania\szczegoly.html:35
-#: .\glosowania\views.py:227 .\home\views.py:658
+#: .\glosowania\views.py:232 .\home\views.py:658
 msgid "Referendum"
 msgstr "Referendum"
 
@@ -1562,7 +1562,7 @@ msgstr "Referendum"
 #: .\glosowania\templates\glosowania\_proposal_card.html:32
 #: .\glosowania\templates\glosowania\menu.html:43
 #: .\glosowania\templates\glosowania\szczegoly.html:37
-#: .\glosowania\views.py:229 .\home\views.py:660
+#: .\glosowania\views.py:234 .\home\views.py:660
 msgid "Approved"
 msgstr "Zatwierdzone"
 
@@ -1570,13 +1570,13 @@ msgstr "Zatwierdzone"
 #: .\glosowania\templates\glosowania\_proposal_card.html:30
 #: .\glosowania\templates\glosowania\menu.html:53
 #: .\glosowania\templates\glosowania\szczegoly.html:36
-#: .\glosowania\views.py:228 .\home\views.py:659 .\tasks\models.py:53
+#: .\glosowania\views.py:233 .\home\views.py:659 .\tasks\models.py:53
 #: .\tasks\templates\tasks\_task_card.html:29
 #: .\tasks\templates\tasks\task_list.html:150 .\tasks\views.py:91
 msgid "Rejected"
 msgstr "Odrzucone"
 
-#: .\glosowania\management\commands\vote.py:168 .\glosowania\views.py:386
+#: .\glosowania\management\commands\vote.py:168 .\glosowania\views.py:391
 #: .\obywatele\forms.py:308
 #, python-brace-format
 msgid "Why you received this email? Here is explanation: {url}"
@@ -1609,99 +1609,107 @@ msgid "What is the penalty for non-compliance with this rule. This can be, for e
 msgstr "Jakie są konsekwencje za nieprzestrzeganie tej zasady. Może to być na przykład: \"Wygnanie na 3 miesiące\", \"Wygnanie na zawsze itd.\""
 
 #: .\glosowania\models.py:28
+msgid "Add penalty if execution is not automatic"
+msgstr "Dodaj karę jeśli wykonanie przepisu nie jest automatyczne"
+
+#: .\glosowania\models.py:28
+msgid "Check this box if the rule execution depends on human action and requires a penalty for non-compliance."
+msgstr "Zaznacz to pole jeśli wykonanie przepisu nie jest automatyczne i zależy od człowieka."
+
+#: .\glosowania\models.py:29
 #: .\glosowania\templates\glosowania\_proposal_card.html:135
 #: .\glosowania\templates\glosowania\szczegoly.html:131 .\home\views.py:671
 msgid "Reasoning"
 msgstr "Uzasadnienie"
 
-#: .\glosowania\models.py:28
+#: .\glosowania\models.py:29
 msgid "Why do we need this law? What events or thoughts inspired this bill? What are the expected results?"
 msgstr "Dlaczego potrzebujemy tego przepisu? Jakie wydarzenia lub przemyślenia zainspirowały ten projekt? Jakie są oczekiwane efekty?"
 
-#: .\glosowania\models.py:33
+#: .\glosowania\models.py:34
 msgid "Positive Aspects of the Idea"
 msgstr "Pozytywne Aspekty Pomysłu"
 
-#: .\glosowania\models.py:34
+#: .\glosowania\models.py:35
 msgid "Enter the benefits for the group, environment, economy, etc. resulting from the introduction of the idea."
 msgstr "Określ korzyści dla grupy, otoczenia, środowiska, ekonomi etc. wynikające z wprowadzenia pomysłu."
 
-#: .\glosowania\models.py:40
+#: .\glosowania\models.py:41
 msgid "Negative Aspects of the Idea"
 msgstr "Negatywne Aspekty Pomysłu"
 
-#: .\glosowania\models.py:41
+#: .\glosowania\models.py:42
 msgid "Enter the potential threat associated with the proposal."
 msgstr "Określ potencjalne zagrożenia związane z propozycją."
 
-#: .\glosowania\models.py:43
+#: .\glosowania\models.py:44
 msgid "Abolishes the rules"
 msgstr "Znosi przepis/y"
 
-#: .\glosowania\models.py:43
+#: .\glosowania\models.py:44
 msgid "If the proposed law supersedes other bills, enter their comma separated numbers here."
 msgstr "Jeśli proponowane prawo zastępuje inne przepisy, wprowadź tutaj ich numery rozdzielone przecinkami."
 
-#: .\glosowania\models.py:44
+#: .\glosowania\models.py:45
 msgid "The path this bill took."
 msgstr "Historia propozycji"
 
-#: .\glosowania\models.py:60 .\home\templatetags\feed_filters.py:34
+#: .\glosowania\models.py:61 .\home\templatetags\feed_filters.py:34
 #: .\home\views.py:738 .\obywatele\views.py:1188 .\tasks\models.py:91
 msgid "Chat room"
 msgstr "Pokój czatu"
 
-#: .\glosowania\models.py:107
+#: .\glosowania\models.py:108
 msgid "draft"
 msgstr "szkic"
 
-#: .\glosowania\models.py:112
+#: .\glosowania\models.py:113
 msgid "Positive"
 msgstr "Argument Za"
 
-#: .\glosowania\models.py:113
+#: .\glosowania\models.py:114
 msgid "Negative"
 msgstr "Argument Przeciw"
 
-#: .\glosowania\models.py:116
+#: .\glosowania\models.py:117
 #: .\glosowania\templates\glosowania\delete_argument.html:14
 #: .\glosowania\templates\glosowania\edit_argument.html:12 .\home\models.py:15
 #: .\home\models.py:44 .\home\templatetags\feed_filters.py:35
 msgid "Decision"
 msgstr "Referendum"
 
-#: .\glosowania\models.py:118
+#: .\glosowania\models.py:119
 #: .\glosowania\templates\glosowania\delete_argument.html:15
 msgid "Argument Type"
 msgstr "Typ argumentu"
 
-#: .\glosowania\models.py:118
+#: .\glosowania\models.py:119
 msgid "Is this a positive or negative argument?"
 msgstr "Czy to argument pozytywny czy negatywny?"
 
-#: .\glosowania\models.py:119
+#: .\glosowania\models.py:120
 msgid "Argument Content"
 msgstr "Treść argumentu"
 
-#: .\glosowania\models.py:119
+#: .\glosowania\models.py:120
 msgid "Enter your argument. You can include links."
 msgstr "Wprowadź swój argument. Możesz dodać linki."
 
-#: .\glosowania\models.py:120
+#: .\glosowania\models.py:121
 msgid "Created At"
 msgstr "Utworzono"
 
-#: .\glosowania\models.py:121
+#: .\glosowania\models.py:122
 #: .\glosowania\templates\glosowania\delete_argument.html:23
 #: .\glosowania\templates\glosowania\edit_argument.html:16
 msgid "Last Modified"
 msgstr "Ostatnia modyfikacja"
 
-#: .\glosowania\models.py:125
+#: .\glosowania\models.py:126
 msgid "Argument"
 msgstr "Argument"
 
-#: .\glosowania\models.py:126
+#: .\glosowania\models.py:127
 msgid "Arguments"
 msgstr "Argumenty"
 
@@ -1788,11 +1796,11 @@ msgstr "Tak, skasuj"
 msgid "No, Cancel"
 msgstr "Nie, anuluj"
 
-#: .\glosowania\templates\glosowania\dodaj.html:9
+#: .\glosowania\templates\glosowania\dodaj.html:32
 msgid "Add new law proposal"
 msgstr "Dodaj nową propozycję przepisu"
 
-#: .\glosowania\templates\glosowania\edit.html:11
+#: .\glosowania\templates\glosowania\edit.html:34
 msgid "Edit law proposal"
 msgstr "Nowa propozycja przepisu"
 
@@ -1961,7 +1969,7 @@ msgstr "Dodaj argument przeciw"
 msgid "Your argument against..."
 msgstr "Twój argument przeciw..."
 
-#: .\glosowania\views.py:41 .\glosowania\views.py:225 .\home\views.py:656
+#: .\glosowania\views.py:41 .\glosowania\views.py:230 .\home\views.py:656
 msgid "Proposition"
 msgstr "Propozycja"
 
@@ -1982,16 +1990,16 @@ msgstr ""
 "{user} dodał/a nową propozycję przepisu: \"{title}\"\n"
 "Możesz ją zobaczyć tutaj: {url}"
 
-#: .\glosowania\views.py:82
+#: .\glosowania\views.py:86
 msgid "Saved."
 msgstr "Zapisane."
 
-#: .\glosowania\views.py:85
+#: .\glosowania\views.py:89
 #, python-brace-format
 msgid "Proposal no. {} has been modified"
 msgstr "Propozycja nr. {} została zmodyfikowana"
 
-#: .\glosowania\views.py:85
+#: .\glosowania\views.py:89
 #, python-brace-format
 msgid ""
 "{user} modified proposal: \"{title}\"\n"
@@ -2000,65 +2008,65 @@ msgstr ""
 "{user} zmodyfikował/a propozycję przepisu: \"{title}\"\n"
 "Możesz zobaczyć nową wersję tutaj: {url}"
 
-#: .\glosowania\views.py:126
+#: .\glosowania\views.py:131
 msgid "You signed this motion for a referendum."
 msgstr "Podpisałeś ten wniosek o referendum."
 
-#: .\glosowania\views.py:143
+#: .\glosowania\views.py:148
 msgid "Not signed."
 msgstr "Nie podpisane."
 
-#: .\glosowania\views.py:166
+#: .\glosowania\views.py:171
 msgid "Your vote has been saved. You voted Yes."
 msgstr "Twój głos został zapisany. Zagłosowałeś na Tak."
 
-#: .\glosowania\views.py:169 .\glosowania\views.py:201
+#: .\glosowania\views.py:174 .\glosowania\views.py:206
 #, python-format
 msgid "Your verification code is: %(code)s"
 msgstr "Twój kod weryfikacyjny to: %(code)s"
 
-#: .\glosowania\views.py:174 .\glosowania\views.py:206
+#: .\glosowania\views.py:179 .\glosowania\views.py:211
 msgid "Write down your code or create screenshot to verify it when the referendum is over. This code will be presented just once and will be not related to you."
 msgstr "Zapisz swój kod na kartce lub zrób zrzut ekranu aby zweryfikować go po zakończeniu referendum. Ten kod zostanie pokazany tylko raz i nie będzie powiązany z twoją osobą."
 
-#: .\glosowania\views.py:198
+#: .\glosowania\views.py:203
 msgid "Your vote has been saved. You voted No."
 msgstr "Twój głos został zapisany. Zagłosowałeś na Nie."
 
-#: .\glosowania\views.py:297
+#: .\glosowania\views.py:302
 msgid "Arguments cannot be added after voting has ended."
 msgstr "Argumenty nie mogą być dodawane po zakończeniu głosowania."
 
-#: .\glosowania\views.py:309
+#: .\glosowania\views.py:314
 #, python-brace-format
 msgid "Your {type} argument has been added."
 msgstr "Twój argument {type} został dodany."
 
-#: .\glosowania\views.py:314
+#: .\glosowania\views.py:319
 msgid "There was an error with your argument. Please try again."
 msgstr "Wystąpił błąd z twoim argumentem. Spróbuj ponownie."
 
-#: .\glosowania\views.py:326
+#: .\glosowania\views.py:331
 msgid "You can only edit your own arguments."
 msgstr "Możesz edytować tylko własne argumenty."
 
-#: .\glosowania\views.py:331
+#: .\glosowania\views.py:336
 msgid "Arguments cannot be edited after voting has ended."
 msgstr "Argumenty nie mogą być edytowane po zakończeniu głosowania."
 
-#: .\glosowania\views.py:338
+#: .\glosowania\views.py:343
 msgid "Your argument has been updated."
 msgstr "Twój argument został zaktualizowany."
 
-#: .\glosowania\views.py:359
+#: .\glosowania\views.py:364
 msgid "You can only delete your own arguments."
 msgstr "Możesz usuwać tylko własne argumenty."
 
-#: .\glosowania\views.py:364
+#: .\glosowania\views.py:369
 msgid "Arguments cannot be deleted after voting has ended."
 msgstr "Argumenty nie mogą być usuwane po zakończeniu głosowania."
 
-#: .\glosowania\views.py:370
+#: .\glosowania\views.py:375
 msgid "Your argument has been deleted."
 msgstr "Twój argument został usunięty."
 
@@ -3578,7 +3586,7 @@ msgstr "Profil kandydata został zaktualizowany."
 #: .\obywatele\views.py:978
 #, python-format
 msgid "You have confirmed %(email)s."
-msgstr ""
+msgstr "Potwierdziłeś emial %(email)s."
 
 #: .\obywatele\views.py:987
 msgid "Fill out your onboarding form"
