@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-29 17:30+0200\n"
+"POT-Creation-Date: 2026-05-29 21:53+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -73,8 +73,8 @@ msgid "Subtitle"
 msgstr "Podtytuł"
 
 #: .\board\models.py:24 .\board\templates\board\post_detail.html:49
-#: .\bookkeeping\models.py:59
-#: .\bookkeeping\templates\bookkeeping\transaction_list.html:29
+#: .\bookkeeping\models.py:110
+#: .\bookkeeping\templates\bookkeeping\transaction_list.html:44
 #: .\glosowania\models.py:118
 #: .\obywatele\templates\obywatele\_citizen_zadania_partial.html:32
 #: .\obywatele\templates\obywatele\citizen_zadania.html:55
@@ -310,8 +310,8 @@ msgstr "Brak dokumentów"
 #: .\glosowania\templates\glosowania\szczegoly.html:212
 #: .\obywatele\templates\obywatele\my_profile.html:140
 #: .\obywatele\templates\obywatele\szczegoly.html:186
-#: .\tasks\templates\tasks\task_detail.html:123
-#: .\tasks\templates\tasks\task_list.html:321
+#: .\tasks\templates\tasks\task_detail.html:133
+#: .\tasks\templates\tasks\task_list.html:326
 msgid "Edit"
 msgstr "Edytuj"
 
@@ -859,7 +859,7 @@ msgstr "Nie można usunąć partnera, ponieważ jest w użyciu. Usuń najpierw w
 #: .\categories\templates\categories\_category_modal.html:9
 #: .\chat\templates\chat\chat.html:189 .\chat\templates\chat\chat.html:227
 #: .\chat\views.py:210 .\obywatele\templates\obywatele\my_profile.html:283
-#: .\tasks\templates\tasks\task_detail.html:212
+#: .\tasks\templates\tasks\task_detail.html:238
 #: .\tasks\templates\tasks\task_list.html:171
 msgid "Close"
 msgstr "Zamknij"
@@ -900,8 +900,8 @@ msgstr "Skocz do czatu żeby to zrobić {HOST}/chat"
 #: .\home\templates\home\base.html:130 .\home\templates\home\base.html:133
 #: .\home\templates\home\base.html:212 .\home\templates\home\base.html:258
 #: .\home\templates\home\home.html:79 .\home\templates\home\home.html:109
-#: .\home\templates\home\home.html:672 .\home\templates\home\search.html:87
-#: .\home\views.py:411 .\obywatele\templates\obywatele\wspolnota.html:80
+#: .\home\templates\home\home.html:685 .\home\templates\home\search.html:87
+#: .\home\views.py:426 .\obywatele\templates\obywatele\wspolnota.html:80
 #: .\obywatele\views.py:702 .\tasks\templates\tasks\_task_card.html:43
 #: .\tasks\templates\tasks\task_detail.html:19
 msgid "Chat"
@@ -975,7 +975,7 @@ msgstr "Brak"
 #: .\chat\templates\chat\chat.html:96 .\chat\templates\chat\chat.html:210
 #: .\home\templates\home\base.html:208 .\home\templates\home\base.html:242
 #: .\home\templates\home\home.html:47 .\home\templates\home\search.html:63
-#: .\home\views.py:407 .\obywatele\templates\obywatele\szczegoly.html:134
+#: .\home\views.py:422 .\obywatele\templates\obywatele\szczegoly.html:134
 msgid "Tasks"
 msgstr "Zadania"
 
@@ -1581,7 +1581,7 @@ msgstr "Podpisana"
 #: .\glosowania\templates\glosowania\_proposal_card.html:26
 #: .\glosowania\templates\glosowania\menu.html:29
 #: .\glosowania\templates\glosowania\szczegoly.html:34
-#: .\glosowania\views.py:231 .\home\views.py:657
+#: .\glosowania\views.py:231 .\home\views.py:672
 msgid "Discussion"
 msgstr "Dyskusja"
 
@@ -1595,7 +1595,7 @@ msgstr "Nie zabrała podpisów"
 #: .\glosowania\templates\glosowania\menu.html:36
 #: .\glosowania\templates\glosowania\szczegoly.html:30
 #: .\glosowania\templates\glosowania\szczegoly.html:35
-#: .\glosowania\views.py:232 .\home\views.py:658
+#: .\glosowania\views.py:232 .\home\views.py:673
 msgid "Referendum"
 msgstr "Referendum"
 
@@ -1603,7 +1603,7 @@ msgstr "Referendum"
 #: .\glosowania\templates\glosowania\_proposal_card.html:32
 #: .\glosowania\templates\glosowania\menu.html:43
 #: .\glosowania\templates\glosowania\szczegoly.html:37
-#: .\glosowania\views.py:234 .\home\views.py:660
+#: .\glosowania\views.py:234 .\home\views.py:675
 msgid "Approved"
 msgstr "Zatwierdzone"
 
@@ -1611,7 +1611,7 @@ msgstr "Zatwierdzone"
 #: .\glosowania\templates\glosowania\_proposal_card.html:30
 #: .\glosowania\templates\glosowania\menu.html:53
 #: .\glosowania\templates\glosowania\szczegoly.html:36
-#: .\glosowania\views.py:233 .\home\views.py:659 .\tasks\models.py:53
+#: .\glosowania\views.py:233 .\home\views.py:674 .\tasks\models.py:53
 #: .\tasks\templates\tasks\_task_card.html:29
 #: .\tasks\templates\tasks\task_list.html:150 .\tasks\views.py:94
 msgid "Rejected"
@@ -1696,7 +1696,7 @@ msgid "The path this bill took."
 msgstr "Historia propozycji"
 
 #: .\glosowania\models.py:61 .\home\templatetags\feed_filters.py:34
-#: .\home\views.py:738 .\obywatele\views.py:1196 .\tasks\models.py:91
+#: .\home\views.py:753 .\obywatele\views.py:1196 .\tasks\models.py:91
 msgid "Chat room"
 msgstr "Pokój czatu"
 
@@ -2010,7 +2010,7 @@ msgstr "Dodaj argument przeciw"
 msgid "Your argument against..."
 msgstr "Twój argument przeciw..."
 
-#: .\glosowania\views.py:41 .\glosowania\views.py:230 .\home\views.py:656
+#: .\glosowania\views.py:41 .\glosowania\views.py:230 .\home\views.py:671
 msgid "Proposition"
 msgstr "Propozycja"
 
@@ -2116,7 +2116,7 @@ msgid "Keep me signed in"
 msgstr "Nie wylogowuj mnie"
 
 #: .\home\models.py:12 .\home\models.py:41
-#: .\home\templatetags\feed_filters.py:31 .\home\views.py:642
+#: .\home\templatetags\feed_filters.py:31 .\home\views.py:657
 #: .\obywatele\views.py:1176
 msgid "Task"
 msgstr "Zadanie"
@@ -2221,7 +2221,7 @@ msgstr "Filtry wyszukiwania"
 msgid "Toggle light / dark mode"
 msgstr "Przełącz tryb jasny/ciemny"
 
-#: .\home\templates\home\base.html:286 .\home\templates\home\home.html:228
+#: .\home\templates\home\base.html:288 .\home\templates\home\home.html:230
 #: .\obywatele\templates\obywatele\szczegoly.html:123
 #: .\obywatele\templates\obywatele\szczegoly.html:139
 msgid "Activity"
@@ -2311,7 +2311,7 @@ msgstr "Zarządzanie zadaniami — twórz, przypisuj i śledź zadania w społec
 msgid "Member directory — browse citizen profiles, check roles and track community activity."
 msgstr "Katalog członków — przeglądaj profile obywateli, sprawdzaj role i śledź aktywność społeczności."
 
-#: .\home\templates\home\home.html:63 .\home\views.py:676 .\home\views.py:695
+#: .\home\templates\home\home.html:63 .\home\views.py:691 .\home\views.py:710
 #: .\obywatele\views.py:696
 msgid "Voting"
 msgstr "Głosowania"
@@ -3839,7 +3839,7 @@ msgstr "Twoje żądanie usunięcia konta zostało anulowane."
 msgid "No active deletion request found."
 msgstr "Brak aktywnego żądania usunięcia."
 
-#: .\site_settings\models.py:11
+#: .\site_settings\models.py:13
 msgid "Onboarding category"
 msgstr "Formularz rejestracyjny"
 
