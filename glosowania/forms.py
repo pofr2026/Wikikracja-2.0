@@ -8,7 +8,7 @@ from .models import Argument, Decyzja
 class DecyzjaForm(forms.ModelForm):
     class Meta:
         model = Decyzja
-        fields = ('title', 'tresc', 'uzasadnienie', 'kara', 'znosi')
+        fields = ('title', 'tresc', 'uzasadnienie', 'wymaga_kary', 'kara', 'znosi')
         widgets = {
             'title': forms.TextInput(),
             'tresc': RichTextWidget(max_length=2000),

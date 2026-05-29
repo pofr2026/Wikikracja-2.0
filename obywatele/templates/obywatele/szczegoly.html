@@ -39,7 +39,11 @@
           {{ b.uid.username|slice:":2"|upper }}
         </div>
       {% endif %}
-      <h5 class="mb-0">{{ b.uid.first_name|default:b.uid }} {{ b.uid.last_name }}</h5>
+      <h5 class="mb-0">{{ b.uid.first_name|default:b.uid }} {{ b.uid.last_name }}
+        {% if candidate_deletion_request %}
+        <span class="badge text-bg-danger ms-1" title="{% trans 'This person has requested account deletion' %}"><i class="fas fa-trash-alt"></i></span>
+        {% endif %}
+      </h5>
       {% if active %}
       <a href="{% url 'chat:open_dm' pk=b.uid.pk %}" class="proposal-chat-link ms-2" style="font-size:.78rem;">
         <i class="fas fa-comment-dots"></i>

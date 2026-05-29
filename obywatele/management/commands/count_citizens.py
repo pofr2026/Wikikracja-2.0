@@ -18,7 +18,7 @@ from django.utils.translation import gettext as _
 from board.models import Post
 from chat import signals
 from chat.models import Room
-from obywatele.models import CitizenActivity, Rate, Uzytkownik
+from obywatele.models import CitizenActivity, DeletionRequest, Rate, Uzytkownik
 from obywatele.views import population
 from obywatele.signals import track_user_blocked
 from obywatele.views import SendEmailToAll, required_reputation
@@ -56,6 +56,9 @@ class Command(BaseCommand):
 
         # Delete inactive users after grace period
         self.delete_inactive_users()
+
+        # Process user-requested deletions (30-day delay)
+        self.process_deletion_requests()
 
         ts = now().strftime('%Y-%m-%d %H:%M:%S%z')
         self.stdout.write(self.style.SUCCESS(f'[{ts}] Successfully processed citizens'))
@@ -202,7 +205,7 @@ class Command(BaseCommand):
                             password_url=f"{host}/haslo/"
                         )
                         # Convert HTML <br> to newlines for plain text email
-                        message = message.replace('<br>', '\n')
+                        message = message.replace('<br>', '\n').replace('<p>', '').replace('</p>', '')
                         subject = f"[{host}] {welcome_post.title}"
                         log.info(f'Using welcome email from system post for user {uemail}')
                     except KeyError as e:
@@ -256,6 +259,33 @@ class Command(BaseCommand):
                     log.error(f'Failed to send account blocked notification to {i.uid.email}: {str(e)}')
 
                 SendEmailToAll(_('Citizen has been banned'), f"{_('User')} {uname} {_('has been blocked')}")
+
+    def process_deletion_requests(self):
+        """Delete accounts where the 30-day grace period has expired."""
+        overdue = DeletionRequest.objects.filter(scheduled_for__lte=now()).select_related('user')
+        for dr in overdue:
+            user = dr.user
+            log.info(f'Processing deletion request for user {user.username} (id={user.id})')
+            signals.user_deleted.send(sender='user_deleted', user=user)
+            try:
+                if hasattr(user, 'uzytkownik'):
+                    user.uzytkownik.delete()
+
+                for room in Room.objects.filter(allowed=user):
+                    room.allowed.remove(user)
+                for room in Room.objects.filter(muted_by=user):
+                    room.muted_by.remove(user)
+                for room in Room.objects.filter(seen_by=user):
+                    room.seen_by.remove(user)
+
+                user.groups.clear()
+                user.user_permissions.clear()
+
+                username = user.username
+                user.delete()
+                log.info(f'Deleted account (user-requested): {username}')
+            except Exception as e:
+                log.error(f'Failed to delete user {user.id} (user-requested): {str(e)}')
 
     def delete_inactive_users(self):
         """Delete inactive users who haven't logged in for a while"""

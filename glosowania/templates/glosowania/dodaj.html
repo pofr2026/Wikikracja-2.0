@@ -5,11 +5,33 @@
 
 {% block extra_css %}{{ form.media }}{% endblock %}
 
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const wymagaKaryCheckbox = document.getElementById('id_wymaga_kary');
+    const karaField = document.getElementById('div_id_kara');
+    
+    function toggleKaraField() {
+        if (wymagaKaryCheckbox.checked) {
+            karaField.style.display = 'block';
+        } else {
+            karaField.style.display = 'none';
+        }
+    }
+    
+    // Initial state - hide kara field by default (checkbox is unchecked by default)
+    toggleKaraField();
+    
+    // Toggle on checkbox change
+    wymagaKaryCheckbox.addEventListener('change', toggleKaraField);
+});
+</script>
+{% endblock %}
+
 {% block glosowania %}
 <h2>{% trans 'Add new law proposal' %}</h2>
 <form action="." method="POST" class="post-form">
     {% csrf_token %}
-    <!-- {{ form|crispy }} -->
     <div class="row">
         <div class="col-12">
           {{ form.title|as_crispy_field }}
@@ -27,6 +49,11 @@
     </div>
     <div class="row">
         <div class="col-12">
+          {{ form.wymaga_kary|as_crispy_field }}
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
           {{ form.kara|as_crispy_field }}
         </div>
     </div>
@@ -36,6 +63,6 @@
         </div>
     </div>
     <button type="submit" class="btn btn-primary btn-sm">{% trans 'Save' %}</button>
-    <button onclick="window.history.back();" class="btn btn-warning btn-sm" type="button">{% trans 'Back' %}</button>
+    <button onclick="window.history.back();" class="btn btn-secondary btn-sm" type="button">{% trans 'Back' %}</button>
 </form>
 {% endblock %}

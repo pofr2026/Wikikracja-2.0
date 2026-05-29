@@ -161,6 +161,9 @@
                   {% if i.near_threshold %}
                   <span class="badge text-bg-warning ms-1" title="{% trans 'This person has low reputation points' %}">!</span>
                   {% endif %}
+                  {% if i.pending_deletion %}
+                  <span class="badge text-bg-danger ms-1" title="{% trans 'This person has requested account deletion' %}"><i class="fas fa-trash-alt"></i></span>
+                  {% endif %}
                 </div>
               </td>
               <td class="email-cell">

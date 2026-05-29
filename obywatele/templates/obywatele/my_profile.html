@@ -240,5 +240,63 @@ updateThemeBtns(localStorage.getItem('app-theme') || 'dark');
     </div>
   </div>
 
+  {# ── USUNIĘCIE KONTA ── #}
+  <div class="card border-danger" style="border-color:var(--bs-danger)!important;">
+    <div class="card-header">
+      <span class="section-heading text-danger">{% trans "Delete account" %}</span>
+    </div>
+    <div class="card-body">
+      {% if deletion_request %}
+        <p class="mb-2" style="font-size:.9rem;">
+          {% blocktrans with date=deletion_request.scheduled_for|date:"Y-m-d" %}
+            Your account is scheduled for permanent deletion on <strong>{{ date }}</strong>.
+            You can cancel this request before that date.
+          {% endblocktrans %}
+        </p>
+        <form method="post" action="{% url 'obywatele:cancel_deletion' %}">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-sm btn-outline-secondary">
+            <i class="fas fa-undo me-1"></i>{% trans "Cancel deletion request" %}
+          </button>
+        </form>
+      {% else %}
+        <p class="mb-2" style="font-size:.9rem;color:var(--text-muted);">
+          {% trans "Permanently delete your account and all associated data. This action has a 30-day grace period — you can cancel any time before the deadline." %}
+        </p>
+        <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deletionModal">
+          <i class="fas fa-trash-alt me-1"></i>{% trans "Delete all my data" %}
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+
+{# ── MODAL POTWIERDZENIA USUNIĘCIA ── #}
+<div class="modal fade" id="deletionModal" tabindex="-1" aria-labelledby="deletionModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger" id="deletionModalLabel">
+          <i class="fas fa-exclamation-triangle me-2"></i>{% trans "Delete account" %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="{% trans 'Close' %}"></button>
+      </div>
+      <div class="modal-body">
+        <p>{% trans "Are you sure you want to request deletion of your account and all your data?" %}</p>
+        <p><strong>{% trans "Your account will remain active for 30 days. After that, all data will be permanently removed and cannot be recovered." %}</strong></p>
+        <p>{% trans "You can cancel this request at any time during the 30-day period." %}</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "Cancel" %}</button>
+        <form method="post" action="{% url 'obywatele:request_deletion' %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger">
+            <i class="fas fa-trash-alt me-1"></i>{% trans "Yes, schedule deletion" %}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
 </div>
 {% endblock %}

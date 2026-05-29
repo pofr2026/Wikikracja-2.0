@@ -35,7 +35,7 @@ from events.models import Event
 from glosowania.models import Argument, Decyzja, KtoJuzGlosowal, ZebranePodpisy
 from obywatele.filters import UzytkownikFilter
 from obywatele.forms import AvatarForm, EmailChangeForm, OnboardingDetailsForm, ProfileForm, SendEmailToAll, UserForm, UsernameChangeForm
-from obywatele.models import CitizenActivity, Rate, Uzytkownik
+from obywatele.models import CitizenActivity, DeletionRequest, Rate, Uzytkownik
 from obywatele.tables import UzytkownikTable
 from tasks.models import Task, TaskEvaluation, TaskVote
 from zzz.utils import build_site_url, get_site_domain
@@ -369,6 +369,8 @@ def obywatele(request: HttpRequest):
             user.near_threshold = reputation <= (req_rep + 1)
         else:
             user.near_threshold = False
+
+        user.pending_deletion = hasattr(user, 'deletion_request')
 
         if user.last_login is None:
             user.activity_status = 'inactive'
@@ -724,6 +726,8 @@ def my_profile(request: HttpRequest):
         'why': profile.why,
     })
 
+    deletion_request = getattr(user, 'deletion_request', None)
+
     return render(request, 'obywatele/my_profile.html', {
         'profile': profile,
         'user': user,
@@ -733,6 +737,7 @@ def my_profile(request: HttpRequest):
         'notifications': notifications,
         'avatar_form': AvatarForm(),
         'profile_form': profile_form,
+        'deletion_request': deletion_request,
     })
 
 
@@ -910,6 +915,8 @@ def obywatele_szczegoly(request: HttpRequest, pk: int):
     prev = User.objects.filter(pk__lt=obj.pk, is_active=obj.is_active).order_by('-pk').first()
     next = User.objects.filter(pk__gt=obj.pk, is_active=obj.is_active).order_by('pk').first()
 
+    candidate_deletion_request = getattr(candidate_user, 'deletion_request', None)
+
     return render(request, 'obywatele/szczegoly.html', {
         'b': candidate_profile,
         'd': citizen_profile,
@@ -922,6 +929,7 @@ def obywatele_szczegoly(request: HttpRequest, pk: int):
         'email_confirmed': email_confirmed,
         'form_completed': form_completed,
         'total_rate_count': total_rate_count,
+        'candidate_deletion_request': candidate_deletion_request,
     })
 
 
@@ -1198,3 +1206,32 @@ def citizen_zalozono(request: HttpRequest, pk: int):
         'items': items,
         'is_own': request.user.pk == pk,
     })
+
+
+@login_required
+@require_POST
+def request_deletion(request: HttpRequest):
+    user = request.user
+    if hasattr(user, 'deletion_request'):
+        error(request, _('A deletion request already exists for your account.'))
+        return redirect('obywatele:my_profile')
+
+    scheduled = timezone.now() + timedelta(days=30)
+    DeletionRequest.objects.create(user=user, scheduled_for=scheduled)
+    log.info(f'User {user.username} (id={user.id}) requested account deletion, scheduled for {scheduled.date()}')
+    success(request, _('Your account deletion has been scheduled. Your data will be permanently removed in 30 days. You can cancel this request at any time before then.'))
+    return redirect('obywatele:my_profile')
+
+
+@login_required
+@require_POST
+def cancel_deletion(request: HttpRequest):
+    user = request.user
+    try:
+        dr = user.deletion_request
+        dr.delete()
+        log.info(f'User {user.username} (id={user.id}) cancelled their account deletion request')
+        success(request, _('Your account deletion request has been cancelled.'))
+    except DeletionRequest.DoesNotExist:
+        error(request, _('No active deletion request found.'))
+    return redirect('obywatele:my_profile')

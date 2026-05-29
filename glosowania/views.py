@@ -79,6 +79,7 @@ def edit(request: HttpRequest, pk: int):
             decision.title = form.cleaned_data['title']
             decision.tresc = form.cleaned_data['tresc']
             decision.kara = form.cleaned_data['kara']
+            decision.wymaga_kary = form.cleaned_data['wymaga_kary']
             decision.uzasadnienie = form.cleaned_data['uzasadnienie']
             decision.znosi = form.cleaned_data['znosi']
             decision.save()
@@ -93,6 +94,7 @@ def edit(request: HttpRequest, pk: int):
             'title': decision.title,
             'tresc': decision.tresc,
             'kara': decision.kara,
+            'wymaga_kary': bool(decision.kara),
             'uzasadnienie': decision.uzasadnienie,
             'znosi': decision.znosi,
         })
