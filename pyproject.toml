@@ -1,6 +1,6 @@
 [project]
 name = "wikikracja"
-version = "1.4.3"
+version = "1.4.1"
 requires-python = ">= 3.14"
 
 [tool.ruff]
@@ -166,6 +166,7 @@ ignore_patterns = [
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
+version_variables = ["zzz/__init__.py:__version__"]
 branch = "main"
 upload_to_pypi = false
 upload_to_release = true
