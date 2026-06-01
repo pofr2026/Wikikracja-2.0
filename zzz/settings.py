@@ -186,6 +186,7 @@ TEMPLATES = [
                 'django.template.context_processors.media',
                 'zzz.context_processors.footer',
                 'zzz.context_processors.site_description',
+                'zzz.context_processors.group_is_public',
             ],
             'debug': False
         },

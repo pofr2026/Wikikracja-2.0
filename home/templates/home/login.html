@@ -44,7 +44,7 @@
           <div class="text-center">
             <div class="d-inline-flex flex-wrap justify-content-center gap-2">
               <input type="submit" name="submit" class="btn btn-info" value="{% trans 'Login' %}">
-              <a href="{% url 'account_signup' %}" class="btn btn-outline-secondary">{% trans 'Sign Up' %}</a>
+              {% if group_is_public %}<a href="{% url 'account_signup' %}" class="btn btn-outline-secondary">{% trans 'Sign Up' %}</a>{% endif %}
               <a href="{% url 'password_reset' %}" class="btn btn-outline-secondary">{% trans 'Reset password' %}</a>
             </div>
           </div>

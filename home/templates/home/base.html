@@ -314,7 +314,7 @@
         <i id="theme-toggle-icon" class="fas fa-circle-half-stroke"></i>
       </button>
       <a href="{% url 'login' %}" class="btn btn-sm btn-outline-secondary me-1">{% trans "Login" %}</a>
-      <a href="{% url 'account_signup' %}" class="btn-cta">{% trans "Register" %}</a>
+      {% if group_is_public %}<a href="{% url 'account_signup' %}" class="btn-cta">{% trans "Register" %}</a>{% endif %}
     </nav>
     {% endif %}
 

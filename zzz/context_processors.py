@@ -19,3 +19,9 @@ def site_description(request):
     return {
         'site_description': settings.SITE_DESCRIPTION,
     }
+
+
+def group_is_public(request):
+    return {
+        'group_is_public': getattr(settings, 'GROUP_IS_PUBLIC', True),
+    }
