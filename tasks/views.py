@@ -594,7 +594,7 @@ class TaskStatsView(LoginRequiredMixin, TemplateView):
             "failure_count": failure_count,
             "mixed_count": mixed_count,
             "no_eval_count": no_eval_count,
-            "success_rate": round(success_rate, 1),
+            "success_rate": int(success_rate),
             "completed_last_week": completed_last_week,
         })
         return context
