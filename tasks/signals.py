@@ -18,10 +18,9 @@ log = logging.getLogger(__name__)
 
 
 @receiver(post_save, sender=Task)
-def create_or_update_task_chat_room(sender, instance, created, **kwargs):
+def create_task_chat_room(sender, instance, created, **kwargs):
     """
     Automatically create a public chat room for each new task
-    and update room title when task title changes
     """
     if created:
 
@@ -57,14 +56,6 @@ def create_or_update_task_chat_room(sender, instance, created, **kwargs):
             log.info(f"Sent initial message to chat room '{room_title}'")
 
         transaction.on_commit(_create_room)
-    else:
-        # Update room title if task title changed
-        if instance.chat_room:
-            new_title = instance.get_chat_room_title()
-            if instance.chat_room.title != new_title:
-                instance.chat_room.title = new_title
-                instance.chat_room.save(update_fields=['title'])
-                log.info(f"Updated chat room title to '{new_title}' for task #{instance.id}")
 
 
 @receiver(post_save, sender=Task)

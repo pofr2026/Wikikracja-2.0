@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-01 19:40+0200\n"
+"POT-Creation-Date: 2026-06-01 20:14+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -1931,11 +1931,11 @@ msgstr "Już zagłosowałeś w tym referendum"
 msgid "Results"
 msgstr "Wyniki"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:97 .\tasks\models.py:131
+#: .\glosowania\templates\glosowania\szczegoly.html:97 .\tasks\models.py:129
 msgid "For"
 msgstr "Za"
 
-#: .\glosowania\templates\glosowania\szczegoly.html:98 .\tasks\models.py:130
+#: .\glosowania\templates\glosowania\szczegoly.html:98 .\tasks\models.py:128
 #: .\tasks\templates\tasks\_task_card.html:217
 #: .\tasks\templates\tasks\_task_card.html:226
 #: .\tasks\templates\tasks\task_detail.html:89
@@ -3776,13 +3776,15 @@ msgstr "Ukończone"
 msgid "Cancelled"
 msgstr "Anulowane"
 
-#: .\tasks\models.py:155 .\tasks\templates\tasks\task_detail.html:51
+#: .\tasks\models.py:153 .\tasks\templates\tasks\task_detail.html:51
 #: .\tasks\templates\tasks\task_detail.html:190
+#: .\tasks\templates\tasks\task_stats.html:21
 msgid "Success"
 msgstr "Sukces"
 
-#: .\tasks\models.py:156 .\tasks\templates\tasks\task_detail.html:52
+#: .\tasks\models.py:154 .\tasks\templates\tasks\task_detail.html:52
 #: .\tasks\templates\tasks\task_detail.html:198
+#: .\tasks\templates\tasks\task_stats.html:29
 msgid "Failure"
 msgstr "Porażka"
 
@@ -3943,6 +3945,10 @@ msgstr "W realizacji"
 msgid "Finished"
 msgstr "Zakończone"
 
+#: .\tasks\templates\tasks\menu.html:40
+msgid "Statistics"
+msgstr "Statystyki"
+
 #: .\tasks\templates\tasks\task_close.html:6
 msgid "Back to task"
 msgstr "Powrót do zadania"
@@ -4095,6 +4101,46 @@ msgstr "zadania"
 #, python-brace-format
 msgid "This category has {n} task(s). Deleting it will leave those tasks without a category. Continue?"
 msgstr "Ta kategoria ma {n} zadanie/zadań. Usunięcie jej pozostawi te zadania bez kategorii. Kontynuować?"
+
+#: .\tasks\templates\tasks\task_stats.html:7
+msgid "Task Statistics"
+msgstr "Statystyki zadań"
+
+#: .\tasks\templates\tasks\task_stats.html:13
+msgid "Total Completed"
+msgstr "Wszystkie zakończone"
+
+#: .\tasks\templates\tasks\task_stats.html:37
+msgid "Success Rate"
+msgstr "Wskaźnik sukcesu"
+
+#: .\tasks\templates\tasks\task_stats.html:48
+msgid "Mixed Evaluations"
+msgstr "Mieszane oceny"
+
+#: .\tasks\templates\tasks\task_stats.html:49
+msgid "tasks with equal success and failure votes"
+msgstr "zadania z równą liczbą głosów sukcesu i porażki"
+
+#: .\tasks\templates\tasks\task_stats.html:56
+msgid "No Evaluations"
+msgstr "Brak ocen"
+
+#: .\tasks\templates\tasks\task_stats.html:57
+msgid "tasks without any evaluations"
+msgstr "zadania bez żadnych ocen"
+
+#: .\tasks\templates\tasks\task_stats.html:64
+msgid "Completed Last Week"
+msgstr "Zakończone w ostatnim tygodniu"
+
+#: .\tasks\templates\tasks\task_stats.html:65
+msgid "tasks completed in the last 7 days"
+msgstr "zadania zakończone w ciągu ostatnich 7 dni"
+
+#: .\tasks\templates\tasks\task_stats.html:73
+msgid "Back to tasks"
+msgstr "Powrót do zadań"
 
 #: .\templates\admin\base_site.html:4
 msgid "Django site admin"

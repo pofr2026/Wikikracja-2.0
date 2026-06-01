@@ -561,3 +561,40 @@ class TaskCategoryReorderAPI(CategoryReorderAPI):
 
     def after_write(self):
         invalidate_task_list_cache()
+
+
+class TaskStatsView(LoginRequiredMixin, TemplateView):
+    template_name = "tasks/task_stats.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        from django.utils import timezone
+        from datetime import timedelta
+
+        completed_tasks = Task.objects.filter(status=Task.Status.COMPLETED).with_metrics()
+
+        total_completed = completed_tasks.count()
+
+        success_count = sum(1 for t in completed_tasks if (t.eval_success or 0) > (t.eval_failure or 0))
+        failure_count = sum(1 for t in completed_tasks if (t.eval_failure or 0) > (t.eval_success or 0))
+        mixed_count = sum(1 for t in completed_tasks if (t.eval_success or 0) == (t.eval_failure or 0) and (t.eval_success or 0) > 0)
+        no_eval_count = sum(1 for t in completed_tasks if (t.eval_success or 0) == 0 and (t.eval_failure or 0) == 0)
+
+        success_rate = (success_count / total_completed * 100) if total_completed > 0 else 0
+
+        one_week_ago = timezone.now() - timedelta(days=7)
+        completed_last_week = Task.objects.filter(
+            status=Task.Status.COMPLETED,
+            updated_at__gte=one_week_ago
+        ).count()
+
+        context.update({
+            "total_completed": total_completed,
+            "success_count": success_count,
+            "failure_count": failure_count,
+            "mixed_count": mixed_count,
+            "no_eval_count": no_eval_count,
+            "success_rate": round(success_rate, 1),
+            "completed_last_week": completed_last_week,
+        })
+        return context
