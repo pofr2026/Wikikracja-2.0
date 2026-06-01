@@ -74,6 +74,19 @@ class Uzytkownik(models.Model):
     email_notifications_glosowania = models.BooleanField(default=True, help_text=_('Receive notifications about law proposals and voting'), verbose_name=_('Voting notifications'))
     email_notifications_chat = models.BooleanField(default=True, help_text=_('Receive notifications about new chat messages'), verbose_name=_('Chat notifications'))
 
+    ONBOARDING_FORM_FIELDS = ('phone', 'responsibilities', 'city', 'hobby', 'to_give_away', 'to_borrow', 'for_sale', 'i_need', 'skills', 'knowledge', 'want_to_learn', 'business', 'job', 'gift', 'other', 'why')
+
+    @property
+    def form_completion_percent(self) -> int:
+        profile_fields = [bool(getattr(self, f)) for f in self.ONBOARDING_FORM_FIELDS]
+        try:
+            user_fields = [bool(self.uid.first_name), bool(self.uid.last_name)]
+        except Exception:
+            user_fields = [False, False]
+        all_fields = profile_fields + user_fields
+        filled = sum(all_fields)
+        return round(filled / len(all_fields) * 100)
+
     class Meta:
         verbose_name = _("Citizen")
         verbose_name_plural = _("Citizens")

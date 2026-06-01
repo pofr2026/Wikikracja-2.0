@@ -75,11 +75,17 @@
         </div>
         <div class="col-md-6 mb-2">
           <strong>{% trans 'Form completed' %}:</strong>
-          {% if form_completed %}
-            <span class="badge text-bg-success">{% trans 'Yes' %}</span>
-          {% else %}
-            <span class="badge text-bg-warning">{% trans 'No' %}</span>
-          {% endif %}
+          <div class="d-flex align-items-center gap-2 mt-1">
+            <div class="progress flex-grow-1" style="height:8px;">
+              <div class="progress-bar {% if form_completion_percent == 100 %}bg-success{% elif form_completion_percent >= 50 %}bg-warning{% else %}bg-danger{% endif %}"
+                   role="progressbar"
+                   style="width:{{ form_completion_percent }}%"
+                   aria-valuenow="{{ form_completion_percent }}"
+                   aria-valuemin="0"
+                   aria-valuemax="100"></div>
+            </div>
+            <span class="text-nowrap" style="min-width:3rem;">{{ form_completion_percent }}%</span>
+          </div>
         </div>
         {% if not active %}
         <div class="col-md-6 mb-2">

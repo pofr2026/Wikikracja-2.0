@@ -475,7 +475,7 @@ def poczekalnia(request: HttpRequest):
         user.ratings_count = ratings_count_map.get(candidate_profile.id, 0)
 
         user.email_confirmed = (user.id in verified_user_ids) or bool(candidate_profile.polecajacy)
-        user.form_completed = candidate_profile.onboarding_status == Uzytkownik.OnboardingStatus.FORM_COMPLETED
+        user.form_completion_percent = candidate_profile.form_completion_percent
         users_with_ratings.append(user)
 
     return render(
@@ -880,7 +880,7 @@ def obywatele_szczegoly(request: HttpRequest, pk: int):
     candidate_profile = get_object_or_404(Uzytkownik, uid_id=pk)
     candidate_user = User.objects.get(pk=pk)
     email_confirmed = is_email_confirmed_for_candidate(candidate_user, candidate_profile)
-    form_completed = candidate_profile.onboarding_status == Uzytkownik.OnboardingStatus.FORM_COMPLETED
+    form_completion_percent = candidate_profile.form_completion_percent
     citizen_profile = request.user.uzytkownik
     polecajacy = citizen_profile.polecajacy
 
@@ -927,7 +927,7 @@ def obywatele_szczegoly(request: HttpRequest, pk: int):
         'next': next,
         'active': obj.is_active,
         'email_confirmed': email_confirmed,
-        'form_completed': form_completed,
+        'form_completion_percent': form_completion_percent,
         'total_rate_count': total_rate_count,
         'candidate_deletion_request': candidate_deletion_request,
     })
