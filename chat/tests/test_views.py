@@ -158,3 +158,71 @@ class ChatRoomAccessTest(TestCase):
         response = self.client.get(reverse("chat:room_data", kwargs={"room_id": self.private_room.id}))
         self.assertEqual(response.status_code, 404)
 
+
+class RenameRoomViewTest(TestCase):
+    def setUp(self):
+        self.user = make_user("renamer")
+        self.public_room = Room.objects.create(title="StaraNazwa", public=True, protected=False)
+        self.public_room.allowed.add(self.user)
+        self.protected_room = Room.objects.create(title="Chroniony", public=True, protected=True)
+        self.protected_room.allowed.add(self.user)
+        self.private_room = Room.objects.create(title="renamer-other", public=False)
+        self.private_room.allowed.add(self.user)
+
+    def _rename(self, room, title):
+        return self.client.post(
+            reverse("chat:rename_room", kwargs={"room_id": room.id}),
+            data=json.dumps({"title": title}),
+            content_type="application/json",
+        )
+
+    def test_rename_requires_login(self):
+        response = self._rename(self.public_room, "Nowa")
+        self.assertEqual(response.status_code, 302)
+
+    def test_rename_public_room_succeeds(self):
+        self.client.force_login(self.user)
+        response = self._rename(self.public_room, "NowaNazwa")
+        self.assertEqual(response.status_code, 200)
+        self.public_room.refresh_from_db()
+        self.assertEqual(self.public_room.title, "NowaNazwa")
+
+    def test_rename_protected_room_denied(self):
+        self.client.force_login(self.user)
+        response = self._rename(self.protected_room, "Zmieniony")
+        self.assertEqual(response.status_code, 404)
+        self.protected_room.refresh_from_db()
+        self.assertEqual(self.protected_room.title, "Chroniony")
+
+    def test_rename_private_room_denied(self):
+        self.client.force_login(self.user)
+        response = self._rename(self.private_room, "Zmieniony")
+        self.assertEqual(response.status_code, 404)
+
+    def test_rename_to_duplicate_title_returns_400(self):
+        Room.objects.create(title="JuzIstnieje", public=True)
+        self.client.force_login(self.user)
+        response = self._rename(self.public_room, "JuzIstnieje")
+        self.assertEqual(response.status_code, 400)
+
+    def test_rename_to_same_name_succeeds(self):
+        self.client.force_login(self.user)
+        response = self._rename(self.public_room, "StaraNazwa")
+        self.assertEqual(response.status_code, 200)
+
+    def test_rename_empty_title_returns_400(self):
+        self.client.force_login(self.user)
+        response = self._rename(self.public_room, "")
+        self.assertEqual(response.status_code, 400)
+
+    def test_rename_non_member_denied(self):
+        outsider = make_user("outsider2")
+        self.client.force_login(outsider)
+        response = self._rename(self.public_room, "Próba")
+        self.assertEqual(response.status_code, 403)
+
+    def test_rename_get_method_not_allowed(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("chat:rename_room", kwargs={"room_id": self.public_room.id}))
+        self.assertEqual(response.status_code, 405)
+

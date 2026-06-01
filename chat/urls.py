@@ -23,4 +23,7 @@ urlpatterns = [
 
     # Unread count API (used by home page badge refresh)
     path('api/unread-count/', views.unread_count, name='unread_count'),
+
+    # Rename room
+    path('api/room/<int:room_id>/rename/', views.rename_room, name='rename_room'),
 ]

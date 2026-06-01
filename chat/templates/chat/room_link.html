@@ -85,6 +85,17 @@
           <i class="fas fa-link fa-fw me-2"></i>{% trans 'Copy link' %}
         </button>
       </li>
+      {% if room.public and not room.protected %}
+      <li><hr class="dropdown-divider"></li>
+      <li>
+        <button type="button"
+          class="dropdown-item rename-room-btn"
+          data-room-id="{{ room.id }}"
+          data-room-title="{{ room.title }}">
+          <i class="fas fa-pencil fa-fw me-2"></i>{% trans 'Rename room' %}
+        </button>
+      </li>
+      {% endif %}
     </ul>
   </div>
 </div>

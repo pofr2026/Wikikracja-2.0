@@ -20,6 +20,7 @@ from PIL import Image
 
 from chat.forms import RoomForm
 from chat.models import Room
+from chat.utils import send_message_to_room
 from chat.signals import user_accepted, user_deleted
 from glosowania.models import Decyzja
 from tasks.models import Task
@@ -384,3 +385,34 @@ def unread_count(request: HttpRequest):
     from chat.services import get_unread_count_for_user
     count = get_unread_count_for_user(request.user)
     return JsonResponse({"count": count})
+
+
+@login_required
+def rename_room(request: HttpRequest, room_id: int):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    try:
+        new_title = (json.loads(request.body).get('title') or '').strip()
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'Invalid JSON'}, status=400)
+
+    room = get_object_or_404(Room, id=room_id, public=True, protected=False)
+    if not room.allowed.filter(id=request.user.id).exists():
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    form = RoomForm(data={'title': new_title}, instance=room)
+    if not form.is_valid():
+        errors = form.errors.get('title', [])
+        return JsonResponse({'error': errors[0] if errors else 'Błąd walidacji.'}, status=400)
+
+    old_title = Room.objects.get(id=room_id).title
+    room = form.save()
+    if room.title != old_title:
+        log.info(f"Room {room_id} renamed from '{old_title}' to '{room.title}' by user {request.user.id}")
+        send_message_to_room(
+            room_title=room.title,
+            message_text=f'📝 {request.user.username} zmienił(a) nazwę pokoju z "{old_title}" na "{room.title}".',
+            sender=None,
+            anonymous=False,
+        )
+    return JsonResponse({'success': True, 'title': room.title})
