@@ -21,3 +21,9 @@ def site_description(request):
         'site_description': settings.SITE_DESCRIPTION,
         'app_version': zzz.__version__,
     }
+
+
+def group_is_public(request):
+    return {
+        'group_is_public': getattr(settings, 'GROUP_IS_PUBLIC', True),
+    }

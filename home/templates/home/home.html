@@ -12,9 +12,9 @@
     <div class="col-auto">
       <a href="{% url 'login' %}" class="btn btn-primary btn-sm">{% trans 'Login' %}</a>
     </div>
-    <div class="col-auto">
+    {% if group_is_public %}<div class="col-auto">
       <a href="{% url 'account_signup' %}" class="btn btn-primary btn-sm">{% trans 'Sign Up' %}</a>
-    </div>
+    </div>{% endif %}
     <div class="col-auto">
       <a href="{% url 'password_reset' %}" class="btn btn-outline-secondary btn-sm">{% trans 'Reset password' %}</a>
     </div>

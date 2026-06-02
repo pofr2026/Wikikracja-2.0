@@ -532,5 +532,58 @@ document.addEventListener('DOMContentLoaded', function() {
             setRoomListHidden(false);
         }
     });
+
+    // ── Rename room ───────────────────────────────────────────────────────────
+    let renameRoomId = null;
+    const renameModal = document.getElementById('rename-room-modal');
+    const renameInput = document.getElementById('rename-room-input');
+    const renameError = document.getElementById('rename-room-error');
+    const renameConfirm = document.getElementById('rename-room-confirm');
+    const bsRenameModal = renameModal && typeof bootstrap !== 'undefined'
+        ? bootstrap.Modal.getOrCreateInstance(renameModal) : null;
+    const showRenameError = (msg) => { if (renameError) { renameError.textContent = msg; renameError.style.display = ''; } };
+
+    let renameOriginalTitle = null;
+
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.rename-room-btn');
+        if (!btn) return;
+        e.preventDefault();
+        e.stopPropagation();
+        renameRoomId = btn.dataset.roomId;
+        renameOriginalTitle = btn.dataset.roomTitle || '';
+        if (renameInput) renameInput.value = renameOriginalTitle;
+        if (renameError) { renameError.style.display = 'none'; renameError.textContent = ''; }
+        bsRenameModal?.show();
+        setTimeout(() => renameInput?.select(), 300);
+    });
+
+    renameConfirm?.addEventListener('click', async () => {
+        if (!renameRoomId) return;
+        const newTitle = (renameInput?.value || '').trim();
+        if (!newTitle) { showRenameError('Nazwa nie może być pusta.'); return; }
+        if (newTitle === renameOriginalTitle) { bsRenameModal?.hide(); return; }
+        try {
+            const resp = await fetch(`/chat/api/room/${renameRoomId}/rename/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '' },
+                body: JSON.stringify({ title: newTitle }),
+            });
+            const data = await resp.json();
+            if (!resp.ok) { showRenameError(data.error || 'Błąd.'); return; }
+            bsRenameModal?.hide();
+            const roomLink = document.querySelector(`.room-link[data-room-id="${renameRoomId}"]`);
+            if (roomLink) {
+                roomLink.querySelector('.room-name')?.replaceChildren(document.createTextNode(data.title));
+                const btn = roomLink.querySelector('.rename-room-btn');
+                if (btn) btn.dataset.roomTitle = data.title;
+            }
+            showToast('Nazwa pokoju zmieniona.');
+        } catch {
+            showRenameError('Błąd połączenia.');
+        }
+    });
+
+    renameInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') renameConfirm?.click(); });
 });
 

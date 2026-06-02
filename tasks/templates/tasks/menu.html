@@ -35,6 +35,12 @@
       </a>
     </div>
 
+    <div class="stepper-step-wrap {% if request.resolver_match.url_name == 'stats' %}active{% endif %}">
+      <a href="{% url 'tasks:stats' %}" class="stepper-step">
+        {% trans 'Statistics' %}
+      </a>
+    </div>
+
     {% endwith %}
   </nav>
 

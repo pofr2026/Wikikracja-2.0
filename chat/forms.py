@@ -13,7 +13,9 @@ class RoomForm(forms.ModelForm):
     def clean_title(self):
         title = self.cleaned_data.get('title')
         if title:
-            # Check for case-insensitive duplicate
-            if Room.objects.filter(title__iexact=title).exists():
-                raise ValidationError("Pokój o tej nazwie juz istnieje (niezaleznie od wielkosci liter).", code='duplicate_title')
+            qs = Room.objects.filter(title=title)
+            if self.instance and self.instance.pk:
+                qs = qs.exclude(pk=self.instance.pk)
+            if qs.exists():
+                raise ValidationError("Pokój o tej nazwie już istnieje.", code='duplicate_title')
         return title

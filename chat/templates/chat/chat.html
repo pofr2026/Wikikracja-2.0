@@ -193,6 +193,27 @@
   </div>
   <!-- End Modal -->
 
+  <!-- Rename room modal -->
+  <div id="rename-room-modal" class="modal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">{% trans 'Rename room' %}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <input type="text" id="rename-room-input" class="form-control" maxlength="255" placeholder="{% trans 'New room name' %}">
+          <div id="rename-room-error" class="text-danger mt-2" style="display:none;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans 'Cancel' %}</button>
+          <button type="button" class="btn btn-primary" id="rename-room-confirm">{% trans 'Save' %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- End Rename Room Modal -->
+
   <!-- Info modal -->
   <div id="chat-info-modal" class="modal" tabindex="-1">
     <div class="modal-dialog modal-dialog-scrollable">
