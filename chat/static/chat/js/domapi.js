@@ -533,14 +533,15 @@ export default class DomApi {
         }
     }
 
-    updateSidebarForMessage(msg) {
+    updateSidebarForMessage(msg, {reorder = true, bumpActivity = reorder} = {}) {
         const roomLink = document.querySelector(`.room-link[data-room-id="${msg.room_id}"]`);
         if (!roomLink) return;
 
-        roomLink.dataset.lastActivity = Math.floor(msg.timestamp / 1000);
-
-        const dateEl = roomLink.querySelector('.room-link__date');
-        if (dateEl) dateEl.textContent = _relativeChatDate(msg.timestamp);
+        if (bumpActivity) {
+            roomLink.dataset.lastActivity = Math.floor(msg.timestamp / 1000);
+            const dateEl = roomLink.querySelector('.room-link__date');
+            if (dateEl) dateEl.textContent = _relativeChatDate(msg.timestamp);
+        }
 
         const senderEl = roomLink.querySelector('.room-link__sender');
         if (senderEl) senderEl.textContent = (msg.anonymous ? _('Anonymous') : (msg.username || '—')) + ':';
@@ -553,9 +554,11 @@ export default class DomApi {
             snippetEl.textContent = text || _('attachment');
         }
 
-        const container = roomLink.closest('.nav-cat-content, #room-list-flat');
-        if (container && container.firstElementChild !== roomLink) {
-            container.prepend(roomLink);
+        if (reorder) {
+            const container = roomLink.closest('.nav-cat-content, #room-list-flat');
+            if (container && container.firstElementChild !== roomLink) {
+                container.prepend(roomLink);
+            }
         }
     }
 

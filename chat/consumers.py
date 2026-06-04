@@ -594,11 +594,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         else:
             timestamp = int(datetime.now().timestamp()) * 1000
 
+        is_last = await self.repo.is_last_message_in_room(message_id, room.id)
         proxy.group_send(room.group_name, {
             "type": "chat.edit",
             "edit_message": {
                 "message_id": message_id,
+                "room_id": room.id,
                 "user_id": self.scope['user'].id,
+                "username": self.scope['user'].username,
+                "anonymous": message.anonymous,
+                "is_last_message": is_last,
                 "text": new_message,
                 "timestamp": timestamp,
                 "attachments": updated_attachments

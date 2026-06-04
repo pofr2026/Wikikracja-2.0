@@ -199,15 +199,26 @@ class RoomLastMessageSignalTest(TestCase):
         self.room.refresh_from_db()
         self.assertEqual(self.room.last_activity, future)
 
-    def test_editing_message_does_not_update_last_message_text(self):
+    def test_editing_last_message_updates_last_message_text(self):
         msg = Message.objects.create(sender=self.user, room=self.room, text="Original")
         self.room.refresh_from_db()
-        original_text = self.room.last_message_text
+        self.assertEqual(self.room.last_message_text, "Original")
 
         msg.text = "Edited"
         msg.save(update_fields=['text'])
         self.room.refresh_from_db()
-        self.assertEqual(self.room.last_message_text, original_text)
+        self.assertEqual(self.room.last_message_text, "Edited")
+
+    def test_editing_non_last_message_does_not_update_last_message_text(self):
+        first = Message.objects.create(sender=self.user, room=self.room, text="First")
+        Message.objects.create(sender=self.user, room=self.room, text="Second")
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.last_message_text, "Second")
+
+        first.text = "First-edited"
+        first.save(update_fields=['text'])
+        self.room.refresh_from_db()
+        self.assertEqual(self.room.last_message_text, "Second")
 
 
 class MessageAttachmentTest(TestCase):

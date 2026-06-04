@@ -215,6 +215,10 @@ class ChatRepository:
         return state
 
     @database_sync_to_async
+    def is_last_message_in_room(self, message_id: int, room_id: int) -> bool:
+        return not Message.objects.filter(room_id=room_id, pk__gt=message_id).exists()
+
+    @database_sync_to_async
     def get_message_states(self, message_id):
         history = MessageHistory.objects.filter(message_id=message_id)
         if not history.exists():

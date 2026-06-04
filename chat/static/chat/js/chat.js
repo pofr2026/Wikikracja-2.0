@@ -905,6 +905,16 @@ export async function onReceiveEdit(edit_info) {
     }
     DOM_API.showHistoryButton(edit_info.message_id);
 
+    if (edit_info.is_last_message) {
+        DOM_API.updateSidebarForMessage({
+            room_id: edit_info.room_id,
+            username: edit_info.username,
+            anonymous: edit_info.anonymous,
+            message: edit_info.text,
+            timestamp: edit_info.timestamp,
+        }, {reorder: false});
+    }
+
     // Stop editing mode if this was the message being edited
     const editedId = DOM_API.getEditedMessageId();
 
