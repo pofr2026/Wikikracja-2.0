@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-03 18:41+0200\n"
+"POT-Creation-Date: 2026-06-04 11:40+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -25,7 +25,7 @@ msgstr "Treść"
 msgid "Attachments"
 msgstr "Załączniki"
 
-#: .\board\forms.py:23 .\board\templates\board\board.html:282
+#: .\board\forms.py:23 .\board\templates\board\board.html:283
 #: .\board\templates\board\create_post.html:33
 #: .\board\templates\board\edit_post.html:33 .\bookkeeping\forms.py:21
 #: .\bookkeeping\forms.py:34 .\bookkeeping\forms.py:47
@@ -178,7 +178,7 @@ msgid "Are you sure you want to delete the attachment"
 msgstr "Czy na pewno chcesz usunąć ten załącznik?"
 
 #: .\board\templates\board\attachment_confirm_delete.html:14
-#: .\board\templates\board\board.html:283
+#: .\board\templates\board\board.html:284
 #: .\board\templates\board\post_confirm_delete.html:19
 #: .\board\templates\board\post_detail.html:53
 #: .\bookkeeping\templates\bookkeeping\asset_list.html:55
@@ -193,7 +193,7 @@ msgid "Delete"
 msgstr "Usuń"
 
 #: .\board\templates\board\attachment_confirm_delete.html:15
-#: .\board\templates\board\board.html:281
+#: .\board\templates\board\board.html:282
 #: .\board\templates\board\create_post.html:34
 #: .\board\templates\board\edit_post.html:34
 #: .\board\templates\board\post_confirm_delete.html:20
@@ -296,7 +296,7 @@ msgstr "Dokumenty"
 msgid "No documents"
 msgstr "Brak dokumentów"
 
-#: .\board\templates\board\board.html:280
+#: .\board\templates\board\board.html:281
 #: .\board\templates\board\post_detail.html:52
 #: .\bookkeeping\templates\bookkeeping\asset_confirm_delete.html:57
 #: .\bookkeeping\templates\bookkeeping\asset_list.html:54
@@ -317,31 +317,36 @@ msgstr "Brak dokumentów"
 msgid "Edit"
 msgstr "Edytuj"
 
-#: .\board\templates\board\board.html:284
+#: .\board\templates\board\board.html:285
 msgid "documents"
 msgstr "dokumenty"
 
-#: .\board\templates\board\board.html:285
+#: .\board\templates\board\board.html:286
 #: .\tasks\templates\tasks\task_list.html:331
 msgid "Protected — cannot be deleted"
 msgstr "Chroniona — nie można usunąć"
 
-#: .\board\templates\board\board.html:286
+#: .\board\templates\board\board.html:287
 #, python-brace-format
 msgid "This category has {n} document(s). Deleting it will leave those documents without a category. Continue?"
 msgstr "Ta kategoria ma {n} dokument(ów). Usunięcie jej pozostawi te dokumenty bez kategorii. Kontynuować?"
 
-#: .\board\templates\board\board.html:287
+#: .\board\templates\board\board.html:288
+#, python-brace-format
+msgid "…and {n} more"
+msgstr "…i jeszcze {n}"
+
+#: .\board\templates\board\board.html:289
 #: .\tasks\templates\tasks\task_list.html:333
 msgid "Category name is required."
 msgstr "Nazwa kategorii jest wymagana."
 
-#: .\board\templates\board\board.html:288
+#: .\board\templates\board\board.html:290
 #: .\tasks\templates\tasks\task_list.html:334
 msgid "Failed to load categories."
 msgstr "Nie udało się wczytać kategorii."
 
-#: .\board\templates\board\board.html:289
+#: .\board\templates\board\board.html:291
 #: .\tasks\templates\tasks\task_list.html:335
 msgid "An error occurred."
 msgstr "Wystąpił błąd."

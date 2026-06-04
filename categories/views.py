@@ -106,6 +106,29 @@ class CategoryDeleteAPI(LoginRequiredMixin, View):
         return JsonResponse({"ok": True})
 
 
+class CategoryItemsAPI(LoginRequiredMixin, View):
+    """GET: labels (titles/names) of items assigned to a category, plus total count.
+
+    Reusable across apps (board uses posts/title; tasks could use tasks/title). The label
+    list is capped at `limit`; `count` is always the true total so the UI can show "and N more".
+    """
+    model = None
+    related_field = None      # e.g. 'posts'
+    item_label_field = None   # e.g. 'title' (Post) / 'name'
+    limit = 50
+
+    def get(self, request, pk):
+        cat = get_object_or_404(self.model, pk=pk)
+        qs = getattr(cat, self.related_field).all()
+        total = qs.count()
+        # order_by keeps the truncated preview stable across calls (slice without ordering
+        # is DB-plan-dependent), so the user sees a consistent list of affected items.
+        labels = list(
+            qs.order_by(self.item_label_field).values_list(self.item_label_field, flat=True)[: self.limit]
+        )
+        return JsonResponse({"items": labels, "count": total})
+
+
 class CategoryReorderAPI(LoginRequiredMixin, View):
     """POST body: JSON array [{id, order}, ...]. Updates order of categories."""
     model = None

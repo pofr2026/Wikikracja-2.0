@@ -331,6 +331,11 @@ msgid ""
 "without a category. Continue?"
 msgstr ""
 
+#: .\board\templates\board\board.html:288
+#, python-brace-format
+msgid "…and {n} more"
+msgstr ""
+
 #: .\board\templates\board\board.html:287
 #: .\tasks\templates\tasks\task_list.html:333
 msgid "Category name is required."

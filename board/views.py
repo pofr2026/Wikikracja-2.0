@@ -5,7 +5,7 @@ from django.db.models import QuerySet
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 
-from categories.views import CategoryAPIBase, CategoryDeleteAPI, CategoryEditAPI, CategoryReorderAPI
+from categories.views import CategoryAPIBase, CategoryDeleteAPI, CategoryEditAPI, CategoryItemsAPI, CategoryReorderAPI
 
 from .forms import PostForm
 from .models import Post, PostAttachment, PostCategory
@@ -30,10 +30,19 @@ class PostCategoryEditAPI(CategoryEditAPI):
 class PostCategoryDeleteAPI(CategoryDeleteAPI):
     model = PostCategory
     related_count_field = "posts"
-    block_if_in_use = True
+    # Deleting a category that documents use is allowed: FK Post.category is SET_NULL,
+    # so those documents simply become uncategorized. The UI confirms first (lists titles).
+    block_if_in_use = False
 
     def after_write(self):
         pass
+
+
+class PostCategoryItemsAPI(CategoryItemsAPI):
+    model = PostCategory
+    related_field = "posts"
+    item_label_field = "title"
+    limit = 10  # keep the native confirm() dialog short; "…and N more" covers the rest
 
 
 class PostCategoryReorderAPI(CategoryReorderAPI):
