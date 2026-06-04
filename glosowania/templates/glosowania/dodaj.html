@@ -5,28 +5,6 @@
 
 {% block extra_css %}{{ form.media }}{% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const wymagaKaryCheckbox = document.getElementById('id_wymaga_kary');
-    const karaField = document.getElementById('div_id_kara');
-    
-    function toggleKaraField() {
-        if (wymagaKaryCheckbox.checked) {
-            karaField.style.display = 'block';
-        } else {
-            karaField.style.display = 'none';
-        }
-    }
-    
-    // Initial state - hide kara field by default (checkbox is unchecked by default)
-    toggleKaraField();
-    
-    // Toggle on checkbox change
-    wymagaKaryCheckbox.addEventListener('change', toggleKaraField);
-});
-</script>
-{% endblock %}
 
 {% block glosowania %}
 <h2>{% trans 'Add new law proposal' %}</h2>
@@ -45,11 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     <div class="row">
         <div class="col-12">
           {{ form.uzasadnienie|as_crispy_field }}
-        </div>
-    </div>
-    <div class="row">
-        <div class="col-12">
-          {{ form.wymaga_kary|as_crispy_field }}
         </div>
     </div>
     <div class="row">
