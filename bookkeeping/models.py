@@ -1,7 +1,7 @@
 from datetime import datetime
 
 from django.contrib.auth.models import User
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
@@ -21,6 +21,10 @@ class Asset(models.Model):
         # Auto-unset: ustawienie is_default=True na tym instance odznacza poprzedniego defaulta.
         # Wykluczamy self.pk, żeby nie odznaczyć samego siebie przy ponownym zapisie.
         #
+        # Atomic: unset poprzedniego defaulta + zapis tego instance muszą być jedną transakcją.
+        # Bez tego, gdy super().save() rzuci PO update(), zostajemy z ZERO defaultów (poprzedni
+        # odznaczony, nowy niezapisany) bez rollbacku.
+        #
         # Ograniczenia tej ścieżki (świadome trade-offy):
         #  - QuerySet.update() / bulk_update() / bulk_create() omijają save() — można w ten sposób
         #    obejść auto-unset i wymusić wiele defaultów. Bezpiecznikiem jest UniqueConstraint
@@ -28,9 +32,10 @@ class Asset(models.Model):
         #  - Race condition (dwóch userów zapisuje default jednocześnie) jest teoretycznie możliwy,
         #    ale w praktyce nieosiągalny (admin assetów = jeden user, sporadyczne zmiany). Constraint
         #    również go łapie.
-        if self.is_default:
-            Asset.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
-        super().save(*args, **kwargs)
+        with transaction.atomic():
+            if self.is_default:
+                Asset.objects.filter(is_default=True).exclude(pk=self.pk).update(is_default=False)
+            super().save(*args, **kwargs)
 
     def validate_constraints(self, exclude=None):
         # Pomijamy walidację constraintów dotyczących is_default na poziomie formularza.
@@ -40,6 +45,11 @@ class Asset(models.Model):
         # "Ograniczenie naruszone". Constraint nadal chroni przed bulk-bypass (QuerySet.update,
         # bulk_create) na poziomie bazy — IntegrityError tam dalej leci.
         # Uwaga: 'exclude' w Django to zbiór NAZW PÓL (nie nazw constrainów).
+        #
+        # TODO: to wyklucza is_default GLOBALNIE — każdy PRZYSZŁY constraint dotykający
+        # is_default też zostanie po cichu pominięty w walidacji formularza i wyjdzie dopiero
+        # jako IntegrityError na zapisie. Przy dodawaniu kolejnego constraintu na to pole
+        # zawęź exclude do konkretnej nazwy constraintu zamiast całego pola.
         exclude = set(exclude or [])
         exclude.add('is_default')
         super().validate_constraints(exclude=exclude)

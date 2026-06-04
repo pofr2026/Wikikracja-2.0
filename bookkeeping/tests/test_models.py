@@ -1,4 +1,6 @@
 """Testy modeli aplikacji bookkeeping."""
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
 from django.test import TestCase
@@ -190,3 +192,16 @@ class AssetDefaultTests(TestCase):
         Asset.objects.create(code='EUR', name='Euro', symbol='€')
 
         self.assertEqual(Asset.get_default(), pln)
+
+    def test_save_rolls_back_unset_when_super_save_fails(self):
+        """Atomowość: jeśli super().save() rzuci PO odznaczeniu poprzedniego defaulta,
+        transakcja musi się wycofać — inaczej zostajemy z ZERO defaultów w bazie."""
+        default = Asset.objects.create(code='PLN', name='Polish Zloty', symbol='zł', is_default=True)
+        new = Asset(code='BTC', name='Bitcoin', symbol='₿', is_default=True)
+
+        with patch('django.db.models.Model.save', side_effect=RuntimeError('boom')):
+            with self.assertRaises(RuntimeError):
+                new.save()
+
+        default.refresh_from_db()
+        self.assertTrue(default.is_default)  # rollback przywrócił flagę
