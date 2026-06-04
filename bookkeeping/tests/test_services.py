@@ -421,3 +421,41 @@ class CategoryBreakdownTests(TestCase):
         pivot_rows, _, asset_totals = category_breakdown()
         self.assertEqual(pivot_rows[0]['by_asset'][self.pln.pk], Decimal('600'))
         self.assertEqual(asset_totals[self.pln.pk], Decimal('600'))
+
+    def test_two_deleted_categories_produce_separate_rows(self):
+        """
+        Regression #3: transactions whose category was deleted (FK points to gone row)
+        must produce separate pivot rows — not be merged into one '—' row.
+
+        category on_delete=CASCADE deletes transactions too, so we simulate
+        'ghost' category IDs by:
+        1. reserving IDs (create+delete with no transactions),
+        2. creating transactions pointing to a live category,
+        3. re-pointing them to the ghost IDs via update() (bypasses FK check).
+        """
+        # Reserve ghost IDs (no transactions point here yet)
+        ghost_a = Category.objects.create(name='_ghost_a')
+        ghost_b = Category.objects.create(name='_ghost_b')
+        ghost_id_a, ghost_id_b = ghost_a.pk, ghost_b.pk
+        ghost_a.delete()
+        ghost_b.delete()
+
+        # Create transactions against a safe category, then re-point
+        txn_a = self._make_txn(self.pln, Transaction.INCOMING, 1000, category=self.cat_skladki)
+        txn_b = self._make_txn(self.pln, Transaction.INCOMING, 500, category=self.cat_skladki)
+        Transaction.objects.filter(pk=txn_a.pk).update(category_id=ghost_id_a)
+        Transaction.objects.filter(pk=txn_b.pk).update(category_id=ghost_id_b)
+
+        try:
+            pivot_rows, _, asset_totals = category_breakdown()
+
+            # Bug: both ghost IDs → cat_name='—' → setdefault('—') merges them → 1 row, 1500
+            # Fix: key by cat_id → 2 separate rows
+            self.assertEqual(len(pivot_rows), 2,
+                             "Each deleted category must produce its own pivot row")
+            self.assertEqual(asset_totals[self.pln.pk], Decimal('1500'))
+            by_asset_values = sorted(r['by_asset'].get(self.pln.pk) for r in pivot_rows)
+            self.assertEqual(by_asset_values, [Decimal('500'), Decimal('1000')])
+        finally:
+            # Remove rows with invalid FKs so teardown doesn't trip FK integrity checks
+            Transaction.objects.filter(pk__in=[txn_a.pk, txn_b.pk]).delete()

@@ -132,7 +132,7 @@ def category_breakdown(year=None):
     rows_by_cat = {}
     for (cat_id, asset_id), value in net.items():
         cat_name = cat_map.get(cat_id, '—') if cat_id is not None else '—'
-        row = rows_by_cat.setdefault(cat_name, {
+        row = rows_by_cat.setdefault(cat_id, {
             'category_name': cat_name,
             'by_asset': {},
         })
