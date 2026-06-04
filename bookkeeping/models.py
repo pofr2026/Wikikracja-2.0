@@ -102,7 +102,7 @@ class Transaction(models.Model):
     created_date = models.DateField(auto_now_add=True, verbose_name=_("Created"))
     payment_received_date = models.DateField(null=True, blank=True, default=datetime.now, editable=True, verbose_name=_("Payment received date"))
 
-    asset = models.ForeignKey(Asset, on_delete=models.PROTECT, null=True, blank=False, verbose_name=_("Asset"))
+    asset = models.ForeignKey(Asset, on_delete=models.PROTECT, blank=False, verbose_name=_("Asset"))
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True, blank=True, verbose_name=_("Category"))
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, null=True, blank=False, verbose_name=_("Partner"))
     amount = models.DecimalField(max_digits=20, decimal_places=8, null=True, blank=False, verbose_name=_("Amount"))

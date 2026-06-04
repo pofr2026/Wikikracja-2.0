@@ -16,17 +16,26 @@ class TransactionModelTest(TestCase):
         cls.user = User.objects.create_user(username='trans_author', email='ta@example.com', password='x')
         cls.category = Category.objects.create(name='Test Cat')
         cls.partner = Partner.objects.create(name='Test Partner', email='p@example.com', phone='+48123456789', city='Warsaw', country='Poland')
+        cls.asset = Asset.objects.create(code='TST', name='Test Asset', symbol='⊙')
 
     def test_transaction_create_with_all_relations(self):
-        """Transaction trzyma wszystkie relacje (category, partner, author) i poprawnie zwraca pola."""
-        txn = Transaction.objects.create(type='I', category=self.category, partner=self.partner, amount=1500.50, note='Workflow test', author=self.user)
+        """Transaction trzyma wszystkie relacje (asset, category, partner, author) i poprawnie zwraca pola."""
+        txn = Transaction.objects.create(type='I', asset=self.asset, category=self.category, partner=self.partner, amount=1500.50, note='Workflow test', author=self.user)
 
         self.assertTrue(Transaction.objects.filter(note='Workflow test').exists())
+        self.assertEqual(txn.asset, self.asset)
         self.assertEqual(txn.category, self.category)
         self.assertEqual(txn.partner, self.partner)
         self.assertEqual(txn.author, self.user)
         self.assertEqual(float(txn.amount), 1500.50)
         self.assertEqual(txn.type, 'I')
+
+    def test_asset_is_required_at_db_level(self):
+        """asset=NULL musi rzucać IntegrityError. Transakcje bez aktywa po cichu
+        znikały z sald (asset_balances/category_breakdown pomijają asset_id=None)."""
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Transaction.objects.create(type='I', asset=None, category=self.category, partner=self.partner, amount=10, author=self.user)
 
     def test_transaction_type_choices_contain_income_and_outgoing(self):
         """Pole type ma zdefiniowane choices 'I' (income) i 'O' (outgoing)."""

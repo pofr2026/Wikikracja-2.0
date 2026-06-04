@@ -54,7 +54,7 @@ def asset_balances(year=None, category=None, partner=None, asset=None):
     )
 
     # Materializujemy do dict, żeby raz pobrać Asset-y (jedno IN-query) zamiast N+1.
-    by_asset_id = {row['asset']: row for row in aggregated if row['asset'] is not None}
+    by_asset_id = {row['asset']: row for row in aggregated}
     asset_objs = {a.pk: a for a in Asset.objects.filter(pk__in=by_asset_id.keys())}
 
     result = []
@@ -110,8 +110,6 @@ def category_breakdown(year=None):
     used_asset_ids = set()
     for row in aggregated:
         asset_id = row['asset']
-        if asset_id is None:
-            continue
         used_asset_ids.add(asset_id)
         key = (row['category'], asset_id)
         sign = 1 if row['type'] == Transaction.INCOMING else -1
