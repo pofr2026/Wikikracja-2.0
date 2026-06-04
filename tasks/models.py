@@ -104,7 +104,7 @@ class Task(models.Model):
         return self.status == self.Status.ACTIVE
 
     def get_chat_room_title(self):
-        return f"Task #{self.id}: {self.title[:90]}"
+        return f"Task #{self.id}: {self.title}"[:90]
 
     def get_chat_room_url(self):
         if self.chat_room_id:
