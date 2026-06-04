@@ -3269,6 +3269,10 @@ msgstr "Twój obecny email"
 msgid "Change username"
 msgstr "Zmień nazwę użytkownika"
 
+#: .\home\templates\home\_language_switcher.html:11
+msgid "Change language"
+msgstr "Zmień język"
+
 #: .\obywatele\templates\obywatele\citizen_aktywnosc.html:16
 msgid "My activity"
 msgstr "Moja aktywność"

@@ -174,6 +174,7 @@ Do oddania / na sprzedaż / do wypożyczenia:
 - Fixtures: Start i Footer do startowych fixtures
 - Zrób obrazek po polsku pokazujący kolejne kroki zapisywania się do grupy
 - "Ostatnie logowanie" nie działa jeśli ktoś się nie wylogował. Powinno być ostatnie kliknięcie.
+- Wybór języka powinien być możliwy na stronie startowej bez zalogowania. Powinien być pamiętany i możliwy do zmiany podczas całego procesu zakładania nowego konta.
 
 # LIBRARY
 

@@ -1,0 +1,37 @@
+{% load i18n %}
+{% get_current_language as CURRENT_LANG %}
+{% comment %}
+Language switcher available to anonymous users (landing page + signup/onboarding flow).
+Each option posts to obywatele:set_language, which persists the choice in the
+django_language cookie. Active language is highlighted via get_current_language,
+so it works without a user profile.
+{% endcomment %}
+<div class="dropdown">
+  <button class="notif-bell" type="button" data-bs-toggle="dropdown" aria-expanded="false"
+          title="{% trans 'Change language' %}"
+          style="background:none;border:none;cursor:pointer;">
+    <i class="fas fa-globe"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li>
+      <form method="post" action="{% url 'obywatele:set_language' %}">
+        {% csrf_token %}
+        <input type="hidden" name="language" value="pl">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="dropdown-item {% if CURRENT_LANG == 'pl' %}active{% endif %}">
+          🇵🇱 Polski
+        </button>
+      </form>
+    </li>
+    <li>
+      <form method="post" action="{% url 'obywatele:set_language' %}">
+        {% csrf_token %}
+        <input type="hidden" name="language" value="en">
+        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button type="submit" class="dropdown-item {% if CURRENT_LANG == 'en' %}active{% endif %}">
+          🇬🇧 English
+        </button>
+      </form>
+    </li>
+  </ul>
+</div>
