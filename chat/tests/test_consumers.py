@@ -74,3 +74,18 @@ class PostSendProcessingUnseenTest(TestCase):
         receiver.repo.unsee_room.assert_not_called()
         receiver.push_unread_count.assert_not_called()
         mock_create_task.assert_not_called()
+
+    async def test_race_no_consumer_muted_seen_does_not_crash(self):
+        """Regression: race condition where online_registry reports member as online
+        but get_consumer() returns None (e.g. disconnect between registry check and lookup),
+        with muted=True and seen=True. Must not reach consumer.repo (None → AttributeError).
+        No push (muted), no crash."""
+        await database_sync_to_async(self.room.seen_by.add)(self.receiver)
+        await database_sync_to_async(self.room.muted_by.add)(self.receiver)
+        sender = self._make_sender_consumer()
+
+        with patch('chat.consumers.log') as mock_log:
+            mock_create_task = await self._run(sender, None)  # get_consumer → None
+
+        mock_log.error.assert_not_called()   # bug: crash is swallowed into log.error
+        mock_create_task.assert_not_called()  # muted → no push

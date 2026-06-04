@@ -389,11 +389,12 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 prefs = membership_prefs.get(member.id, {'seen': False, 'muted': True})
                 consumer = ChatConsumer.online_registry.get_consumer(member)
 
-                if not consumer and not prefs['muted']:
-                    asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room.id))
+                if not consumer:
+                    if not prefs['muted']:
+                        asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room.id))
                     continue
 
-                if consumer and consumer.rooms.present(room):
+                if consumer.rooms.present(room):
                     continue
 
                 if prefs['seen']:
