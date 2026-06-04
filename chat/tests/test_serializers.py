@@ -48,6 +48,19 @@ class BuildChatMessagePayloadTest(TestCase):
         )
         self.assertIsNone(payload["user_id"])
 
+    def test_system_message_has_system_username(self):
+        # Wiadomości systemowe: sender=None, anonymous=False (np. rename pokoju).
+        # Powinny zwracać username='System', nie None (co renderuje się jako '—:' w sidebarze).
+        event = {**self.base_event, "user_id": None, "anonymous": False}
+        payload = build_chat_message_payload(
+            event,
+            user=None,
+            vote_value=None,
+            current_user=self.viewer,
+        )
+        self.assertEqual(payload["username"], "System")
+        self.assertIsNone(payload["user_id"])
+
     def test_your_vote_passthrough_upvote(self):
         payload = build_chat_message_payload(
             self.base_event, user=self.sender, vote_value="upvote", current_user=self.viewer,
