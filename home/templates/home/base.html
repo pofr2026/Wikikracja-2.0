@@ -323,22 +323,26 @@
 
     <!-- Global notification permission banner -->
     {% if user.is_authenticated %}
-    <div id="notification-permission-banner" class="alert alert-info m-0 text-center" style="border-radius:0;">
-      <i class="far fa-bell-slash"></i>
-      <span id="notification-banner-message">{% trans "Enable notifications to stay updated with new messages and activities" %}</span>
-      <button type="button" class="btn btn-sm btn-primary mx-2" id="enable-notifications-global">
-        {% trans "Enable Notifications" %}
-      </button>
-      <button type="button" class="btn btn-sm btn-secondary" id="dismiss-notifications-banner">
-        {% trans "Not now" %}
-      </button>
+    <div class="notif-banner-wrap">
+      <div id="notification-permission-banner" class="alert alert-info m-0 text-center" style="border-radius:0;">
+        <i class="far fa-bell-slash"></i>
+        <span id="notification-banner-message">{% trans "Enable notifications to stay updated with new messages and activities" %}</span>
+        <button type="button" class="btn btn-sm btn-primary mx-2" id="enable-notifications-global">
+          {% trans "Enable Notifications" %}
+        </button>
+        <button type="button" class="btn btn-sm btn-secondary" id="dismiss-notifications-banner">
+          {% trans "Not now" %}
+        </button>
+      </div>
     </div>
-    <div id="notification-blocked-banner" class="alert alert-warning m-0 text-center" style="border-radius:0;">
-      <i class="fas fa-exclamation-triangle"></i>
-      <span>{% trans "Notifications are blocked. Please enable them in your browser settings" %}</span>
-      <button type="button" class="btn btn-sm btn-secondary mx-2" id="dismiss-blocked-banner">
-        {% trans "Dismiss" %}
-      </button>
+    <div class="notif-banner-wrap">
+      <div id="notification-blocked-banner" class="alert alert-warning m-0 text-center" style="border-radius:0;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>{% trans "Notifications are blocked. Please enable them in your browser settings" %}</span>
+        <button type="button" class="btn btn-sm btn-secondary mx-2" id="dismiss-blocked-banner">
+          {% trans "Dismiss" %}
+        </button>
+      </div>
     </div>
     {% endif %}
 
@@ -351,6 +355,42 @@
       </div>
       {% endfor %}
     </div>
+    <script>
+    (function() {
+      var toasts = document.getElementById('django-toasts');
+
+      // Ustaw pozycję nad kartą i dopiero wtedy pokaż toast (startuje ukryty w CSS).
+      function place() {
+        var card = document.querySelector('main .card');
+        if (card) {
+          var r = card.getBoundingClientRect();
+          toasts.style.top  = (r.top + 22) + 'px';
+          toasts.style.left = (r.left + r.width / 2) + 'px';
+          toasts.style.transform = 'translateX(-50%)';
+        }
+        toasts.style.visibility = 'visible';
+      }
+
+      // Jedyne co przesuwa kartę po załadowaniu to animacja banera powiadomień
+      // (max-height .3s rozpycha <main> w dół). Jeśli baner właśnie się rozwija,
+      // czekamy na koniec animacji — toast pojawi się od razu we właściwym miejscu,
+      // bez przeskoku. Bez banera pozycjonujemy natychmiast. setTimeout to bezpiecznik,
+      // gdyby transitionend nie wystartował (np. baner nie zmienił wysokości).
+      document.addEventListener('DOMContentLoaded', function() {
+        var expanding = null;
+        document.querySelectorAll('.notif-banner-wrap').forEach(function(w) {
+          var mh = w.style.maxHeight;
+          if (mh && mh !== '0px' && mh !== '0') expanding = w;
+        });
+        if (expanding) {
+          expanding.addEventListener('transitionend', place, { once: true });
+          setTimeout(place, 500);
+        } else {
+          place();
+        }
+      });
+    })();
+    </script>
     {% endif %}
 
     <!-- ==== CONTENT ==== -->

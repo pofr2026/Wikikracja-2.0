@@ -326,9 +326,14 @@ img {
   background-color: var(--bs-success);
 }
 /* Notification banner styles */
+.notif-banner-wrap {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height .3s ease;
+}
+
 #notification-permission-banner,
 #notification-blocked-banner {
-  display: none;
   border-radius: 0;
 }
 /* Owner highlight for task cards */
@@ -707,7 +712,9 @@ textarea.form-control:focus {
   position: fixed;
   top: 33%;
   left: 50%;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
+  /* Ukryty do czasu, aż JS ustawi pozycję nad kartą — bez przeskoku z top:33% */
+  visibility: hidden;
   z-index: 1090;
   display: flex;
   flex-direction: column;
