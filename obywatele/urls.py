@@ -31,4 +31,5 @@ urlpatterns = (
     path('wspolnota/calendar/', v.wspolnota_calendar, name='wspolnota_calendar'),
     path('settings/delete/', v.request_deletion, name='request_deletion'),
     path('settings/delete/cancel/', v.cancel_deletion, name='cancel_deletion'),
+    path('webhook/sendpulse/', v.sendpulse_webhook, name='sendpulse_webhook'),
 )
