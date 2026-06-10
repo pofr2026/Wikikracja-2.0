@@ -23,6 +23,7 @@ from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone, translation
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import check_for_language
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.csrf import csrf_exempt
@@ -1052,16 +1053,31 @@ def set_onboarding_email_confirmed(sender, request, email_address, **kwargs):
         send_mail(subject, body, s.DEFAULT_FROM_EMAIL, [email_address.email], fail_silently=False)
 
 
-@login_required
 @require_POST
 def set_user_language(request: HttpRequest):
+    """Set the interface language.
+
+    Open to anonymous users so the language can be chosen on the landing page and
+    kept through the whole signup/onboarding flow (which runs unauthenticated).
+    Persistence relies on the django_language cookie, read by LocaleMiddleware on
+    every request. For authenticated users we additionally store the choice in
+    their profile so it survives a cookie reset.
+    """
     lang = request.POST.get('language', '').strip()
     next_url = request.POST.get('next', '/')
+    # Endpoint is reachable by anonymous users, so guard against open redirects.
+    if not url_has_allowed_host_and_scheme(
+        next_url, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        next_url = '/'
 
-    profile = request.user.uzytkownik
+    # Only authenticated users have a profile to persist the choice to.
+    profile = request.user.uzytkownik if request.user.is_authenticated else None
+
     if lang and check_for_language(lang):
-        profile.language = lang
-        profile.save(update_fields=['language'])
+        if profile:
+            profile.language = lang
+            profile.save(update_fields=['language'])
         translation.activate(lang)
         response = redirect(next_url)
         response.set_cookie(
@@ -1076,8 +1092,9 @@ def set_user_language(request: HttpRequest):
         )
     elif lang == '':
         # Reset to auto-detect
-        profile.language = ''
-        profile.save(update_fields=['language'])
+        if profile:
+            profile.language = ''
+            profile.save(update_fields=['language'])
         response = redirect(next_url)
         response.delete_cookie(s.LANGUAGE_COOKIE_NAME, path=s.LANGUAGE_COOKIE_PATH)
     else:

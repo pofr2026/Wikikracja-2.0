@@ -339,7 +339,6 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         msg.id = message_id
 
         await self.repo.save_attachments(message_id, attachments)
-        await self.repo.update_room_last_message(room_id, msg)
 
         reply_to_data = None
         if reply_to_id:
@@ -390,15 +389,17 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
                 prefs = membership_prefs.get(member.id, {'seen': False, 'muted': True})
                 consumer = ChatConsumer.online_registry.get_consumer(member)
 
-                if not consumer and not prefs['muted']:
-                    asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room.id))
+                if not consumer:
+                    if not prefs['muted']:
+                        asyncio.create_task(self.send_push_notification_async(proxy, member, msg, room.id))
                     continue
 
-                if consumer and consumer.rooms.present(room):
+                if consumer.rooms.present(room):
                     continue
 
                 if prefs['seen']:
-                    await consumer.unsee_room(room)
+                    await consumer.repo.unsee_room(room)
+                    await consumer.push_unread_count()
                     await consumer.send_unsee_room(proxy=proxy, room=room)
 
                 if not prefs['muted']:
@@ -593,11 +594,16 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
         else:
             timestamp = int(datetime.now().timestamp()) * 1000
 
+        is_last = await self.repo.is_last_message_in_room(message_id, room.id)
         proxy.group_send(room.group_name, {
             "type": "chat.edit",
             "edit_message": {
                 "message_id": message_id,
+                "room_id": room.id,
                 "user_id": self.scope['user'].id,
+                "username": self.scope['user'].username,
+                "anonymous": message.anonymous,
+                "is_last_message": is_last,
                 "text": new_message,
                 "timestamp": timestamp,
                 "attachments": updated_attachments

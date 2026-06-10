@@ -1,5 +1,35 @@
-from django.dispatch import Signal
+from django.db.models import F
+from django.db.models.functions import Greatest
+from django.db.models.signals import post_save
+from django.dispatch import Signal, receiver
 
-# Original signals used in views
 user_accepted = Signal()
 user_deleted = Signal()
+
+
+@receiver(post_save, sender='chat.Message')
+def _sync_room_last_message(sender, instance, created, **kwargs):
+    # Denormalizujemy ostatnią wiadomość do Room, żeby sidebar mógł renderować podgląd bez JOIN-a.
+    # last_activity przez Greatest() — nigdy nie cofamy czasu (room mógł być bumpowany później przez inną akcję).
+    from chat.models import Message, Room
+    if created:
+        Room.objects.filter(id=instance.room_id).update(
+            last_message_text=instance.text[:200],
+            last_message_sender_id=instance.sender_id,
+            last_message_at=instance.time,
+            last_message_anonymous=instance.anonymous,
+            last_activity=Greatest(F('last_activity'), instance.time),
+        )
+    else:
+        # Na edycji: interesuje nas tylko zmiana tekstu.
+        uf = kwargs.get('update_fields')
+        if uf is not None and 'text' not in uf:
+            return
+        # Aktualizuj last_message_text tylko jeśli to ostatnia wiadomość w pokoju.
+        # Sprawdzamy po pk (auto-increment) — wyższy pk = nowsza wiadomość, niezależnie od
+        # auto_now na polu time, które zmienia się przy każdym save().
+        is_last = not Message.objects.filter(room_id=instance.room_id, pk__gt=instance.pk).exists()
+        if is_last:
+            Room.objects.filter(id=instance.room_id).update(
+                last_message_text=instance.text[:200],
+            )

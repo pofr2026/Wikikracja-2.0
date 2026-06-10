@@ -183,6 +183,42 @@ class TakeResignTaskTest(TestCase):
         self.task.refresh_from_db()
         self.assertEqual(self.task.assigned_to, self.other)
 
+    def test_take_task_ajax_returns_user_data(self):
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(
+            reverse("tasks:take", kwargs={"pk": self.task.pk}),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertIsNotNone(data["assigned_to"])
+        self.assertEqual(data["assigned_to"]["id"], self.user.id)
+        self.assertEqual(data["assigned_to"]["username"], self.user.username)
+
+    def test_resign_task_ajax_returns_null_assigned_to(self):
+        self.task.assigned_to = self.user
+        self.task.save()
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(
+            reverse("tasks:resign", kwargs={"pk": self.task.pk}),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertTrue(data["ok"])
+        self.assertIsNone(data["assigned_to"])
+
+    def test_resign_task_ajax_403_if_not_coordinator(self):
+        self.task.assigned_to = self.other
+        self.task.save()
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.post(
+            reverse("tasks:resign", kwargs={"pk": self.task.pk}),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 403)
+
     def test_resign_unassigned_task_does_nothing(self):
         # assigned_to=None — nikomu nie przypisane, resign nie powinien crashować
         self.assertIsNone(self.task.assigned_to)
@@ -405,4 +441,36 @@ class CategoryAPITest(TestCase):
         self.client.post(reverse("tasks:api_category_delete", kwargs={"pk": self.cat.pk}))
         task.refresh_from_db()
         self.assertIsNone(task.category)
+
+
+class TaskAgainstJsonTest(TestCase):
+    def setUp(self):
+        self.client = Client()
+        self.user = make_user("requester")
+        self.task = make_task(created_by=self.user)
+
+    def test_requires_login(self):
+        response = self.client.get(reverse("tasks:against_json", kwargs={"pk": self.task.pk}))
+        self.assertEqual(response.status_code, 302)
+
+    def test_returns_only_down_voters(self):
+        helper = make_user("helper")
+        opponent = make_user("opponent")
+        TaskVote.objects.create(task=self.task, user=helper, value=TaskVote.Value.UP)
+        TaskVote.objects.create(task=self.task, user=opponent, value=TaskVote.Value.DOWN)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:against_json", kwargs={"pk": self.task.pk}))
+        data = response.json()
+        self.assertEqual(data["total"], 1)
+        self.assertEqual(len(data["helpers"]), 1)
+        self.assertEqual(data["helpers"][0]["username"], "opponent")
+
+    def test_returns_empty_when_no_down_votes(self):
+        helper = make_user("helper")
+        TaskVote.objects.create(task=self.task, user=helper, value=TaskVote.Value.UP)
+        self.client.login(username=self.user.username, password=self.user._plain_password)
+        response = self.client.get(reverse("tasks:against_json", kwargs={"pk": self.task.pk}))
+        data = response.json()
+        self.assertEqual(data["total"], 0)
+        self.assertEqual(data["helpers"], [])
 

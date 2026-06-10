@@ -130,7 +130,7 @@ const message_template = `
           <% } %>
         <% } %>
       </div>
-      <div class='msg-text'><%-message%></div>
+      <div class='msg-text' data-raw="<%=raw_message%>"><%-message%></div>
     </div>
 
     <div class='message-header'>

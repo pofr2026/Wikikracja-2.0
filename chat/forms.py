@@ -13,9 +13,13 @@ class RoomForm(forms.ModelForm):
     def clean_title(self):
         title = self.cleaned_data.get('title')
         if title:
-            qs = Room.objects.filter(title=title)
-            if self.instance and self.instance.pk:
-                qs = qs.exclude(pk=self.instance.pk)
-            if qs.exists():
+            title_cf = title.casefold()
+            qs = Room.objects.values_list('title', 'pk')
+            existing = next(
+                (pk for t, pk in qs if t.casefold() == title_cf
+                 and (not self.instance or not self.instance.pk or pk != self.instance.pk)),
+                None,
+            )
+            if existing is not None:
                 raise ValidationError("Pokój o tej nazwie już istnieje.", code='duplicate_title')
         return title

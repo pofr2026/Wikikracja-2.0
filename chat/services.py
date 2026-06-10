@@ -179,17 +179,6 @@ class ChatRepository:
         return message.id
 
     @database_sync_to_async
-    def update_room_last_message(self, room_id, message):
-        # Set last_activity explicitly — .update() bypasses the auto_now hook.
-        Room.objects.filter(id=room_id).update(
-            last_message_text=message.text[:200],
-            last_message_sender_id=message.sender_id,
-            last_message_at=message.time,
-            last_message_anonymous=message.anonymous,
-            last_activity=message.time,
-        )
-
-    @database_sync_to_async
     def get_message(self, message_id):
         try:
             return Message.objects.get(pk=message_id)
@@ -224,6 +213,10 @@ class ChatRepository:
         message.text = new_message
         message.save(update_fields=('text',))
         return state
+
+    @database_sync_to_async
+    def is_last_message_in_room(self, message_id: int, room_id: int) -> bool:
+        return not Message.objects.filter(room_id=room_id, pk__gt=message_id).exists()
 
     @database_sync_to_async
     def get_message_states(self, message_id):

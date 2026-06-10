@@ -249,6 +249,7 @@ def get_translations():
         "Select a room from the list": _("Select a room from the list"),
         "No unread messages": _("No unread messages"),
         "Tap {icon} above the list to disable the unread filter": _("Tap {icon} above the list to disable the unread filter"),
+        "Disable the unread filter": _("Disable the unread filter"),
     }
 
 

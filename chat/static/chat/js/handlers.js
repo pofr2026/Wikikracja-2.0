@@ -15,6 +15,7 @@ import {
     handleListTrigger,
     initFormattingToolbar,
     initGlobalPasteImageHandler,
+    insertPlainTextAtCaret,
 } from './chat-core.js';
 import {
     copyMessageLink,
@@ -105,29 +106,22 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Paste interception: strip HTML and truncate if over limit
+    // Paste interception: strip HTML and truncate if over limit.
+    // For contenteditable, insertPlainTextAtCaret turns \n into explicit <br> nodes
+    // (bypassing browser auto-wrap that produced ghost empty lines on render)
+    // and dispatches 'input', so the counter listener handles updates.
     document.addEventListener('paste', (e) => {
         if (e.target.id !== 'message-input') return;
         const el = e.target;
         const pastedText = (e.clipboardData || window.clipboardData).getData('text');
         if (el.isContentEditable) {
+            e.preventDefault();
             const currentLength = (el.textContent || '').length;
             const sel = window.getSelection();
             const selectedLength = sel?.toString().length ?? 0;
-            const newLength = currentLength - selectedLength + pastedText.length;
-            if (newLength > MSG_MAX) {
-                e.preventDefault();
-                const available = MSG_MAX - currentLength + selectedLength;
-                if (available > 0) {
-                    document.execCommand('insertText', false, pastedText.slice(0, available));
-                }
-                updateCounter(el.textContent || '');
-                showToast('Wiadomość przycięta do ' + MSG_MAX + ' znaków');
-            } else {
-                // Always paste as plain text to avoid injecting foreign HTML
-                e.preventDefault();
-                document.execCommand('insertText', false, pastedText);
-            }
+            const wouldOverflow = currentLength - selectedLength + pastedText.length > MSG_MAX;
+            insertPlainTextAtCaret(el, pastedText, MSG_MAX);
+            if (wouldOverflow) showToast('Wiadomość przycięta do ' + MSG_MAX + ' znaków');
         } else {
             const val = el.value;
             const start = el.selectionStart;

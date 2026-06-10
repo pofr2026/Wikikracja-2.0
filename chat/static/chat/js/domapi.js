@@ -49,6 +49,7 @@ export default class DomApi {
         return Message({
             room_id, user_id, avatar_url, message_id, username,
             message: this.wrapExpandable(formatted),
+            raw_message: message,
             upvotes, downvotes, vote, own, edited, attachments,
             original_ts, latest_ts: formatTime(latest_ts),
             type: this.getRoomType(room_id),
@@ -66,8 +67,6 @@ export default class DomApi {
         messagesDiv?.insertAdjacentHTML('beforeend', html);
         this.getVoteDiv(message_id, vote)?.classList.add('active');
         const msgDiv = this.getMessageDiv(message_id);
-        const msgText = msgDiv?.querySelector('.msg-text');
-        if (msgText) msgText.dataset.raw = message;
         if (temp_id && msgDiv) {
             msgDiv.dataset.tempId = temp_id;
             msgDiv.classList.add('message--pending');
@@ -534,14 +533,15 @@ export default class DomApi {
         }
     }
 
-    updateSidebarForMessage(msg) {
+    updateSidebarForMessage(msg, {reorder = true, bumpActivity = reorder} = {}) {
         const roomLink = document.querySelector(`.room-link[data-room-id="${msg.room_id}"]`);
         if (!roomLink) return;
 
-        roomLink.dataset.lastActivity = Math.floor(msg.timestamp / 1000);
-
-        const dateEl = roomLink.querySelector('.room-link__date');
-        if (dateEl) dateEl.textContent = _relativeChatDate(msg.timestamp);
+        if (bumpActivity) {
+            roomLink.dataset.lastActivity = Math.floor(msg.timestamp / 1000);
+            const dateEl = roomLink.querySelector('.room-link__date');
+            if (dateEl) dateEl.textContent = _relativeChatDate(msg.timestamp);
+        }
 
         const senderEl = roomLink.querySelector('.room-link__sender');
         if (senderEl) senderEl.textContent = (msg.anonymous ? _('Anonymous') : (msg.username || '—')) + ':';
@@ -554,9 +554,11 @@ export default class DomApi {
             snippetEl.textContent = text || _('attachment');
         }
 
-        const container = roomLink.closest('.nav-cat-content, #room-list-flat');
-        if (container && container.firstElementChild !== roomLink) {
-            container.prepend(roomLink);
+        if (reorder) {
+            const container = roomLink.closest('.nav-cat-content, #room-list-flat');
+            if (container && container.firstElementChild !== roomLink) {
+                container.prepend(roomLink);
+            }
         }
     }
 

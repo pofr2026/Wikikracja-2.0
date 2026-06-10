@@ -31,10 +31,16 @@ def _set_link_target(attrs, new=False):
 
 
 def sanitize(text: str, *, linkify: bool = True) -> str:
-    """Sanitize user HTML, keeping only ALLOWED_TAGS and (optionally) auto-linking URLs."""
+    """Sanitize user HTML, keeping only ALLOWED_TAGS and (optionally) auto-linking URLs.
+
+    Normalizes line endings (CRLF/CR/LF) to <br> — single source of truth so callers
+    (chat consumers, RichTextWidget, |richtext filter) don't each carry their own
+    replace. Eliminates ghost empty lines from legacy DB content with raw \\n.
+    """
     if not text:
         return ''
-    cleaned = bleach.clean(text, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
+    normalized = text.replace('\r\n', '\n').replace('\r', '\n').replace('\n', '<br>')
+    cleaned = bleach.clean(normalized, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, strip=True)
     if linkify:
         cleaned = bleach.linkify(cleaned, callbacks=[_set_link_target])
     return cleaned

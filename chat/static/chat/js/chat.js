@@ -170,6 +170,21 @@ function decideStartupAction({ search = '', hasHash = false, isMobile = false } 
     return { mode: 'default', joinAction: 'auto' };
 }
 
+/**
+ * Decyduje, czy STARTOWA intencja filtra (z URL) ma w wsOnConnect zmienic aktualny
+ * stan filtra unread. Reczny klik usera (userToggled) MA PIERWSZENSTWO nad URL —
+ * inaczej asynchroniczne wsOnConnect cofaloby decyzje usera ("filtr wraca po odkliknieciu").
+ * Zwraca 'enable' | 'disable' | 'none'.
+ * UWAGA: synchronizować z chat/static/chat/js/__tests__/unread_filter_override.test.js.
+ */
+function decideUnreadFilterOverride({ urlFilter, isActive, userToggled }) {
+    // Reczna decyzja usera jest ostateczna — nie nadpisujemy jej intencja z URL.
+    if (userToggled) return 'none';
+    if (urlFilter === 'on' && !isActive) return 'enable';
+    if (urlFilter === 'off' && isActive) return 'disable';
+    return 'none';
+}
+
 // Placeholder "Wybierz pokoj" w lewej kolumnie — gdy nie ma joinowanego pokoju.
 // Tekst budujemy przez textContent (defense-in-depth — gdyby kiedys w tlumaczeniu
 // pojawil sie znak < lub &, to nie zlamie HTML'a).
@@ -223,12 +238,29 @@ function showUnreadEmptyState() {
     // komunikat z akcja, ktora user ma wykonac.
     const hint = document.createElement('p');
     hint.className = 'chat-no-unread-hint';
-    const [before, after] = _("Tap {icon} above the list to disable the unread filter").split('{icon}');
+    // after = '' jako bezpiecznik: gdyby tlumaczenie kiedys zgubilo placeholder {icon},
+    // split zwroci 1-elementowa tablice i bez defaultu createTextNode(undefined) wstawilby
+    // literalny napis "undefined" po przycisku.
+    const [before, after = ''] = _("Tap {icon} above the list to disable the unread filter").split('{icon}');
     hint.appendChild(document.createTextNode(before));
+    // Realny, klikalny przycisk wygladajacy DOKLADNIE jak aktywny #unread-filter-btn —
+    // user widzi tu te sama (podswietlona) ikone, ktora ma kliknac w pasku, i moze ja
+    // kliknac wprost stad. Logiki nie duplikujemy: delegujemy do .click() prawdziwego
+    // przycisku (zdejmie filtr i — przez removeUnreadFilter — usunie ten empty state).
+    const inlineBtn = document.createElement('button');
+    inlineBtn.type = 'button';
+    inlineBtn.className = 'chat-no-unread-inline-btn';
+    // Etykieta opisuje AKCJE tego przycisku (zawsze zdejmuje filtr), nie kierunek toggle'a —
+    // ten przycisk, w przeciwienstwie do #unread-filter-btn w pasku, tylko wylacza filtr.
+    inlineBtn.setAttribute('aria-label', _("Disable the unread filter"));
     const inlineIcon = document.createElement('i');
-    inlineIcon.className = 'fas fa-eye-slash chat-no-unread-inline-icon';
+    inlineIcon.className = 'fas fa-eye-slash';
     inlineIcon.setAttribute('aria-hidden', 'true');
-    hint.appendChild(inlineIcon);
+    inlineBtn.appendChild(inlineIcon);
+    inlineBtn.addEventListener('click', () => {
+        document.getElementById('unread-filter-btn')?.click();
+    });
+    hint.appendChild(inlineBtn);
     hint.appendChild(document.createTextNode(after));
 
     div.append(iconBig, title, hint);
@@ -254,6 +286,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Handle unread filter functionality
     const unreadFilterBtn = $('#unread-filter-btn');
     let isUnreadFilterActive = false;
+    // Gdy user recznie kliknie filtr, jego decyzja jest ostateczna na te sesje strony —
+    // pozniejsze (asynchroniczne) wsOnConnect NIE moze jej nadpisac intencja z URL.
+    let userToggledFilter = false;
 
     // Restore filter state from localStorage. URL params bija zapisany stan:
     //   ?view=rooms   -> wymuszamy filtr OFF (sidebar)
@@ -272,6 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     unreadFilterBtn?.addEventListener('click', () => {
+        userToggledFilter = true;
         isUnreadFilterActive = !isUnreadFilterActive;
 
         if (isUnreadFilterActive) {
@@ -443,12 +479,20 @@ document.addEventListener('DOMContentLoaded', () => {
             history.replaceState(null, '', url.pathname + url.search + url.hash);
         }
 
-        if (action.unreadFilter === 'on' && !isUnreadFilterActive) {
+        // Intencja z URL aplikuje filtr — ale reczny klik usera (userToggledFilter) bije
+        // URL. Bez tego: user zdejmuje filtr w oknie miedzy DOMContentLoaded a polaczeniem
+        // WS, a to (czytajace wciaz obecny ?view=unread) wlaczaloby go z powrotem.
+        const filterOverride = decideUnreadFilterOverride({
+            urlFilter: action.unreadFilter,
+            isActive: isUnreadFilterActive,
+            userToggled: userToggledFilter,
+        });
+        if (filterOverride === 'enable') {
             isUnreadFilterActive = true;
             unreadFilterBtn?.classList.add('active');
             localStorage.setItem('chat-unread-filter', 'active');
             applyUnreadFilter();
-        } else if (action.unreadFilter === 'off' && isUnreadFilterActive) {
+        } else if (filterOverride === 'disable') {
             isUnreadFilterActive = false;
             unreadFilterBtn?.classList.remove('active');
             localStorage.removeItem('chat-unread-filter');
@@ -695,7 +739,7 @@ export async function onReceiveMessages(messages) {
             message.your_reactions ?? [],
             message.read_by ?? []
         );
-        DOM_API.updateSidebarForMessage(message);
+        if (message.new) DOM_API.updateSidebarForMessage(message);
         requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(message.message_id)));
         if (message.new && document.hidden && !message.own) {
             makeNotification({ title: message.username, body: message.message });
@@ -860,6 +904,16 @@ export async function onReceiveEdit(edit_info) {
         DOM_API.updateMessageAttachments(edit_info.message_id, edit_info.attachments);
     }
     DOM_API.showHistoryButton(edit_info.message_id);
+
+    if (edit_info.is_last_message) {
+        DOM_API.updateSidebarForMessage({
+            room_id: edit_info.room_id,
+            username: edit_info.username,
+            anonymous: edit_info.anonymous,
+            message: edit_info.text,
+            timestamp: edit_info.timestamp,
+        }, {reorder: false});
+    }
 
     // Stop editing mode if this was the message being edited
     const editedId = DOM_API.getEditedMessageId();

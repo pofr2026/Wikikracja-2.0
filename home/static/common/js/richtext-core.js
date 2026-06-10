@@ -24,12 +24,36 @@ export function getInputHtml(inputEl) {
         return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     }
 
+    function isBr(node) {
+        return node && node.nodeType === Node.ELEMENT_NODE && node.tagName.toUpperCase() === 'BR';
+    }
+
     function serialize(node, isFirst) {
-        if (node.nodeType === Node.TEXT_NODE) return node.textContent;
+        if (node.nodeType === Node.TEXT_NODE) {
+            // Legacy DB content (sprzed paste fix-a) może mieć surowe \n w tekście —
+            // normalizujemy na <br>, żeby render po save nie produkował ghost empty lines.
+            return node.textContent.replace(/\n/g, '<br>');
+        }
         if (node.nodeType !== Node.ELEMENT_NODE) return '';
+        if (isBr(node)) return '<br>';
         const tag = node.tagName.toUpperCase();
-        if (tag === 'BR') return '<br>';
-        const inner = Array.from(node.childNodes).map((c, i) => serialize(c, i === 0)).join('');
+
+        let children = Array.from(node.childNodes);
+        if (BLOCK.has(tag)) {
+            // Block-with-only-filler-<br>(s) = empty line (user pressed Enter on a blank line).
+            // Without this special case, <div><br></div> would serialize to "<br><br>" and
+            // produce ghost empty lines when pasted text is re-rendered.
+            const isEmpty = children.every(c =>
+                isBr(c) || (c.nodeType === Node.TEXT_NODE && !c.textContent)
+            );
+            if (isEmpty) return '<br>';
+            // Non-empty block: strip trailing <br> filler the browser auto-inserts.
+            while (children.length > 0 && isBr(children[children.length - 1])) {
+                children.pop();
+            }
+        }
+
+        const inner = children.map((c, i) => serialize(c, i === 0)).join('');
         if (BLOCK.has(tag)) return (isFirst ? '' : '<br>') + inner;
         if (tag === 'B') return `<b>${inner}</b>`;
         if (tag === 'I') return `<i>${inner}</i>`;
@@ -48,6 +72,64 @@ export function getInputHtml(inputEl) {
 }
 
 /**
+ * Insert plain text at the current caret in a contenteditable, converting `\n`
+ * (and normalized `\r\n` / `\r`) directly into <br> elements via DOM API.
+ *
+ * Bypasses execCommand('insertText'), which lets the browser auto-wrap pasted
+ * text in <div> blocks with filler <br>s — that wrapping later serializes to
+ * extra <br>s in getInputHtml and produces ghost empty lines on render.
+ *
+ * @param {HTMLElement} inputEl - contenteditable target
+ * @param {string} text - plain text to insert (line endings get normalized)
+ * @param {number} [maxLength=Infinity] - truncate to fit; counts current textContent
+ */
+export function insertPlainTextAtCaret(inputEl, text, maxLength = Infinity) {
+    if (!inputEl) return;
+    const sel = window.getSelection();
+    if (!sel) return;
+
+    const normalized = String(text ?? '').replace(/\r\n?/g, '\n');
+    const selLen = sel.toString().length;
+    const currentLen = (inputEl.textContent || '').length;
+    const available = maxLength - currentLen + selLen;
+    const toInsert = normalized.slice(0, Math.max(0, available));
+    if (!toInsert) return;
+
+    if (!sel.rangeCount) {
+        inputEl.focus();
+        const r = document.createRange();
+        r.selectNodeContents(inputEl);
+        r.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(r);
+    }
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+
+    const frag = document.createDocumentFragment();
+    const lines = toInsert.split('\n');
+    lines.forEach((line, i) => {
+        if (i > 0) frag.appendChild(document.createElement('br'));
+        if (line) frag.appendChild(document.createTextNode(line));
+    });
+
+    const lastChild = frag.lastChild;
+    range.insertNode(frag);
+
+    if (lastChild) {
+        const newRange = document.createRange();
+        newRange.setStartAfter(lastChild);
+        newRange.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(newRange);
+    }
+
+    // Mirror execCommand behaviour: fire bubbling 'input' so existing listeners
+    // (counter, draft autosave, hidden-input sync) update without per-call wiring.
+    inputEl.dispatchEvent(new InputEvent('input', { bubbles: true }));
+}
+
+/**
  * Sanitize HTML for display + auto-linkify plain URLs.
  * @param {string} raw
  * @returns {string}
@@ -57,7 +139,8 @@ export function formatMessage(raw) {
         ? DOMPurify.sanitize(raw, { ALLOWED_TAGS, ALLOWED_ATTR })
         : String(raw ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     // Linkify only URLs that are not already inside an <a> element.
-    const URL_REGEX = /(?:<a\b[^>]*>[^<]*<\/a>)|(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&/=]*))/g;
+    // `&amp;` matched as a unit (listed before char class) — keeps trailing ';' out of plain URL matches.
+    const URL_REGEX = /(?:<a\b[^>]*>[^<]*<\/a>)|(https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:&amp;|[-a-zA-Z0-9()@:%_+.~#?&/=])*)/g;
     return clean.replace(URL_REGEX, (match, url) => {
         if (!url) return match; // pre-existing <a>...</a>, leave untouched
         const isInternal = url.replace(/^https?/, 'http').startsWith(window.location.origin.replace(/^https?/, 'http'));

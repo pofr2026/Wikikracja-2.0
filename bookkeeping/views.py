@@ -1,7 +1,6 @@
 import json
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
-from django.db.models import Sum
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -10,6 +9,7 @@ from django.views.generic import CreateView, DeleteView, ListView, UpdateView, V
 
 from .forms import AssetForm, TransactionForm
 from .models import Asset, Category, Partner, Transaction
+from .services import asset_balances, category_breakdown
 
 # #########################  Asset ###########################
 
@@ -180,6 +180,13 @@ class TransactionListView(LoginRequiredMixin, ListView):
             .order_by('-payment_received_date', '-id')
         )
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pasek sald per asset z CAŁEJ historii — nad tabelą, jako kontekst dla użytkownika.
+        # Sortowanie z asset_balances: default asset pierwszy, reszta wg code alfabetycznie.
+        context['balances_by_asset'] = asset_balances()
+        return context
+
 
 def _asset_decimal_places_json():
     return json.dumps({str(a.pk): a.decimal_places for a in Asset.objects.all()})
@@ -252,65 +259,9 @@ class TransactionDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView)
 class ReportView(LoginRequiredMixin, View):
     template_name = 'bookkeeping/report_list.html'
 
-    def _flat_rows(self, year=None):
-        """
-        Returns:
-          rows   - list of {'category_name', 'net', 'symbol'} sorted by category name
-          totals - list of {'asset', 'net'} one per asset that has any transactions
-        """
-        qs = Transaction.objects.all()
-        if year:
-            qs = qs.filter(payment_received_date__year=year)
-
-        agg = (
-            qs.values('category', 'asset', 'type')
-            .annotate(total=Sum('amount'))
-        )
-
-        # net[(category_id, asset_id)] = net_value
-        net = {}
-        for row in agg:
-            key = (row['category'], row['asset'])
-            sign = 1 if row['type'] == Transaction.INCOMING else -1
-            net[key] = net.get(key, 0) + sign * (row['total'] or 0)
-
-        # Resolve category names
-        cat_ids = {k[0] for k in net} - {None}
-        cat_map = {c.id: c.name for c in Category.objects.filter(id__in=cat_ids)}
-
-        # Resolve asset objects
-        asset_ids = {k[1] for k in net}
-        asset_map = {a.id: a for a in Asset.objects.filter(id__in=asset_ids)}
-
-        # Build flat rows
-        rows = []
-        for (cat_id, asset_id), value in net.items():
-            if value == 0:
-                continue
-            cat_name = cat_map.get(cat_id, '—') if cat_id is not None else '—'
-            asset = asset_map.get(asset_id)
-            rows.append({
-                'category_name': cat_name,
-                'net': value,
-                'symbol': asset.symbol if asset else '',
-                'asset_id': asset_id,
-            })
-
-        rows.sort(key=lambda r: (r['category_name'], r['asset_id'] or 0))
-
-        # Totals per asset
-        asset_totals = {}
-        for r in rows:
-            asset_totals[r['asset_id']] = asset_totals.get(r['asset_id'], 0) + r['net']
-
-        totals = [
-            {'asset': asset_map[aid], 'net': val}
-            for aid, val in asset_totals.items()
-            if aid in asset_map
-        ]
-        totals.sort(key=lambda t: t['asset'].code)
-
-        return rows, totals
+    # Próg powyżej którego pivot kategorie × aktywa staje się nieczytelny (za szeroki).
+    # Wtedy template przełącza się na fallback "sekcje per waluta" (Wzorzec 1).
+    MAX_ASSETS_FOR_PIVOT = 5
 
     def get(self, request, year=None):
         try:
@@ -318,8 +269,8 @@ class ReportView(LoginRequiredMixin, View):
         except (ValueError, TypeError):
             year = timezone.now().year
 
-        year_rows, year_totals = self._flat_rows(year)
-        all_rows, all_totals = self._flat_rows()
+        year_pivot, year_assets, year_totals = category_breakdown(year=year)
+        all_pivot, all_assets, all_totals = category_breakdown()
 
         available_years = (
             Transaction.objects.dates('payment_received_date', 'year')
@@ -329,10 +280,14 @@ class ReportView(LoginRequiredMixin, View):
         )
 
         context = {
-            'year_rows': year_rows,
+            'year_pivot': year_pivot,
+            'year_assets': year_assets,
             'year_totals': year_totals,
-            'all_rows': all_rows,
+            'year_uses_fallback': len(year_assets) > self.MAX_ASSETS_FOR_PIVOT,
+            'all_pivot': all_pivot,
+            'all_assets': all_assets,
             'all_totals': all_totals,
+            'all_uses_fallback': len(all_assets) > self.MAX_ASSETS_FOR_PIVOT,
             'year': year,
             'available_years': available_years,
         }

@@ -1,6 +1,7 @@
 import logging
 import os
 from datetime import timedelta as td
+from decimal import Decimal
 
 from django.conf import settings
 from django.contrib import messages
@@ -11,7 +12,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.views import LoginView
 from django.contrib.staticfiles import finders
 from django.core.cache import cache
-from django.db.models import Q, Sum
+from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -20,14 +21,17 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from board.models import Post, PostCategory
-from bookkeeping.models import Transaction
+from bookkeeping.models import Asset
+from bookkeeping.services import asset_balances
 from chat.models import Message, Room
 from chat.services import CHAT_UNREAD_CACHE_KEY, get_unread_count_for_user
 from events.models import Event
 from glosowania.models import Argument as DecyzjaArgument
 from glosowania.models import Decyzja, KtoJuzGlosowal
 from obywatele.models import CitizenActivity, Uzytkownik
+from site_settings.forms import SiteSettingsBrandingForm
 from site_settings.models import SiteSettings
+from site_settings.services import get_branding_version
 from tasks.models import Task
 
 from .forms import RememberLoginForm
@@ -148,12 +152,22 @@ def home(request: HttpRequest):
     _occurrences.sort(key=lambda o: o['date'])
     upcoming_events = _occurrences[:5]
 
-    # Karta 5 — Finanse: przychody/wydatki za bieżący rok
-    current_year = today_dt.year
-    finance_qs = Transaction.objects.filter(payment_received_date__year=current_year)
-    income = finance_qs.filter(type='I').aggregate(total=Sum('amount'))['total'] or 0
-    expenses = finance_qs.filter(type='O').aggregate(total=Sum('amount'))['total'] or 0
-    balance = income - expenses
+    # Karta 5 — Finanse: salda CAŁEJ historii w walucie domyślnej (default asset).
+    # Jeśli default asset nie istnieje (pusta baza assetów) → wszystkie pola = None i template
+    # pokazuje onboarding CTA "dodaj aktywo". Jeśli default istnieje, ale 0 transakcji →
+    # asset_balances() zwraca pustą listę → wyświetlamy 0/0/0 w symbolu defaultu.
+    default_asset = Asset.get_default()
+    if default_asset is None:
+        default_income = default_expenses = default_balance = None
+        default_symbol = None
+    else:
+        balances = asset_balances(asset=default_asset)
+        if balances:
+            row = balances[0]
+            default_income, default_expenses, default_balance = row['income'], row['expenses'], row['balance']
+        else:
+            default_income = default_expenses = default_balance = Decimal('0')
+        default_symbol = default_asset.symbol
 
     # Karta 6 — Nowi obywatele: 6 ostatnio dołączonych aktywnych
     new_citizens = list(Uzytkownik.objects.filter(uid__is_active=True).select_related('uid').order_by('-uid__date_joined')[:7])
@@ -199,10 +213,11 @@ def home(request: HttpRequest):
         'onboarding_docs': onboarding_docs,
         'onboarding_docs_read_ids': onboarding_docs_read_ids,
         'upcoming_events': upcoming_events,
-        'income': income,
-        'expenses': expenses,
-        'balance': balance,
-        'current_year': current_year,
+        'default_asset': default_asset,
+        'default_income': default_income,
+        'default_expenses': default_expenses,
+        'default_balance': default_balance,
+        'default_symbol': default_symbol,
         'new_citizens': new_citizens,
         'candidates_count': candidates_count,
         'last_feed_items': last_feed_items,
@@ -801,6 +816,18 @@ def haslo(request: HttpRequest):
 
 def manifest(request):
     """Serve dynamic PWA manifest JSON"""
+    ss = SiteSettings.get()
+    if ss.brand_mark:
+        derived_url = settings.MEDIA_URL + 'site_branding/derived/'
+        version_q = f'?v={get_branding_version(ss)}'
+        favicon_src = derived_url + 'favicon.ico' + version_q
+        icon_192_src = derived_url + 'icon-192.png' + version_q
+        icon_512_src = derived_url + 'icon-512.png' + version_q
+    else:
+        favicon_src = '/static/home/images/favicon.ico'
+        icon_192_src = '/static/home/images/icon-192.png'
+        icon_512_src = '/static/home/images/icon-512.png'
+
     data = {
         'name': settings.SITE_NAME,
         'short_name': settings.SITE_NAME_MAX_12_CHARS,
@@ -813,17 +840,17 @@ def manifest(request):
         "prefer_related_applications": False,
         "related_applications": [],
         'icons': [{
-            'src': '/static/home/images/favicon.ico',
+            'src': favicon_src,
             'sizes': "16x16 32x32 48x48",
             'type': 'image/x-icon',
             "purpose": "any"
         }, {
-            'src': '/static/home/images/icon-192.png',
+            'src': icon_192_src,
             'sizes': "192x192",
             'type': 'image/png',
             "purpose": "any"
         }, {
-            'src': '/static/home/images/icon-512.png',
+            'src': icon_512_src,
             'sizes': "512x512",
             'type': 'image/png',
             "purpose": "any"
@@ -907,6 +934,18 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         messages.success(request, _('Onboarding zapisany.'))
         return redirect('site_admin')
 
+
+    if request.method == 'POST' and 'save_branding' in request.POST:
+        form = SiteSettingsBrandingForm(request.POST, request.FILES, instance=ss)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('Branding zapisany.'))
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
+        return redirect('site_admin')
+
     selected_ids = set(ss.onboarding_posts.values_list('id', flat=True))
     categories_with_posts = []
     for cat in PostCategory.objects.order_by('name'):
@@ -927,7 +966,28 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         'referendum_span': settings.CZAS_TRWANIA_REFERENDUM,
         'documents': Post.objects.all().order_by('title'),
         'ss': ss,
+        'branding_form': SiteSettingsBrandingForm(instance=ss),
         'categories_with_posts': categories_with_posts,
         'selected_onboarding_post_ids': selected_ids,
         'message_max_length': settings.MESSAGE_MAX_LENGTH,
     })
+
+
+@login_required
+def remove_brand_mark(request: HttpRequest) -> JsonResponse:
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    ss = SiteSettings.get()
+    if ss.brand_mark:
+        ss.brand_mark.delete(save=True)
+    return JsonResponse({'ok': True})
+
+
+@login_required
+def remove_brand_mark_dark(request: HttpRequest) -> JsonResponse:
+    if request.method != 'POST':
+        return JsonResponse({'ok': False}, status=405)
+    ss = SiteSettings.get()
+    if ss.brand_mark_dark:
+        ss.brand_mark_dark.delete(save=True)
+    return JsonResponse({'ok': True})

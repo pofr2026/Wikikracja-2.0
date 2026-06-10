@@ -10,6 +10,7 @@ media/board/featured/*
 media/avatars/
 media/elibrary/*
 !media/elibrary/.gitkeep
+media/site_branding/
 memory/
 
 *.DS_Store
@@ -37,6 +38,12 @@ test-results/
 e2e/.auth/
 .python-version
 .pytest_cache/
+
+# Local AI agent rules/docs
+.cursorrules
+CLAUDE.md
+CODEX.md
+AGENTS.md
 
 $RECYCLE.BIN/
 Desktop.ini

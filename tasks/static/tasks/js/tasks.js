@@ -30,10 +30,18 @@
       if (countEl) {
         countEl.textContent = data.votes_up;
       }
+      var againstEl = card.querySelector('.proposal-against-count');
+      if (againstEl && typeof data.votes_down !== 'undefined') {
+        againstEl.textContent = data.votes_down;
+      }
       // Vote changed — popover content may be stale, drop cached html for this task
       var helpersBtn = card.querySelector('[data-task-helpers]');
       if (helpersBtn) {
         helpersCache.delete(helpersBtn.dataset.taskHelpers);
+      }
+      var againstBtn = card.querySelector('[data-task-against]');
+      if (againstBtn) {
+        againstCache.delete(againstBtn.dataset.taskAgainst);
       }
     }
     var badge = document.querySelector('[data-votes-badge]');
@@ -72,6 +80,7 @@
         if (upBtn) setVoteBtnState(upBtn, data.vote === 1);
         if (downBtn) setVoteBtnState(downBtn, data.vote === -1);
         updateVoteCounts(form, data);
+        updateVoterLists(data);
       })
       .catch(function () {
         // silent fail — card stays open, user can retry
@@ -81,16 +90,143 @@
   // Capture phase: fires before card-body onclick and card-header toggleCard
   document.addEventListener('click', handleVoteClick, true);
 
+  // ─── Live update for "Willing to help" / "Against this task" lists ──
+  function buildVoterItem(user) {
+    var item = document.createElement('a');
+    item.className = 'helpers-popover-item';
+    item.href = user.profile_url;
+    item.dataset.userId = user.id;
+
+    var avatar = document.createElement('span');
+    avatar.className = 'helpers-popover-avatar';
+    if (user.avatar_url) {
+      var img = document.createElement('img');
+      img.src = user.avatar_url;
+      img.alt = '';
+      avatar.appendChild(img);
+    } else {
+      avatar.textContent = (user.username || '').slice(0, 2).toUpperCase();
+    }
+    item.appendChild(avatar);
+
+    var name = document.createElement('span');
+    name.className = 'helpers-popover-name';
+    name.textContent = user.username;
+    item.appendChild(name);
+
+    return item;
+  }
+
+  function syncVoterEmptyState() {
+    ['helpers', 'against'].forEach(function (key) {
+      var list = document.querySelector('[data-voter-list="' + key + '"]');
+      var empty = document.querySelector('[data-voter-empty="' + key + '"]');
+      if (!list || !empty) return;
+      var has = list.children.length > 0;
+      list.hidden = !has;
+      empty.hidden = has;
+    });
+  }
+
+  function updateVoterLists(data) {
+    if (!window.CURRENT_USER || window.CURRENT_USER.id == null) return;
+    var userId = String(window.CURRENT_USER.id);
+    document.querySelectorAll('[data-voter-list] .helpers-popover-item[data-user-id="' + userId + '"]')
+      .forEach(function (el) { el.remove(); });
+
+    var targetKey = data.vote === 1 ? 'helpers' : (data.vote === -1 ? 'against' : null);
+    if (targetKey) {
+      var target = document.querySelector('[data-voter-list="' + targetKey + '"]');
+      if (target) target.appendChild(buildVoterItem(window.CURRENT_USER));
+    }
+    syncVoterEmptyState();
+  }
+
+  // ─── Coordinator take/resign live update ──────────────────────
+  function handleCoordSubmit(e) {
+    var form = e.target.closest && e.target.closest('form');
+    if (!form) return;
+    var action = form.action || '';
+    if (!/\/(take|resign)\/?$/.test(action)) return;
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    var csrf = form.querySelector('[name="csrfmiddlewaretoken"]');
+    if (!csrf) return;
+
+    fetch(action, {
+      method: 'POST',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest',
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({ csrfmiddlewaretoken: csrf.value }),
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data || !data.ok) return;
+        updateCoordinatorUI(form, data);
+      })
+      .catch(function () {
+        // silent fail — user can retry
+      });
+  }
+
+  function updateCoordinatorUI(form, data) {
+    var isAssigned = data.assigned_to !== null;
+    // Scope to enclosing card on task list; document elsewhere (detail page has no .proposal-card)
+    var card = form.closest('.proposal-card');
+    var scope = card || document;
+
+    scope.querySelectorAll('[data-coord-state="empty"]').forEach(function (el) {
+      el.hidden = isAssigned;
+    });
+    scope.querySelectorAll('[data-coord-state="me"]').forEach(function (el) {
+      el.hidden = !isAssigned;
+    });
+
+    // Detail page coordinator label: update text in `Coordinator: <span>...</span>`
+    var label = document.querySelector('[data-coord-label]');
+    if (label) {
+      var coordI18n = window.TASK_COORD_I18N || {};
+      label.textContent = isAssigned
+        ? (data.assigned_to.username || '')
+        : (coordI18n.none_label || 'None');
+    }
+  }
+
+  document.addEventListener('submit', handleCoordSubmit, true);
+
   document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
       new bootstrap.Tooltip(el, { trigger: 'hover' });
     });
     initHelpersPopovers();
+    initAgainstPopovers();
+
+    // Single document-level click listener closes any open voter popover when
+    // clicking outside it (touch devices). Replaces N per-button listeners.
+    if (!supportsHover) {
+      document.addEventListener('click', function (e) {
+        document.querySelectorAll('[data-task-helpers], [data-task-against]').forEach(function (btn) {
+          var tipId = btn.getAttribute('aria-describedby');
+          if (!tipId) return;
+          var tip = document.getElementById(tipId);
+          if (tip && !tip.contains(e.target) && !btn.contains(e.target)) {
+            var popover = bootstrap.Popover.getInstance(btn);
+            if (popover) popover.hide();
+          }
+        });
+      });
+    }
   });
 
   // ─── Helpers popover ──────────────────────────────────────────
   var helpersCache = new Map();
+  var againstCache = new Map();
   var i18n = (window.TASK_HELPERS_I18N || {});
+  var againstI18n = (window.TASK_AGAINST_I18N || {});
   var supportsHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
   function sanitize(html) {
@@ -106,9 +242,9 @@
       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
-  function renderHelpersHtml(data) {
+  function renderVotersHtml(data, labels) {
     if (!data.total) {
-      return '<div class="helpers-popover-empty">' + escapeHtml(i18n.empty || 'No one helps yet') + '</div>';
+      return '<div class="helpers-popover-empty">' + escapeHtml(labels.empty || 'No one helps yet') + '</div>';
     }
     var items = data.helpers.map(function (h) {
       var avatar = h.avatar_url
@@ -121,7 +257,7 @@
     }).join('');
     var more = '';
     if (data.extra > 0) {
-      var moreText = (i18n.more || 'and {n} more — see all').replace('{n}', data.extra);
+      var moreText = (labels.more || 'and {n} more — see all').replace('{n}', data.extra);
       more = '<a class="helpers-popover-more" href="' + escapeHtml(data.task_url) + '">'
            + escapeHtml(moreText) + '</a>';
     }
@@ -137,7 +273,7 @@
     fetch(btn.dataset.helpersUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        var html = renderHelpersHtml(data);
+        var html = renderVotersHtml(data, i18n);
         helpersCache.set(taskId, html);
         popover.setContent({ '.popover-body': sanitize(html) });
       })
@@ -147,56 +283,72 @@
       });
   }
 
+  function loadAgainst(btn, popover) {
+    var taskId = btn.dataset.taskAgainst;
+    if (againstCache.has(taskId)) {
+      popover.setContent({ '.popover-body': sanitize(againstCache.get(taskId)) });
+      return;
+    }
+    fetch(btn.dataset.againstUrl, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        var html = renderVotersHtml(data, againstI18n);
+        againstCache.set(taskId, html);
+        popover.setContent({ '.popover-body': sanitize(html) });
+      })
+      .catch(function () {
+        var err = '<div class="helpers-popover-empty">' + escapeHtml(againstI18n.error || 'Could not load opponents') + '</div>';
+        popover.setContent({ '.popover-body': sanitize(err) });
+      });
+  }
+
+  function initVoterPopover(btn, popoverOptions, loadFn) {
+    var popover = new bootstrap.Popover(btn, popoverOptions);
+    var hideTimer = null;
+    var clearHide = function () { if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; } };
+    var scheduleHide = function () {
+      clearHide();
+      hideTimer = setTimeout(function () { popover.hide(); }, 150);
+    };
+
+    btn.addEventListener('show.bs.popover', function () { loadFn(btn, popover); });
+
+    if (supportsHover) {
+      btn.addEventListener('mouseenter', function () { clearHide(); popover.show(); });
+      btn.addEventListener('mouseleave', scheduleHide);
+      btn.addEventListener('focus', function () { popover.show(); });
+      btn.addEventListener('blur', scheduleHide);
+      btn.addEventListener('shown.bs.popover', function () {
+        var tip = document.getElementById(btn.getAttribute('aria-describedby'));
+        if (!tip) return;
+        tip.addEventListener('mouseenter', clearHide);
+        tip.addEventListener('mouseleave', scheduleHide);
+      });
+    } else {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var tipId = btn.getAttribute('aria-describedby');
+        if (tipId && document.getElementById(tipId)) {
+          popover.hide();
+        } else {
+          popover.show();
+        }
+      });
+    }
+  }
+
   function initHelpersPopovers() {
     if (typeof bootstrap === 'undefined') return;
-    var buttons = document.querySelectorAll('[data-task-helpers]');
-    buttons.forEach(function (btn) {
-      var popover = new bootstrap.Popover(btn, {
-        sanitize: false,
-        html: true,
-        customClass: 'helpers-popover',
-      });
+    document.querySelectorAll('[data-task-helpers]').forEach(function (btn) {
+      initVoterPopover(btn, { sanitize: false, html: true, customClass: 'helpers-popover' }, loadHelpers);
+    });
+  }
 
-      var hideTimer = null;
-      var clearHide = function () { if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; } };
-      var scheduleHide = function () {
-        clearHide();
-        hideTimer = setTimeout(function () { popover.hide(); }, 150);
-      };
-
-      btn.addEventListener('show.bs.popover', function () { loadHelpers(btn, popover); });
-
-      if (supportsHover) {
-        btn.addEventListener('mouseenter', function () { clearHide(); popover.show(); });
-        btn.addEventListener('mouseleave', scheduleHide);
-        btn.addEventListener('focus', function () { popover.show(); });
-        btn.addEventListener('blur', scheduleHide);
-        btn.addEventListener('shown.bs.popover', function () {
-          var tip = document.getElementById(btn.getAttribute('aria-describedby'));
-          if (!tip) return;
-          tip.addEventListener('mouseenter', clearHide);
-          tip.addEventListener('mouseleave', scheduleHide);
-        });
-      } else {
-        btn.addEventListener('click', function (e) {
-          e.preventDefault();
-          e.stopPropagation();
-          var tipId = btn.getAttribute('aria-describedby');
-          if (tipId && document.getElementById(tipId)) {
-            popover.hide();
-          } else {
-            popover.show();
-          }
-        });
-        document.addEventListener('click', function (e) {
-          var tipId = btn.getAttribute('aria-describedby');
-          if (!tipId) return;
-          var tip = document.getElementById(tipId);
-          if (tip && !tip.contains(e.target) && !btn.contains(e.target)) {
-            popover.hide();
-          }
-        });
-      }
+  function initAgainstPopovers() {
+    if (typeof bootstrap === 'undefined') return;
+    document.querySelectorAll('[data-task-against]').forEach(function (btn) {
+      initVoterPopover(btn, { sanitize: false, html: true, customClass: 'helpers-popover against-popover' }, loadAgainst);
     });
   }
 }());

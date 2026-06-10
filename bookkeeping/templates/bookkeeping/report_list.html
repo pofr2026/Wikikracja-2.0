@@ -36,35 +36,8 @@
       <h5 class="mb-0">{% trans 'Summary' %} ({{ year }})</h5>
     </div>
     <div class="card-body p-0">
-      {% if year_rows %}
-        <table class="table table-sm mb-0">
-          <thead>
-            <tr>
-              <th>{% trans 'Category' %}</th>
-              <th class="text-end">{% trans 'Sum' %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in year_rows %}
-              <tr>
-                <td>{{ row.category_name }}</td>
-                <td class="text-end {% if row.net > 0 %}text-success{% elif row.net < 0 %}text-danger{% endif %}">
-                  {{ row.net|normalize_decimal }} {{ row.symbol }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot class="fw-bold border-top">
-            {% for total in year_totals %}
-              <tr>
-                <td>{% trans 'Summary of the year' %}</td>
-                <td class="text-end {% if total.net > 0 %}text-success{% elif total.net < 0 %}text-danger{% endif %}">
-                  {{ total.net|normalize_decimal }} {{ total.asset.symbol }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tfoot>
-        </table>
+      {% if year_pivot %}
+        {% include 'bookkeeping/_report_pivot.html' with pivot_rows=year_pivot asset_columns=year_assets asset_totals=year_totals uses_fallback=year_uses_fallback totals_label=_('Summary of the year') %}
       {% else %}
         <div class="p-3"><div class="alert alert-info mb-0">{% trans 'No records found.' %}</div></div>
       {% endif %}
@@ -77,35 +50,8 @@
       <h5 class="mb-0">{% trans 'All Years Summary' %}</h5>
     </div>
     <div class="card-body p-0">
-      {% if all_rows %}
-        <table class="table table-sm mb-0">
-          <thead>
-            <tr>
-              <th>{% trans 'Category' %}</th>
-              <th class="text-end">{% trans 'Sum' %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in all_rows %}
-              <tr>
-                <td>{{ row.category_name }}</td>
-                <td class="text-end {% if row.net > 0 %}text-success{% elif row.net < 0 %}text-danger{% endif %}">
-                  {{ row.net|normalize_decimal }} {{ row.symbol }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-          <tfoot class="fw-bold border-top">
-            {% for total in all_totals %}
-              <tr>
-                <td>{% trans 'Total all years' %}</td>
-                <td class="text-end {% if total.net > 0 %}text-success{% elif total.net < 0 %}text-danger{% endif %}">
-                  {{ total.net|normalize_decimal }} {{ total.asset.symbol }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tfoot>
-        </table>
+      {% if all_pivot %}
+        {% include 'bookkeeping/_report_pivot.html' with pivot_rows=all_pivot asset_columns=all_assets asset_totals=all_totals uses_fallback=all_uses_fallback totals_label=_('Total all years') %}
       {% else %}
         <div class="p-3"><div class="alert alert-info mb-0">{% trans 'No records found.' %}</div></div>
       {% endif %}

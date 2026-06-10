@@ -78,7 +78,10 @@ def _apply_task_sort(tasks, sort, order):
     if sort == 'date':
         return sorted(tasks, key=lambda t: t.created_at, reverse=reverse)
     elif sort == 'score':
-        return sorted(tasks, key=lambda t: t.votes_score or 0, reverse=reverse)
+        # 'Poparcie' = liczba helpers (votes_up), nie netto. Głosy sprzeciwu
+        # są osobnym sygnałem (próg rejection przy votes_score <= -2),
+        # nie obniżają rankingu helpers.
+        return sorted(tasks, key=lambda t: t.votes_up or 0, reverse=reverse)
     elif sort == 'buzz':
         return sorted(tasks, key=lambda t: getattr(t, 'chat_msg_count', 0) or 0, reverse=reverse)
     return tasks
@@ -253,43 +256,58 @@ class TaskCreateView(CategoryContextMixin, LoginRequiredMixin, CreateView):
 HELPERS_POPOVER_LIMIT = 10
 
 
-@login_required
-def task_helpers_json(request: HttpRequest, pk: int) -> JsonResponse:
-    task = get_object_or_404(Task, pk=pk)
+def _serialize_user(user):
+    avatar_url = ""
+    uzy = getattr(user, "uzytkownik", None)
+    if uzy and getattr(uzy, "avatar", None):
+        try:
+            avatar_url = uzy.avatar.url
+        except ValueError:
+            avatar_url = ""
+    return {
+        "id": user.id,
+        "username": user.username,
+        "avatar_url": avatar_url,
+        "profile_url": reverse("obywatele:obywatele_szczegoly", args=[user.pk]),
+    }
+
+
+def _voters_json(task: Task, value: int) -> dict:
     qs = (TaskVote.objects
-          .filter(task=task, value=TaskVote.Value.UP)
+          .filter(task=task, value=value)
           .select_related("user", "user__uzytkownik")
           .order_by("updated_at", "id"))
     total = qs.count()
-    helpers = []
-    for vote in qs[:HELPERS_POPOVER_LIMIT]:
-        user = vote.user
-        avatar_url = ""
-        uzy = getattr(user, "uzytkownik", None)
-        if uzy and getattr(uzy, "avatar", None):
-            try:
-                avatar_url = uzy.avatar.url
-            except ValueError:
-                avatar_url = ""
-        helpers.append({
-            "username": user.username,
-            "avatar_url": avatar_url,
-            "profile_url": reverse("obywatele:obywatele_szczegoly", args=[user.pk]),
-        })
-    return JsonResponse({
+    helpers = [_serialize_user(vote.user) for vote in qs[:HELPERS_POPOVER_LIMIT]]
+    return {
         "helpers": helpers,
         "total": total,
         "extra": max(0, total - HELPERS_POPOVER_LIMIT),
         "task_url": reverse("tasks:detail", args=[task.pk]),
-    })
+    }
+
+
+@login_required
+def task_helpers_json(request: HttpRequest, pk: int) -> JsonResponse:
+    task = get_object_or_404(Task, pk=pk)
+    return JsonResponse(_voters_json(task, TaskVote.Value.UP))
+
+
+@login_required
+def task_against_json(request: HttpRequest, pk: int) -> JsonResponse:
+    task = get_object_or_404(Task, pk=pk)
+    return JsonResponse(_voters_json(task, TaskVote.Value.DOWN))
 
 
 @require_POST
 @login_required
 def take_task(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=pk)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     task.assigned_to = request.user
     task.save(update_fields=["assigned_to", "updated_at"])
+    if is_ajax:
+        return JsonResponse({"ok": True, "assigned_to": _serialize_user(request.user)})
     return redirect(request.POST.get("next") or "tasks:list")
 
 
@@ -297,14 +315,19 @@ def take_task(request: HttpRequest, pk: int) -> HttpResponse:
 @login_required
 def resign_task(request: HttpRequest, pk: int) -> HttpResponse:
     task = get_object_or_404(Task, pk=pk)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
     next_url = request.POST.get("next")
     if task.assigned_to != request.user:
+        if is_ajax:
+            return JsonResponse({"ok": False, "error": "not coordinator"}, status=403)
         if next_url:
             return redirect(next_url)
         return redirect("tasks:detail", pk=pk)
 
     task.assigned_to = None
     task.save(update_fields=["assigned_to", "updated_at"])
+    if is_ajax:
+        return JsonResponse({"ok": True, "assigned_to": None})
     if next_url:
         return redirect(next_url)
     return redirect("tasks:list")
@@ -346,7 +369,8 @@ class TaskDetailView(LoginRequiredMixin, DetailView):
         )
         task.priority_label = current_label or task.get_status_display()
         task.priority_category = current_category
-        context["helping_votes"] = (TaskVote.objects.filter(task=task, value=TaskVote.Value.UP).select_related("user").order_by("updated_at", "id"))
+        context["helping_votes"] = (TaskVote.objects.filter(task=task, value=TaskVote.Value.UP).select_related("user", "user__uzytkownik").order_by("updated_at", "id"))
+        context["against_votes"] = (TaskVote.objects.filter(task=task, value=TaskVote.Value.DOWN).select_related("user", "user__uzytkownik").order_by("updated_at", "id"))
         if self.request.user.is_authenticated:
             vote = TaskVote.objects.filter(task=task, user=self.request.user).first()
             context["user_vote_value"] = vote.value if vote else None
@@ -431,18 +455,20 @@ def vote_task(request: HttpRequest, pk: int) -> HttpResponse:
             .annotate(
                 votes_score=Coalesce(Sum("votes__value"), 0),
                 votes_up=Count("votes", filter=Q(votes__value=1)),
+                votes_down=Count("votes", filter=Q(votes__value=-1)),
             )
-            .values("votes_score", "votes_up", "status")
+            .values("votes_score", "votes_up", "votes_down", "status")
             .first()
         )
         votes_score = metrics["votes_score"] if metrics else 0
         votes_up = metrics["votes_up"] if metrics else 0
+        votes_down = metrics["votes_down"] if metrics else 0
         if votes_score <= -2 and task.status != Task.Status.REJECTED:
             Task.objects.filter(pk=task.pk).update(status=Task.Status.REJECTED, updated_at=models.F("updated_at"))
             task.status = Task.Status.REJECTED
 
     if is_ajax:
-        return JsonResponse({"vote": new_vote, "votes_score": votes_score, "votes_up": votes_up})
+        return JsonResponse({"vote": new_vote, "votes_score": votes_score, "votes_up": votes_up, "votes_down": votes_down})
     return redirect(request.POST.get("next") or "tasks:list")
 
 

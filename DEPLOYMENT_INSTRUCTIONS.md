@@ -1,0 +1,365 @@
+# Deployment Instructions for WikiKracja
+
+This document contains instructions for developers setting up the development environment and deploying the Wikikracja application.
+
+## Table of Contents
+1. [Development Setup](#development-setup)
+2. [Running the Application](#running-the-application)
+3. [Database Management](#database-management)
+4. [Deployment](#deployment)
+5. [Common Issues and Fixes](#common-issues-and-fixes)
+6. [Chat Room Categorization Fix](#chat-room-categorization-fix)
+
+## Development Setup
+
+### Prerequisites
+- Python 3.11+
+- PostgreSQL (for production) or SQLite (for development)
+- Redis (for chat functionality)
+- Docker and Docker Compose (optional)
+
+### Local Development Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone <repository-url>
+   cd wikikracja
+   ```
+
+2. **Start Redis with Docker Desktop**
+   - Open Docker Desktop
+   - Run Redis container:
+   ```bash
+   docker run -d -p 6379:6379 redis:latest
+   ```
+
+3. **Create and activate virtual environment**
+   ```bash
+   python -m venv .venv
+   # Windows
+   .venv\Scripts\activate
+   # Linux/Mac
+   source .venv/bin/activate
+   ```
+
+4. **Run the automated setup**
+   ```bash
+   python scripts/start_dev.py --full
+   ```
+
+The `start_dev.py --full` command will:
+- Copy `.env.example` to `.env` if needed
+- Generate a secure `SECRET_KEY`
+- Install dependencies from `requirements.txt`
+- Create and apply migrations
+- Update translation files
+- Collect static files
+- Start the development server
+
+### Quick Start (Subsequent Runs)
+For subsequent development sessions, just run:
+```bash
+# Start Redis if not running (ensure Docker Desktop is open)
+docker run -d -p 6379:6379 redis:latest
+
+# Activate virtual environment
+.venv\Scripts\activate
+
+# Start development server
+python scripts/start_dev.py
+```
+
+## Development Scripts
+
+The `scripts/` directory contains utility scripts to streamline development and deployment tasks:
+
+### Development Setup Scripts
+
+#### `start_dev.py` (Cross-platform)
+Quick development server starter for Windows/Linux.
+```bash
+# Basic start (fast)
+python scripts/start_dev.py
+
+# Full setup (slower, includes migrations, i18n, static files)
+python scripts/start_dev.py --full
+```
+
+Features:
+- Automatically copies `.env.example` to `.env` if needed
+- Generates secure `SECRET_KEY` automatically
+- Runs migrations and starts development server
+- With `--full`: installs dependencies, creates migrations, updates translations
+
+#### `start_dev.sh` (Linux)
+Linux-specific development setup with system dependencies.
+```bash
+./scripts/start_dev.sh
+```
+
+Features:
+- Installs system dependencies (gettext, sqlite3, redis)
+- Sets up and starts Redis server
+- Runs full migration and translation setup
+- Starts Daphne server (required for chat functionality)
+
+### Docker Scripts
+
+#### `build_docker_localy_on_windows.ps1` (Windows)
+Build and run Docker containers locally on Windows.
+```powershell
+# Start containers
+.\scripts\build_docker_localy_on_windows.ps1
+
+# Start in detached mode
+.\scripts\build_docker_localy_on_windows.ps1 -Detached
+
+# Stop containers
+.\scripts\build_docker_localy_on_windows.ps1 -Stop
+
+# Restart containers
+.\scripts\build_docker_localy_on_windows.ps1 -Restart
+
+# Reset database
+.\scripts\build_docker_localy_on_windows.ps1 -ResetDb
+```
+
+#### `build_and_push_docker_image.sh` (Linux)
+Build and push Docker image to registry.
+```bash
+# Push to custom registry
+REGISTRY_IMAGE=ghcr.io/username/wikikracja ./scripts/build_and_push_docker_image.sh
+
+# Push to official registry (maintainer only)
+CONFIRM_OFFICIAL_PUSH=1 ./scripts/build_and_push_docker_image.sh
+
+# Custom tag
+TAG=v1.2.3 ./scripts/build_and_push_docker_image.sh
+```
+
+### Utility Scripts
+
+#### `import_fixtures.sh`
+Import database fixtures for initial data.
+```bash
+./scripts/import_fixtures.sh
+```
+
+#### `repair_file_rights.sh`
+Fix file permissions for production deployment.
+```bash
+./scripts/repair_file_rights /path/to/app user group
+# Example:
+./scripts/repair_file_rights . www-data www-data
+```
+
+#### `update_translations.ps1` (Windows)
+Update translation files on Windows.
+```powershell
+./scripts/update_translations.ps1
+
+# With specific Python binary
+./scripts/update_translations.ps1 -PythonBin .venv\Scripts\python.exe
+```
+
+## Running the Application
+
+### Development Server
+```bash
+python manage.py runserver
+```
+
+### Using Docker
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Or use the Windows script
+.\scripts\build_docker_localy_on_windows.ps1
+```
+
+### Running Tests
+```bash
+# Run all tests
+python manage.py test
+
+# Run specific app tests
+python manage.py test chat
+python manage.py test tasks
+```
+
+## Database Management
+
+### Creating New Migrations
+```bash
+python manage.py makemigrations <app_name>
+```
+
+### Applying Migrations
+```bash
+python manage.py migrate
+```
+
+### Database Backup
+```bash
+# PostgreSQL
+pg_dump wikikracja_db > backup.sql
+
+# SQLite
+cp db.sqlite3 backup.sqlite3
+```
+
+### Database Restore
+```bash
+# PostgreSQL
+psql wikikracja_db < backup.sql
+
+# SQLite
+cp backup.sqlite3 db.sqlite3
+```
+
+## Deployment
+
+### Production Deployment with Docker
+
+1. **Build the image**
+   ```bash
+   docker build -t wikikracja .
+   ```
+
+2. **Deploy with Docker Compose**
+   ```bash
+   docker-compose -f docker-compose.yml up -d
+   ```
+
+### Manual Deployment
+
+1. **Install dependencies on server**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Set environment variables**
+   ```bash
+   export DEBUG=False
+   export DATABASE_URL=postgresql://user:pass@localhost/wikikracja
+   export SECRET_KEY=your-secret-key
+   ```
+
+3. **Apply migrations**
+   ```bash
+   python manage.py migrate
+   ```
+
+4. **Collect static files**
+   ```bash
+   python manage.py collectstatic --noinput
+   ```
+
+5. **Restart application server**
+   ```bash
+   systemctl restart gunicorn
+   # or
+   supervisorctl restart wikikracja
+   ```
+
+## Common Issues and Fixes
+
+### Multiple Users with Same Email Error
+
+**Problem**: `django.contrib.auth.models.User.MultipleObjectsReturned: get() returned more than one User`
+
+**Solution**: The authentication backend in `obywatele/auth_backends.py` automatically handles duplicate emails:
+- Catches `MultipleObjectsReturned` exceptions
+- Falls back to authenticating with the single active user if exactly one exists
+- Logs errors for unresolved cases
+
+The issue is resolved at the source - no manual migration required.
+
+### Chat Room Categorization Issues
+
+See the dedicated section below for detailed fix instructions.
+
+### Static Files Not Loading
+
+```bash
+python manage.py collectstatic --noinput
+```
+
+### Permission Issues
+
+```bash
+# Fix file permissions for media files
+chmod -R 755 media/
+```
+
+## Chat Room Categorization Fix
+
+### Problem
+Chat rooms are not properly categorized in production. Rooms have Polish prefixes ("Zadanie #", "Głosowanie #"), but the code filters by English prefixes.
+
+### Solution
+Changes have been made to:
+1. Use constant English prefixes ("Task #", "Vote #") in room titles
+2. Filter rooms by English prefixes (without translation)
+3. Add a command to update existing rooms
+
+### Implementation Steps
+
+1. **Deploy code changes**
+   Deploy the following files to production:
+   - `chat/views.py` (lines 80-88) - changed filtering
+   - `tasks/models.py` (lines 74-76) - English prefix in get_chat_room_title
+   - `glosowania/models.py` (lines 90-92) - English prefix in get_chat_room_title
+   - `glosowania/signals.py` (lines 21-22, 69-70) - English prefix in signals
+   - `glosowania/views.py` (lines 227-231) - use model methods
+   - `chat/management/commands/fix_room_titles.py` - new command
+
+2. **Run the fix command**
+   After deploying code, run the command on production server:
+   ```bash
+   python manage.py fix_room_titles
+   ```
+
+3. **Restart the server**
+   ```bash
+   systemctl restart gunicorn
+   # or
+   systemctl restart uwsgi
+   # or
+   supervisorctl restart wikikracja
+   ```
+
+4. **Verify the fix**
+   Check that:
+   - Rooms are properly categorized in chat interface
+   - Links from Tasks and Votes work correctly
+   - New rooms are created with English prefixes
+
+### Command Output Example
+```
+Updated: "Zadanie #1: test" -> "Task #1: test"
+Updated: "Zadanie #2: przykład" -> "Task #2: przykład"
+Updated: "Głosowanie #1: propozycja" -> "Vote #1: propozycja"
+Updated: "Głosowanie #2: test" -> "Vote #2: test"
+
+Total rooms updated: 4 (2 tasks, 2 votes)
+```
+
+### What Changed
+
+**Before:**
+- Rooms created with translated prefixes (language-dependent)
+- Filtering used `_("Task #")` and `_("Vote #")` (translated at runtime)
+- Inconsistency between room titles and filtering
+
+**After:**
+- Rooms always created with English prefixes "Task #" and "Vote #"
+- Filtering uses constant strings "Task #" and "Vote #"
+- Consistency between room titles and filtering
+
+### Notes
+- The command is safe and can be run multiple times
+- If no rooms need updating, it will show an appropriate message
+- The command doesn't delete or modify message content in rooms
+- Only room titles are changed

@@ -11,13 +11,30 @@ document.addEventListener('DOMContentLoaded', function() {
     const blockedBanner = document.getElementById('notification-blocked-banner');
     if (!banner || !blockedBanner) return;
 
+    function showBanner(el) {
+        el.parentElement.style.maxHeight = el.scrollHeight + 'px';
+    }
+    function hideBanner(el) {
+        el.parentElement.style.maxHeight = '0';
+    }
+
+    // max-height zamraża wysokość w pikselach. Po resize/obrocie tekst banera może
+    // zawinąć się na więcej linii — przelicz zamrożoną wysokość pokazanych banerów,
+    // żeby overflow:hidden nie przyciął dołu.
+    window.addEventListener('resize', function() {
+        [banner, blockedBanner].forEach(function(el) {
+            var wrap = el.parentElement;
+            if (wrap.style.maxHeight && wrap.style.maxHeight !== '0px') {
+                wrap.style.maxHeight = el.scrollHeight + 'px';
+            }
+        });
+    });
+
     // Check if Notification API is supported
     if (!('Notification' in window)) {
         console.log('Notifications not supported');
         return;
     }
-
-    //console.log('Notification permission status:', Notification.permission);
 
     // Check if user has already dismissed the banner
     const dismissed = localStorage.getItem('notification-banner-dismissed');
@@ -25,9 +42,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Show appropriate banner based on permission state
     if (Notification.permission === 'default' && !dismissed) {
-        banner.style.display = 'block';
+        showBanner(banner);
     } else if (Notification.permission === 'denied' && !blockedDismissed) {
-        blockedBanner.style.display = 'block';
+        showBanner(blockedBanner);
     }
 
     // Handle "Enable Notifications" button
@@ -41,14 +58,14 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Permission result:', permission);
 
             if (permission === 'granted') {
-                banner.style.display = 'none';
+                hideBanner(banner);
                 localStorage.removeItem('notification-banner-dismissed');
                 // Reload to initialize push notifications
                 location.reload();
             } else if (permission === 'denied') {
                 // Show blocked banner
-                banner.style.display = 'none';
-                blockedBanner.style.display = 'block';
+                hideBanner(banner);
+                showBanner(blockedBanner);
                 // Remember that user denied
                 localStorage.setItem('notification-blocked-dismissed', Date.now() + (30 * 24 * 60 * 60 * 1000));
             } else {
@@ -58,14 +75,14 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error('Error requesting notification permission:', error);
             // Show blocked banner on error
-            banner.style.display = 'none';
-            blockedBanner.style.display = 'block';
+            hideBanner(banner);
+            showBanner(blockedBanner);
         }
     });
 
     // Handle "Not now" button
     document.getElementById('dismiss-notifications-banner')?.addEventListener('click', function() {
-        banner.style.display = 'none';
+        hideBanner(banner);
         // Remember dismissal for 7 days
         const dismissedUntil = Date.now() + (7 * 24 * 60 * 60 * 1000);
         localStorage.setItem('notification-banner-dismissed', dismissedUntil);
@@ -73,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Handle "Dismiss" button on blocked banner
     document.getElementById('dismiss-blocked-banner')?.addEventListener('click', function() {
-        blockedBanner.style.display = 'none';
+        hideBanner(blockedBanner);
         // Remember dismissal for 30 days
         const dismissedUntil = Date.now() + (30 * 24 * 60 * 60 * 1000);
         localStorage.setItem('notification-blocked-dismissed', dismissedUntil);
@@ -83,14 +100,14 @@ document.addEventListener('DOMContentLoaded', function() {
     if (dismissed && parseInt(dismissed) < Date.now()) {
         localStorage.removeItem('notification-banner-dismissed');
         if (Notification.permission === 'default') {
-            banner.style.display = 'block';
+            showBanner(banner);
         }
     }
 
     if (blockedDismissed && parseInt(blockedDismissed) < Date.now()) {
         localStorage.removeItem('notification-blocked-dismissed');
         if (Notification.permission === 'denied') {
-            blockedBanner.style.display = 'block';
+            showBanner(blockedBanner);
         }
     }
 
@@ -447,8 +464,44 @@ window.initActivityFeedMarkRead = function(containerSelector, linkSelector) {
 };
 
 // Toggle .expandable blocks — clicking body toggles open/close (only when overflow detected).
+function hasSelectedTextInside(container) {
+    const selection = window.getSelection?.();
+    if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return false;
+    if (!(selection.toString() || '').trim()) return false;
+    const range = selection.getRangeAt(0);
+
+    if (typeof range.intersectsNode === 'function') {
+        try {
+            return range.intersectsNode(container);
+        } catch (err) {
+            // Fall through to compatibility checks below.
+        }
+    }
+
+    if (container.contains(range.startContainer) || container.contains(range.endContainer)) {
+        return true;
+    }
+
+    const ancestor = range.commonAncestorContainer;
+    const ancestorEl = ancestor.nodeType === Node.ELEMENT_NODE ? ancestor : ancestor.parentElement;
+    return !!(ancestorEl && container.contains(ancestorEl));
+}
+
 document.addEventListener('click', function(e) {
     if (e.target.closest('a')) return;
-    const el = e.target.closest('.expandable-body')?.closest('.expandable');
-    if (el?.classList.contains('has-overflow')) el.classList.toggle('is-open');
+    const body = e.target.closest('.expandable-body');
+    const el = body?.closest('.expandable');
+    if (!el?.classList.contains('has-overflow')) return;
+    if (hasSelectedTextInside(body)) return;
+    el.classList.toggle('is-open');
+});
+
+// Globalna inicjalizacja Bootstrap tooltipów — każdy [data-bs-toggle="tooltip"] działa
+// bez per-page boilerplate'u. Trigger 'hover' (bez focus) żeby chip nie zostawał
+// "kliknięty" po tap'ie na mobile.
+document.addEventListener('DOMContentLoaded', function () {
+    if (typeof bootstrap === 'undefined' || !bootstrap.Tooltip) return;
+    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(function (el) {
+        new bootstrap.Tooltip(el, { trigger: 'hover' });
+    });
 });

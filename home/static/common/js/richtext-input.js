@@ -26,7 +26,7 @@
         if (wrapper.dataset.richtextInit === '1') return;
         wrapper.dataset.richtextInit = '1';
 
-        const { getInputHtml, updateCounter } = await loadCore();
+        const { getInputHtml, updateCounter, insertPlainTextAtCaret } = await loadCore();
 
         const input = wrapper.querySelector('.richtext-input');
         const hidden = wrapper.querySelector('input[type="hidden"]');
@@ -58,12 +58,13 @@
         });
 
         // Plain-text paste — strips formatting from clipboard, respecting maxLength.
+        // insertPlainTextAtCaret turns \n into explicit <br> nodes (not browser-wrapped
+        // <div> blocks that serialize to extra <br>s) and fires its own 'input' event
+        // so the existing input listener handles sync.
         input.addEventListener('paste', (e) => {
             e.preventDefault();
             const pasted = (e.clipboardData || window.clipboardData).getData('text');
-            const remaining = maxLength - (input.textContent || '').length;
-            const toInsert = pasted.slice(0, Math.max(0, remaining));
-            document.execCommand('insertText', false, toInsert);
+            insertPlainTextAtCaret(input, pasted, maxLength);
         });
 
         input.addEventListener('keydown', (e) => {

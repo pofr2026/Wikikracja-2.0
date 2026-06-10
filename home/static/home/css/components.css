@@ -527,6 +527,30 @@ button.proposal-helpers-btn:focus-visible {
   outline: none;
 }
 
+/* ── Against popover trigger (analogous to helpers, neutral-colored) ─ */
+.proposal-against {
+  display: inline-flex;
+  align-items: center;
+  gap: .2rem;
+}
+button.proposal-against-btn {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  margin: -2px -4px;
+  border-radius: .35rem;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+button.proposal-against-btn:hover,
+button.proposal-against-btn:focus-visible {
+  background: rgba(255, 255, 255, .07);
+  color: var(--text-primary);
+  outline: none;
+}
+
 /* ── Helpers popover content ───────────────────────────────────── */
 .helpers-popover {
   --bs-popover-bg: var(--bg-card);
@@ -1384,6 +1408,39 @@ button.proposal-helpers-btn:focus-visible {
   border-color: rgba(255, 255, 255, .2);
   background: rgba(255, 255, 255, .04);
 }
+/* Override Bootstrap's .d-inline { display: inline !important } when hidden — */
+/* attribute selector + element attribute beats .d-inline by specificity (0,2,0 > 0,1,0). */
+[data-coord-state][hidden] {
+  display: none !important;
+}
+
+.action-btn-take {
+  background: var(--badge-proposition-bg);
+  color: var(--badge-proposition-color) !important;
+  border: 1px solid color-mix(in srgb, var(--badge-proposition-color) 35%, transparent);
+}
+.action-btn-take:hover {
+  filter: brightness(1.2);
+  border-color: var(--badge-proposition-color);
+}
+
+/* Detail page (.task-actions): unify all action/vote button sizes */
+.task-actions .task-vote-btn,
+.task-actions .action-btn {
+  min-height: 2.25rem;
+  padding: .35rem .75rem;
+  font-size: .85rem;
+  font-weight: 600;
+  line-height: 1.4;
+  border-radius: .5rem;
+  gap: .4rem;
+  box-sizing: border-box;
+  margin-bottom: 0;
+}
+.task-actions .task-vote-btn {
+  /* keep vote-btn border (others have variant-specific borders) */
+  border: 1px solid var(--border);
+}
 /* ══════════════════════════════════════════════════
    VOTE RESULTS (glosowania/szczegoly)
    ══════════════════════════════════════════════════ */
@@ -1564,8 +1621,8 @@ button.proposal-helpers-btn:focus-visible {
   gap: .3rem;
   padding: .28rem .7rem;
   border-radius: .4rem;
-  border: 1px solid rgba(96, 165, 250, .35);
-  background: rgba(96, 165, 250, .08);
+  border: 1px solid color-mix(in srgb, var(--badge-proposition-color) 35%, transparent);
+  background: var(--badge-proposition-bg);
   color: var(--badge-proposition-color);
   font-size: .78rem;
   font-weight: 500;
@@ -1573,7 +1630,7 @@ button.proposal-helpers-btn:focus-visible {
   transition: background var(--transition-fast), border-color var(--transition-fast);
 }
 .task-take-btn:hover {
-  background: rgba(96, 165, 250, .18);
+  filter: brightness(1.2);
   border-color: var(--badge-proposition-color);
 }
 .task-resign-btn {

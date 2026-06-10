@@ -1561,10 +1561,36 @@ body:has(.chat-rooms) .main-area {
     max-width: 28ch;
     line-height: 1.4;
 }
-.chat-no-unread-inline-icon {
-    color: var(--color-primary);
+/* Klikalny przycisk w podpowiedzi — te same KOLORY co aktywny #unread-filter-btn
+   (mirrorujemy regule #unread-filter-btn.active wyzej: primary tlo + bg-base tekst,
+   hover na accent-hover), zeby user od razu skojarzyl, ktory przycisk ma kliknac.
+   UWAGA: geometrie (padding/border-radius/font-size) ustawiamy tu lokalnie — pasek
+   dziedziczy ja z reguly bazowej .sort-btn, wiec nie jest 1:1 i moze sie rozjechac.
+   Klik = klik tego przycisku w pasku (showUnreadEmptyState w chat.js). */
+.chat-no-unread-inline-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: .28rem .45rem;
     margin: 0 0.2em;
-    vertical-align: -0.05em;
+    border-radius: .4rem;
+    border: 1px solid var(--color-primary);
+    background-color: var(--color-primary);
+    color: var(--bg-base);
+    font-size: var(--text-sm);
+    line-height: 1;
+    cursor: pointer;
+    vertical-align: middle;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+.chat-no-unread-inline-btn:hover {
+    background-color: var(--accent-hover);
+    border-color: var(--accent-hover);
+    color: var(--bg-base);
+}
+.chat-no-unread-inline-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 /* Gdy pokazany jest empty state "brak nieprzeczytanych", chowamy drzewo kategorii.
    Nie ruszamy inline style .row — sort wg czasu tez ukrywa .row przez display:none,
