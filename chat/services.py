@@ -10,6 +10,7 @@ from django.db.models import Count, Prefetch
 from firebase_admin import messaging
 from push_notifications.models import GCMDevice, WebPushDevice
 
+from zzz import reactions as reactions_core
 from zzz.richtext import strip_tags
 from zzz.utils import get_site_domain
 
@@ -46,7 +47,7 @@ def get_unread_count_for_user(user) -> int:
 
 
 def _reactions(message) -> dict:
-    return message.reactions if isinstance(message.reactions, dict) else {}
+    return reactions_core.normalize(message.reactions)
 
 
 def _username_to_color(username: str) -> str:
@@ -260,45 +261,17 @@ class ChatRepository:
     def add_vote(self, event: str, message_id: int):
         """Add a vote directly to the message's reactions JSONField."""
         m = Message.objects.get(pk=message_id)
-        reactions_dict = _reactions(m)
-        user_id = self.user.id
-
-        if 'upvotes' not in reactions_dict:
-            reactions_dict['upvotes'] = []
-        if 'downvotes' not in reactions_dict:
-            reactions_dict['downvotes'] = []
-
-        if user_id in reactions_dict['upvotes']:
-            reactions_dict['upvotes'].remove(user_id)
-        if user_id in reactions_dict['downvotes']:
-            reactions_dict['downvotes'].remove(user_id)
-
-        if event == 'upvote':
-            reactions_dict['upvotes'].append(user_id)
-        else:
-            reactions_dict['downvotes'].append(user_id)
-
-        m.reactions = reactions_dict
+        m.reactions = reactions_core.set_vote(m.reactions, self.user.id, event)
         m.save(update_fields=['reactions'])
-
-        return len(reactions_dict.get('upvotes', [])), len(reactions_dict.get('downvotes', []))
+        return reactions_core.vote_counts(m.reactions)
 
     @database_sync_to_async
     def remove_vote(self, event: str, message_id: int):
         """Remove a vote directly from the message's reactions JSONField."""
         m = Message.objects.get(pk=message_id)
-        reactions_dict = _reactions(m)
-        user_id = self.user.id
-
-        if event == 'upvote' and user_id in reactions_dict.get('upvotes', []):
-            reactions_dict['upvotes'].remove(user_id)
-        elif event == 'downvote' and user_id in reactions_dict.get('downvotes', []):
-            reactions_dict['downvotes'].remove(user_id)
-
-        m.reactions = reactions_dict
+        m.reactions = reactions_core.clear_vote(m.reactions, self.user.id, event)
         m.save(update_fields=['reactions'])
-
-        return len(reactions_dict.get('upvotes', [])), len(reactions_dict.get('downvotes', []))
+        return reactions_core.vote_counts(m.reactions)
 
     @database_sync_to_async
     def get_vote(self, message_id: int):
@@ -307,14 +280,10 @@ class ChatRepository:
             m = Message.objects.get(pk=message_id)
         except Message.DoesNotExist:
             return None
-        reactions_dict = _reactions(m)
-        user_id = self.user.id
-
-        if user_id in reactions_dict.get('upvotes', []):
-            return type('Vote', (), {'vote': 'upvote'})()
-        elif user_id in reactions_dict.get('downvotes', []):
-            return type('Vote', (), {'vote': 'downvote'})()
-        return None
+        vote = reactions_core.user_vote(m.reactions, self.user.id)
+        if vote is None:
+            return None
+        return type('Vote', (), {'vote': vote})()
 
     # -- Reaction methods --
     @database_sync_to_async
