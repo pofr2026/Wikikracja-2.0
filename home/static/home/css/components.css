@@ -1161,6 +1161,55 @@ button.proposal-against-btn:focus-visible {
   line-height: 1.6;
   margin-bottom: .5rem;
 }
+/* Arguments sort/filter toolbar — shares .sort-btn with chat & proposal lists */
+.args-sort-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-bottom: .75rem;
+}
+/* Up/down vote control on an argument — shares .vote-bar-* with chat */
+.arg-votes {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex-wrap: wrap;
+  margin-bottom: .5rem;
+}
+.arg-vote-btn,
+.arg-vote-static {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  font-size: .72rem;
+  padding: 2px 8px;
+  border-radius: .3rem;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  background: transparent;
+}
+.arg-vote-btn {
+  cursor: pointer;
+  transition: color var(--transition-fast), border-color var(--transition-fast);
+}
+.arg-vote-btn:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, .2);
+}
+.arg-vote-btn.active {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.arg-vote-btn[disabled] {
+  opacity: .55;
+  cursor: default;
+}
+.arg-vote-bar {
+  flex: 1 1 60px;
+  min-width: 60px;
+  max-width: 140px;
+}
 .arg-card-footer {
   display: flex;
   align-items: center;

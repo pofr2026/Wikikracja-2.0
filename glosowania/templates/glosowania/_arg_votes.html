@@ -1,0 +1,31 @@
+{% load i18n %}
+{% comment %}
+  Up/down vote control + support bar for a single argument.
+  Requires from context:
+    arg  — Argument decorated in the view with .upvotes, .downvotes,
+           .user_vote ('upvote'/'downvote'/None) and .vote_bar (zzz.reactions.vote_bar)
+    user — request.user
+    voting_open — False once the decision is closed (status 4/5)
+  Reuses the global .vote-bar-* styles shared with chat.
+{% endcomment %}
+<div class="arg-votes" data-vote-url="{% url 'glosowania:vote_argument' arg.id %}">
+  {% if user.is_authenticated and voting_open %}
+    <button type="button" class="arg-vote-btn{% if arg.user_vote == 'upvote' %} active{% endif %}"
+            data-event="upvote" title="{% trans 'Upvote' %}">
+      <i class="fas fa-thumbs-up"></i> <span class="arg-vote-count" data-count="up">{{ arg.upvotes }}</span>
+    </button>
+    <button type="button" class="arg-vote-btn{% if arg.user_vote == 'downvote' %} active{% endif %}"
+            data-event="downvote" title="{% trans 'Downvote' %}">
+      <i class="fas fa-thumbs-down"></i> <span class="arg-vote-count" data-count="down">{{ arg.downvotes }}</span>
+    </button>
+  {% else %}
+    <span class="arg-vote-static"><i class="fas fa-thumbs-up"></i> {{ arg.upvotes }}</span>
+    <span class="arg-vote-static"><i class="fas fa-thumbs-down"></i> {{ arg.downvotes }}</span>
+  {% endif %}
+
+  <div class="vote-bar-wrap arg-vote-bar"{% if not arg.vote_bar.show %} hidden{% endif %}>
+    <div class="vote-bar-fill {{ arg.vote_bar.css }}" style="width:{{ arg.vote_bar.pct }}%"></div>
+  </div>
+  <span class="vote-bar-label arg-vote-label" data-word="{% trans 'supports' %}"
+        {% if not arg.vote_bar.show %}hidden{% endif %}>{{ arg.vote_bar.pct }}% {% trans 'supports' %}</span>
+</div>

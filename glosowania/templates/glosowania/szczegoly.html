@@ -1,5 +1,6 @@
 {% extends 'glosowania/menu.html' %}
 {% load i18n %}
+{% load static %}
 {% load richtext %}
 
 {% block extra_css %}{{ argument_form.media }}{% endblock %}
@@ -145,7 +146,8 @@
 </div>
 
 {# Argumenty #}
-<div class="args-grid">
+{% include 'glosowania/_arg_sort_toolbar.html' %}
+<div class="args-grid" data-csrf="{{ csrf_token }}">
 
   <div>
     <div class="args-col-header for">
@@ -164,6 +166,7 @@
           </div>
         {% if arg.author %}</a>{% else %}</span>{% endif %}
         <div class="arg-card-content">{{ arg.content|richtext }}</div>
+        {% include 'glosowania/_arg_votes.html' %}
         {% if arg.author == current_user and id.status not in "4,5"|make_list %}
         <div class="arg-card-footer">
           <a href="{% url 'glosowania:edit_argument' arg.id %}" class="arg-edit-btn">{% trans 'Edit' %}</a>
@@ -207,6 +210,7 @@
           </div>
         {% if arg.author %}</a>{% else %}</span>{% endif %}
         <div class="arg-card-content">{{ arg.content|richtext }}</div>
+        {% include 'glosowania/_arg_votes.html' %}
         {% if arg.author == current_user and id.status not in "4,5"|make_list %}
         <div class="arg-card-footer">
           <a href="{% url 'glosowania:edit_argument' arg.id %}" class="arg-edit-btn">{% trans 'Edit' %}</a>
@@ -242,6 +246,7 @@ function toggleArgForm(id) {
   if (el.classList.contains('visible')) el.querySelector('textarea').focus();
 }
 </script>
+<script src="{% static 'glosowania/js/argument-voting.js' %}"></script>
 
 {% with chat_room=chat_room %}
   {% include 'chat/_embedded_chat.html' %}

@@ -1,0 +1,24 @@
+{% load i18n %}
+{% comment %}
+  Sort/filter toolbar for the arguments list. Reuses the shared .sort-btn
+  styling (also used by chat and the proposal lists). Requires from context:
+    arg_sort ('date'/'likes'), arg_order ('asc'/'desc'), arg_popular (bool),
+    arg_sort_links (dict with 'date'/'likes'/'popular' hrefs).
+{% endcomment %}
+<div class="args-sort-toolbar">
+  <span class="toolbar-sort-label">{% trans 'Sort' %}:</span>
+
+  <a href="{{ arg_sort_links.date }}" class="sort-btn{% if arg_sort == 'date' %} active{% endif %}">
+    <i class="fas fa-clock-rotate-left fa-fw"></i> {% trans 'Newest' %}
+    {% if arg_sort == 'date' %}<i class="fas fa-arrow-{% if arg_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>{% endif %}
+  </a>
+
+  <a href="{{ arg_sort_links.likes }}" class="sort-btn{% if arg_sort == 'likes' %} active{% endif %}">
+    <i class="fas fa-thumbs-up fa-fw"></i> {% trans 'Likes' %}
+    {% if arg_sort == 'likes' %}<i class="fas fa-arrow-{% if arg_order == 'asc' %}up{% else %}down{% endif %} sort-arrow"></i>{% endif %}
+  </a>
+
+  <a href="{{ arg_sort_links.popular }}" class="sort-btn{% if arg_popular %} active{% endif %}">
+    <i class="fas fa-fire fa-fw"></i> {% trans 'Popular' %}
+  </a>
+</div>

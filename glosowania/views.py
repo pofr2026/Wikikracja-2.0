@@ -11,14 +11,16 @@ from django.contrib.auth.models import User
 from django.core.mail import EmailMessage
 from django.db import transaction
 from django.db.models import Count, F
-from django.http import HttpRequest
+from django.http import HttpRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import translation
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
 
 from chat.views import get_translations as get_chat_translations
 from glosowania.forms import ArgumentForm, DecyzjaForm
 from glosowania.models import Argument, Decyzja, KtoJuzGlosowal, VoteCode, ZebranePodpisy
+from zzz import reactions as reactions_core
 from zzz.utils import build_site_url, get_site_domain
 
 log = logging.getLogger(__name__)
@@ -243,28 +245,40 @@ def details(request: HttpRequest, pk: int):
     # Check if chat room has unseen messages
     chat_room_pulse_class = szczegoly.get_chat_room_pulse_class(request.user)
 
-    # Query arguments for this decision
-    arguments = Argument.objects.filter(decyzja=pk).select_related('author')
+    # Query arguments for this decision and decorate each with vote data
+    # (same core as chat reactions). select_related pulls the author profile
+    # too — the template reads author.uzytkownik.avatar per row.
+    arguments = list(
+        Argument.objects.filter(decyzja=pk).select_related('author', 'author__uzytkownik')
+    )
+    for arg in arguments:
+        arg.upvotes, arg.downvotes = reactions_core.vote_counts(arg.reactions)
+        arg.user_vote = reactions_core.user_vote(arg.reactions, request.user.id)
+        arg.vote_bar = reactions_core.vote_bar(arg.reactions)
 
-    # Custom sorting: prioritize concise arguments, then by author's argument count
-    # First, get all arguments as a list to apply custom sorting
-    all_arguments = list(arguments)
+    # Sorting/filtering — same querystring shape as the proposal lists, but
+    # 'likes' sorts on the JSON vote counts so it happens in Python.
+    arg_sort = request.GET.get('sort', 'date')
+    arg_order = request.GET.get('order', 'desc')
+    if arg_order not in ('asc', 'desc'):
+        arg_order = 'desc'
+    arg_popular = request.GET.get('filter') == 'popular'
 
-    # Count arguments per author for this decision
-    from collections import Counter
-    author_counts = Counter(arg.author_id for arg in all_arguments if arg.author_id)
+    if arg_popular:
+        arguments = [arg for arg in arguments if arg.upvotes >= 1]
 
-    # Sort by: 1) content length (shorter first), 2) author's argument count (fewer first)
-    def sort_key(arg):
-        content_length = len(arg.content)
-        author_arg_count = author_counts.get(arg.author_id, 0) if arg.author_id else 0
-        return (content_length, author_arg_count)
-
-    sorted_arguments = sorted(all_arguments, key=sort_key)
+    reverse = arg_order == 'desc'
+    if arg_sort == 'likes':
+        arguments.sort(key=lambda a: (a.upvotes, a.created_at), reverse=reverse)
+    else:
+        arg_sort = 'date'
+        arguments.sort(key=lambda a: a.created_at, reverse=reverse)
 
     # Separate into positive and negative
-    positive_arguments = [arg for arg in sorted_arguments if arg.argument_type == 'FOR']
-    negative_arguments = [arg for arg in sorted_arguments if arg.argument_type == 'AGAINST']
+    positive_arguments = [arg for arg in arguments if arg.argument_type == 'FOR']
+    negative_arguments = [arg for arg in arguments if arg.argument_type == 'AGAINST']
+
+    arg_sort_links = _arg_sort_links(arg_sort, arg_order, arg_popular)
 
     # Create argument form for adding new arguments
     argument_form = ArgumentForm()
@@ -284,10 +298,36 @@ def details(request: HttpRequest, pk: int):
         'chat_room_pulse_class': chat_room_pulse_class,
         'positive_arguments': positive_arguments,
         'negative_arguments': negative_arguments,
+        'arg_sort': arg_sort,
+        'arg_order': arg_order,
+        'arg_popular': arg_popular,
+        'arg_sort_links': arg_sort_links,
+        # Voting follows the same rule as add/edit/delete: closed once
+        # the decision is Rejected (4) or Approved (5).
+        'voting_open': szczegoly.status not in (4, 5),
         'argument_form': argument_form,
         'MESSAGE_MAX_LENGTH': s.MESSAGE_MAX_LENGTH,
         'ec_translations': get_chat_translations(),
     })
+
+
+def _arg_sort_links(sort, order, popular):
+    """Build the argument toolbar hrefs, preserving the orthogonal state.
+
+    Clicking a sort key toggles its direction (or starts at desc); the
+    'popular' filter is carried across sort clicks and toggled on its own.
+    """
+    pop = '&filter=popular' if popular else ''
+
+    def sort_href(key):
+        nxt = ('asc' if order == 'desc' else 'desc') if sort == key else 'desc'
+        return f'?sort={key}&order={nxt}{pop}'
+
+    return {
+        'date': sort_href('date'),
+        'likes': sort_href('likes'),
+        'popular': f'?sort={sort}&order={order}' + ('' if popular else '&filter=popular'),
+    }
 
 
 @login_required
@@ -317,6 +357,43 @@ def add_argument(request: HttpRequest, pk: int):
             messages.error(request, _("There was an error with your argument. Please try again."))
 
     return redirect('glosowania:details', pk)
+
+
+@login_required
+@require_POST
+def vote_argument(request: HttpRequest, argument_id: int):
+    """Toggle the current user's up/down vote on an argument (AJAX).
+
+    Shares the vote core with chat (zzz.reactions) so the behaviour and the
+    stored JSON shape stay identical. Returns the fresh counts as JSON.
+    """
+    event = request.POST.get('event')
+    if event not in ('upvote', 'downvote'):
+        return JsonResponse({'error': 'invalid event'}, status=400)
+
+    with transaction.atomic():
+        # Lock only the argument row (of='self'); select_related avoids a
+        # second query for the status check. of= is a no-op on SQLite.
+        argument = get_object_or_404(
+            Argument.objects.select_for_update(of=('self',)).select_related('decyzja'),
+            pk=argument_id,
+        )
+        # Same rule as add/edit/delete: no changes once voting has ended.
+        if argument.decyzja.status in (4, 5):
+            return JsonResponse({'error': 'closed'}, status=403)
+
+        argument.reactions, active = reactions_core.toggle_vote(
+            argument.reactions, request.user.id, event
+        )
+        argument.save(update_fields=['reactions'])
+
+    upvotes, downvotes = reactions_core.vote_counts(argument.reactions)
+    return JsonResponse({
+        'upvotes': upvotes,
+        'downvotes': downvotes,
+        'active': active,
+        'event': event,
+    })
 
 
 @login_required
