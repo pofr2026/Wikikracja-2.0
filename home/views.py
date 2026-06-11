@@ -959,6 +959,8 @@ def site_admin(request: HttpRequest) -> HttpResponse:
                 'has_selected': selected_count > 0,
             })
 
+    # Limity treści propozycji/argumentu — źródło prawdy to pola modelu (max_length), nie osobne stałe.
+    decyzja_fields = Decyzja._meta
     return render(request, 'home/site_admin.html', {
         'signatures': settings.WYMAGANYCH_PODPISOW,
         'signatures_span': settings.CZAS_NA_ZEBRANIE_PODPISOW,
@@ -970,6 +972,15 @@ def site_admin(request: HttpRequest) -> HttpResponse:
         'categories_with_posts': categories_with_posts,
         'selected_onboarding_post_ids': selected_ids,
         'message_max_length': settings.MESSAGE_MAX_LENGTH,
+        'argument_max_length': DecyzjaArgument._meta.get_field('content').max_length,
+        'proposal_text_max_length': decyzja_fields.get_field('tresc').max_length,
+        'proposal_reasoning_max_length': decyzja_fields.get_field('uzasadnienie').max_length,
+        'proposal_penalty_max_length': decyzja_fields.get_field('kara').max_length,
+        'archive_chat_room_days': settings.ARCHIVE_PUBLIC_CHAT_ROOM,
+        'delete_chat_room_days': settings.DELETE_PUBLIC_CHAT_ROOM,
+        'acceptance_votes': settings.ACCEPTANCE,
+        'delete_inactive_user_after': settings.DELETE_INACTIVE_USER_AFTER,
+        'upload_image_max_size_mb': settings.UPLOAD_IMAGE_MAX_SIZE_MB,
     })
 
 

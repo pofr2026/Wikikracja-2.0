@@ -22,5 +22,6 @@ class ArgumentForm(forms.ModelForm):
         model = Argument
         fields = ('argument_type', 'content')
         widgets = {
-            'content': RichTextWidget(max_length=1000),
+            # licznik/limit widgetu z modelu — to samo źródło prawdy, którego ModelForm użyje do walidacji
+            'content': RichTextWidget(max_length=Argument._meta.get_field('content').max_length),
         }

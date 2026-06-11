@@ -131,7 +131,7 @@ class Argument(models.Model):
     decyzja = models.ForeignKey(Decyzja, on_delete=models.CASCADE, related_name='arguments', verbose_name=_('Decision'))
     author = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('Author'))
     argument_type = models.CharField(max_length=10, choices=ARGUMENT_TYPE_CHOICES, verbose_name=_('Argument Type'), help_text=_('Is this a positive or negative argument?'))
-    content = models.TextField(max_length=1000, verbose_name=_('Argument Content'), help_text=_('Enter your argument. You can include links.'))
+    content = models.TextField(max_length=2000, verbose_name=_('Argument Content'), help_text=_('Enter your argument. You can include links.'))
     # Up/down votes stored with the same JSON shape as chat messages
     # (zzz.reactions): {"upvotes": [user_id, ...], "downvotes": [user_id, ...]}
     reactions = models.JSONField(default=dict, blank=True)

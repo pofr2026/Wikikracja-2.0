@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-11 13:22+0200\n"
+"POT-Creation-Date: 2026-06-11 16:58+0200\n"
 "PO-Revision-Date: 2025-04-14 01:32+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: Polish <LL@li.org>\n"
@@ -35,8 +35,8 @@ msgstr "Załączniki"
 #: .\glosowania\templates\glosowania\edit.html:22
 #: .\glosowania\templates\glosowania\edit_argument.html:33
 #: .\home\templates\home\haslo.html:25
-#: .\home\templates\home\site_admin.html:255
-#: .\home\templates\home\site_admin.html:469
+#: .\home\templates\home\site_admin.html:374
+#: .\home\templates\home\site_admin.html:635
 #: .\obywatele\templates\obywatele\candidate_edit.html:56
 #: .\obywatele\templates\obywatele\change_email.html:23
 #: .\obywatele\templates\obywatele\change_username.html:18
@@ -76,7 +76,7 @@ msgstr "Podtytuł"
 #: .\board\models.py:24 .\board\templates\board\post_detail.html:49
 #: .\bookkeeping\models.py:120
 #: .\bookkeeping\templates\bookkeeping\transaction_list.html:44
-#: .\glosowania\models.py:130
+#: .\glosowania\models.py:132
 #: .\obywatele\templates\obywatele\_citizen_zadania_partial.html:32
 #: .\obywatele\templates\obywatele\citizen_zadania.html:55
 #: .\tasks\templates\tasks\_task_card.html:64
@@ -1705,53 +1705,53 @@ msgstr "Pokój czatu"
 msgid "draft"
 msgstr "szkic"
 
-#: .\glosowania\models.py:125
+#: .\glosowania\models.py:127
 msgid "Positive"
 msgstr "Argument Za"
 
-#: .\glosowania\models.py:126
+#: .\glosowania\models.py:128
 msgid "Negative"
 msgstr "Argument Przeciw"
 
-#: .\glosowania\models.py:129
+#: .\glosowania\models.py:131
 #: .\glosowania\templates\glosowania\delete_argument.html:14
 #: .\glosowania\templates\glosowania\edit_argument.html:12 .\home\models.py:15
 #: .\home\models.py:44 .\home\templatetags\feed_filters.py:35
 msgid "Decision"
 msgstr "Referendum"
 
-#: .\glosowania\models.py:131
+#: .\glosowania\models.py:133
 #: .\glosowania\templates\glosowania\delete_argument.html:15
 msgid "Argument Type"
 msgstr "Typ argumentu"
 
-#: .\glosowania\models.py:131
+#: .\glosowania\models.py:133
 msgid "Is this a positive or negative argument?"
 msgstr "Czy to argument pozytywny czy negatywny?"
 
-#: .\glosowania\models.py:132
+#: .\glosowania\models.py:134
 msgid "Argument Content"
 msgstr "Treść argumentu"
 
-#: .\glosowania\models.py:132
+#: .\glosowania\models.py:134
 msgid "Enter your argument. You can include links."
 msgstr "Wprowadź swój argument. Możesz dodać linki."
 
-#: .\glosowania\models.py:136
+#: .\glosowania\models.py:138
 msgid "Created At"
 msgstr "Utworzono"
 
-#: .\glosowania\models.py:137
+#: .\glosowania\models.py:139
 #: .\glosowania\templates\glosowania\delete_argument.html:23
 #: .\glosowania\templates\glosowania\edit_argument.html:16
 msgid "Last Modified"
 msgstr "Ostatnia modyfikacja"
 
-#: .\glosowania\models.py:141
+#: .\glosowania\models.py:143
 msgid "Argument"
 msgstr "Argument"
 
-#: .\glosowania\models.py:142
+#: .\glosowania\models.py:144
 msgid "Arguments"
 msgstr "Argumenty"
 
@@ -1904,9 +1904,12 @@ msgstr "Czas na dyskusję trwa"
 
 #: .\glosowania\templates\glosowania\parameters.html:25
 #: .\glosowania\templates\glosowania\parameters.html:28
-#: .\home\templates\home\site_admin.html:50
-#: .\home\templates\home\site_admin.html:66
-#: .\home\templates\home\site_admin.html:82
+#: .\home\templates\home\site_admin.html:45
+#: .\home\templates\home\site_admin.html:58
+#: .\home\templates\home\site_admin.html:71
+#: .\home\templates\home\site_admin.html:168
+#: .\home\templates\home\site_admin.html:181
+#: .\home\templates\home\site_admin.html:239
 #: .\obywatele\templates\obywatele\parameters.html:23
 msgid "days"
 msgstr "dni"
@@ -2449,7 +2452,7 @@ msgstr "Dodaj wydarzenie"
 msgid "Voting proposals"
 msgstr "Propozycje głosowań"
 
-#: .\home\templates\home\home.html:374 .\home\templates\home\site_admin.html:34
+#: .\home\templates\home\home.html:374 .\home\templates\home\site_admin.html:32
 msgid "signatures"
 msgstr "podpisy"
 
@@ -2651,166 +2654,258 @@ msgstr "Administracja strony i ustawień globalnych"
 msgid "Ultimately, the administration panel will require authentication by several authorized persons (by default, everyone has the right to authenticate; changes will be logged)"
 msgstr "Docelowo panel administracyjny będzie wymagał uwierzytelnienia przez kilka uprawnionych osób (domyślnie każdy ma prawo uwierzytelnienia; zmiany będą logowane)"
 
-#: .\home\templates\home\site_admin.html:30
+#: .\home\templates\home\site_admin.html:28
 msgid "Min. number of signatures for the referendum"
 msgstr "Min. ilość podpisów pod referendum"
 
-#: .\home\templates\home\site_admin.html:38
+#: .\home\templates\home\site_admin.html:35
 msgid "env: REQUIRED_SIGNATURES"
 msgstr "env: WYMAGANYCH_PODPISOW"
 
-#: .\home\templates\home\site_admin.html:46
+#: .\home\templates\home\site_admin.html:41
 msgid "Max time to collect signatures"
 msgstr "Maks. czas na zebranie podpisów"
 
-#: .\home\templates\home\site_admin.html:54
+#: .\home\templates\home\site_admin.html:48
 msgid "env: TIME_TO_GATHER_SIGNATURES"
 msgstr "env: CZAS_NA_ZEBRANIE_PODPISOW"
 
-#: .\home\templates\home\site_admin.html:62
+#: .\home\templates\home\site_admin.html:54
 msgid "Discussion duration"
 msgstr "Czas trwania dyskusji"
 
-#: .\home\templates\home\site_admin.html:70
+#: .\home\templates\home\site_admin.html:61
 msgid "env: DISCUSSION"
 msgstr "env: DYSKUSJA"
 
-#: .\home\templates\home\site_admin.html:78
+#: .\home\templates\home\site_admin.html:67
 msgid "Referendum duration"
 msgstr "Czas trwania referendum"
 
-#: .\home\templates\home\site_admin.html:86
+#: .\home\templates\home\site_admin.html:74
 msgid "env: REFERENDUM_DURATION"
 msgstr "env: CZAS_TRWANIA_REFERENDUM"
 
-#: .\home\templates\home\site_admin.html:96
-#: .\home\templates\home\site_admin.html:131
-msgid "Parameters are defined as environment variables. Panel editing will be available in a future release."
-msgstr "Parametry są definiowane jako zmienne środowiskowe. Edycja przez panel będzie dostępna w przyszłej wersji."
+#: .\home\templates\home\site_admin.html:80
+msgid "Max argument length"
+msgstr "Maksymalna długość argumentu"
 
-#: .\home\templates\home\site_admin.html:106
-msgid "Chat parameters"
-msgstr "Parametry czatu"
-
-#: .\home\templates\home\site_admin.html:114
-msgid "Max message length"
-msgstr "Maksymalna długość wiadomości"
-
-#: .\home\templates\home\site_admin.html:118
+#: .\home\templates\home\site_admin.html:84
+#: .\home\templates\home\site_admin.html:97
+#: .\home\templates\home\site_admin.html:110
+#: .\home\templates\home\site_admin.html:123
+#: .\home\templates\home\site_admin.html:155
 msgid "characters"
 msgstr "znaków"
 
-#: .\home\templates\home\site_admin.html:122
-msgid "env: MESSAGE_MAX_LENGTH"
-msgstr ""
+#: .\home\templates\home\site_admin.html:87
+msgid "model: Argument.content"
+msgstr "model: Argument.content"
 
-#: .\home\templates\home\site_admin.html:141
+#: .\home\templates\home\site_admin.html:93
+msgid "Max proposal law text length"
+msgstr "Maksymalna długość treści ustawy w propozycji"
+
+#: .\home\templates\home\site_admin.html:100
+msgid "model: Decyzja.tresc"
+msgstr "model: Decyzja.tresc"
+
+#: .\home\templates\home\site_admin.html:106
+msgid "Max proposal reasoning length"
+msgstr "Maksymalna długość uzasadnienia propozycji"
+
+#: .\home\templates\home\site_admin.html:113
+msgid "model: Decyzja.uzasadnienie"
+msgstr "model: Decyzja.uzasadnienie"
+
+#: .\home\templates\home\site_admin.html:119
+msgid "Max proposal penalty length"
+msgstr "Maksymalna długość kary w propozycji"
+
+#: .\home\templates\home\site_admin.html:126
+msgid "model: Decyzja.kara"
+msgstr "model: Decyzja.kara"
+
+#: .\home\templates\home\site_admin.html:134
+msgid "Parameters are defined as environment variables or model constraints. Panel editing will be available in a future release."
+msgstr "Parametry są definiowane jako zmienne środowiskowe lub ograniczenia modelu. Edycja przez panel będzie dostępna w przyszłej wersji."
+
+#: .\home\templates\home\site_admin.html:144
+msgid "Chat parameters"
+msgstr "Parametry czatu"
+
+#: .\home\templates\home\site_admin.html:151
+msgid "Max message length"
+msgstr "Maksymalna długość wiadomości"
+
+#: .\home\templates\home\site_admin.html:158
+msgid "env: MESSAGE_MAX_LENGTH"
+msgstr "env: MESSAGE_MAX_LENGTH"
+
+#: .\home\templates\home\site_admin.html:164
+msgid "Archive public chat room after"
+msgstr "Archiwizacja publicznego pokoju czatu po"
+
+#: .\home\templates\home\site_admin.html:171
+msgid "env: ARCHIVE_PUBLIC_CHAT_ROOM"
+msgstr "env: ARCHIVE_PUBLIC_CHAT_ROOM"
+
+#: .\home\templates\home\site_admin.html:177
+msgid "Delete public chat room after"
+msgstr "Usunięcie publicznego pokoju czatu po"
+
+#: .\home\templates\home\site_admin.html:184
+msgid "env: DELETE_PUBLIC_CHAT_ROOM"
+msgstr "env: DELETE_PUBLIC_CHAT_ROOM"
+
+#: .\home\templates\home\site_admin.html:190
+msgid "Max uploaded image size"
+msgstr "Maksymalny rozmiar przesyłanego obrazu"
+
+#: .\home\templates\home\site_admin.html:194
+msgid "MB"
+msgstr "MB"
+
+#: .\home\templates\home\site_admin.html:197
+msgid "env: UPLOAD_IMAGE_MAX_SIZE_MB"
+msgstr "env: UPLOAD_IMAGE_MAX_SIZE_MB"
+
+#: .\home\templates\home\site_admin.html:205
+#: .\home\templates\home\site_admin.html:250
+msgid "Parameters are defined as environment variables. Panel editing will be available in a future release."
+msgstr "Parametry są definiowane jako zmienne środowiskowe. Edycja przez panel będzie dostępna w przyszłej wersji."
+
+#: .\home\templates\home\site_admin.html:215
+msgid "Members parameters"
+msgstr "Parametry członków"
+
+#: .\home\templates\home\site_admin.html:222
+msgid "Votes required to accept a new member"
+msgstr "Głosy wymagane do zaakceptowania nowego członka"
+
+#: .\home\templates\home\site_admin.html:226
+msgid "votes"
+msgstr "głosów"
+
+#: .\home\templates\home\site_admin.html:229
+msgid "env: ACCEPTANCE"
+msgstr "env: ACCEPTANCE"
+
+#: .\home\templates\home\site_admin.html:235
+msgid "Delete inactive (unaccepted) member after"
+msgstr "Usunięcie nieaktywnego (niezaakceptowanego) członka po"
+
+#: .\home\templates\home\site_admin.html:242
+msgid "env: DELETE_INACTIVE_USER_AFTER"
+msgstr "env: DELETE_INACTIVE_USER_AFTER"
+
+#: .\home\templates\home\site_admin.html:260
 msgid "Updates"
 msgstr "Aktualizacje"
 
-#: .\home\templates\home\site_admin.html:147
-#: .\home\templates\home\site_admin.html:150
+#: .\home\templates\home\site_admin.html:266
+#: .\home\templates\home\site_admin.html:269
 msgid "Feature planned for a future release"
 msgstr "Funkcja planowana w przyszłej wersji"
 
-#: .\home\templates\home\site_admin.html:148
+#: .\home\templates\home\site_admin.html:267
 msgid "Check for updates"
 msgstr "Sprawdź aktualizacje"
 
-#: .\home\templates\home\site_admin.html:151
+#: .\home\templates\home\site_admin.html:270
 msgid "Update"
 msgstr "Aktualizuj"
 
-#: .\home\templates\home\site_admin.html:160
+#: .\home\templates\home\site_admin.html:279
 msgid "Automatic update checking and installation is planned for a future release."
 msgstr "Automatyczne sprawdzanie i instalacja aktualizacji są planowane w przyszłej wersji."
 
-#: .\home\templates\home\site_admin.html:170
+#: .\home\templates\home\site_admin.html:289
 msgid "Branding"
 msgstr "Branding"
 
-#: .\home\templates\home\site_admin.html:179
+#: .\home\templates\home\site_admin.html:298
 msgid "Upload a PNG graphic mark (longest side 512-1024 px, max 1 MB, transparent background recommended). Non-square images are letterboxed to a square on save. The mark replaces the default icon in the header and is the source for favicon and PWA icons."
 msgstr "Wgraj logo PNG (najdłuższy bok 512-1024 px, max 1 MB, przezroczyste tło zalecane). Obrazy nie-kwadratowe są wyrównywane do kwadratu przy zapisie. Logo zastępuje domyślną ikonę w nagłówku oraz jest źródłem dla faviconu i ikon PWA."
 
-#: .\home\templates\home\site_admin.html:184 .\site_settings\models.py:27
+#: .\home\templates\home\site_admin.html:303 .\site_settings\models.py:27
 msgid "Branding text"
 msgstr "Tekst marki"
 
-#: .\home\templates\home\site_admin.html:188
+#: .\home\templates\home\site_admin.html:307
 msgid "Name displayed next to the brand mark. Leave empty to use the Django Sites site name."
 msgstr "Nazwa wyświetlana obok logo. Pozostaw puste, aby użyć nazwy strony z Django Sites."
 
-#: .\home\templates\home\site_admin.html:189
+#: .\home\templates\home\site_admin.html:308
 #, python-format
 msgid "Max %(max)s characters."
 msgstr "Max %(max)s znaków."
 
-#: .\home\templates\home\site_admin.html:195 .\site_settings\models.py:35
+#: .\home\templates\home\site_admin.html:314 .\site_settings\models.py:35
 msgid "Brand mark"
 msgstr "Logo"
 
-#: .\home\templates\home\site_admin.html:209
-#: .\home\templates\home\site_admin.html:240
+#: .\home\templates\home\site_admin.html:328
+#: .\home\templates\home\site_admin.html:359
 msgid "Choose new file"
 msgstr "Wybierz nowy plik"
 
-#: .\home\templates\home\site_admin.html:209
-#: .\home\templates\home\site_admin.html:240
+#: .\home\templates\home\site_admin.html:328
+#: .\home\templates\home\site_admin.html:359
 msgid "Choose file"
 msgstr "Wybierz plik"
 
-#: .\home\templates\home\site_admin.html:216
-#: .\home\templates\home\site_admin.html:247
+#: .\home\templates\home\site_admin.html:335
+#: .\home\templates\home\site_admin.html:366
 #: .\templates\allauth\account\email.html:36
 msgid "Remove"
 msgstr "Usuń"
 
-#: .\home\templates\home\site_admin.html:220
+#: .\home\templates\home\site_admin.html:339
 msgid "Used on light themes (Light, Official) and as source for favicon/PWA icons."
 msgstr "Używane na tematach jasnych (Light, Official) oraz jako źródło faviconu i ikon PWA."
 
-#: .\home\templates\home\site_admin.html:226 .\site_settings\models.py:43
+#: .\home\templates\home\site_admin.html:345 .\site_settings\models.py:43
 msgid "Brand mark (dark themes)"
 msgstr "Logo (tematy ciemne)"
 
-#: .\home\templates\home\site_admin.html:251
+#: .\home\templates\home\site_admin.html:370
 msgid "Optional variant for dark themes (Dark, Civic). Falls back to the main brand mark if empty."
 msgstr "Opcjonalny wariant dla tematów ciemnych (Dark, Civic). Fallback do głównego logo, gdy puste."
 
-#: .\home\templates\home\site_admin.html:293
+#: .\home\templates\home\site_admin.html:412
 msgid "Brand mark must be a PNG file."
 msgstr "Logo musi być plikiem PNG."
 
-#: .\home\templates\home\site_admin.html:300 .\site_settings\validators.py:14
+#: .\home\templates\home\site_admin.html:419 .\site_settings\validators.py:14
 msgid "Branding image file is too large (max 1 MB)."
 msgstr "Plik logo jest za duży (max 1 MB)."
 
-#: .\home\templates\home\site_admin.html:312
+#: .\home\templates\home\site_admin.html:431
 msgid "Brand mark longest side must be at least 512 pixels."
 msgstr "Najdłuższy bok logo musi mieć co najmniej 512 pikseli."
 
-#: .\home\templates\home\site_admin.html:317
+#: .\home\templates\home\site_admin.html:436
 msgid "Brand mark longest side must be at most 1024 pixels."
 msgstr "Najdłuższy bok logo może mieć maksymalnie 1024 piksele."
 
-#: .\home\templates\home\site_admin.html:332
+#: .\home\templates\home\site_admin.html:451
 msgid "click Save to apply"
 msgstr "kliknij Zapisz, aby zastosować"
 
-#: .\home\templates\home\site_admin.html:363
+#: .\home\templates\home\site_admin.html:482
 msgid "An error occurred. Please try again."
 msgstr "Wystąpił błąd. Spróbuj ponownie."
 
-#: .\home\templates\home\site_admin.html:389
+#: .\home\templates\home\site_admin.html:555
 msgid "Onboarding"
 msgstr "Formularz rejestracyjny"
 
-#: .\home\templates\home\site_admin.html:399
+#: .\home\templates\home\site_admin.html:565
 msgid "Mandatory documents"
 msgstr "Dokumenty obowiązkowe"
 
-#: .\home\templates\home\site_admin.html:463
+#: .\home\templates\home\site_admin.html:629
 msgid "No documents in any category."
 msgstr "Brak dokumentów w żadnej kategorii."
 

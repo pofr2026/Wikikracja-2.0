@@ -21,79 +21,117 @@
       <span class="section-heading" style="font-size:.85rem;">{% trans "Voting parameters" %}</span>
     </div>
     <div class="card-body p-0">
-      <table class="table mb-0" style="font-size:.875rem;">
-        <tbody>
+      <div class="settings-list">
 
-          <tr>
-            <td style="width:60%;color:var(--text-muted);padding:.85rem 1rem;">
-              <i class="fas fa-signature me-2" style="color:var(--accent);opacity:.6;width:16px;text-align:center;"></i>
-              {% trans "Min. number of signatures for the referendum" %}
-            </td>
-            <td style="padding:.85rem 1rem;">
-              <span class="fw-semibold">{{ signatures }}</span>
-              <span style="font-size:.78rem;color:var(--text-muted);margin-left:.35rem;">{% trans "signatures" %}</span>
-            </td>
-            <td style="padding:.85rem 1rem;text-align:right;">
-              <span class="badge" style="background:rgba(255,255,255,.07);color:var(--text-muted);font-size:.7rem;font-weight:400;border-radius:.35rem;padding:.25rem .55rem;">
-                <i class="fas fa-lock me-1" style="font-size:.65rem;"></i>{% trans "env: REQUIRED_SIGNATURES" %}
-              </span>
-            </td>
-          </tr>
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-signature setting-icon"></i>{% trans "Min. number of signatures for the referendum" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ signatures }}</span>
+            <span class="setting-unit">{% trans "signatures" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: REQUIRED_SIGNATURES" %}</span>
+          </div>
+        </div>
 
-          <tr>
-            <td style="color:var(--text-muted);padding:.85rem 1rem;">
-              <i class="fas fa-clock me-2" style="color:var(--accent);opacity:.6;width:16px;text-align:center;"></i>
-              {% trans "Max time to collect signatures" %}
-            </td>
-            <td style="padding:.85rem 1rem;">
-              <span class="fw-semibold">{{ signatures_span }}</span>
-              <span style="font-size:.78rem;color:var(--text-muted);margin-left:.35rem;">{% trans "days" %}</span>
-            </td>
-            <td style="padding:.85rem 1rem;text-align:right;">
-              <span class="badge" style="background:rgba(255,255,255,.07);color:var(--text-muted);font-size:.7rem;font-weight:400;border-radius:.35rem;padding:.25rem .55rem;">
-                <i class="fas fa-lock me-1" style="font-size:.65rem;"></i>{% trans "env: TIME_TO_GATHER_SIGNATURES" %}
-              </span>
-            </td>
-          </tr>
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-clock setting-icon"></i>{% trans "Max time to collect signatures" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ signatures_span }}</span>
+            <span class="setting-unit">{% trans "days" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: TIME_TO_GATHER_SIGNATURES" %}</span>
+          </div>
+        </div>
 
-          <tr>
-            <td style="color:var(--text-muted);padding:.85rem 1rem;">
-              <i class="fas fa-comments me-2" style="color:var(--accent);opacity:.6;width:16px;text-align:center;"></i>
-              {% trans "Discussion duration" %}
-            </td>
-            <td style="padding:.85rem 1rem;">
-              <span class="fw-semibold">{{ discussion_span }}</span>
-              <span style="font-size:.78rem;color:var(--text-muted);margin-left:.35rem;">{% trans "days" %}</span>
-            </td>
-            <td style="padding:.85rem 1rem;text-align:right;">
-              <span class="badge" style="background:rgba(255,255,255,.07);color:var(--text-muted);font-size:.7rem;font-weight:400;border-radius:.35rem;padding:.25rem .55rem;">
-                <i class="fas fa-lock me-1" style="font-size:.65rem;"></i>{% trans "env: DISCUSSION" %}
-              </span>
-            </td>
-          </tr>
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-comments setting-icon"></i>{% trans "Discussion duration" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ discussion_span }}</span>
+            <span class="setting-unit">{% trans "days" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: DISCUSSION" %}</span>
+          </div>
+        </div>
 
-          <tr>
-            <td style="color:var(--text-muted);padding:.85rem 1rem;border-bottom:none;">
-              <i class="fas fa-vote-yea me-2" style="color:var(--accent);opacity:.6;width:16px;text-align:center;"></i>
-              {% trans "Referendum duration" %}
-            </td>
-            <td style="padding:.85rem 1rem;border-bottom:none;">
-              <span class="fw-semibold">{{ referendum_span }}</span>
-              <span style="font-size:.78rem;color:var(--text-muted);margin-left:.35rem;">{% trans "days" %}</span>
-            </td>
-            <td style="padding:.85rem 1rem;border-bottom:none;text-align:right;">
-              <span class="badge" style="background:rgba(255,255,255,.07);color:var(--text-muted);font-size:.7rem;font-weight:400;border-radius:.35rem;padding:.25rem .55rem;">
-                <i class="fas fa-lock me-1" style="font-size:.65rem;"></i>{% trans "env: REFERENDUM_DURATION" %}
-              </span>
-            </td>
-          </tr>
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-vote-yea setting-icon"></i>{% trans "Referendum duration" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ referendum_span }}</span>
+            <span class="setting-unit">{% trans "days" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: REFERENDUM_DURATION" %}</span>
+          </div>
+        </div>
 
-        </tbody>
-      </table>
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-comment-dots setting-icon"></i>{% trans "Max argument length" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ argument_max_length }}</span>
+            <span class="setting-unit">{% trans "characters" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "model: Argument.content" %}</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-scroll setting-icon"></i>{% trans "Max proposal law text length" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ proposal_text_max_length }}</span>
+            <span class="setting-unit">{% trans "characters" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "model: Decyzja.tresc" %}</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-align-left setting-icon"></i>{% trans "Max proposal reasoning length" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ proposal_reasoning_max_length }}</span>
+            <span class="setting-unit">{% trans "characters" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "model: Decyzja.uzasadnienie" %}</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-gavel setting-icon"></i>{% trans "Max proposal penalty length" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ proposal_penalty_max_length }}</span>
+            <span class="setting-unit">{% trans "characters" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "model: Decyzja.kara" %}</span>
+          </div>
+        </div>
+
+      </div>
       <div class="px-3 pb-3 pt-1">
-        <span style="font-size:.72rem;color:var(--text-muted);">
+        <span class="settings-note">
           <i class="fas fa-info-circle me-1"></i>
-          {% trans "Parameters are defined as environment variables. Panel editing will be available in a future release." %}
+          {% trans "Parameters are defined as environment variables or model constraints. Panel editing will be available in a future release." %}
         </span>
       </div>
     </div>
@@ -106,27 +144,108 @@
       <span class="section-heading" style="font-size:.85rem;">{% trans "Chat parameters" %}</span>
     </div>
     <div class="card-body p-0">
-      <table class="table mb-0" style="font-size:.875rem;">
-        <tbody>
-          <tr>
-            <td style="width:60%;color:var(--text-muted);padding:.85rem 1rem;border-bottom:none;">
-              <i class="fas fa-text-width me-2" style="color:var(--accent);opacity:.6;width:16px;text-align:center;"></i>
-              {% trans "Max message length" %}
-            </td>
-            <td style="padding:.85rem 1rem;border-bottom:none;">
-              <span class="fw-semibold">{{ message_max_length }}</span>
-              <span style="font-size:.78rem;color:var(--text-muted);margin-left:.35rem;">{% trans "characters" %}</span>
-            </td>
-            <td style="padding:.85rem 1rem;border-bottom:none;text-align:right;">
-              <span class="badge" style="background:rgba(255,255,255,.07);color:var(--text-muted);font-size:.7rem;font-weight:400;border-radius:.35rem;padding:.25rem .55rem;">
-                <i class="fas fa-lock me-1" style="font-size:.65rem;"></i>{% trans "env: MESSAGE_MAX_LENGTH" %}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="settings-list">
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-text-width setting-icon"></i>{% trans "Max message length" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ message_max_length }}</span>
+            <span class="setting-unit">{% trans "characters" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: MESSAGE_MAX_LENGTH" %}</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-box-archive setting-icon"></i>{% trans "Archive public chat room after" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ archive_chat_room_days }}</span>
+            <span class="setting-unit">{% trans "days" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: ARCHIVE_PUBLIC_CHAT_ROOM" %}</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-trash-can setting-icon"></i>{% trans "Delete public chat room after" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ delete_chat_room_days }}</span>
+            <span class="setting-unit">{% trans "days" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: DELETE_PUBLIC_CHAT_ROOM" %}</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-image setting-icon"></i>{% trans "Max uploaded image size" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ upload_image_max_size_mb }}</span>
+            <span class="setting-unit">{% trans "MB" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: UPLOAD_IMAGE_MAX_SIZE_MB" %}</span>
+          </div>
+        </div>
+
+      </div>
       <div class="px-3 pb-3 pt-1">
-        <span style="font-size:.72rem;color:var(--text-muted);">
+        <span class="settings-note">
+          <i class="fas fa-info-circle me-1"></i>
+          {% trans "Parameters are defined as environment variables. Panel editing will be available in a future release." %}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  {# ── PARAMETRY OBYWATELI ── #}
+  <div class="card mb-4">
+    <div class="card-header d-flex align-items-center gap-2">
+      <i class="fas fa-users" style="color:var(--accent);opacity:.8;font-size:.85rem;"></i>
+      <span class="section-heading" style="font-size:.85rem;">{% trans "Members parameters" %}</span>
+    </div>
+    <div class="card-body p-0">
+      <div class="settings-list">
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-user-check setting-icon"></i>{% trans "Votes required to accept a new member" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ acceptance_votes }}</span>
+            <span class="setting-unit">{% trans "votes" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: ACCEPTANCE" %}</span>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-label">
+            <i class="fas fa-user-clock setting-icon"></i>{% trans "Delete inactive (unaccepted) member after" %}
+          </div>
+          <div class="setting-value">
+            <span class="fw-semibold">{{ delete_inactive_user_after }}</span>
+            <span class="setting-unit">{% trans "days" %}</span>
+          </div>
+          <div class="setting-source">
+            <span class="badge setting-badge"><i class="fas fa-lock setting-badge-lock"></i>{% trans "env: DELETE_INACTIVE_USER_AFTER" %}</span>
+          </div>
+        </div>
+
+      </div>
+      <div class="px-3 pb-3 pt-1">
+        <span class="settings-note">
           <i class="fas fa-info-circle me-1"></i>
           {% trans "Parameters are defined as environment variables. Panel editing will be available in a future release." %}
         </span>
@@ -368,6 +487,53 @@
   </div>
 
   <style>
+  /* ── read-only lista parametrów (zastępuje tabele 3-kolumnowe; responsywna) ── */
+  .settings-list { display: flex; flex-direction: column; }
+  .setting-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem 1rem;
+    flex-wrap: wrap;
+    padding: .85rem 1rem;
+    font-size: .875rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+  }
+  .setting-row:last-child { border-bottom: none; }
+  .setting-label {
+    flex: 1 1 220px;
+    min-width: 0;
+    color: var(--text-muted);
+  }
+  .setting-icon {
+    color: var(--accent);
+    opacity: .6;
+    width: 16px;
+    text-align: center;
+    margin-right: .5rem;
+  }
+  .setting-value { flex: 0 0 auto; }
+  .setting-unit { font-size: .78rem; color: var(--text-muted); margin-left: .35rem; }
+  .setting-source { margin-left: auto; }
+  .setting-badge {
+    background: rgba(255,255,255,.07);
+    color: var(--text-muted);
+    font-size: .7rem;
+    font-weight: 400;
+    border-radius: .35rem;
+    padding: .25rem .55rem;
+    /* długie nazwy zmiennych (np. DELETE_INACTIVE_USER_AFTER) muszą móc się zawinąć na wąskim ekranie */
+    white-space: normal;
+    word-break: break-word;
+    text-align: left;
+  }
+  .setting-badge-lock { font-size: .65rem; margin-right: .25rem; }
+  /* mobile: znacznik źródła schodzi pod wartość, nic nie wypycha karty w poziomie */
+  @media (max-width: 575.98px) {
+    .setting-row { padding: .7rem .9rem; }
+    .setting-source { margin-left: 0; flex-basis: 100%; }
+  }
+  .settings-note { font-size: .72rem; color: var(--text-muted); }
+
   /* dark + civic: jasna ikonka */
   :root #onboarding-accordion .accordion-button::after,
   [data-theme="dark"] #onboarding-accordion .accordion-button::after,
