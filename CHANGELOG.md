@@ -1,6 +1,557 @@
 # CHANGELOG
 
 
+## v1.5.0 (2026-06-10)
+
+### Bug Fixes
+
+- **bookkeeping**: Key pivot rows by cat_id, not category name
+  ([`90eccf3`](https://github.com/soma115/Wikikracja/commit/90eccf3500707650795fe8bd73aab4b8e77b2c49))
+
+Deleted categories all resolved to cat_name='—', causing rows_by_cat.setdefault('—', …) to merge
+  them into a single row and sum their amounts incorrectly.
+
+Key the dict by cat_id (integer) instead; the display label 'category_name' stays '—' for
+  missing/null categories but each original category ID gets its own row.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **bookkeeping**: Make Asset.save() default-switch atomic
+  ([`fdf110a`](https://github.com/soma115/Wikikracja/commit/fdf110af9d4f5c76625ae3a8e5e23078aec1f5a3))
+
+Setting is_default=True unsets the previous default before saving the new one. Without a
+  transaction, if super().save() raised after the unset, the DB was left with zero defaults and no
+  rollback. Wrapped both steps in transaction.atomic().
+
+Also flags validate_constraints() with a TODO: it excludes is_default globally, so any future
+  constraint on that field would be silently skipped at form validation and only surface as an
+  IntegrityError on save — future constraints should narrow exclude to the constraint name.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **bookkeeping**: Require asset on transactions at DB level
+  ([`71b0406`](https://github.com/soma115/Wikikracja/commit/71b04060186aea8ac138cf243ccaa69134fdf41f))
+
+Transaction.asset was null=True (a legacy artifact of adding the field to existing rows in
+  0026/0027), while the form already required it (blank=False). NULL-asset transactions would
+  silently vanish from asset_balances and category_breakdown, which skipped asset_id=None.
+
+Migration 0030 defensively backfills any NULL asset with the default asset (a no-op in practice —
+  0027 already backfilled all to PLN), then alters the field to NOT NULL. Creating a transaction
+  without an asset now raises IntegrityError instead of disappearing from the books.
+
+Removes the now-dead `asset is None` guards in services.py. Keeps the `asset_obj is None` guard (a
+  distinct referential check, not nullability).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Case-insensitive room name check with Unicode support
+  ([`f39a237`](https://github.com/soma115/Wikikracja/commit/f39a2378abbbecd104b2cdde10003ea37e732dda))
+
+Replaced DB-level iexact with Python casefold() scan. SQLite's LIKE only case-folds ASCII A-Z, so
+  Polish letters like Ś/ś, Ż/ż, Ó/ó slipped through — 'Środa' and 'środa' could coexist as separate
+  rooms.
+
+Python's casefold() handles full Unicode case-folding correctly and is DB-agnostic. Full table scan
+  is acceptable for the rooms table; a denormalized title_cf column with an index would be the next
+  step at large scale.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Data-raw in EJS template stops "pokaż więcej" leaking into edited content
+  ([`9a5988a`](https://github.com/soma115/Wikikracja/commit/9a5988a857df775a9529f65055cb2887ed3457f1))
+
+Edycja wiadomości załadowanej z historii (po reload) wstrzykiwała literalny tekst "… pokaż więcej"
+  do treści. Przyczyna: dataset.raw był ustawiany tylko w addMessage (nowe wiadomości w sesji), więc
+  batch insert / replace / embed renderowały .msg-text bez raw_text. setEditing fallback'ował do
+  innerHTML — czyli ciągnął całą strukturę .expandable razem z hint'em. User edytował, wysyłał z
+  powrotem, backend zapisywał HTML expandable jako część treści.
+
+Fix: data-raw="<%=raw_message%>" w template'cie EJS — single source of truth dla wszystkich 4
+  ścieżek renderu. EJS <%= escape'uje wartość bezpiecznie do atrybutu. Po edycji (editMessageText /
+  updateMessage) dataset.raw jest synchronizowane tuż przed innerHTML.
+
+Test: e2e/chat-edit-message.spec.js pokrywa oba scenariusze (sesja + reload).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat**: Handle race condition in _post_send_processing
+  ([`af6259c`](https://github.com/soma115/Wikikracja/commit/af6259c46cf80d46aea4ff25d813c559e251862c))
+
+When online_registry reports a member as online but get_consumer() returns None (race between
+  registry check and disconnect), the code fell through to consumer.repo.unsee_room() with
+  consumer=None, raising AttributeError on every message sent to the room.
+
+Consolidate the no-consumer branch: skip further processing with continue regardless of mute status;
+  only schedule a push notification beforehand when not muted.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Label system messages as "System" instead of "—"
+  ([`b7c3a94`](https://github.com/soma115/Wikikracja/commit/b7c3a94ded366d209b44ddf300c069f08f5ad7b3))
+
+System messages (sender=None, non-anonymous — e.g. room rename) were rendered with no author: the
+  sidebar preview and message bubble showed "—:" because build_chat_message_payload returned
+  username=None and the room_link template fell into its else branch.
+
+- serializers.py: username falls back to "System" for sender-less, non-anonymous messages
+  (consistent with the notification title path, which already used "System"). - room_link.html: else
+  branch renders {% trans 'System' %} instead of "—".
+
+The .po diff is otherwise pure churn — line-number updates and a reorder of the already-translated
+  "Change language" string; the only new entry is "System" / "System".
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Unread filter respects manual toggle over URL intent
+  ([`b824245`](https://github.com/soma115/Wikikracja/commit/b8242454e5d711d1f769d9a77745bbb65f105e7c))
+
+decideUnreadFilterOverride + flaga userToggledFilter: reczny klik usera bije asynchroniczne
+  wsOnConnect, ktore czytajac wciaz obecne ?view=unread w URL wlaczaloby filtr z powrotem (bug
+  "filtr wraca po odkliknieciu").
+
+Empty-state "brak nieprzeczytanych": gola ikona -> realny <button> delegujacy do #unread-filter-btn
+  (bez duplikacji logiki), aria-label opisuje akcje (zdejmuje filtr). Guard after='' gdy tlumaczenie
+  zgubi placeholder {icon}.
+
+Testy: decideUnreadFilterOverride (8) + showUnreadEmptyState (6, jsdom).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+- **chat**: Update sidebar preview on last message edit
+  ([`e62dc9e`](https://github.com/soma115/Wikikracja/commit/e62dc9e8fa182e35a6780aa7daef1c5ba80b6e7b))
+
+Editing the last message in a room now refreshes the sidebar snippet for all connected clients in
+  real time, and persists the updated text to Room.last_message_text in the DB.
+
+Backend: - signals.py: on Message edit, update last_message_text only when the edited message is the
+  room's last (checked by pk, immune to auto_now changing Message.time on every save). Guard skips
+  the exists() query for saves that don't touch the text field. - services.py:
+  is_last_message_in_room() repo method (pk__gt). - consumers.py: edit_message payload gains
+  room_id, username, anonymous, is_last_message so the frontend can update the sidebar correctly.
+
+Frontend: - domapi.js: updateSidebarForMessage() gains {reorder, bumpActivity} options. bumpActivity
+  defaults to reorder, so new messages bump date and dataset.lastActivity as before; edits pass
+  reorder:false and get bumpActivity:false automatically — snippet and sender update but the sort
+  key and displayed date stay untouched. - chat.js: onReceiveEdit calls
+  updateSidebarForMessage({reorder:false}) when is_last_message is true.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **chat**: Update unread badge in real-time for online users who had seen the room
+  ([`8285e1b`](https://github.com/soma115/Wikikracja/commit/8285e1b1638f788e5d6bfa309b722e174ff32a3e))
+
+consumer.unsee_room(room) does not exist on ChatConsumer — only on ChatRepository. This caused
+  AttributeError swallowed by the try/except, so online receivers never got a push_unread_count()
+  call and their nav badge stayed stale until next page load or tab refocus.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **ci**: Downgrade GitHub Actions to stable versions
+  ([`0ca48ac`](https://github.com/soma115/Wikikracja/commit/0ca48ac16fa92c0c85ad80e9c4430e6dd127f9e0))
+
+actions/checkout v6, docker/* v4-v7 don't exist — caused workflow failure on every push.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **expandable**: Block toggle when selection intersects body
+  ([`a098aa3`](https://github.com/soma115/Wikikracja/commit/a098aa3a62c3dc0340ca2d7b483048b45258cf3f))
+
+Add intersectsNode guard and Jest tests for cross-boundary selection. Bump app version to 1.4.3.
+  Stop tracking CLAUDE.md; ignore local AI rules files in .gitignore.
+
+Co-authored-by: Cursor <cursoragent@cursor.com>
+
+- **i18n**: Restore 3 Polish translations dropped during main merge
+  ([`db3d7cd`](https://github.com/soma115/Wikikracja/commit/db3d7cd3bde66927468713294e8dddad387fa7c1))
+
+makemessages after the merge picked up new msgids from main's side but left their msgstr empty
+  because main's .po wasn't merged. Restore the missing translations (with typo fixes vs main's
+  original):
+
+- "This information will allow us to contact you and activate your account." — fix main's typo
+  "skonaktować" -> "skontaktować" - "We will contact you soon." - "We have sent an email with a
+  confirmation link to your inbox."
+
+PLN -> zł was dropped from main but is no longer used in our code after the bookkeeping refactor
+  (asset_balances returns symbol dynamically), so makemessages no longer extracts it.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **i18n**: Unstick PL email confirmation msgstr (merge artifact)
+  ([`a0b63d4`](https://github.com/soma115/Wikikracja/commit/a0b63d4edbd912932db375d15fda48a7f25f4008))
+
+msgstr for "Your email has been confirmed... onboarding form: %(link)s" had a duplicated tail glued
+  after %(link)s — second copy of the same sentence with slightly different phrasing. Likely
+  artifact of an earlier merge or paste-during-translation. User saw the duplicate text in the
+  confirmation email.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **richtext**: Eliminate ghost empty lines from paste and legacy DB content
+  ([`fca609e`](https://github.com/soma115/Wikikracja/commit/fca609eeccf8e8151bec4cc88bb8e090f906be36))
+
+Root cause was 2-layered: 1. Frontend paste used execCommand('insertText') → browser wrapped in
+  <div> blocks with filler <br>, then getInputHtml serialized those blocks to "<br><br>" producing
+  extra empty lines. 2. Backend sanitize() did NOT normalize \n → <br>; only the |richtext template
+  tag did. Chat consumers and RichTextWidget stored raw \n in DB, and edit-flow re-emitted raw \n
+  via TEXT_NODE in getInputHtml, perpetuating the bug for any legacy or non-template-tag render
+  path.
+
+Changes: - richtext-core.js: new insertPlainTextAtCaret() inserts text+<br> via DOM API;
+  getInputHtml normalizes block fillers, strips trailing <br>, and converts \n in TEXT_NODE (legacy
+  content) to <br>. - All 3 paste handlers (chat normal, embedded, RichTextWidget) use
+  insertPlainTextAtCaret — single source of truth. - sanitize() (zzz/richtext.py): central
+  CRLF/CR/LF → <br> normalization before bleach.clean. Template tag drops its duplicate. - 28 jest
+  tests + 13 Django tests + 2 Playwright E2E covering paste, legacy TEXT_NODE, CRLF, edit-flow.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **richtext**: Handle &amp; entity as unit in URL linkification regex
+  ([`6203a79`](https://github.com/soma115/Wikikracja/commit/6203a79154d6fb1ed72a29e66f71e6cce95236c5))
+
+URL_REGEX alternation ((?:&amp;|char_class)*) tries the 5-char entity sequence first, preventing the
+  regex from stopping at ';' mid-entity. Added tests covering &amp; in query strings and regression
+  for pre-linked <a> tags that must not be double-wrapped.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **tasks**: Clip get_chat_room_title to 90 chars correctly
+  ([`83235e6`](https://github.com/soma115/Wikikracja/commit/83235e68fe8e2c8d824e521369ee2a9c6531ba91))
+
+f"Task #{id}: {title[:90]}" clips the title first, then prepends the prefix — a 100-char title would
+  yield a 107-char result. Moved the slice to the end of the full string instead.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **test**: Ignore collectstatic dir in jest
+  ([`1f2502b`](https://github.com/soma115/Wikikracja/commit/1f2502b76304c9049dc8f44a4675a8e8b37106be))
+
+jest.config nie mial testPathIgnorePatterns, wiec Jest kolekcjonowal stale kopie testow z root-owego
+  static/ (collectstatic, gitignorowany) obok zrodel <app>/static/... — kazdy test chatu/home lecial
+  2x (11 suit / 140 testow zamiast 6 / 73). Stara kopia po edycji testu bez ponownego collectstatic
+  dawalaby falszywy PASS maskujacy regresje.
+
+Kotwica <rootDir>/static/ trafia tylko w root static/, nie w zrodla pod <app>/static/ (gole /static/
+  wycieloby wszystkie testy -> 0 zebranych).
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+- **tests**: Use TransactionTestCase for SendEmailToAll thread visibility
+  ([`fd8d0ba`](https://github.com/soma115/Wikikracja/commit/fd8d0baf9e62148bb42bd7f3f4106cdb8ca4c61e))
+
+`SendEmailToAll` spawns a background thread that queries the DB for active users. Under `TestCase`
+  the test runs inside a transaction invisible to the background thread — its read hits an
+  `OperationalError: database table is locked: obywatele_uzytkownik`, the exception is swallowed by
+  the broad except
+
+in `_send_with_delay`, and the email never reaches `mail.outbox`. Result: 2 tests asserting outbox
+  counts (1 and 2 emails) always saw 0.
+
+`TransactionTestCase` commits between operations, so the worker thread sees the test fixtures.
+  Production race-condition protection in `SendEmailToAll._get_recipients` (run inside the thread,
+  just before send) is preserved.
+
+`ChatMessagesEmailTest` left on `TestCase` — its worker thread does not hit the DB (recipients
+  computed in the main thread before spawn).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **ui**: Anchor referendum toast over card without layout jump
+  ([`337dd9f`](https://github.com/soma115/Wikikracja/commit/337dd9f112f93dcd07e74c2b8c5b98358c7e4283))
+
+The signature/referendum confirmation toast was centered at a fixed 33% viewport offset, ignoring
+  screen width. Anchor it horizontally to the content card and place it near the card title instead.
+
+Two follow-up issues addressed: - The notification permission banner expands via a 300ms max-height
+  transition that pushes the card down. Measuring the card at DOMContentLoaded gave a stale
+  position, so the toast appeared too high. Hide the toast until placed and reveal it only after the
+  banner's transitionend (or immediately when no banner animates), eliminating the visible jump. -
+  The banner's frozen max-height could clip wrapped text after a resize/orientation change;
+  recompute shown banners on resize.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+### Chores
+
+- **deps**: Bump @babel transitives via npm install drift
+  ([`1e4e3fb`](https://github.com/soma115/Wikikracja/commit/1e4e3fb605516205bb97776c5cad9fd5136457e3))
+
+Lockfile resolved newer @babel/* (7.28.x/7.29.0-3 → 7.29.7) during local npm install for jest/jsdom
+  devDeps. No package.json changes.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **deps**: Bump pytest 8.3.4->9.0.3 (CVE-2025-71176)
+  ([`3a40ecc`](https://github.com/soma115/Wikikracja/commit/3a40eccabe2c98d13721303e891c9b03db8befe4))
+
+Fixes Dependabot alert #72 (GHSA-6w46-j5rx-g56g): pytest <9.0.3 used an insecure
+  /tmp/pytest-of-{user} tmpdir pattern on UNIX (local DoS / privesc).
+
+Bump test plugins for pytest 9 compatibility: - pytest-django 4.9.0 -> 4.12.0 - pytest-asyncio
+  0.25.0 -> 1.4.0 (major 0.x->1.x; existing asyncio_mode=auto +
+  asyncio_default_fixture_loop_scope=function already satisfy 1.x requirements, so no config change
+  needed)
+
+Full suite green: 373 passed under Python 3.14.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+### Features
+
+- **board**: Allow deleting document categories in use
+  ([`c2a7ef5`](https://github.com/soma115/Wikikracja/commit/c2a7ef5f4b15af1fa5c97c9376824e2f3832afd4))
+
+Deleting a document category that documents reference is now allowed: the FK Post.category is
+  SET_NULL, so those documents simply become uncategorized instead of returning a 409 "reassign
+  first" error.
+
+Before deletion the manage-categories modal fetches and lists the affected document titles in the
+  confirm dialog (native confirm with up to 10 titles + "…and N more"), so the user sees exactly
+  what will be orphaned. Protected categories stay blocked (403).
+
+- categories: add generic CategoryItemsAPI (titles + true count, ordered and capped) reusable across
+  apps - board: PostCategoryDeleteAPI block_if_in_use=False; PostCategoryItemsAPI endpoint (limit
+  10); wire url + template urls.items/and_more - category-manager.js: optional items branch gated on
+  urls.items, so tasks (no items url) keeps the old count-only confirm - tests: delete-in-use
+  unassigns, protected→403, items+limit ordering, login required
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+- **bookkeeping**: Asset.is_default with auto-unset save + DB constraint
+  ([`627ba7f`](https://github.com/soma115/Wikikracja/commit/627ba7fa4afc6028129fb151fd6e9d954efd3477))
+
+Add is_default boolean field to Asset, auto-unset previous default in save(), backstop via partial
+  UniqueConstraint. Override validate_constraints() to exclude is_default from form-level checks so
+  ModelForm doesn't block before save can satisfy the constraint. Includes classmethod get_default()
+  with fallback to oldest asset. Polish translations bundled together (.po cannot be staged
+  partially).
+
+10 model tests covering field default, persist, auto-unset (create/update/self), form promote
+  regression, bypass-via-update integrity, get_default branches.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **bookkeeping**: Services layer + pivot report + per-asset bar on transactions
+  ([`118c935`](https://github.com/soma115/Wikikracja/commit/118c93594fed3d2ca78c083647dbf14b5f0e9b72))
+
+asset_balances(year, category, partner, asset) and category_breakdown(year) as single source of
+  truth for "how much per asset". ReportView migrated from inline _flat_rows to category_breakdown;
+  template rewritten as pivot (categories × assets, default-first) with mobile cards and fallback to
+  per-currency sections above 5 assets. Transaction list shows balance-per-asset chips above the
+  table with tooltip (income/expenses/txn_count).
+
+28 service tests including regression for the main bug (1 PLN + 1 BTC must never equal 2 of
+  anything).
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **chat**: Denormalize Room.last_message_* via post_save signal
+  ([`69dc499`](https://github.com/soma115/Wikikracja/commit/69dc499b50301cc15246007f2344b94960068b73))
+
+- Replace ad-hoc update in services with single signal handler as SSoT. - Add data migration to
+  backfill existing rooms. - Use Greatest() to prevent last_activity from moving backwards. - Fix
+  sidebar updating for historical messages (only update when message.new).
+
+Removes duplicate backfill_last_message management command (covered by migration 0020).
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **home**: Dashboard finances card shows default asset all-time balance
+  ([`c65d580`](https://github.com/soma115/Wikikracja/commit/c65d580f5dbb64607aeccd3cf6b7e15351e26fc1))
+
+Dashboard badge + finances card now read default asset symbol and all-time balance from
+  asset_balances() instead of hardcoded PLN/current-year sum. Empty-state onboarding CTA when no
+  assets exist. Bootstrap tooltips initialized globally in app.js so future pages don't need
+  per-page setup.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **i18n**: Language switcher for anonymous users across signup flow
+  ([`4d1a030`](https://github.com/soma115/Wikikracja/commit/4d1a030824eadd39b568eb67b302d445e68970d3))
+
+Anonymous visitors had no way to change the interface language — the only switcher lived in profile
+  settings behind @login_required. The whole signup flow (landing, signup, onboarding, waiting)
+  renders for an unauthenticated request, so it shares the anonymous topbar.
+
+- set_user_language: drop @login_required; persist to profile only when authenticated, always set
+  the django_language cookie. Add open-redirect guard on `next` since the endpoint is now public. -
+  New _language_switcher.html (globe dropdown, PL/EN), included in the anon topbar; active language
+  highlighted via {% get_current_language %} so it works without a profile. Choice persists via
+  cookie through the flow and after login (UserLanguageMiddleware won't override an empty
+  profile.language). - Tests: anon cookie set, invalid code ignored, open-redirect rejected,
+  authenticated profile persistence + Auto reset, and switcher presence on home / signup /
+  onboarding. - pl translation for "Change language"; en catalog intentionally not tracked.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+- **site-settings**: Custom branding (logo, name, favicon, PWA icons)
+  ([`6563dec`](https://github.com/soma115/Wikikracja/commit/6563decc5c83d4685f5d0755691bb9ab854cd519))
+
+- Add brand_mark, brand_mark_dark, branding_text fields to SiteSettings - Pillow auto-generates
+  favicon.ico + apple-touch-icon + PWA icon-192/512 from brand_mark - Auto-letterbox non-square
+  uploads to square (transparent background) - Validators: max 1 MB, longest side 512-1024 px,
+  PNG-only - Theme-aware rendering (brand_mark for light, brand_mark_dark for dark with fallback) -
+  Cache-bust ?v=<timestamp> on branded asset URLs via updated_at - New Branding card in
+  /site-settings/ with custom file picker (thumbnail + button + clear) - Manifest view +
+  favicon/apple-touch-icon links use derivatives when brand_mark set - <title> uses branding_text
+  with fallback to Django Sites name - Sidebar shows "Wikikracja v.X.Y.Z" powered-by line - 63 tests
+  across 9 test classes
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **site_settings**: Wrap brand mark thumbnail in clickable link to full image
+  ([`bb5898a`](https://github.com/soma115/Wikikracja/commit/bb5898ad0af8f90cd3c6a5d50800081cbc49bc12))
+
+Thumbnail was rendered as bare <img> — clicking it did nothing. Now wrapped in <a target="_blank"
+  rel="noopener"> so admins can open the full-size image. - href attribute omitted (not empty) when
+  no image is set — avoids same-page link - file picker updates link href to data URL so preview is
+  clickable before Save - AJAX remove handler hides link and removes href via removeAttribute
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **tasks**: Ajax take/resign coordinator + design unification on detail page
+  ([`4401edf`](https://github.com/soma115/Wikikracja/commit/4401edf3331d49e58096be3da20d59e425db813e))
+
+Why: - "Become coordinator" / "Resign" buttons forced full page reload, slow and inconsistent with
+  the just-introduced AJAX voting flow. - On detail page, take/resign mixed task-*-btn (small) with
+  action-btn-* (larger) styling — buttons visibly differed in height and "Become coordinator"
+  appeared on third position before take, then moved off when assigned, breaking visual continuity.
+
+Changes: - take_task / resign_task return JSON on X-Requested-With (assigned_to user dict or null);
+  resign returns 403 JSON if not coordinator. - both card meta strip and detail action area
+  pre-render BOTH states (data-coord-state="empty" and "me") with `hidden` attribute toggled by JS
+  after AJAX success. Cards where someone ELSE is coordinator render only the static link (no
+  transition possible from this user). - detail page action order: Resign → Edit → Close → Delete
+  (Resign now in the same position where Take used to be, preserving visual continuity on
+  take/resign toggle). - take / resign use action-btn variants (new .action-btn-take for blue
+  primary, .action-btn-withdraw for red); all icons get fa-fw so they have identical widths; vote
+  buttons on detail page get scoped padding/font/min-height to match action-btn dimensions. - detail
+  page coordinator label wrapped in `<span data-coord-label>` and updated in place; falls back to
+  translated "None" via TASK_COORD_I18N. - CSS [data-coord-state][hidden] { display: none !important
+  } overrides Bootstrap's .d-inline { display: inline !important } when JS sets hidden=true on
+  `<form class="d-inline">`.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **tasks**: Sort by helpers count + "People against" popover + live voter lists
+  ([`4d21c47`](https://github.com/soma115/Wikikracja/commit/4d21c4745c615d117e5a98c924d40f83e4935636))
+
+Reasons: - Sort "Poparcie" was using votes_score (net) while card showed votes_up (helpers count) —
+  sorting did not match the visible number. - Tasks had no public visibility of opposing votes —
+  sprzeciwy invisible outside rejection threshold. - Voting required full page reload to refresh
+  helper/opponent lists.
+
+Changes: - sort 'score' now ranks by votes_up (helpers); rejection threshold (votes_score <= -2)
+  unchanged. - new endpoint tasks:against_json + fa-ban popover button on each task card (analogous
+  to helpers). - detail page shows "Willing to help" and "Against this task" as flex lists with
+  avatars (reuses helpers-popover-list / helpers-popover-item / helpers-popover-avatar styles). -
+  vote AJAX now returns votes_down too; JS updates both helpers and against counters + voter lists
+  live (no reload). - chat/_embedded_chat: removed per-request ?v={now} cache-buster that forced
+  full re-fetch of ~110KB JS + 40KB CSS on every page reload.
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+
+- **ui**: Brand mark UX — live preview, AJAX remove, toast system, scroll restore
+  ([`6b8510b`](https://github.com/soma115/Wikikracja/commit/6b8510bda08de03f26d17d28daa4cd8111f08626))
+
+- Brand mark upload: live preview on file select, client-side validation (PNG only, max 1 MB,
+  512–1024 px), error messages before save - AJAX remove brand mark without page reload (two new
+  endpoints) - Toast system replaces {% bootstrap_messages %} — fixed at 1/3 from top, centered,
+  auto-hides after 4s; uses message.level_tag for correct CSS class - Global scroll-restore.js
+  (data-preserve-scroll on forms) replaces per-page duplicates in profile.js and site_admin inline
+  script - FieldFile.delete(save=True) for storage-backend-agnostic file removal
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+- **ui**: Restore version label in sidebar and site-settings header
+  ([`dbabed4`](https://github.com/soma115/Wikikracja/commit/dbabed44f95d5492c9f453e0153d546279f61923))
+
+Adds "Wikikracja v.1.4.2" under the sidebar logo (links to /site-settings/) and version badge in the
+  site-settings heading. Reuses existing .logo-sub style. Adds --font-mono CSS variable. Version is
+  hardcoded in two templates — update both on each release.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+### Refactoring
+
+- **auth**: Conditionally show registration based on GROUP_IS_PUBLIC setting
+  ([`4fb2334`](https://github.com/soma115/Wikikracja/commit/4fb23345ff2b2eff2c43a7517d4099ad7decdeab))
+
+Add GROUP_IS_PUBLIC setting to control user registration availability. Hide registration links in
+  base.html, home.html, and login.html templates when group is not public. Update
+  CustomAccountAdapter to check GROUP_IS_PUBLIC in is_open_for_signup(). Add group_is_public context
+  processor to make setting available in templates.
+
+- **chat**: Add room rename functionality with validation and UI
+  ([`7ff5cc4`](https://github.com/soma115/Wikikracja/commit/7ff5cc402356f30a2c6b8802da21ea2ea74502cd))
+
+Add rename_room view and API endpoint to allow renaming public, non-protected rooms. Update RoomForm
+  validation to check for exact case duplicates while excluding current instance during edit. Add
+  rename modal UI with JavaScript handlers, include rename button in room dropdown menu for eligible
+  rooms, send system message to room on successful rename, and add comprehensive tests for rename
+  functionality including permission checks and validation.
+
+- **glosowania**: Add wymaga_kary checkbox to conditionally show penalty field
+  ([`c986591`](https://github.com/soma115/Wikikracja/commit/c986591d098bb96c770085048aa49b420091ceda))
+
+Add wymaga_kary boolean field to Decyzja model to indicate when a penalty is required. Update forms
+  and templates to include the new checkbox, add JavaScript to toggle kara field visibility based on
+  checkbox state, improve checkbox styling for dark mode, and set initial wymaga_kary value based on
+  existing kara content when editing.
+
+- **obywatele**: Replace boolean form_completed with percentage-based form_completion_percent
+  ([`ea7a980`](https://github.com/soma115/Wikikracja/commit/ea7a98035567cced80dd7810ab2b5889890ed5f4))
+
+Add form_completion_percent property to Uzytkownik model that calculates completion percentage based
+  on ONBOARDING_FORM_FIELDS and user's first/last name. Replace form_completed boolean checks in
+  poczekalnia and szczegoly views/templates with progress bars showing completion percentage. Use
+  color-coded progress bars (green for 100%, yellow for ≥50%, red for <50%).
+
+- **tasks**: Add statistics page and update chat room title format
+  ([`eca4401`](https://github.com/soma115/Wikikracja/commit/eca4401ab99ae4ed3459c693d2aa64d841d9f347))
+
+Add TaskStatsView to display task completion metrics including total completed, success/failure
+  counts, mixed evaluations, tasks without evaluations, and weekly completion stats. Update task
+  chat room title format to include task ID prefix. Remove automatic chat room title updates on task
+  edits. Add statistics link to tasks menu and update Polish translations for new statistics page
+  strings.
+
+- **tasks**: Replace display-4 with fs-1 and round success rate to integer
+  ([`1fb4efe`](https://github.com/soma115/Wikikracja/commit/1fb4efe323a385819175ead76dcb763eddc8311c))
+
+Replace Bootstrap display-4 class with fs-1 for consistent font sizing in task statistics cards.
+  Change success_rate rounding from 1 decimal place to integer for cleaner display.
+
+- **version**: Single-source app version (pyproject <-> zzz.__version__)
+  ([`e9b5e7d`](https://github.com/soma115/Wikikracja/commit/e9b5e7dfebb1830f4ef968b28ded14ee4e2b2c55))
+
+App version is now read from zzz.__version__ via the site_description context processor and rendered
+  as {{ app_version }} in the sidebar and site-settings header, replacing the value hardcoded in two
+  templates.
+
+- zzz/__init__.py: __version__ as the runtime source of truth - pyproject.toml: semantic-release
+  version_variables keeps __version__ in lockstep with project.version on every release (no manual
+  edits) - reconcile drift: pyproject 1.4.3 (phantom manual bumps on ui) reset to 1.4.1 to match the
+  last release tag v1.4.1; semantic-release owns it now
+
+Tests (TDD, red->green): tests/test_version.py covers drift guard (__version__ == pyproject),
+  context processor exposure, and dynamic sidebar render. 79 passed across test_version + home +
+  site_settings.
+
+Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>
+
+### Testing
+
+- **site_settings**: Ajax remove brand mark endpoints (Test 13)
+  ([`b4d5c01`](https://github.com/soma115/Wikikracja/commit/b4d5c0102404c98ff19e10cbb4411d6c8b7b15a7))
+
+7 cases: clears field, deletes file from disk, dark does not affect light, empty field returns ok,
+  requires POST, requires login.
+
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+
+
 ## v1.4.1 (2026-05-23)
 
 ### Bug Fixes
