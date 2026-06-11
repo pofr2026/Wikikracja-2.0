@@ -57,14 +57,7 @@
 
   </div>
 
-  {# ── Widok lista/grid ── #}
-  <div class="toolbar-view">
-    <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}">
-      <i class="fas fa-list"></i>
-    </button>
-    <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}">
-      <i class="fas fa-grip"></i>
-    </button>
-  </div>
+  {# ── Widok lista/compact/grid ── #}
+  {% include 'home/_view_toggle_buttons.html' with compact=True %}
 
 </div>

@@ -21,14 +21,7 @@
     <i class="fas fa-chevron-down agenda-month-chevron"></i>
   </button>
 
-  <div class="toolbar-view ms-auto">
-    <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}">
-      <i class="fas fa-list"></i>
-    </button>
-    <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}">
-      <i class="fas fa-grip"></i>
-    </button>
-  </div>
+  {% include 'home/_view_toggle_buttons.html' with view_class='ms-auto' %}
 </div>
 
 {# Pojedynczy drawer dla mini-kalendarza — pre-render bieżącego miesiąca, bez AJAX na starcie #}

@@ -16,6 +16,8 @@
     <div class="proposal-card-title-row">
       <span class="proposal-card-num">#{{ i.pk }}</span>
       <span class="proposal-card-title">{{ i.display_title }}</span>
+      {# Data — widoczna tylko w widoku zwartym (compact), wyrównana do prawej #}
+      <span class="proposal-card-compact-date">{{ i.data_powstania|date:"d.m.Y" }}</span>
       <i class="fas fa-chevron-down proposal-card-chevron" id="chevron-{{ i.pk }}"></i>
     </div>
 

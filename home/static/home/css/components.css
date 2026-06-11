@@ -283,6 +283,58 @@
     grid-template-columns: 1fr;
   }
 }
+/* ── Widok zwarty (compact): zwinięta karta = tylko tytuł ──
+   Reszta (badge/preview/meta + body) odsłania się po kliknięciu przez
+   istniejący toggleCard() → .proposal-card.open. */
+.proposals-list.view-compact .proposal-card-header {
+  padding: .55rem .9rem;
+}
+.proposals-list.view-compact .proposal-card-title-row {
+  margin-bottom: 0;
+  align-items: center;
+}
+.proposals-list.view-compact .proposal-card-title {
+  font-size: .9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.proposals-list.view-compact .proposal-card-badges-row,
+.proposals-list.view-compact .proposal-preview,
+.proposals-list.view-compact .proposal-card-meta {
+  display: none;
+}
+/* Po rozwinięciu wracają badge + meta (preview pozostaje ukryty regułą .open). */
+.proposals-list.view-compact .proposal-card.open .proposal-card-title-row {
+  margin-bottom: .4rem;
+  align-items: flex-start;
+}
+.proposals-list.view-compact .proposal-card.open .proposal-card-title {
+  white-space: normal;
+}
+.proposals-list.view-compact .proposal-card.open .proposal-card-badges-row {
+  display: flex;
+  margin-bottom: .55rem;
+}
+.proposals-list.view-compact .proposal-card.open .proposal-card-meta {
+  display: flex;
+}
+/* Data w widoku zwartym — dosunięta do prawej (tytuł ma flex:1 i wypełnia wiersz,
+   spychając datę przed chevron); chowa się po rozwinięciu (pełna data jest wtedy
+   w .proposal-card-meta). */
+.proposal-card-compact-date {
+  display: none;
+}
+.proposals-list.view-compact .proposal-card-compact-date {
+  display: inline-block;
+  flex-shrink: 0;
+  font-size: .72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.proposals-list.view-compact .proposal-card.open .proposal-card-compact-date {
+  display: none;
+}
 .proposal-card {
   background: var(--bg-card);
   border: 1px solid var(--border);

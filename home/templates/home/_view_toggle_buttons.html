@@ -1,0 +1,27 @@
+{% load i18n %}
+{% comment %}
+  Wspólna grupa przycisków przełącznika widoku.
+  Sterowana globalnie przez applyView() w home/js/app.js (PagePrefs) — szablon
+  hostujący musi mieć [data-view-container] na kontenerze listy.
+
+  Parametry (opcjonalne, przez {% include ... with %}):
+    compact     — bool; dokłada środkowy przycisk widoku zwartego. Tylko tam,
+                  gdzie .view-compact ma zdefiniowany CSS (glosowania, tasks, board).
+    view_class  — dodatkowe klasy CSS na .toolbar-view (np. 'ms-auto' w events).
+{% endcomment %}
+<div class="toolbar-view{% if view_class %} {{ view_class }}{% endif %}">
+  <button class="view-toggle-btn" data-view="list" title="{% trans 'List' %}"
+          aria-label="{% trans 'List' %}" aria-pressed="false">
+    <i class="fas fa-list"></i>
+  </button>
+  {% if compact %}
+  <button class="view-toggle-btn" data-view="compact" title="{% trans 'Compact' %}"
+          aria-label="{% trans 'Compact' %}" aria-pressed="false">
+    <i class="fas fa-bars"></i>
+  </button>
+  {% endif %}
+  <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid' %}"
+          aria-label="{% trans 'Grid' %}" aria-pressed="false">
+    <i class="fas fa-grip"></i>
+  </button>
+</div>

@@ -49,14 +49,7 @@
       </ul>
     </div>
 
-    <div class="toolbar-view">
-      <button class="view-toggle-btn" data-view="list" title="{% trans 'List view' %}">
-        <i class="fas fa-list"></i>
-      </button>
-      <button class="view-toggle-btn" data-view="grid" title="{% trans 'Grid view' %}">
-        <i class="fas fa-grip"></i>
-      </button>
-    </div>
+    {% include 'home/_view_toggle_buttons.html' %}
   </div>
 
   <div class="card-body p-0" data-view-container>

@@ -220,9 +220,15 @@ document.addEventListener('DOMContentLoaded', function() {
     function applyView(mode) {
         var container = document.querySelector('[data-view-container]');
         if (!container) return;
-        container.classList.toggle('view-grid', mode === 'grid');
+        // Tryby wzajemnie wykluczające się: 'list' = brak klasy, 'grid' i 'compact'
+        // sterują własną klasą. Zostawiamy .view-grid nietknięte dla apps bez compact.
+        container.classList.remove('view-grid', 'view-compact');
+        if (mode === 'grid') container.classList.add('view-grid');
+        else if (mode === 'compact') container.classList.add('view-compact');
         document.querySelectorAll('[data-view]').forEach(function(btn) {
-            btn.classList.toggle('active', btn.dataset.view === mode);
+            var on = btn.dataset.view === mode;
+            btn.classList.toggle('active', on);
+            btn.setAttribute('aria-pressed', on ? 'true' : 'false');
         });
     }
 

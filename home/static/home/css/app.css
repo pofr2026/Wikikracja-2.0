@@ -1086,6 +1086,26 @@ hr {
 .view-grid .board-posts-list {
   display: none;
 }
+
+/* ── Widok zwarty (compact): gęsta lista samych tytułów ──
+   Pokazujemy blok listy, chowamy miniaturę, podtytuł oraz meta (autor/data);
+   wiersz nadal linkuje wprost do dokumentu (board nie ma rozwijanego ciała). */
+.view-compact .board-posts-grid {
+  display: none;
+}
+.view-compact .board-posts-list {
+  display: block;
+}
+.view-compact .board-post-row {
+  padding-top: .3rem;
+  padding-bottom: .3rem;
+}
+.view-compact .board-post-row .post-featured-thumb,
+.view-compact .board-post-row .text-subtitle-clamp,
+.view-compact .board-post-row .avatar-xs,
+.view-compact .board-post-row .avatar-xs-fallback {
+  display: none;
+}
 .board-post-row:hover {
   background: var(--accent-muted);
 }
