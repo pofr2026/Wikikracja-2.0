@@ -34,6 +34,22 @@
         <span class="badge-status badge-approved">{% trans 'Approved' %}</span>
       {% endif %}
 
+      {% if show_dates and i.data_referendum_stop %}
+        {% with dni=i.dni_do_konca_referendum %}
+        <span class="badge-deadline">
+          <i class="fas fa-clock"></i>
+          {% if dni > 0 %}
+            {% blocktrans count days=dni %}{{ days }} day left{% plural %}{{ days }} days left{% endblocktrans %}
+            &nbsp;·&nbsp;{{ i.data_referendum_stop|date:"d.m.Y" }}
+          {% elif dni == 0 %}
+            {% trans 'Last day' %}&nbsp;·&nbsp;{{ i.data_referendum_stop|date:"d.m.Y" }}
+          {% else %}
+            {{ i.data_referendum_stop|date:"d.m.Y" }}
+          {% endif %}
+        </span>
+        {% endwith %}
+      {% endif %}
+
       {% if i.chat_room_pulse_class %}
         <a href="{{ i.chat_room_url }}"
            class="proposal-chat-link proposal-chat-link--pulse {{ i.chat_room_pulse_class }}"

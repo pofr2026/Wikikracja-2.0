@@ -5,6 +5,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import validate_comma_separated_integer_list
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 User = get_user_model()
@@ -105,6 +106,20 @@ class Decyzja(models.Model):
         if self.is_author_signed:
             return self.title
         return f"{self.title} [{_('draft')}]"
+
+    @property
+    def dni_do_konca_referendum(self):
+        """Liczba dni do końca referendum.
+
+        None gdy brak daty końca; 0 gdy kończy się dziś (ostatni dzień);
+        ujemne gdy termin już minął. Surowa wartość — wyświetlanie odsiewa
+        przypadki brzegowe w szablonie.
+        """
+        if not self.data_referendum_stop:
+            return None
+        # localdate() — data w strefie projektu (Europe/Warsaw), nie UTC;
+        # spójne z realnym zamknięciem referendum i bez off-by-one koło północy.
+        return (self.data_referendum_stop - timezone.localdate()).days
     
 
 class Argument(models.Model):

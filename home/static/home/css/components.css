@@ -261,6 +261,19 @@
   background: var(--badge-rejected-bg);
   color: var(--badge-rejected-color);
 }
+/* Termin zakończenia referendum — odliczanie + data, obok statusu */
+.badge-deadline {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: .68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: var(--radius-badge);
+  white-space: nowrap;
+  background: var(--badge-referendum-bg);
+  color: var(--badge-referendum-color);
+}
 /* ══════════════════════════════════════════════════
    PROPOSAL CARD (glosowania)
    ══════════════════════════════════════════════════ */
