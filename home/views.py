@@ -621,7 +621,17 @@ def mark_unread(request):
         })
 
 
-ALL_SEARCH_CATS = ['post', 'task', 'decision', 'event', 'citizen', 'chat']
+# Single source of truth for the search-filter dropdown (key + label + Font Awesome icon).
+# Kolejność = kolejność w panelu filtra. ALL_SEARCH_CATS derived from this.
+SEARCH_CAT_META = [
+    {'key': 'post', 'label': _('Board'), 'icon': 'fa-chalkboard'},
+    {'key': 'task', 'label': _('Tasks'), 'icon': 'fa-list-check'},
+    {'key': 'decision', 'label': _('Votings'), 'icon': 'fa-landmark'},
+    {'key': 'event', 'label': _('Event'), 'icon': 'fa-calendar'},
+    {'key': 'citizen', 'label': _('Citizens'), 'icon': 'fa-users'},
+    {'key': 'chat', 'label': _('Chat'), 'icon': 'fa-comments'},
+]
+ALL_SEARCH_CATS = [c['key'] for c in SEARCH_CAT_META]
 
 
 @login_required
@@ -776,9 +786,8 @@ def global_search(request: HttpRequest):
     return render(request, 'home/search.html', {
         'query': query,
         'results': results,
-        'active_cats': active_cats,
-        'all_cats': ALL_SEARCH_CATS,
         'selected_cats': selected,
+        'search_cats': SEARCH_CAT_META,
     })
 
 

@@ -38,60 +38,27 @@
         </button>
       </div>
 
-      <!-- Category filter chips -->
-      <div class="d-flex flex-wrap gap-2 align-items-center">
+      <!-- Category filter — inline, all visible (global .cat-filter__item styling, like task categories) -->
+      <div class="d-flex flex-wrap gap-2 align-items-center" id="searchCatFilter">
         <span style="color:var(--text-muted);font-size:.78rem;flex-shrink:0;">
           <i class="fas fa-filter me-1"></i>{% trans "Search in:" %}
         </span>
 
-        {% comment %}
-          Chip logic:
-          - no cats selected  → active_cats == ALL  → every chip gets its color (on)
-          - some cats selected → chip colored if in active_cats, grayed if not
-        {% endcomment %}
+        {# "Everywhere" = brak zaznaczonej kategorii (serwer traktuje pusty wybór jako wszystkie) #}
+        <div class="cat-filter__item{% if not selected_cats %} selected{% endif %}" id="scatAll">
+          <i class="fas fa-check cat-filter__check"></i>
+          <i class="fas fa-asterisk me-1"></i>{% trans "Everywhere" %}
+        </div>
 
-        <label class="sp-chip{% if 'post' in active_cats %} on{% endif %}" data-color="primary">
-          <input type="checkbox" name="cat" value="post" class="d-none sp-cb"
-                 {% if 'post' in active_cats %}checked{% endif %}>
-          <i class="fas fa-chalkboard me-1"></i>{% trans "Board" %}
-        </label>
-
-        <label class="sp-chip{% if 'task' in active_cats %} on{% endif %}" data-color="warning">
-          <input type="checkbox" name="cat" value="task" class="d-none sp-cb"
-                 {% if 'task' in active_cats %}checked{% endif %}>
-          <i class="fas fa-list-check me-1"></i>{% trans "Tasks" %}
-        </label>
-
-        <label class="sp-chip{% if 'decision' in active_cats %} on{% endif %}" data-color="danger">
-          <input type="checkbox" name="cat" value="decision" class="d-none sp-cb"
-                 {% if 'decision' in active_cats %}checked{% endif %}>
-          <i class="fas fa-landmark me-1"></i>{% trans "Votings" %}
-        </label>
-
-        <label class="sp-chip{% if 'event' in active_cats %} on{% endif %}" data-color="success">
-          <input type="checkbox" name="cat" value="event" class="d-none sp-cb"
-                 {% if 'event' in active_cats %}checked{% endif %}>
-          <i class="fas fa-calendar me-1"></i>{% trans "Event" %}
-        </label>
-
-        <label class="sp-chip{% if 'citizen' in active_cats %} on{% endif %}" data-color="secondary">
-          <input type="checkbox" name="cat" value="citizen" class="d-none sp-cb"
-                 {% if 'citizen' in active_cats %}checked{% endif %}>
-          <i class="fas fa-users me-1"></i>{% trans "Citizens" %}
-        </label>
-
-        <label class="sp-chip{% if 'chat' in active_cats %} on{% endif %}" data-color="primary">
-          <input type="checkbox" name="cat" value="chat" class="d-none sp-cb"
-                 {% if 'chat' in active_cats %}checked{% endif %}>
-          <i class="fas fa-comments me-1"></i>{% trans "Chat" %}
-        </label>
-
-        <button type="button" id="sp-select-all"
-                class="btn btn-sm ms-1"
-                style="font-size:.72rem;background:transparent;border:1px solid var(--border);
-                       color:var(--text-muted);padding:.25rem .6rem;">
-          {% trans "Everywhere" %}
-        </button>
+        {% for c in search_cats %}
+        <div class="cat-filter__item scat-item{% if c.key in selected_cats %} selected{% endif %}"
+             data-key="{{ c.key }}">
+          <input type="checkbox" name="cat" value="{{ c.key }}" class="d-none scat-cb"
+                 {% if c.key in selected_cats %}checked{% endif %}>
+          <i class="fas fa-check cat-filter__check"></i>
+          <i class="fas {{ c.icon }} me-1"></i>{{ c.label }}
+        </div>
+        {% endfor %}
       </div>
     </div>
   </form>
@@ -147,24 +114,6 @@
 </div>
 
 <style>
-/* ── Search-page chips ── */
-.sp-chip {
-  display:inline-flex;align-items:center;padding:.3rem .75rem;
-  border-radius:2rem;font-size:.78rem;cursor:pointer;
-  border:1px solid var(--border);color:var(--text-muted);
-  background:transparent;transition:all .15s;user-select:none;
-  /* inactive = clearly dimmed */
-  opacity:.38;
-}
-.sp-chip:hover { opacity:.65; }
-.sp-chip.on { opacity:1; }
-.sp-chip.on[data-color="primary"]  { background:rgba(59,130,246,.15); color:#60a5fa; border-color:rgba(59,130,246,.35); }
-.sp-chip.on[data-color="warning"]  { background:rgba(243,156,18,.12); color:#f39c12; border-color:rgba(243,156,18,.35); }
-.sp-chip.on[data-color="danger"]   { background:rgba(231,76,60,.12);  color:#e74c3c; border-color:rgba(231,76,60,.35); }
-.sp-chip.on[data-color="success"]  { background:rgba(0,188,140,.12);  color:#00bc8c; border-color:rgba(0,188,140,.35); }
-.sp-chip.on[data-color="info"]     { background:rgba(52,152,219,.12); color:#3498db; border-color:rgba(52,152,219,.35); }
-.sp-chip.on[data-color="secondary"]{ background:rgba(120,120,140,.15);color:#aaa;   border-color:rgba(255,255,255,.15); }
-
 /* ── Result rows ── */
 .sr-row { transition:background .15s; }
 .sr-row:hover { background:var(--bg-card-hover) !important; }
@@ -172,30 +121,38 @@
 
 <script>
 (function () {
-  var form   = document.getElementById('search-form');
-  var allBtn = document.getElementById('sp-select-all');
-  var cbs    = document.querySelectorAll('.sp-cb');
-  var qInput = document.getElementById('sq');
+  var wrap   = document.getElementById('searchCatFilter');
+  var allRow = document.getElementById('scatAll');
+  var items  = Array.from(wrap.querySelectorAll('.scat-item'));
 
-  function setChip(cb, on) {
-    cb.checked = on;
-    var chip = cb.closest('.sp-chip');
-    if (on) chip.classList.add('on'); else chip.classList.remove('on');
+  function setItem(it, on) {
+    it.querySelector('.scat-cb').checked = on;
+    it.classList.toggle('selected', on);
+  }
+  function syncAll() {
+    // "Everywhere" is on exactly when no specific category is selected
+    var any = items.some(function (it) { return it.classList.contains('selected'); });
+    allRow.classList.toggle('selected', !any);
   }
 
-  // Auto-submit when chip toggled and query present
-  cbs.forEach(function (cb) {
-    cb.addEventListener('change', function () {
-      setChip(cb, cb.checked);
-      if (qInput && qInput.value.trim())
-        setTimeout(function () { form.submit(); }, 80);
+  // Selection only updates the form — user applies it via the Search button / Enter.
+  // (No reload on each toggle, so multiple categories can be picked freely.)
+
+  // ── "Everywhere" → clear all categories ───────────────────────
+  allRow.addEventListener('click', function () {
+    items.forEach(function (it) { setItem(it, false); });
+    syncAll();
+  });
+
+  // ── individual category toggle ────────────────────────────────
+  items.forEach(function (it) {
+    it.addEventListener('click', function () {
+      setItem(it, !it.classList.contains('selected'));
+      syncAll();
     });
   });
 
-  allBtn.addEventListener('click', function () {
-    cbs.forEach(function (cb) { setChip(cb, true); });
-    if (qInput && qInput.value.trim()) form.submit();
-  });
+  syncAll(); // sync "Everywhere" state with server-rendered selection
 })();
 </script>
 {% endblock %}

@@ -1865,52 +1865,85 @@ a:hover {
 .sidebar.collapsed .sidebar-version-link {
   display: none !important;
 }
-.tb-chip {
-  display: inline-flex;
+/* ── Topbar search (shared desktop/mobile) ── */
+.topbar-search-wrapper {
+  position: relative;
+}
+.topbar-search-row {
+  display: flex;
+  gap: .35rem;
   align-items: center;
-  padding: .28rem .65rem;
-  border-radius: 2rem;
-  font-size: .75rem;
-  cursor: pointer;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
+}
+.topbar-icon-btn {
   background: transparent;
-  transition: all .15s;
-  user-select: none;
-  opacity: .4;
+  border: 1px solid var(--border);
+  border-radius: .4rem;
+  padding: .36rem .55rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color .15s, border-color .15s;
+  flex-shrink: 0;
 }
-.tb-chip.on {
-  opacity: 1;
+.topbar-icon-btn:hover {
+  color: var(--text-primary);
+  border-color: rgba(255, 255, 255, .2);
 }
-.tb-chip.on[data-color="primary"] {
-  background: rgba(59, 130, 246, .15);
-  color: #60a5fa;
-  border-color: rgba(59, 130, 246, .35);
+/* desktop: filter panel right-aligned under the input row.
+   ID selector intentionally — components.css (loaded after app.css) defines
+   .cat-filter__panel{left:0}, so a class override would lose on source order. */
+#topbar-filter-panel {
+  left: auto;
+  right: 0;
 }
-.tb-chip.on[data-color="warning"] {
-  background: rgba(243, 156, 18, .12);
-  color: #f39c12;
-  border-color: rgba(243, 156, 18, .35);
+/* mobile-only "expand search" icon — hidden on desktop */
+.topbar-search-toggle {
+  display: none;
 }
-.tb-chip.on[data-color="danger"] {
-  background: rgba(231, 76, 60, .12);
-  color: #e74c3c;
-  border-color: rgba(231, 76, 60, .35);
-}
-.tb-chip.on[data-color="success"] {
-  background: rgba(0, 188, 140, .12);
-  color: #00bc8c;
-  border-color: rgba(0, 188, 140, .35);
-}
-.tb-chip.on[data-color="info"] {
-  background: rgba(52, 152, 219, .12);
-  color: #3498db;
-  border-color: rgba(52, 152, 219, .35);
-}
-.tb-chip.on[data-color="secondary"] {
-  background: rgba(120, 120, 140, .15);
-  color: #aaa;
-  border-color: rgba(255, 255, 255, .15);
+@media (max-width: 575.98px) {
+  .topbar {
+    position: relative;
+  }
+  .topbar-search-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: .25rem;
+  }
+  .topbar-search-toggle:hover {
+    color: var(--text-primary);
+  }
+  /* lupa expands the field: collapsed by default, shown as a floating panel when open */
+  .topbar-search-wrapper {
+    position: absolute;
+    top: 100%;
+    left: .5rem;
+    right: .5rem;
+    z-index: 300;
+    display: none;
+    background: var(--bg-sidebar);
+    border: 1px solid var(--border);
+    border-radius: .6rem;
+    padding: .6rem;
+    margin-top: .35rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, .45);
+  }
+  .topbar-search-wrapper.search-open {
+    display: block;
+  }
+  .topbar-search-wrapper .search-box {
+    width: 100%;
+    flex: 1 1 auto;
+  }
+  #topbar-filter-panel {
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
 }
 /* ── EXPANDABLE CONTENT ── */
 /* Full text always in DOM — max-height clips body; .expandable-hint sits bottom-right inline on last visible line */

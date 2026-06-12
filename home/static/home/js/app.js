@@ -320,54 +320,72 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('topbar-search-form');
-    const btn = document.getElementById('topbar-filter-btn');
-    const panel = document.getElementById('topbar-filter-panel');
-    const allBtn = document.getElementById('topbar-select-all');
-    const qInput = document.getElementById('topbar-q');
-    const cbs = document.querySelectorAll('.tb-cb');
-    if (!form || !btn) return;
+    const form      = document.getElementById('topbar-search-form');
+    const filterBtn = document.getElementById('topbar-filter-btn');
+    const panel     = document.getElementById('topbar-filter-panel');
+    const allRow    = document.getElementById('topbar-select-all');
+    const qInput    = document.getElementById('topbar-q');
+    const wrapper   = document.getElementById('topbar-search-wrapper');
+    const toggle    = document.getElementById('topbar-search-toggle');
+    if (!form || !filterBtn) return;
 
+    const items   = Array.from(panel.querySelectorAll('.tb-item'));
     const urlCats = new URLSearchParams(window.location.search).getAll('cat');
 
-    function setChip(cb, on) {
-        cb.checked = on;
-        const chip = cb.closest('.tb-chip');
-        if (on) chip.classList.add('on'); else chip.classList.remove('on');
+    function setItem(it, on) {
+        it.querySelector('.tb-cb').checked = on;
+        it.classList.toggle('selected', on);
     }
-    function syncBtn() {
-        const n = document.querySelectorAll('.tb-cb:checked').length;
-        const partial = n < cbs.length;
-        btn.style.color = partial ? 'var(--accent)' : 'var(--text-muted)';
-        btn.style.borderColor = partial ? 'var(--accent)' : 'var(--border)';
+    function syncAll() {
+        // "Everywhere" is on exactly when no specific category is selected;
+        // highlight the filter button while a subset is active.
+        const any = items.some(function(it) { return it.classList.contains('selected'); });
+        allRow.classList.toggle('selected', !any);
+        filterBtn.style.color = any ? 'var(--accent)' : 'var(--text-muted)';
+        filterBtn.style.borderColor = any ? 'var(--accent)' : 'var(--border)';
     }
 
-    cbs.forEach(function(cb) {
-        setChip(cb, urlCats.length === 0 || urlCats.indexOf(cb.value) !== -1);
-    });
-    syncBtn();
+    // restore selection from URL (empty = everywhere)
+    items.forEach(function(it) { setItem(it, urlCats.indexOf(it.dataset.key) !== -1); });
+    syncAll();
 
-    btn.addEventListener('click', function(e) {
+    // ── filter panel open/close ───────────────────────────────────
+    filterBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        panel.hidden = !panel.hidden;
     });
     document.addEventListener('click', function(e) {
-        if (!panel.contains(e.target) && e.target !== btn)
-            panel.style.display = 'none';
+        if (!panel.contains(e.target) && !filterBtn.contains(e.target)) panel.hidden = true;
     });
-    cbs.forEach(function(cb) {
-        cb.addEventListener('change', function() {
-            setChip(cb, cb.checked);
-            syncBtn();
-            if (qInput && qInput.value.trim())
-                setTimeout(function() { form.submit(); }, 80);
+
+    // ── selection (no reload per toggle — apply via Enter / search button) ──
+    allRow.addEventListener('click', function() {
+        items.forEach(function(it) { setItem(it, false); });
+        syncAll();
+    });
+    items.forEach(function(it) {
+        it.addEventListener('click', function() {
+            setItem(it, !it.classList.contains('selected'));
+            syncAll();
         });
     });
-    allBtn.addEventListener('click', function() {
-        cbs.forEach(function(cb) { setChip(cb, true); });
-        syncBtn();
-        if (qInput && qInput.value.trim()) form.submit();
-    });
+
+    // ── mobile: lupa expands / collapses the search field ─────────
+    if (toggle && wrapper) {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const open = wrapper.classList.toggle('search-open');
+            toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+            if (open && qInput) qInput.focus();
+        });
+        document.addEventListener('click', function(e) {
+            if (wrapper.classList.contains('search-open') &&
+                !wrapper.contains(e.target) && !toggle.contains(e.target)) {
+                wrapper.classList.remove('search-open');
+                toggle.setAttribute('aria-expanded', 'false');
+            }
+        });
+    }
 });
 
 document.addEventListener('DOMContentLoaded', function() {
