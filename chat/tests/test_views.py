@@ -6,7 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 # Local folder imports
-from chat.models import Room
+from chat.models import Message, Room
 from chat.tests.utils import make_user
 
 
@@ -139,6 +139,35 @@ class ChatViewsTest(TestCase):
         response = self.client.get(reverse("chat:open_dm", kwargs={"pk": self.user.pk}))
         self.assertEqual(response.status_code, 302)
         self.assertNotIn("#room_id=", response["Location"])
+
+
+class PrivateRoomVisibilityTest(TestCase):
+    """Private 1-to-1 rooms are pre-created for every user pair. Until the first
+    message is exchanged they should stay out of the default sidebar list."""
+
+    def setUp(self):
+        self.user = make_user("viewer")
+        self.with_history = make_user("hashistory")
+        self.no_history = make_user("nohistory")
+
+        self.room_with_history = Room.objects.create(title="viewer-hashistory", public=False)
+        self.room_with_history.allowed.set([self.user, self.with_history])
+        Message.objects.create(sender=self.with_history, room=self.room_with_history, text="hi")
+
+        self.empty_room = Room.objects.create(title="viewer-nohistory", public=False)
+        self.empty_room.allowed.set([self.user, self.no_history])
+
+    def test_private_room_with_messages_is_listed(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("chat:chat"))
+        active_ids = {r.id for r in response.context["private_active"]}
+        self.assertIn(self.room_with_history.id, active_ids)
+
+    def test_empty_private_room_is_hidden(self):
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("chat:chat"))
+        active_ids = {r.id for r in response.context["private_active"]}
+        self.assertNotIn(self.empty_room.id, active_ids)
 
 
 class ChatRoomAccessTest(TestCase):

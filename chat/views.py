@@ -104,8 +104,11 @@ def chat(request: HttpRequest):
 
     public_active = public_pool.filter(public=True, archived=False)
     public_archived = public_pool.filter(public=True, archived=True)
-    private_active = private_pool.filter(public=False, archived=False)
-    private_archived = private_pool.filter(public=False, archived=True)
+    # Private 1-to-1 rooms are pre-created for every user pair, so without a filter the
+    # sidebar would list a room for everyone you've never written to. Hide the empty ones —
+    # they reappear once the first message gives the room a history (and a real timestamp).
+    private_active = private_pool.filter(public=False, archived=False, messages_count__gt=0)
+    private_archived = private_pool.filter(public=False, archived=True, messages_count__gt=0)
 
     task_room_ids = Task.objects.filter(chat_room__isnull=False).values_list('chat_room_id', flat=True)
     vote_room_ids = Decyzja.objects.filter(chat_room__isnull=False).values_list('chat_room_id', flat=True)
