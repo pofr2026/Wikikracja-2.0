@@ -547,6 +547,7 @@ export async function onSocketMessage(data) {
     if (data.join || data.leave) console.warn("deprecated");
     else if (data.replace_messages) onReplaceMessages(data.messages, data.room_id);
     else if (data.messages) onReceiveMessages(data.messages);
+    else if (data.room_added) onRoomAdded(data.room_added);
     else if (data.unsee_room) onRoomUnsee(data.unsee_room);
     else if (data.room_seen) onRoomSeen(data.room_seen);
     else if (data.notification) onReceiveNotification(data.notification);
@@ -931,6 +932,36 @@ export async function onReceiveOnlineUpdates(updates) {
     for (const update of updates) {
         DOM_API.updateOnline(update.room_id, update.online);
     }
+}
+
+/**
+ * Live-add a private room tile to the sidebar after its first message.
+ * Empty private rooms are hidden until then; the server sends the rendered
+ * room_link.html so the per-recipient context lives in the template, not here.
+ * @param {{room_id: number, html: string}} payload
+ */
+export function onRoomAdded(payload) {
+    const { room_id, html } = payload || {};
+    if (!room_id || !html) return;
+    // Idempotencja: kafelek juz jest (np. druga karta / wyscig) — nic nie rob.
+    if (DOM_API.getRoomLinkDiv(room_id)) return;
+    const container = document.getElementById('cat-private');
+    if (!container) return;
+    container.insertAdjacentHTML('afterbegin', html);
+
+    // Klik/seen/notif sa delegowane na document — dzialaja same. Wyjatek: dropdown
+    // chevrona inicjowany per-element przy starcie (handlers.js, strategy:'fixed'),
+    // wiec swiezo wstawiony kafelek trzeba dopiac recznie.
+    const chevron = container.querySelector(`.room-link[data-room-id="${room_id}"] .room-link__chevron[data-bs-toggle="dropdown"]`);
+    if (chevron && typeof bootstrap !== 'undefined' && bootstrap.Dropdown) {
+        new bootstrap.Dropdown(chevron, {
+            popperConfig(defaultConfig) {
+                return { ...defaultConfig, strategy: 'fixed' };
+            },
+        });
+    }
+
+    updateUnreadFilter();
 }
 
 export async function onRoomUnsee(room_id) {

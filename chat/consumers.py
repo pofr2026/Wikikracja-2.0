@@ -384,6 +384,10 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
             membership_prefs = await database_sync_to_async(lambda: Room.get_membership_preferences_bulk(room.id, other_member_ids))()
 
+            # Empty private rooms are hidden in the sidebar; the first message is when the
+            # recipient's tile should appear. count==1 means this is that first message.
+            is_first_private_message = not room.public and await self.repo.count_messages(room.id) == 1
+
             proxy = HandledMessage()
             for member in other_members:
                 prefs = membership_prefs.get(member.id, {'seen': False, 'muted': True})
@@ -396,6 +400,11 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
 
                 if consumer.rooms.present(room):
                     continue
+
+                # Add the tile live before any seen/muted handling — mute silences the alert,
+                # it does not hide the conversation.
+                if is_first_private_message:
+                    await consumer.send_room_added(proxy=proxy, room=room)
 
                 if prefs['seen']:
                     await consumer.repo.unsee_room(room)
@@ -670,6 +679,21 @@ class ChatConsumer(AsyncJsonWebsocketConsumer):
             return
         proxy.send_json({
             "unsee_room": room.id,
+        })
+
+    @helper_method
+    async def send_room_added(self, proxy, room):
+        """Tell this (recipient's) client to add a private room tile to the sidebar.
+
+        Empty private rooms are hidden until the first message; this fires for that
+        first message so the recipient sees the room without a page refresh. Sends the
+        server-rendered room_link.html for THIS consumer's user (the other party)."""
+        html = await self.repo.render_private_room_link(room, self.scope['user'])
+        proxy.send_json({
+            "room_added": {
+                "room_id": room.id,
+                "html": html,
+            },
         })
 
     @helper_method

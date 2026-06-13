@@ -7,6 +7,7 @@ from channels.db import database_sync_to_async
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.db.models import Count, Prefetch
+from django.template.loader import render_to_string
 from firebase_admin import messaging
 from push_notifications.models import GCMDevice, WebPushDevice
 
@@ -218,6 +219,26 @@ class ChatRepository:
     @database_sync_to_async
     def is_last_message_in_room(self, message_id: int, room_id: int) -> bool:
         return not Message.objects.filter(room_id=room_id, pk__gt=message_id).exists()
+
+    @database_sync_to_async
+    def count_messages(self, room_id: int) -> int:
+        return Message.objects.filter(room_id=room_id).count()
+
+    @database_sync_to_async
+    def render_private_room_link(self, room, for_user) -> str:
+        """Render the sidebar room-link partial for `for_user` (the recipient).
+
+        Done server-side so the per-recipient context (other_user/name_for, seen/muted,
+        avatar, dropdown actions) lives in room_link.html instead of being reassembled in JS.
+
+        Private rooms only — room_kind='private' is hardcoded, so the caller must guard
+        on `not room.public` (a public room would render the wrong avatar/icon).
+        """
+        return render_to_string('chat/room_link.html', {
+            'room': room,
+            'user': for_user,
+            'room_kind': 'private',
+        })
 
     @database_sync_to_async
     def get_message_states(self, message_id):
