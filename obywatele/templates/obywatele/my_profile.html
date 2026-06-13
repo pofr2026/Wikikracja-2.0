@@ -23,18 +23,19 @@
 <script src="{% static 'obywatele/js/profile.js' %}"></script>
 <script>
 function updateThemeBtns(active) {
-  ['dark','light','civic','official'].forEach(function(t) {
+  ['midnight','daylight','dark','light','civic','official'].forEach(function(t) {
     var el = document.getElementById('theme-btn-' + t);
     if (el) el.className = 'btn btn-sm ' + (active === t ? 'btn-primary' : 'btn-outline-secondary');
   });
 }
 function toggleTheme(theme) {
-  var current = localStorage.getItem('app-theme') || 'dark';
-  var next = (current === theme) ? 'dark' : theme;
+  // 'midnight' (Midnight Civic) to domyślny motyw — klik w aktywny przycisk wraca do niego.
+  var current = localStorage.getItem('app-theme') || 'midnight';
+  var next = (current === theme) ? 'midnight' : theme;
   window.applyTheme(next);
   updateThemeBtns(next);
 }
-updateThemeBtns(localStorage.getItem('app-theme') || 'dark');
+updateThemeBtns(localStorage.getItem('app-theme') || 'midnight');
 
 // Avatar hover overlay + preview + auto-submit
 (function() {
@@ -202,9 +203,17 @@ updateThemeBtns(localStorage.getItem('app-theme') || 'dark');
     </div>
     <div class="card-body">
       <div class="d-flex align-items-center gap-2 flex-wrap">
+        <button type="button" id="theme-btn-midnight" class="btn btn-sm btn-outline-secondary"
+                onclick="toggleTheme('midnight');">
+          <i class="fas fa-moon me-1"></i>{% trans "Midnight Civic" %}
+        </button>
+        <button type="button" id="theme-btn-daylight" class="btn btn-sm btn-outline-secondary"
+                onclick="toggleTheme('daylight');">
+          <i class="fas fa-cloud-sun me-1"></i>{% trans "Civic Daylight" %}
+        </button>
         <button type="button" id="theme-btn-dark" class="btn btn-sm btn-outline-secondary"
                 onclick="toggleTheme('dark');">
-          <i class="fas fa-moon me-1"></i>{% trans "Dark" %}
+          <i class="fas fa-circle-half-stroke me-1"></i>{% trans "Dark" %}
         </button>
         <button type="button" id="theme-btn-light" class="btn btn-sm btn-outline-secondary"
                 onclick="toggleTheme('light');">

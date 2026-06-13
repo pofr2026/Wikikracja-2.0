@@ -534,16 +534,18 @@
   }
   .settings-note { font-size: .72rem; color: var(--text-muted); }
 
-  /* dark + civic: jasna ikonka */
+  /* dark + civic + midnight: jasna ikonka */
   :root #onboarding-accordion .accordion-button::after,
   [data-theme="dark"] #onboarding-accordion .accordion-button::after,
-  [data-theme="civic"] #onboarding-accordion .accordion-button::after {
+  [data-theme="civic"] #onboarding-accordion .accordion-button::after,
+  [data-theme="midnight"] #onboarding-accordion .accordion-button::after {
     filter: brightness(0) invert(1);
     opacity: .7;
   }
-  /* official + light: ciemna ikonka */
+  /* official + light + daylight: ciemna ikonka */
   [data-theme="official"] #onboarding-accordion .accordion-button::after,
-  [data-theme="light"] #onboarding-accordion .accordion-button::after {
+  [data-theme="light"] #onboarding-accordion .accordion-button::after,
+  [data-theme="daylight"] #onboarding-accordion .accordion-button::after {
     filter: brightness(0);
     opacity: .5;
   }

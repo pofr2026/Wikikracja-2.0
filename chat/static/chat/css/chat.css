@@ -19,7 +19,8 @@
     --navbar-height: 56px;
     --notification-banner-height: 50px;
 }
-[data-theme="light"] {
+[data-theme="light"],
+[data-theme="daylight"] {
     --color-surface-offset: rgba(0, 0, 0, .04);
     --color-surface-dynamic: rgba(0, 0, 0, .07);
     --color-warning: #e6a817;

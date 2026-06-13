@@ -158,7 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const btn = document.getElementById('theme-toggle-btn');
     if (btn) {
         btn.addEventListener('click', function() {
-            applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+            // Domyślna para ciemny/jasny: Midnight Civic ↔ Civic Daylight.
+            // Z dowolnego innego motywu pierwsze kliknięcie przełącza na ciemny (midnight).
+            applyTheme(document.documentElement.getAttribute('data-theme') === 'midnight' ? 'daylight' : 'midnight');
         });
     }
 });
