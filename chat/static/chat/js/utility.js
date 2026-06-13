@@ -25,6 +25,30 @@ export function $$(selector, context = document) {
 }
 
 /**
+ * Reads the logged-in user's own avatar URL and id from the navbar user card
+ * (.sidebar-user in home/base.html). Used by the optimistic render of an
+ * outgoing message so the bubble shows the real avatar + profile link
+ * immediately, instead of initials until the server echo / a page refresh.
+ *
+ * @returns {{avatarUrl: string|null, userId: number|null}} avatarUrl is null when
+ *   the card shows initials (a <div>, no uploaded avatar); userId is parsed from
+ *   the card's /obywatele/<pk>/ href. Both null when the card is absent.
+ */
+export function getOwnIdentity() {
+    const card = document.querySelector('.sidebar-user');
+    if (!card) return { avatarUrl: null, userId: null };
+
+    const img = card.querySelector('img.user-avatar');
+    const avatarUrl = img ? img.getAttribute('src') : null;
+
+    const href = card.getAttribute('href') || '';
+    const match = href.match(/\/obywatele\/(\d+)\//);
+    const userId = match ? Number(match[1]) : null;
+
+    return { avatarUrl, userId };
+}
+
+/**
  * Displays a desktop notification for chat events
  * @param {Object} notif - Notification data
  * @param {string} notif.title - Notification title

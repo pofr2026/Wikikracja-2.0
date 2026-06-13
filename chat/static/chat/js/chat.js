@@ -7,7 +7,7 @@
 import { clearReplyTarget as coreClearReplyTarget, setReplyTarget as coreSetReplyTarget } from './chat-core.js';
 import DomApi from './domapi.js';
 import { MessageHistory } from './templates.js';
-import { $, $$, _, formatDate, formatDateTime, Lock, makeNotification, parseParms } from './utility.js';
+import { $, $$, _, formatDate, formatDateTime, getOwnIdentity, Lock, makeNotification, parseParms } from './utility.js';
 import WsApi from './wsapi.js';
 
 /**
@@ -1098,6 +1098,10 @@ export async function onSubmitMessage(message, editing_message_id) {
         const ownUsername = is_anonymous
             ? 'Anonymous User'
             : (document.querySelector('.user-name')?.textContent?.trim() || '');
+        // Anonymous messages must not leak the sender's avatar/profile link.
+        const { avatarUrl: ownAvatar, userId: ownUserId } = is_anonymous
+            ? { avatarUrl: null, userId: null }
+            : getOwnIdentity();
         const now = Date.now();
 
         DOM_API.removeNoMessagesBanner();
@@ -1110,7 +1114,7 @@ export async function onSubmitMessage(message, editing_message_id) {
         }
 
         DOM_API.addMessage(
-            CurrentRoomId, null, null, temp_id, ownUsername, message,
+            CurrentRoomId, ownUserId, ownAvatar, temp_id, ownUsername, message,
             0, 0, null, true, false,
             attachments, now, now,
             reply_to, { bulb: 0, question: 0 }, [], [],
