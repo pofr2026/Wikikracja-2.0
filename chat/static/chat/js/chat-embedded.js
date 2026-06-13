@@ -96,6 +96,12 @@ async function initEmbeddedChat(container) {
     // ── 2. Local helpers ─────────────────────────────────────────────────────
 
     function appendMessage(msg) {
+        // Ramka 'messages' potrafi dotrzeć już po tym, jak join ack odpalił setTimeout
+        // wstawiający placeholder "Brak wiadomości" (joinDone === true). Wtedy realna
+        // wiadomość trafia tu bezpośrednio — placeholder trzeba usunąć, inaczej zostaje
+        // widoczny obok wiadomości.
+        messagesEl.querySelector('.empty-chat-message')?.remove();
+
         const dateStr = formatDate(msg.timestamp);
         if (dateStr !== lastDateBanner) {
             lastDateBanner = dateStr;
