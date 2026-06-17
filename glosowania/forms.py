@@ -1,27 +1,37 @@
 from django import forms
 
-from home.widgets import RichTextWidget
+from home.widgets import RichTextFormField, RichTextWidget
 
 from .models import Argument, Decyzja
 
 
+def _richtext_model_field(model, field_name):
+    model_field = model._meta.get_field(field_name)
+    return RichTextFormField(
+        label=model_field.verbose_name,
+        help_text=model_field.help_text,
+        required=not model_field.blank,
+        max_length=model_field.max_length,
+        widget=RichTextWidget(max_length=model_field.max_length),
+    )
+
+
 class DecyzjaForm(forms.ModelForm):
+    tresc = _richtext_model_field(Decyzja, 'tresc')
+    uzasadnienie = _richtext_model_field(Decyzja, 'uzasadnienie')
+    kara = _richtext_model_field(Decyzja, 'kara')
+
     class Meta:
         model = Decyzja
         fields = ('title', 'tresc', 'uzasadnienie', 'kara', 'znosi')
         widgets = {
             'title': forms.TextInput(),
-            'tresc': RichTextWidget(max_length=3000),
-            'uzasadnienie': RichTextWidget(max_length=2000),
-            'kara': RichTextWidget(max_length=500),
         }
 
 
 class ArgumentForm(forms.ModelForm):
+    content = _richtext_model_field(Argument, 'content')
+
     class Meta:
         model = Argument
         fields = ('argument_type', 'content')
-        widgets = {
-            # licznik/limit widgetu z modelu — to samo źródło prawdy, którego ModelForm użyje do walidacji
-            'content': RichTextWidget(max_length=Argument._meta.get_field('content').max_length),
-        }

@@ -8,7 +8,7 @@ filter / RichTextWidget initial value nie produkował ghost empty lines.
 
 from django.test import TestCase
 
-from zzz.richtext import sanitize, strip_tags
+from zzz.richtext import richtext_content_length, sanitize, strip_tags
 
 
 class SanitizeNormalizesNewlinesTests(TestCase):
@@ -84,3 +84,17 @@ class StripTagsTests(TestCase):
     def test_empty(self):
         self.assertEqual(strip_tags(''), '')
         self.assertEqual(strip_tags(None), '')
+
+
+class RichTextContentLengthTests(TestCase):
+    def test_autolinked_url_is_counted_once(self):
+        url = 'https://example.com/source'
+        html = f'<a href="{url}" target="_blank" rel="noopener">{url}</a>'
+
+        self.assertEqual(richtext_content_length(html), len(url))
+
+    def test_hidden_href_longer_than_label_counts_toward_limit(self):
+        href = 'https://example.com/' + ('a' * 80)
+        html = f'<a href="{href}">x</a>'
+
+        self.assertEqual(richtext_content_length(html), len(href))
