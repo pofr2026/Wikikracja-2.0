@@ -16,6 +16,7 @@ import {
     initFormattingToolbar,
     initGlobalPasteImageHandler,
     insertPlainTextAtCaret,
+    showToast,
 } from './chat-core.js';
 import {
     copyMessageLink,
@@ -67,21 +68,23 @@ document.addEventListener('DOMContentLoaded', function() {
         if (sendBtn) sendBtn.disabled = remaining <= 0;
     }
 
-    function showToast(message) {
-        const existing = document.getElementById('chat-toast');
-        if (existing) existing.remove();
-        const toast = document.createElement('div');
-        toast.id = 'chat-toast';
-        toast.className = 'chat-toast';
-        toast.textContent = message;
-        document.body.appendChild(toast);
-        requestAnimationFrame(() => toast.classList.add('chat-toast--visible'));
-        setTimeout(() => {
-            toast.classList.remove('chat-toast--visible');
-            setTimeout(() => toast.remove(), 300);
-        }, 2500);
-    }
     window.showToast = showToast;
+
+    function showReconnectToast() {
+        showToast(_('Connection is being restored. Try again shortly.'));
+    }
+
+    function applyNotificationState(btn, enabled) {
+        DOM_API.setRoomNotifications(btn.dataset.roomId, enabled);
+    }
+
+    function applySeenState(roomId, seen) {
+        DOM_API.getRoomLinkDiv(roomId)?.classList.toggle('room-not-seen', !seen);
+        DOM_API.setRoomSeenIconState(roomId, seen);
+        if (typeof window.updateUnreadFilter === 'function') {
+            window.updateUnreadFilter();
+        }
+    }
 
     const { updateToolbarState } = initFormattingToolbar(document, () => $('#message-input'));
 
@@ -265,29 +268,14 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', (e) => {
         const btn = e.target.closest('.notif-switch');
         if (btn) {
-            const newState = !(btn.dataset.enabled === "true" || btn.dataset.enabled === true);
-            btn.dataset.enabled = newState;
-            const icon = $("i", btn);
-            icon?.classList.toggle('fa-bell', newState);
-            icon?.classList.toggle('fa-bell-slash', !newState);
-            const label = btn.querySelector('.notif-label');
-            if (label) label.textContent = newState ? _('Mute room') : _('Unmute room');
-            const meta = btn.closest('.room-link')?.querySelector('.room-link__meta');
-            if (meta) {
-                meta.dataset.muted = newState ? 'false' : 'true';
-                let mutedIcon = meta.querySelector('.room-link__muted-icon');
-                if (!newState) {
-                    if (!mutedIcon) {
-                        mutedIcon = document.createElement('i');
-                        mutedIcon.className = 'fas fa-bell-slash room-link__muted-icon';
-                        mutedIcon.title = _('Muted');
-                        meta.appendChild(mutedIcon);
-                    }
-                } else {
-                    mutedIcon?.remove();
-                }
+            const oldState = btn.dataset.enabled === "true" || btn.dataset.enabled === true;
+            const newState = !oldState;
+            applyNotificationState(btn, newState);
+            const sent = onToggleNotifications(btn.dataset.roomId, newState);
+            if (sent === false) {
+                applyNotificationState(btn, oldState);
+                showReconnectToast();
             }
-            onToggleNotifications(btn.dataset.roomId, newState);
         }
     });
 
@@ -298,12 +286,11 @@ document.addEventListener('DOMContentLoaded', function() {
             e.stopPropagation();
             const isCurrentlySeen = btn.dataset.seen === "true";
             const newState = !isCurrentlySeen;
-            DOM_API.getRoomLinkDiv(btn.dataset.roomId)?.classList.toggle('room-not-seen', !newState);
-            DOM_API.setRoomSeenIconState(btn.dataset.roomId, newState);
-            onToggleSeen(btn.dataset.roomId, newState);
-            // Update unread filter if it's active
-            if (typeof window.updateUnreadFilter === 'function') {
-                window.updateUnreadFilter();
+            applySeenState(btn.dataset.roomId, newState);
+            const sent = onToggleSeen(btn.dataset.roomId, newState);
+            if (sent === false) {
+                applySeenState(btn.dataset.roomId, isCurrentlySeen);
+                showReconnectToast();
             }
         }
     });
@@ -454,12 +441,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const room_id = roomLink.getAttribute("data-room-id");
         roomLink.classList.add('room-tapping');
         setTimeout(() => roomLink.classList.remove('room-tapping'), 300);
-        DOM_API.getRoomLinkDiv(room_id)?.classList.remove("room-not-seen");
-        DOM_API.setRoomSeenIconState(room_id, true);
         onRoomTryJoin(room_id);
-        if (typeof window.updateUnreadFilter === 'function') {
-            window.updateUnreadFilter();
-        }
     }
 
     // ── Room list show/hide ───────────────────────────────────────────────────
@@ -586,4 +568,3 @@ document.addEventListener('DOMContentLoaded', function() {
 
     renameInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') renameConfirm?.click(); });
 });
-

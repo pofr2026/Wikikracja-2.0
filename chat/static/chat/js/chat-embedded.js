@@ -7,7 +7,7 @@
  *   <script type="module" src="{% static 'chat/js/chat-embedded.js' %}"></script>
  */
 
-import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, handleListTrigger, initFormattingToolbar, initGlobalPasteImageHandler, insertPlainTextAtCaret, setReplyTarget, updateCounter, uploadFiles } from './chat-core.js';
+import { clearReplyTarget, createEditHandler, createImageClickHandler, createQuoteJumpHandler, createReactionHandler, createReplyHandler, createVoteHandler, formatMessage, getInputHtml, handleEnterKey, handleListTrigger, initFormattingToolbar, initGlobalPasteImageHandler, insertPlainTextAtCaret, setReplyTarget, showToast, updateCounter, uploadFiles } from './chat-core.js';
 import { Message } from './templates.js';
 import { _, formatDate, formatTime } from './utility.js';
 import { getSharedWebSocket } from './websocket-manager.js';
@@ -164,6 +164,11 @@ async function initEmbeddedChat(container) {
         clearTimeout(ecSendLockTimeout);
     }
 
+    function notifyDroppedSend() {
+        unlockSendBtn();
+        showToast(_('Connection is being restored. Try again shortly.'));
+    }
+
     function sendMessage() {
         const html = getInputHtml(inputEl);
         const text = (inputEl.textContent || '').trim();
@@ -176,7 +181,7 @@ async function initEmbeddedChat(container) {
         // Upload files if any selected
         if (selectedFiles.length > 0) {
             uploadFiles(selectedFiles).then((uploadResp) => {
-                ws.sendJson({
+                const sent = ws.sendJson({
                     command: 'send',
                     room_id: roomId,
                     message: html,
@@ -184,6 +189,10 @@ async function initEmbeddedChat(container) {
                     attachments: { images: uploadResp.filenames || [] },
                     ...(currentReplyId ? { reply_to_id: currentReplyId } : {}),
                 });
+                if (!sent) {
+                    notifyDroppedSend();
+                    return;
+                }
                 inputEl.innerHTML = '';
                 currentReplyId = clearReplyTarget(replyPreview);
                 selectedFiles = [];
@@ -196,7 +205,7 @@ async function initEmbeddedChat(container) {
                 unlockSendBtn();
             });
         } else {
-            ws.sendJson({
+            const sent = ws.sendJson({
                 command: 'send',
                 room_id: roomId,
                 message: html,
@@ -204,6 +213,10 @@ async function initEmbeddedChat(container) {
                 attachments: {},
                 ...(currentReplyId ? { reply_to_id: currentReplyId } : {}),
             });
+            if (!sent) {
+                notifyDroppedSend();
+                return;
+            }
             inputEl.innerHTML = '';
             currentReplyId = clearReplyTarget(replyPreview);
             updateCounter(inputEl, counterEl, counterVal, sendBtn, EC_MAX);
@@ -215,6 +228,17 @@ async function initEmbeddedChat(container) {
     let joined = false;
     let pendingMessages = [];
     let joinDone = false;
+    let joinRetryHandler = null;
+
+    function retryJoinOnNextOpen() {
+        if (joinRetryHandler) return;
+        joinRetryHandler = function onOpen() {
+            ws.socket.removeEventListener('open', joinRetryHandler);
+            joinRetryHandler = null;
+            joinRoom();
+        };
+        ws.socket.addEventListener('open', joinRetryHandler);
+    }
 
     function joinRoom() {
         if (joined) return;
@@ -228,12 +252,17 @@ async function initEmbeddedChat(container) {
                     for (const msg of pendingMessages) appendMessage(msg);
                     pendingMessages = [];
                     if (messagesEl.children.length === 0) {
-                        messagesEl.innerHTML = '<div class="ec-empty empty-chat-message">Brak wiadomości. Napisz pierwszy!</div>';
+                        messagesEl.innerHTML = `<div class="ec-empty empty-chat-message">${_('No messages yet. Write first!')}</div>`;
                     }
                 }, 0);
             })
             .catch(err => {
-                messagesEl.innerHTML = '<div class="ec-loading">Brak dostępu do tego czatu.</div>';
+                if (err === 'NOT_CONNECTED') {
+                    messagesEl.innerHTML = `<div class="ec-loading">${_('Connection is being restored. Waiting for reconnect...')}</div>`;
+                    retryJoinOnNextOpen();
+                    return;
+                }
+                messagesEl.innerHTML = `<div class="ec-loading">${_('No access to this chat.')}</div>`;
                 container.querySelector('.ec-input-area').style.display = 'none';
                 console.error('embedded chat join error:', err);
             });
@@ -391,17 +420,25 @@ async function initEmbeddedChat(container) {
         // Toggle active state on button
         const btn = messagesEl.querySelector(`.msg-vote[data-event-name="${eventName}"][data-message-id="${messageId}"]`);
         if (btn) btn.classList.toggle('active', isAdd);
-        if (!joined) return;
-        ws.sendJson({
+        if (!joined) {
+            btn?.classList.toggle('active', !isAdd);
+            return;
+        }
+        const sent = ws.sendJson({
             command: isAdd ? 'message-add-vote' : 'message-remove-vote',
             vote: eventName,
             message_id: messageId,
         });
+        if (!sent) {
+            btn?.classList.toggle('active', !isAdd);
+            showToast(_('Connection is being restored. Try again shortly.'));
+        }
     });
 
     const reactionHandler = createReactionHandler((reaction, messageId) => {
         if (!joined) return;
-        ws.sendJson({ command: 'message-react', reaction, message_id: messageId });
+        const sent = ws.sendJson({ command: 'message-react', reaction, message_id: messageId });
+        if (!sent) showToast(_('Connection is being restored. Try again shortly.'));
     });
 
     function startEdit(messageId, inputElRef) {
@@ -437,7 +474,11 @@ async function initEmbeddedChat(container) {
 
     function submitInput() {
         if (inputEl.dataset.editMessage) {
-            ws.sendJson({ command: 'edit-message', message_id: parseInt(inputEl.dataset.editMessage), new_message: getInputHtml(inputEl) });
+            const sent = ws.sendJson({ command: 'edit-message', message_id: parseInt(inputEl.dataset.editMessage), new_message: getInputHtml(inputEl) });
+            if (!sent) {
+                showToast(_('Connection is being restored. Try again shortly.'));
+                return;
+            }
             delete inputEl.dataset.editMessage;
             inputEl.innerHTML = '';
             inputEl.style.borderColor = '';

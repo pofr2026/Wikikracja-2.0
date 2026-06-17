@@ -20,6 +20,21 @@ export const UPLOAD_MAX_BYTES = 5_000_000;
 const IMAGE_MAX_DIMENSION = 1280;
 const IMAGE_WEBP_QUALITY = 0.75;
 
+export function showToast(message) {
+    const existing = document.getElementById('chat-toast');
+    if (existing) existing.remove();
+    const toast = document.createElement('div');
+    toast.id = 'chat-toast';
+    toast.className = 'chat-toast';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => toast.classList.add('chat-toast--visible'));
+    setTimeout(() => {
+        toast.classList.remove('chat-toast--visible');
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
 async function compressImage(file) {
     if (!file.type.startsWith('image/') || file.type === 'image/gif') return file;
     try {

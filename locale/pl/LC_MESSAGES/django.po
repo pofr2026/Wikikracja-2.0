@@ -4790,3 +4790,19 @@ msgstr "Angielski"
 #: .\zzz\settings.py:102
 msgid "Polish"
 msgstr "Polski"
+
+#: .\chat\views.py:258
+msgid "Connection is being restored. Try again shortly."
+msgstr "Połączenie jest wznawiane. Spróbuj ponownie za chwilę."
+
+#: .\chat\views.py:259
+msgid "Connection is being restored. Waiting for reconnect..."
+msgstr "Połączenie jest wznawiane. Czekam na ponowne połączenie..."
+
+#: .\chat\views.py:260
+msgid "No messages yet. Write first!"
+msgstr "Brak wiadomości. Napisz pierwszy!"
+
+#: .\chat\views.py:261
+msgid "No access to this chat."
+msgstr "Brak dostępu do tego czatu."

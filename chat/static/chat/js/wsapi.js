@@ -74,9 +74,10 @@ export default class WsApi {
     /**
      * Sends a JSON message over WebSocket (no response expected)
      * @param {Object} obj - Object to send (will be JSON stringified)
+     * @returns {boolean} - false if dropped during a reconnect gap
      */
     sendJson(obj) {
-        this.ws.sendJson(obj);
+        return this.ws.sendJson(obj);
     }
 
     /**
@@ -106,7 +107,7 @@ export default class WsApi {
      * @param {number} room_id - ID of room that was viewed
      */
     seenRoom(room_id) {
-        this.sendJson({
+        return this.sendJson({
             command: "room-seen",
             room_id: room_id
         });
@@ -122,7 +123,9 @@ export default class WsApi {
      * @param {string|null} temp_id - Client-generated ID for optimistic UI matching
      */
     sendMessage(room_id, message, is_anonymous, attachments, reply_to_id = null, temp_id = null) {
-        this.sendJson({
+        // Zwracamy wynik wysylki (false w oknie reconnectu), zeby caller mogl od razu
+        // oznaczyc optymistyczny babelek jako nieudany zamiast czekac na timeout.
+        return this.sendJson({
             command: "send",
             room_id,
             message,
@@ -133,11 +136,8 @@ export default class WsApi {
         });
     }
 
-    /**
-     * ZMIANA 4B — toggle emoji reaction on a message.
-     */
     toggleReaction(reaction, message_id) {
-        this.sendJson({ command: 'message-react', reaction, message_id });
+        return this.sendJson({ command: 'message-react', reaction, message_id });
     }
 
     /**
@@ -169,7 +169,7 @@ export default class WsApi {
             payload.removed_attachments = removed_attachments;
         }
 
-        this.sendJson(payload);
+        return this.sendJson(payload);
     }
 
     /**
@@ -178,7 +178,8 @@ export default class WsApi {
      * @param {number} message_id - ID of message to vote on
      */
     addVote(vote, message_id) {
-        this.sendJson({
+        // Zwraca false w oknie reconnectu — caller cofa optymistyczny stan przycisku.
+        return this.sendJson({
             command: "message-add-vote",
             vote: vote,
             message_id: message_id
@@ -191,7 +192,8 @@ export default class WsApi {
      * @param {number} message_id - ID of message to remove vote from
      */
     removeVote(vote, message_id) {
-        this.sendJson({
+        // Zwraca false w oknie reconnectu — caller cofa optymistyczny stan przycisku.
+        return this.sendJson({
             command: "message-remove-vote",
             vote: vote,
             message_id: message_id
@@ -206,7 +208,7 @@ export default class WsApi {
      * @param {boolean} popular_only
      */
     fetchMessages(room_id, sort_by = 'date', order = 'desc', popular_only = false) {
-        this.sendJson({
+        return this.sendJson({
             command: 'fetch-messages',
             room_id,
             sort_by,
@@ -307,7 +309,7 @@ export default class WsApi {
      * @param {boolean} enabled - Whether to enable notifications
      */
     toggleNotifications(room_id, enabled) {
-        this.sendJson({
+        return this.sendJson({
             command: 'toggle-notifications',
             room_id,
             enabled
@@ -319,7 +321,7 @@ export default class WsApi {
      * @param {number} room_id - ID of the room
      */
     markRoomUnseen(room_id) {
-        this.sendJson({
+        return this.sendJson({
             command: 'room-unseen',
             room_id
         });

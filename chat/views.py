@@ -254,6 +254,10 @@ def get_translations():
         "No unread messages": _("No unread messages"),
         "Tap {icon} above the list to disable the unread filter": _("Tap {icon} above the list to disable the unread filter"),
         "Disable the unread filter": _("Disable the unread filter"),
+        "Connection is being restored. Try again shortly.": _("Connection is being restored. Try again shortly."),
+        "Connection is being restored. Waiting for reconnect...": _("Connection is being restored. Waiting for reconnect..."),
+        "No messages yet. Write first!": _("No messages yet. Write first!"),
+        "No access to this chat.": _("No access to this chat."),
     }
 
 

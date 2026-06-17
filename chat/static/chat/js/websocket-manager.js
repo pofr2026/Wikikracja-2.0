@@ -141,6 +141,14 @@ function createWebSocketManager() {
         delete promises[ID];
     }
 
+    function isReconnectSendError(err) {
+        const name = err?.name || '';
+        const message = typeof err === 'string' ? err : (err?.message || '');
+        return name === 'InvalidStateError'
+            || message.includes('INVALID_STATE_ERR : Pausing to reconnect websocket')
+            || message.includes('InvalidStateError');
+    }
+
     return {
         /**
          * Raw WebSocket instance (use with caution)
@@ -194,19 +202,49 @@ function createWebSocketManager() {
 
         /**
          * Send a JSON message over WebSocket (no response expected)
+         * During a reconnect gap the underlying ReconnectingWebSocket has no live
+         * socket and its send() throws 'INVALID_STATE_ERR'. For fire-and-forget
+         * sends we drop the message quietly — server state is refreshed on reconnect
+         * (see wsOnConnect), so re-sending stale commands here is pointless.
          * @param {Object} obj - Object to send (will be JSON stringified)
+         * @returns {boolean} - true if the message was handed to the socket
          */
         sendJson: function(obj) {
-            socket.send(JSON.stringify(obj));
+            if (socket.readyState !== WebSocket.OPEN) {
+                console.warn("sendJson dropped while socket not OPEN (reconnecting):", obj.command);
+                return false;
+            }
+            const payload = JSON.stringify(obj);
+            // Wyscig: readyState moze byc OPEN, a wewnetrzny ws juz null.
+            // reconnecting-websocket.js zeruje ws w onclose i jego send() rzuca
+            // wtedy znany blad INVALID_STATE_ERR. Inne wyjatki puszczamy dalej,
+            // bo to bledy programistyczne, nie stan reconnectu.
+            try {
+                socket.send(payload);
+            } catch (err) {
+                if (!isReconnectSendError(err)) throw err;
+                console.warn("sendJson dropped on socket.send race (reconnecting):", obj.command);
+                return false;
+            }
+            return true;
         },
 
         /**
          * Send a JSON message and wait for response
          * Uses __TRACE_ID to correlate request/response
          * @param {Object} obj - Object to send
-         * @returns {Promise<Object>} - Promise resolving to server response
+         * @returns {Promise<Object>} - Promise resolving to server response,
+         *   rejected with 'NOT_CONNECTED' if sent during a reconnect gap.
          */
         sendJsonAsync: function(obj) {
+            // Reject up front during the reconnect gap so callers get a clean,
+            // recognizable code instead of the raw library throw bubbling into an
+            // alert(). Registering no promise avoids a dangling entry that would
+            // never resolve.
+            if (socket.readyState !== WebSocket.OPEN) {
+                return Promise.reject('NOT_CONNECTED');
+            }
+
             let ID = Math.floor(Math.random() * 1000000) + 1;
             obj.__TRACE_ID = ID;
 
@@ -219,8 +257,19 @@ function createWebSocketManager() {
                 }
             );
 
-            this.sendJson(obj);
-            return promise;
+            // sendJson zwraca false gdy socket nie OPEN albo gdy send() przegral
+            // wyscig z zerowaniem ws — wtedy odrzuc i posprzataj wpis, by nie
+            // zostawic obietnicy, ktora nigdy sie nie rozwiaze.
+            try {
+                if (this.sendJson(obj)) {
+                    return promise;
+                }
+                delete promises[ID];
+                return Promise.reject('NOT_CONNECTED');
+            } catch (err) {
+                delete promises[ID];
+                throw err;
+            }
         }
     };
 }

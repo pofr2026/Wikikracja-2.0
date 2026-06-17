@@ -4,7 +4,7 @@
  * Coordinates between WebSocket API (WsApi) and DOM API (DomApi) to provide chat functionality.
  */
 
-import { clearReplyTarget as coreClearReplyTarget, setReplyTarget as coreSetReplyTarget } from './chat-core.js';
+import { clearReplyTarget as coreClearReplyTarget, setReplyTarget as coreSetReplyTarget, showToast } from './chat-core.js';
 import DomApi from './domapi.js';
 import { MessageHistory } from './templates.js';
 import { $, $$, _, formatDate, formatDateTime, getOwnIdentity, Lock, makeNotification, parseParms } from './utility.js';
@@ -35,6 +35,24 @@ const RoomLock = new Lock();
 let CurrentRoomId = null;
 
 /**
+ * Room requested while the WebSocket was in a reconnect gap.
+ * Consumed once on the next open to avoid repeating costly joins.
+ * @type {number|null}
+ */
+let PendingJoinRoomId = null;
+
+function rememberPendingJoinRoom(room_id) {
+    const parsed = parseInt(room_id);
+    PendingJoinRoomId = Number.isFinite(parsed) ? parsed : null;
+}
+
+function consumePendingJoinRoom() {
+    const room_id = PendingJoinRoomId;
+    PendingJoinRoomId = null;
+    return room_id;
+}
+
+/**
  * Message ID being replied to
  * @type {number|null}
  */
@@ -55,6 +73,10 @@ let ScrollToMessageId = null;
  * Always reset to defaults on room change — not persisted.
  */
 let SortState = { sort_by: 'date', order: 'desc', popular_only: false };
+
+function showReconnectToast() {
+    showToast(_("Connection is being restored. Try again shortly."));
+}
 
 function resetSortState() {
     SortState = { sort_by: 'date', order: 'desc', popular_only: false };
@@ -111,11 +133,12 @@ function bindSortToolbar() {
     };
 
     const refetch = () => {
-        if (CurrentRoomId == null) return;
-        WS_API.fetchMessages(CurrentRoomId, SortState.sort_by, SortState.order, SortState.popular_only);
+        if (CurrentRoomId == null) return true;
+        return WS_API.fetchMessages(CurrentRoomId, SortState.sort_by, SortState.order, SortState.popular_only) !== false;
     };
 
     const toggleSort = (key) => {
+        const previousState = { ...SortState };
         if (SortState.sort_by === key) {
             SortState.order = SortState.order === 'desc' ? 'asc' : 'desc';
         } else {
@@ -123,15 +146,24 @@ function bindSortToolbar() {
             SortState.order = 'desc';
         }
         applyActiveStyles();
-        refetch();
+        if (!refetch()) {
+            SortState = previousState;
+            applyActiveStyles();
+            showReconnectToast();
+        }
     };
 
     dateBtn.addEventListener('click', () => toggleSort('date'));
     likesBtn.addEventListener('click', () => toggleSort('likes'));
     popularBtn.addEventListener('click', () => {
+        const previousState = { ...SortState };
         SortState.popular_only = !SortState.popular_only;
         applyActiveStyles();
-        refetch();
+        if (!refetch()) {
+            SortState = previousState;
+            applyActiveStyles();
+            showReconnectToast();
+        }
     });
 
     applyActiveStyles();
@@ -512,6 +544,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (action.showPlaceholder) showRoomPlaceholder();
 
+        const pendingJoinRoomId = consumePendingJoinRoom();
+        if (pendingJoinRoomId) {
+            onRoomTryJoin(pendingJoinRoomId);
+            return;
+        }
+
         // ?view=rooms / ?view=unread — bez auto-joina, koniec
         if (action.joinAction === 'none') return;
 
@@ -625,7 +663,10 @@ function deriveBreadcrumb(room_id) {
 
 export async function onRoomTryJoin(room_id) {
     room_id = parseInt(room_id);
-    if (room_id === CurrentRoomId) return; // already in this room
+    if (room_id === CurrentRoomId) {
+        PendingJoinRoomId = null;
+        return; // already in this room
+    }
     if (RoomLock.locked()) await RoomLock.wait();
     if (CurrentRoomId) await onRoomTryLeave(false);
 
@@ -646,15 +687,24 @@ export async function onRoomTryJoin(room_id) {
             if (roomLinks && parseInt(roomLinks.dataset.roomId) != room_id) {
                 onRoomTryJoin(parseInt(roomLinks.dataset.roomId));
             }
+        } else if (error === 'NOT_CONNECTED') {
+            // Retry one pending room intent on the next open; URL list views skip
+            // normal localStorage-based auto-join.
+            DOM_API.getRoomLinkDiv(room_id)?.classList.remove("joined");
+            localStorage.lastUsedRoomID = room_id;
+            rememberPendingJoinRoom(room_id);
         } else alert(error);
         return;
     }
     RoomLock.unlock();
 
     localStorage.lastUsedRoomID = room_id;
+    PendingJoinRoomId = null;
     CurrentRoomId = room_id;
     // TODO: send seen confirmation to server after a little while
     DOM_API.seenChat(room_id);
+    // If this drops in a reconnect gap, keep the active room locally seen:
+    // wsOnConnect re-joins CurrentRoomId and sends room-seen again after reconnect.
     WS_API.seenRoom(room_id);
     DOM_API.setRoomNotifications(response.notifications);
     DOM_API.createRoomDiv(CurrentRoomId, response.title, response.public, response.notifications);
@@ -1001,24 +1051,33 @@ export function clearReplyTarget() {
  * send toggle-reaction command to server.
  */
 export function onToggleReaction(reaction, message_id) {
-    WS_API?.toggleReaction(reaction, message_id);
+    const sent = WS_API?.toggleReaction(reaction, message_id);
+    if (sent === false) showReconnectToast();
+    return sent;
 }
 
-export async function onUpdateVote(vote, message_id, is_add) {
-    this.classList.toggle('active');
-    is_add ? WS_API.addVote(vote, message_id) : WS_API.removeVote(vote, message_id);
-}
-
-export async function onToggleNotifications(room_id, is_enabled) {
-    WS_API.toggleNotifications(room_id, is_enabled);
-}
-
-export async function onToggleSeen(room_id, is_seen) {
-    if (is_seen) {
-        WS_API.seenRoom(room_id);
-    } else {
-        WS_API.markRoomUnseen(room_id);
+export function onUpdateVote(vote, message_id, is_add) {
+    // handlers.js already applied the optimistic state; this function only sends
+    // the command and rolls that state back if the reconnect guard drops it.
+    const sent = is_add ? WS_API.addVote(vote, message_id) : WS_API.removeVote(vote, message_id);
+    if (sent === false) {
+        // Drop w oknie reconnectu — cofnij optymistyczny stan przycisku. Glos nie
+        // dotarl do serwera (brak echa, ktore by go potwierdzilo), wiec przycisk nie
+        // moze pokazywac zmiany, ktorej serwer nie widzial.
+        this?.classList.toggle('active', !is_add);
+        showReconnectToast();
     }
+}
+
+export function onToggleNotifications(room_id, is_enabled) {
+    return WS_API.toggleNotifications(room_id, is_enabled);
+}
+
+export function onToggleSeen(room_id, is_seen) {
+    if (is_seen) {
+        return WS_API.seenRoom(room_id);
+    }
+    return WS_API.markRoomUnseen(room_id);
 }
 
 export async function onMessageHistory(message_id) {
@@ -1074,8 +1133,8 @@ async function writeToClipboard(text) {
 
 function showCopyFeedback(button, success) {
     const message = success ? _("Link copied") : _("Could not copy link");
-    if (button?.closest('.dropdown') && window.showToast) {
-        window.showToast(message);
+    if (button?.closest('.dropdown')) {
+        showToast(message);
         return;
     }
     if (!button || !DOM_API || typeof DOM_API.showCopyFeedback !== 'function') return;
@@ -1098,7 +1157,11 @@ export async function onSubmitMessage(message, editing_message_id) {
         if (files?.length) {
             attachments.images = (await WS_API.uploadFiles(files)).filenames;
         }
-        WS_API.editMessage(editing_message_id, message, attachments, DOM_API.getRemovedAttachments(), DOM_API.getOriginalMessageText(editing_message_id));
+        const sent = WS_API.editMessage(editing_message_id, message, attachments, DOM_API.getRemovedAttachments(), DOM_API.getOriginalMessageText(editing_message_id));
+        if (sent === false) {
+            showReconnectToast();
+            return;
+        }
         // Don't stop editing immediately - let onReceiveEdit handle it after server confirms
     } else {
         const files = DOM_API.getFiles();
@@ -1154,12 +1217,19 @@ export async function onSubmitMessage(message, editing_message_id) {
         requestAnimationFrame(() => DOM_API.markOverflow(DOM_API.getMessageDiv(temp_id)));
         if (msgdiv) msgdiv.scrollTop = msgdiv.scrollHeight;
 
-        WS_API.sendMessage(CurrentRoomId, message, is_anonymous, attachments, currentReplyId, temp_id);
+        const sent = WS_API.sendMessage(CurrentRoomId, message, is_anonymous, attachments, currentReplyId, temp_id);
 
-        pendingTimeouts.set(temp_id, setTimeout(() => {
-            pendingTimeouts.delete(temp_id);
+        if (sent) {
+            pendingTimeouts.set(temp_id, setTimeout(() => {
+                pendingTimeouts.delete(temp_id);
+                DOM_API.failMessage(temp_id);
+            }, PENDING_TIMEOUT_MS));
+        } else {
+            // Socket w oknie reconnectu — payload nie wyszedl. Oznacz babelek jako
+            // nieudany od razu, bez czekania PENDING_TIMEOUT_MS. wsOnConnect odswieza
+            // stan pokoi, ale NIE re-wysyla tresci — wiec to musi byc widoczne dla usera.
             DOM_API.failMessage(temp_id);
-        }, PENDING_TIMEOUT_MS));
+        }
 
         if (sendBtn) sendBtn.disabled = false;
 
