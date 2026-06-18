@@ -12,6 +12,7 @@ import {
     createReactionHandler,
     createReplyHandler,
     createVoteHandler,
+    handleEnterKey,
     handleListTrigger,
     initFormattingToolbar,
     initGlobalPasteImageHandler,
@@ -240,13 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
             if (mod && e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateToolbarState(); return; }
             if (handleListTrigger(e)) return;
-            // Enter = wyślij, Shift+Enter = nowa linia
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (e.shiftKey) { document.execCommand('insertLineBreak'); }
-                else { onSubmitMessage(DOM_API.getEnteredText(), DOM_API.getEditedMessageId()); }
-                return;
-            }
+            if (handleEnterKey(e, () => onSubmitMessage(DOM_API.getEnteredText(), DOM_API.getEditedMessageId()))) return;
             return;
         }
 

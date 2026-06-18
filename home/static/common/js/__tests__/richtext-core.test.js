@@ -182,6 +182,74 @@ describe('getInputHtml — text node z surowym \\n (legacy DB content)', () => {
 
 // ── Bug B: insertPlainTextAtCaret — wstawianie tekstu z \n jako DOM ──────────
 
+describe('handleEnterKey', () => {
+
+    let originalMatchMedia;
+    let originalExecCommand;
+
+    beforeEach(() => {
+        originalMatchMedia = window.matchMedia;
+        originalExecCommand = document.execCommand;
+        document.execCommand = jest.fn();
+    });
+
+    afterEach(() => {
+        if (originalMatchMedia === undefined) {
+            delete window.matchMedia;
+        } else {
+            window.matchMedia = originalMatchMedia;
+        }
+        document.execCommand = originalExecCommand;
+    });
+
+    function enterEvent(overrides = {}) {
+        return {
+            key: 'Enter',
+            shiftKey: false,
+            preventDefault: jest.fn(),
+            ...overrides,
+        };
+    }
+
+    function useTouchKeyboardProfile() {
+        window.matchMedia = jest.fn(query => ({
+            matches: query === '(pointer: coarse)' || query === '(hover: none)',
+            media: query,
+            addEventListener: jest.fn(),
+            removeEventListener: jest.fn(),
+        }));
+    }
+
+    test('desktop Enter sends and prevents native Enter', () => {
+        const submit = jest.fn();
+        const e = enterEvent();
+
+        expect(core.handleEnterKey(e, submit)).toBe(true);
+        expect(e.preventDefault).toHaveBeenCalledTimes(1);
+        expect(submit).toHaveBeenCalledTimes(1);
+    });
+
+    test('desktop Shift+Enter inserts a line without sending', () => {
+        const submit = jest.fn();
+        const e = enterEvent({ shiftKey: true });
+
+        expect(core.handleEnterKey(e, submit)).toBe(true);
+        expect(e.preventDefault).toHaveBeenCalledTimes(1);
+        expect(document.execCommand).toHaveBeenCalledWith('insertLineBreak');
+        expect(submit).not.toHaveBeenCalled();
+    });
+
+    test('mobile Enter keeps the native line break behavior', () => {
+        useTouchKeyboardProfile();
+        const submit = jest.fn();
+        const e = enterEvent();
+
+        expect(core.handleEnterKey(e, submit)).toBe(false);
+        expect(e.preventDefault).not.toHaveBeenCalled();
+        expect(submit).not.toHaveBeenCalled();
+    });
+});
+
 describe('insertPlainTextAtCaret — DOM structure', () => {
 
     function placeCaretInto(el) {

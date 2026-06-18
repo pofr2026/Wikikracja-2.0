@@ -221,14 +221,33 @@ export function updateCounter(inputEl, counterEl, counterVal, sendBtn, maxLength
     if (sendBtn) sendBtn.disabled = rem <= 0;
 }
 
+const MOBILE_ENTER_UA_PATTERN = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+
+function mediaMatches(query) {
+    return typeof window !== 'undefined'
+        && typeof window.matchMedia === 'function'
+        && window.matchMedia(query).matches;
+}
+
+function shouldUseNativeEnterLineBreak() {
+    if (typeof navigator === 'undefined') return false;
+    const maxTouchPoints = navigator.maxTouchPoints || 0;
+    const isMobileUa = MOBILE_ENTER_UA_PATTERN.test(navigator.userAgent || '');
+    const isIPadOS = navigator.platform === 'MacIntel' && maxTouchPoints > 1;
+    const isTouchKeyboardProfile = mediaMatches('(pointer: coarse)') && mediaMatches('(hover: none)');
+    return isMobileUa || isIPadOS || isTouchKeyboardProfile;
+}
+
 /**
  * WhatsApp-style Enter handling:
- *   Enter          → send
- *   Shift+Enter    → new line (insertLineBreak)
+ *   Enter          -> send
+ *   Shift+Enter    -> new line (insertLineBreak)
+ * Mobile/touch keyboards leave plain Enter native so it can insert a new line.
  * @returns {boolean} true if handled
  */
 export function handleEnterKey(e, submitCallback) {
     if (e.key !== 'Enter') return false;
+    if (!e.shiftKey && shouldUseNativeEnterLineBreak()) return false;
     e.preventDefault();
     if (e.shiftKey) {
         document.execCommand('insertLineBreak');

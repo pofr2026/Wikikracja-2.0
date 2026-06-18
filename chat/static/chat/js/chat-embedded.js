@@ -406,7 +406,6 @@ async function initEmbeddedChat(container) {
         if (mod && e.key === 'i') { e.preventDefault(); document.execCommand('italic'); updateToolbarState(); return; }
         if (mod && e.key === 'u') { e.preventDefault(); document.execCommand('underline'); updateToolbarState(); return; }
         if (handleListTrigger(e)) return;
-        // Enter = wyślij, Shift+Enter = nowa linia
         if (handleEnterKey(e, submitInput)) return;
     });
 
