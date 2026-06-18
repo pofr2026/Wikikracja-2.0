@@ -482,7 +482,7 @@
   object-fit: cover;
 }
 .proposal-author-name {
-  color: rgba(232, 234, 240, .75);
+  color: var(--text-primary);
   font-weight: 500;
   transition: color var(--transition-fast);
 }
@@ -1065,7 +1065,7 @@ button.proposal-against-btn:focus-visible {
   object-fit: cover;
 }
 .detail-author-name {
-  color: rgba(232, 234, 240, .75);
+  color: var(--text-primary);
   font-weight: 500;
 }
 .detail-author-link:hover .detail-author-name {
