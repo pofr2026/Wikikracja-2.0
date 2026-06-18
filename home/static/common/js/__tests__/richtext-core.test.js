@@ -112,6 +112,16 @@ describe('getInputHtml — bloki zawierające <br>', () => {
         // A + 1 nowa linia + 2 puste linie + B = A + 3 <br> + B
         expect(core.getInputHtml(el)).toBe('A<br><br><br>B');
     });
+
+    test('mieszany DOM po Enterze: <br> przed blokiem i tekst za blokiem', () => {
+        const el = makeEditable('6. Punkt<br><div>7. Punkt</div>8. Punkt<br>9. Punkt');
+        expect(core.getInputHtml(el)).toBe('6. Punkt<br>7. Punkt<br>8. Punkt<br>9. Punkt');
+    });
+
+    test('mieszany DOM po Enterze: inline przed i za blokiem', () => {
+        const el = makeEditable('A<div>B</div>C');
+        expect(core.getInputHtml(el)).toBe('A<br>B<br>C');
+    });
 });
 
 // ── Bug C: text node z surowym \n (stary content z DB) ───────────────────────

@@ -1,9 +1,11 @@
 import os
 import shutil
 import tempfile
+from unittest.mock import patch
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -340,6 +342,50 @@ class ManifestAndAppleTouchIconBrandTest(TestCase):
         content = response.content.decode('utf-8')
         self.assertIn('rel="icon"', content)
         self.assertIn('/media/site_branding/derived/favicon.ico', content)
+
+    def test_root_favicon_redirects_to_media_derivative_with_brand_mark(self):
+        ss = SiteSettings.get()
+        ss.brand_mark = make_branding_png()
+        ss.save()
+
+        response = self.client.get('/favicon.ico')
+
+        expected_ts = str(int(ss.updated_at.timestamp()))
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/media/site_branding/derived/favicon.ico', response['Location'])
+        self.assertIn(f'?v={expected_ts}', response['Location'])
+        self.assertNotIn('/static/home/images/favicon.ico', response['Location'])
+
+    def test_branding_asset_url_helper_uses_derived_subdir_and_version(self):
+        from site_settings.services import get_branding_asset_url
+
+        ss = SiteSettings.get()
+        ss.brand_mark = make_branding_png()
+        ss.save()
+
+        expected_ts = str(int(ss.updated_at.timestamp()))
+        self.assertEqual(
+            get_branding_asset_url(ss, 'favicon.ico'),
+            f'/media/site_branding/derived/favicon.ico?v={expected_ts}',
+        )
+
+    def test_root_favicon_redirect_is_cacheable_and_reuses_cached_target(self):
+        ss = SiteSettings.get()
+        ss.brand_mark = make_branding_png()
+        ss.save()
+        cache.clear()
+
+        with patch('home.views.SiteSettings.get', wraps=SiteSettings.get) as settings_get:
+            first = self.client.get('/favicon.ico')
+            second = self.client.get('/favicon.ico')
+
+        self.assertEqual(first.status_code, 302)
+        self.assertEqual(second.status_code, 302)
+        self.assertEqual(first['Location'], second['Location'])
+        self.assertEqual(settings_get.call_count, 1)
+        self.assertIn('public', first['Cache-Control'])
+        self.assertIn('max-age=', first['Cache-Control'])
+        self.assertNotIn('no-store', first['Cache-Control'])
 
 
 class CacheBustVersioningTest(TestCase):

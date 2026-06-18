@@ -1,9 +1,14 @@
 import os
 
 from django.conf import settings
+from django.core.cache import cache
+from django.templatetags.static import static
 from PIL import Image
 
 DERIVED_SUBDIR = 'site_branding/derived'
+FAVICON_REDIRECT_CACHE_KEY = 'site_settings:favicon_redirect_url:v1'
+FAVICON_REDIRECT_CACHE_TTL = 300
+FAVICON_REDIRECT_CACHE_CONTROL = f'public, max-age={FAVICON_REDIRECT_CACHE_TTL}'
 
 # wymiary PNG derivatives — używane przez przeglądarki/iOS/Android/PWA
 PNG_DERIVATIVES = {
@@ -68,3 +73,29 @@ def get_branding_version(site_settings):
     if site_settings.updated_at:
         return str(int(site_settings.updated_at.timestamp()))
     return '0'
+
+
+def get_branding_asset_url(site_settings, filename):
+    """Build a cache-busted URL for a generated branding derivative."""
+    return f'{settings.MEDIA_URL}{DERIVED_SUBDIR}/{filename}?v={get_branding_version(site_settings)}'
+
+
+def get_favicon_redirect_url():
+    """Return the /favicon.ico redirect target without hitting the DB on every request."""
+    cached = cache.get(FAVICON_REDIRECT_CACHE_KEY)
+    if cached is not None:
+        return cached
+
+    from site_settings.models import SiteSettings
+    site_settings = SiteSettings.get()
+    if site_settings.brand_mark:
+        favicon_url = get_branding_asset_url(site_settings, 'favicon.ico')
+    else:
+        favicon_url = static('home/images/favicon.ico')
+
+    cache.set(FAVICON_REDIRECT_CACHE_KEY, favicon_url, FAVICON_REDIRECT_CACHE_TTL)
+    return favicon_url
+
+
+def invalidate_branding_asset_url_cache():
+    cache.delete(FAVICON_REDIRECT_CACHE_KEY)

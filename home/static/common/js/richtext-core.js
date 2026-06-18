@@ -28,7 +28,30 @@ export function getInputHtml(inputEl) {
         return node && node.nodeType === Node.ELEMENT_NODE && node.tagName.toUpperCase() === 'BR';
     }
 
-    function serialize(node, isFirst) {
+    function isBlock(node) {
+        return node && node.nodeType === Node.ELEMENT_NODE && BLOCK.has(node.tagName.toUpperCase());
+    }
+
+    function isEmptyText(node) {
+        return node.nodeType === Node.TEXT_NODE && !node.textContent;
+    }
+
+    function nextSignificant(nodes, start) {
+        for (let i = start; i < nodes.length; i += 1) {
+            if (!isEmptyText(nodes[i])) return nodes[i];
+        }
+        return null;
+    }
+
+    function appendBreak(out) {
+        return out.endsWith('<br>') ? out : `${out}<br>`;
+    }
+
+    function isEmptyBlock(node, children) {
+        return children.every(c => isBr(c) || isEmptyText(c));
+    }
+
+    function serialize(node) {
         if (node.nodeType === Node.TEXT_NODE) {
             // Legacy DB content (sprzed paste fix-a) może mieć surowe \n w tekście —
             // normalizujemy na <br>, żeby render po save nie produkował ghost empty lines.
@@ -38,23 +61,7 @@ export function getInputHtml(inputEl) {
         if (isBr(node)) return '<br>';
         const tag = node.tagName.toUpperCase();
 
-        let children = Array.from(node.childNodes);
-        if (BLOCK.has(tag)) {
-            // Block-with-only-filler-<br>(s) = empty line (user pressed Enter on a blank line).
-            // Without this special case, <div><br></div> would serialize to "<br><br>" and
-            // produce ghost empty lines when pasted text is re-rendered.
-            const isEmpty = children.every(c =>
-                isBr(c) || (c.nodeType === Node.TEXT_NODE && !c.textContent)
-            );
-            if (isEmpty) return '<br>';
-            // Non-empty block: strip trailing <br> filler the browser auto-inserts.
-            while (children.length > 0 && isBr(children[children.length - 1])) {
-                children.pop();
-            }
-        }
-
-        const inner = children.map((c, i) => serialize(c, i === 0)).join('');
-        if (BLOCK.has(tag)) return (isFirst ? '' : '<br>') + inner;
+        const inner = serializeSequence(node.childNodes);
         if (tag === 'B') return `<b>${inner}</b>`;
         if (tag === 'I') return `<i>${inner}</i>`;
         if (tag === 'U') return `<u>${inner}</u>`;
@@ -65,7 +72,54 @@ export function getInputHtml(inputEl) {
         return inner;
     }
 
-    const html = Array.from(inputEl.childNodes).map((c, i) => serialize(c, i === 0)).join('');
+    function serializeBlock(node) {
+        const children = Array.from(node.childNodes);
+        // Block-with-only-filler-<br>(s) = empty line (user pressed Enter on a blank line).
+        // Without this special case, <div><br></div> would serialize to "<br><br>" and
+        // produce ghost empty lines when pasted text is re-rendered.
+        if (isEmptyBlock(node, children)) return '';
+
+        let contentChildren = children;
+        if (isBlock(node)) {
+            // Non-empty block: strip trailing <br> filler the browser auto-inserts.
+            contentChildren = children.slice();
+            while (contentChildren.length > 0 && isBr(contentChildren[contentChildren.length - 1])) {
+                contentChildren.pop();
+            }
+        }
+
+        return serializeSequence(contentChildren);
+    }
+
+    function serializeSequence(childNodes) {
+        const nodes = Array.from(childNodes);
+        let html = '';
+
+        nodes.forEach((node, index) => {
+            if (isEmptyText(node)) return;
+
+            if (isBlock(node)) {
+                const blockHtml = serializeBlock(node);
+                const next = nextSignificant(nodes, index + 1);
+
+                if (!blockHtml) {
+                    html += html.endsWith('<br>') || html === '' ? '<br>' : '<br><br>';
+                    return;
+                }
+
+                if (html) html = appendBreak(html);
+                html += blockHtml;
+                if (next && !isBr(next) && !isBlock(next)) html = appendBreak(html);
+                return;
+            }
+
+            html += serialize(node);
+        });
+
+        return html;
+    }
+
+    const html = serializeSequence(inputEl.childNodes);
     return (typeof DOMPurify !== 'undefined')
         ? DOMPurify.sanitize(html, { ALLOWED_TAGS, ALLOWED_ATTR })
         : html.replace(/<(?!\/?(?:b|i|u|br|a)\b)[^>]*>/gi, '');

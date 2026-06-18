@@ -81,7 +81,20 @@ export function makeNotification(notif) {
  * Removes notification indicator (changes favicon back)
  */
 export function removeNotification() {
-    changeIcon('/static/chat/images/notification-off.ico');
+    const link = getIconLink();
+    link.setAttribute('href', defaultFaviconHref || '/favicon.ico');
+}
+
+let defaultFaviconHref = null;
+
+function getIconLink() {
+    let link = $("link[rel~='icon']");
+    if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+    }
+    return link;
 }
 
 /**
@@ -89,13 +102,11 @@ export function removeNotification() {
  * @param {string} resource - URL to the icon image
  */
 export function changeIcon(resource) {
-    let link = $("link[rel~='icon']");
-    if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.getElementsByTagName('head')[0].appendChild(link);
+    const link = getIconLink();
+    if (defaultFaviconHref === null) {
+        defaultFaviconHref = link.getAttribute('href') || link.href || '/favicon.ico';
     }
-    link.href = resource;
+    link.setAttribute('href', resource);
 }
 
 /**

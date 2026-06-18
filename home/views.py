@@ -31,7 +31,7 @@ from glosowania.models import Decyzja, KtoJuzGlosowal
 from obywatele.models import CitizenActivity, Uzytkownik
 from site_settings.forms import SiteSettingsBrandingForm
 from site_settings.models import SiteSettings
-from site_settings.services import get_branding_version
+from site_settings.services import FAVICON_REDIRECT_CACHE_CONTROL, get_branding_asset_url, get_favicon_redirect_url
 from tasks.models import Task
 
 from .forms import RememberLoginForm
@@ -827,11 +827,9 @@ def manifest(request):
     """Serve dynamic PWA manifest JSON"""
     ss = SiteSettings.get()
     if ss.brand_mark:
-        derived_url = settings.MEDIA_URL + 'site_branding/derived/'
-        version_q = f'?v={get_branding_version(ss)}'
-        favicon_src = derived_url + 'favicon.ico' + version_q
-        icon_192_src = derived_url + 'icon-192.png' + version_q
-        icon_512_src = derived_url + 'icon-512.png' + version_q
+        favicon_src = get_branding_asset_url(ss, 'favicon.ico')
+        icon_192_src = get_branding_asset_url(ss, 'icon-192.png')
+        icon_512_src = get_branding_asset_url(ss, 'icon-512.png')
     else:
         favicon_src = '/static/home/images/favicon.ico'
         icon_192_src = '/static/home/images/icon-192.png'
@@ -868,6 +866,13 @@ def manifest(request):
     return JsonResponse(data, json_dumps_params={
         'ensure_ascii': False
     })
+
+
+def favicon(request):
+    """Redirect /favicon.ico to the current brand favicon."""
+    response = redirect(get_favicon_redirect_url())
+    response['Cache-Control'] = FAVICON_REDIRECT_CACHE_CONTROL
+    return response
 
 
 def service_worker(request):

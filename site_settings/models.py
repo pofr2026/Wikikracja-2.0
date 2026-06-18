@@ -54,7 +54,7 @@ class SiteSettings(models.Model):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         # late import — services.py importuje PIL, niepotrzebnie ładować przy każdym ładowaniu modelu
-        from site_settings.services import cleanup_brand_derivatives, letterbox_to_square, regenerate_brand_derivatives
+        from site_settings.services import cleanup_brand_derivatives, invalidate_branding_asset_url_cache, letterbox_to_square, regenerate_brand_derivatives
         # I/O na dysku po super().save() — przy rollbacku transakcji pliki pozostają orphan w MEDIA_ROOT.
         # Akceptujemy tę cenę: SiteSettings to singleton edytowany rzadko (admin manual), prawdziwy rollback prawie nie występuje.
         # letterbox prostokątów do kwadratu PRZED regen derivatives (żeby favicon/PWA wynikały z kwadratu)
@@ -67,6 +67,7 @@ class SiteSettings(models.Model):
         # bo favicon w karcie przeglądarki i ikony PWA są theme-independent (rządzi system OS, nie app theme)
         if self.brand_mark_dark:
             letterbox_to_square(self.brand_mark_dark.path)
+        invalidate_branding_asset_url_cache()
 
     @classmethod
     def get(cls):
