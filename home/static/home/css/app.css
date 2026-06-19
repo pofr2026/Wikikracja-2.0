@@ -755,29 +755,43 @@ textarea.form-control:focus {
 }
 /* ── Alerty ─────────────────────────────────────────────────── */
 .alert {
+  --alert-surface: var(--accent-muted);
+  --alert-accent: var(--accent);
+  --alert-border: color-mix(in srgb, var(--alert-accent) 35%, transparent);
+  background: var(--alert-surface) !important;
+  color: var(--text-primary) !important;
   border-radius: .55rem !important;
-  border: 1px solid var(--border) !important;
+  border: 1px solid var(--alert-border) !important;
   font-size: .875rem;
 }
 .alert-info {
-  background: rgba(52, 152, 219, .1) !important;
-  color: #7ec8f5 !important;
-  border-color: rgba(52, 152, 219, .25) !important;
+  --alert-surface: var(--accent-muted);
+  --alert-accent: var(--accent);
 }
 .alert-success {
-  background: rgba(0, 188, 140, .1) !important;
-  color: #5edfc4 !important;
-  border-color: rgba(0, 188, 140, .25) !important;
+  --alert-surface: var(--badge-approved-bg);
+  --alert-accent: var(--badge-approved-color);
 }
 .alert-warning {
-  background: rgba(243, 156, 18, .1) !important;
-  color: #f5c563 !important;
-  border-color: rgba(243, 156, 18, .25) !important;
+  --alert-surface: var(--badge-referendum-bg);
+  --alert-accent: var(--badge-referendum-color);
 }
 .alert-danger {
-  background: rgba(239, 68, 68, .1) !important;
-  color: #f89898 !important;
-  border-color: rgba(239, 68, 68, .25) !important;
+  --alert-surface: var(--badge-rejected-bg);
+  --alert-accent: var(--badge-rejected-color);
+}
+.alert a,
+.alert .alert-link {
+  color: inherit !important;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: .08em;
+  text-underline-offset: .14em;
+}
+.alert a:hover,
+.alert .alert-link:hover {
+  color: inherit !important;
+  opacity: .82;
 }
 .toast-container {
   position: fixed;
@@ -1066,31 +1080,6 @@ hr {
   color: var(--accent);
   border-color: var(--accent);
   background: var(--accent-muted);
-}
-/* Alerts: replace hardcoded colors with lighter variants */
-[data-theme="light"] .alert-info,
-[data-theme="daylight"] .alert-info {
-  background: rgba(52, 152, 219, .07) !important;
-  color: #1a6e9e !important;
-  border-color: rgba(52, 152, 219, .2) !important;
-}
-[data-theme="light"] .alert-success,
-[data-theme="daylight"] .alert-success {
-  background: rgba(0, 153, 132, .07) !important;
-  color: #065f50 !important;
-  border-color: rgba(0, 153, 132, .2) !important;
-}
-[data-theme="light"] .alert-warning,
-[data-theme="daylight"] .alert-warning {
-  background: rgba(243, 156, 18, .07) !important;
-  color: #8a5d00 !important;
-  border-color: rgba(243, 156, 18, .2) !important;
-}
-[data-theme="light"] .alert-danger,
-[data-theme="daylight"] .alert-danger {
-  background: rgba(239, 68, 68, .07) !important;
-  color: #991b1b !important;
-  border-color: rgba(239, 68, 68, .2) !important;
 }
 /* Badges in light mode: darken colors for readable contrast on white */
 [data-theme="light"] .badge.bg-danger,
